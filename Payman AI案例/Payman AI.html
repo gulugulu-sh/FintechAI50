@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payman AI - 全球Top 50 金融AI案例研究</title>
+    <style>
+        :root {
+            --header-h: 72px;
+            --dots-h: 40px;
+            --primary-brand: #0066CC;
+            --secondary-brand: #00AA55;
+            --accent-brand: #FF6B35;
+            --cover-bg: linear-gradient(135deg, #0066CC 0%, #00AA55 100%);
+            --text-1: #1F2937;
+            --text-2: #6B7280;
+            --text-light: #F9FAFB;
+            --warm-base: #FAF7F2;
+            --warm-accent: #D97757;
+            --border-light: #E5E7EB;
+            --card-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            --card-shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif; }
+        body { background: #FFFFFF; color: var(--text-1); line-height: 1.6; }
+
+        /* Layout */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 220px;
+            height: 100vh;
+            background: #1F2937;
+            color: white;
+            padding: 20px;
+            overflow-y: auto;
+            z-index: 100;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+        }
+
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .sidebar-logo {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            background: var(--primary-brand);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 20px;
+            color: white;
+        }
+
+        .sidebar-brand-text {
+            font-weight: 600;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .sidebar-brand-sub {
+            font-size: 12px;
+            color: #9CA3AF;
+            margin-top: 2px;
+        }
+
+        .nav-items {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-btn {
+            text-align: left;
+            padding: 12px 12px;
+            border: none;
+            background: transparent;
+            color: #D1D5DB;
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 13px;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        .nav-btn.active {
+            background: var(--primary-brand);
+            color: white;
+        }
+
+        .main {
+            margin-left: 220px;
+            min-height: 100vh;
+        
+            scroll-snap-type: y mandatory;
+            overflow-y: scroll;}
+
+        /* Cover Section */
+        .cover {
+            min-height: 100vh;
+            background: var(--cover-bg);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cover::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 100px;
+            background: linear-gradient(180deg, transparent, rgba(0,0,0,0.1));
+        }
+
+        .cover-content {
+            position: relative;
+            z-index: 2;
+            max-width: 800px;
+            padding: 40px;
+        }
+
+        .cover-logo {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 40px;
+            background: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .cover-title {
+            font-size: 56px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            line-height: 1.2;
+        }
+
+        .cover-subtitle {
+            font-size: 24px;
+            font-weight: 300;
+            margin-bottom: 32px;
+            opacity: 0.95;
+            line-height: 1.4;
+        }
+
+        .cover-tags {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 48px;
+        }
+
+        .cover-tag {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+        }
+
+        .cover-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 20px;
+            margin-bottom: 50px;
+        }
+
+        .stat-box {
+            background: rgba(255,255,255,0.15);
+            padding: 20px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            font-weight: 500;
+            opacity: 0.9;
+        }
+
+        .cover-scroll-hint {
+            font-size: 14px;
+            opacity: 0.9;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(10px); }
+        }
+
+        /* Chapter Styles */
+        .chapter {
+            min-height: 100vh;
+            padding: 80px 60px;
+            background: white;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .chapter:nth-child(even) {
+            background: var(--warm-base);
+        }
+
+        .chapter-header {
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .chapter-header h2 {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text-1);
+        }
+
+        .ch-sub {
+            display: inline-block;
+            font-size: 16px;
+            color: var(--text-2);
+            margin-right: 16px;
+            font-weight: 500;
+        }
+
+        .ch-counter {
+            font-size: 14px;
+            color: var(--text-2);
+            font-weight: 500;
+            float: right;
+            margin-top: 4px;
+        }
+
+        /* Card Track */
+        .card-track {
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            padding-bottom: 20px;
+            scroll-behavior: smooth;
+            margin-bottom: 30px;
+            scroll-snap-type: x mandatory;
+        }
+
+        .card-track::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .card-track::-webkit-scrollbar-track {
+            background: var(--border-light);
+            border-radius: 4px;
+        }
+
+        .card-track::-webkit-scrollbar-thumb {
+            background: #999;
+            border-radius: 4px;
+        }
+
+        .slide {
+            flex: 0 0 calc(100% - 60px);
+            max-width: 100%;
+            scroll-snap-align: start;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-light);
+            height: 100%;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chapter:nth-child(even) .card {
+            background: white;
+        }
+
+        .card h3 {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-1);
+        }
+
+        .card-body {
+            flex: 1;
+            font-size: 15px;
+            line-height: 1.7;
+            color: var(--text-2);
+        }
+
+        .card-body p {
+            margin-bottom: 12px;
+        }
+
+        .card.sparse {
+            padding: 40px;
+        }
+
+        .card.sparse h3 {
+            font-size: 28px;
+        }
+
+        .card.sparse .card-body {
+            font-size: 18px;
+        }
+
+        /* Metrics Grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid var(--border-light);
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-brand);
+            margin-bottom: 8px;
+        }
+
+        .metric-label {
+            font-size: 13px;
+            color: var(--text-2);
+            font-weight: 500;
+        }
+
+        /* Callout */
+        .callout {
+            background: white;
+            border-left: 4px solid var(--warm-accent);
+            padding: 16px 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+            font-size: 15px;
+            line-height: 1.7;
+        }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            margin: 30px 0;
+        }
+
+        .timeline-item {
+            display: grid;
+            grid-template-columns: 80px 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .timeline-dot {
+            width: 12px;
+            height: 12px;
+            background: var(--primary-brand);
+            border-radius: 50%;
+            margin-top: 8px;
+            position: relative;
+            left: 34px;
+        }
+
+        .timeline-year {
+            font-weight: 700;
+            color: var(--primary-brand);
+            font-size: 15px;
+        }
+
+        .timeline-text {
+            font-size: 14px;
+            color: var(--text-2);
+            line-height: 1.6;
+        }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+        }
+
+        table th {
+            background: var(--text-1);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-light);
+            font-size: 14px;
+        }
+
+        table tr:last-child td {
+            border-bottom: none;
+        }
+
+        table tr:hover {
+            background: var(--warm-base);
+        }
+
+        /* Mode Boxes */
+        .mode-boxes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .mode-box {
+            border-left: 4px solid var(--warm-accent);
+            background: white;
+            padding: 20px;
+            border-radius: 6px;
+            border: 1px solid var(--border-light);
+        }
+
+        .mode-title {
+            font-weight: 700;
+            margin-bottom: 10px;
+            font-size: 15px;
+            color: var(--text-1);
+        }
+
+        .mode-desc {
+            font-size: 13px;
+            color: var(--text-2);
+            line-height: 1.6;
+        }
+
+        /* Insight Card */
+        .insight-card {
+            background: white;
+            border: 2px solid var(--primary-brand);
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .insight-emoji {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .insight-highlight {
+            background: var(--warm-base);
+            border-left: 4px solid var(--warm-accent);
+            padding: 16px;
+            margin-top: 20px;
+            border-radius: 4px;
+            font-weight: 600;
+            color: var(--text-1);
+        }
+
+        /* Quote Block */
+        .quote-block {
+            background: white;
+            border-left: 4px solid var(--secondary-brand);
+            padding: 20px;
+            margin: 20px 0;
+            font-style: italic;
+            color: var(--text-2);
+            border-radius: 4px;
+            font-size: 15px;
+            line-height: 1.7;
+        }
+
+        .quote-attr {
+            margin-top: 12px;
+            font-style: normal;
+            font-weight: 600;
+            color: var(--text-1);
+        }
+
+        /* Dots Bar */
+        .dots-bar {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #D1D5DB;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .dot.active {
+            width: 24px;
+            background: var(--primary-brand);
+            border-radius: 4px;
+        }
+
+        /* References */
+        .references {
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+            margin: 30px 0;
+        }
+
+        .references h4 {
+            margin-bottom: 16px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .references ul {
+            list-style: none;
+            columns: 2;
+            gap: 20px;
+        }
+
+        .references li {
+            margin-bottom: 10px;
+            break-inside: avoid;
+        }
+
+        .references a {
+            color: var(--primary-brand);
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .references a:hover {
+            text-decoration: underline;
+        }
+
+        /* Flex Row */
+        .flex-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 20px 0;
+        }
+
+        .flex-col {
+            display: flex;
+            flex-direction: column;
+        }
+
+        @media (max-width: 768px) {
+            .flex-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 180px;
+            }
+
+            .main {
+                margin-left: 180px;
+            }
+
+            .chapter {
+                padding: 40px 20px;
+            }
+
+            .chapter-header h2 {
+                font-size: 32px;
+            }
+
+            .cover-title {
+                font-size: 40px;
+            }
+
+            .cover-subtitle {
+                font-size: 18px;
+            }
+        }
+
+        /* Utility */
+        .mt-20 { margin-top: 20px; }
+        .mb-20 { margin-bottom: 20px; }
+        .text-center { text-align: center; }
+        .text-sm { font-size: 14px; }
+        .text-muted { color: var(--text-2); }
+    
+        .nav-dashboard {
+            display: block; width: calc(100% - 8px); margin: 8px 4px 4px;
+            background: rgba(217,119,87,0.15); border: 1px solid rgba(217,119,87,0.3);
+            color: var(--accent, #D97757); padding: 10px 12px; border-radius: 8px;
+            text-align: center; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+            font-weight: 600; letter-spacing: 0.3px;
+        }
+        .nav-dashboard:hover {
+            background: rgba(217,119,87,0.3); color: white;
+        }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-brand">
+            <img class="sidebar-logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAAM1BMVEUKO0T18+snUllFaW6drqzm6OGAl5fY3NZxjI26xcE2XmMZRk+OoqJigIOrubdUdXjI0MyDWjTDAAAAy0lEQVQ4jdVSyxKEIAxrCqXyUPb/v3ahrnuw6nk3B4aZRJOUEv0hKtcHlpsA0Mg3/ALIFvMQpUs+QoNdVr1UJLwOe1Ysji/QyYe4rZVYxAkyitnMlEwN4VwAebcJJY1rdykWrONUnQ1VKDhBmw6MjXbB6lJGjG+r+RAzbZbICUZS/hjmc4mGPktCu/Hiph3QyGpAXwI5Gwx7EZsjR4GmqxdN+y/uUdUmQaWdZ3iAxbr7EX1RBGNVHgTzlRGXB4Gtyt06Hegt+135ebwBQggEUbRCagQAAAAASUVORK5CYII=" alt="Logo" />
+            <div>
+                <div class="sidebar-brand-text">Payman AI</div>
+                <div class="sidebar-brand-sub">深度案例研究</div>
+            </div>
+        </div>
+        <div class="nav-items">
+            <button class="nav-btn active" onclick="scrollTo(0)">🏠 封面</button>
+            <button class="nav-btn" onclick="scrollTo(1)">📋 公司概况</button>
+            <button class="nav-btn" onclick="scrollTo(2)">💰 融资与财务</button>
+            <button class="nav-btn" onclick="scrollTo(3)">🛠️ 产品分析</button>
+            <button class="nav-btn" onclick="scrollTo(4)">🤖 技术创新</button>
+            <button class="nav-btn" onclick="scrollTo(5)">🎯 市场竞争</button>
+            <button class="nav-btn" onclick="scrollTo(6)">💡 核心洞察</button>
+            <button class="nav-btn" onclick="scrollTo(7)">📚 参考资源</button>
+        </div>
+    
+    <a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+    <div class="main">
+        <!-- Cover -->
+        <section class="cover" id="ch-0">
+            <div class="cover-content">
+                <img class="cover-logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAAM1BMVEUKO0T18+snUllFaW6drqzm6OGAl5fY3NZxjI26xcE2XmMZRk+OoqJigIOrubdUdXjI0MyDWjTDAAAAy0lEQVQ4jdVSyxKEIAxrCqXyUPb/v3ahrnuw6nk3B4aZRJOUEv0hKtcHlpsA0Mg3/ALIFvMQpUs+QoNdVr1UJLwOe1Ysji/QyYe4rZVYxAkyitnMlEwN4VwAebcJJY1rdykWrONUnQ1VKDhBmw6MjXbB6lJGjG+r+RAzbZbICUZS/hjmc4mGPktCu/Hiph3QyGpAXwI5Gwx7EZsjR4GmqxdN+y/uUdUmQaWdZ3iAxbr7EX1RBGNVHgTzlRGXB4Gtyt06Hegt+135ebwBQggEUbRCagQAAAAASUVORK5CYII=" alt="Logo" />
+                <h1 class="cover-title">Payman AI</h1>
+                <p class="cover-subtitle">Agentic Banking：让AI代理安全持有和转移资金</p>
+                <div class="cover-tags">
+                    <span class="cover-tag">Agentic AI</span>
+                    <span class="cover-tag">支付基础设施</span>
+                    <span class="cover-tag">金融合规</span>
+                    <span class="cover-tag">ToB平台</span>
+                </div>
+                <div class="cover-stats">
+                    <div class="stat-box">
+                        <div class="stat-number" data-count="13.8" data-suffix="M">0</div>
+                        <div class="stat-label">总融资</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number" data-count="9.57" data-suffix="M">0</div>
+                        <div class="stat-label">Series A融资</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number" data-count="18" data-suffix="个月">0</div>
+                        <div class="stat-label">融资耗时</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number" data-count="2024" data-suffix="">0</div>
+                        <div class="stat-label">成立年份</div>
+                    </div>
+                </div>
+                <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+            </div>
+        </section>
+
+        <!-- 1. Company Overview -->
+        <section class="chapter" id="ch-1">
+            <div class="chapter-header">
+                <h2>公司概况</h2>
+                <span class="ch-sub">📋 基础信息与发展历程</span>
+                <span class="ch-counter" id="counter-1">1 / 3</span>
+            </div>
+
+            <div class="card-track" data-ch="1">
+                <div class="slide">
+                    <div class="card sparse">
+                        <h3>创始背景</h3>
+                        <div class="card-body">
+                            <p><strong>成立时间：</strong>2024年6月</p>
+                            <p><strong>总部：</strong>丹佛，美国</p>
+                            <p><strong>核心使命：</strong>为AI代理提供安全、合规的支付基础设施</p>
+                            <div class="callout">
+                                <strong>关键洞察：</strong> Payman AI不是支付工具，而是"信任层"——让AI代理在银行级安全保障下，自主执行金融交易。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="card">
+                        <h3>创始团队</h3>
+                        <div class="card-body">
+                            <p><strong>Tyllen Bicakcic（CEO）</strong><br/>成功创业者，曾成立养老服务初创公司，在被1.6亿美元收购的YC公司任职。对"AI代理将比人类更频繁处理金钱"这一趋势有深刻洞察。</p>
+                            <p style="margin-top: 16px;"><strong>Prashanth Pillareddy（CTO）</strong><br/>AI/ML专家，曾任职TikTok、Zoomie Animals。在产品开发和数据方面有深厚背景。</p>
+                            <p style="margin-top: 16px;"><strong>Akash Desai（CPO）</strong><br/>专注构建AI代理能够直接移动资金的编程基础设施。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="card">
+                        <h3>发展里程碑</h3>
+                        <div class="card-body">
+                            <div class="timeline">
+                                <div class="timeline-item">
+                                    <div class="timeline-year">2024.08</div>
+                                    <div class="timeline-text"><strong>$3M Pre-Seed融资</strong>：Visa、Coinbase Ventures等参投，市场快速验证。</div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-year">2024.10</div>
+                                    <div class="timeline-text"><strong>$9.57M Series A融资</strong>：Boost VC、Deepwater Management领投。总融资达$13.8M。</div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-year">2025.01</div>
+                                    <div class="timeline-text"><strong>业界首笔AI代理ACH交易</strong>：执行首笔由AI代理完全发起的ACH支付，技术里程碑成立。</div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-year">2025.11</div>
+                                    <div class="timeline-text"><strong>Middlesex Federal Savings合作</strong>：与美国银行推出AI代理银行体验。</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-1"></div>
+        </section>
+
+        <!-- 2. Funding & Financials -->
+        <section class="chapter" id="ch-2">
+            <div class="chapter-header">
+                <h2>融资与财务</h2>
+                <span class="ch-sub">💰 投资方与商业模式</span>
+                <span class="ch-counter" id="counter-2">1 / 3</span>
+            </div>
+
+            <div class="card-track" data-ch="2">
+                <div class="slide">
+                    <div class="card">
+                        <h3>融资进度</h3>
+                        <div class="card-body">
+                            <div class="metrics-grid">
+                                <div class="metric-card">
+                                    <div class="metric-value">$13.8M</div>
+                                    <div class="metric-label">总融资</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">18个月</div>
+                                    <div class="metric-label">融资耗时</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">2轮</div>
+                                    <div class="metric-label">融资轮数</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">顶级</div>
+                                    <div class="metric-label">投资方质量</div>
+                                </div>
+                            </div>
+                            <div class="callout">
+                                <strong>融资速度：</strong>从$3M预种子到$13.8M Series A，只用3个月，充分验证了市场对Agentic Banking的强烈需求。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="card">
+                        <h3>主要投资方</h3>
+                        <div class="card-body">
+                            <p style="margin-bottom: 16px;"><strong>Visa</strong> - 全球支付巨头，在Pre-Seed和Series A中都参投，表明其对Agentic Banking的战略重视。</p>
+                            <p style="margin-bottom: 16px;"><strong>Coinbase Ventures</strong> - 加密原生投资机构，预示Payman未来可能与稳定币和区块链深度融合。</p>
+                            <p style="margin-bottom: 16px;"><strong>Circle</strong> - USDC稳定币发行者，与Payman的USDC支付能力形成协同。</p>
+                            <p style="margin-bottom: 16px;"><strong>Boost VC</strong> - 关注早期科技创新的顶级VC。</p>
+                            <div class="callout">
+                                <strong>战略意义：</strong>投资方组合从传统支付（Visa）到Web3（Coinbase、Circle），预示Payman未来跨越传统和新型支付生态。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="card">
+                        <h3>商业模式</h3>
+                        <div class="card-body">
+                            <div class="mode-boxes">
+                                <div class="mode-box">
+                                    <div class="mode-title">💳 API平台</div>
+                                    <div class="mode-desc">B2B SaaS平台，银行和金融科技公司通过API接入，获得Agentic Banking能力。</div>
+                                </div>
+                                <div class="mode-box" style="border-left-color:var(--secondary-brand);">
+                                    <div class="mode-title">💰 交易计费</div>
+                                    <div class="mode-desc">按ACH和USDC交易笔数计费。客户规模越大，单笔成本越低。</div>
+                                </div>
+                                <div class="mode-box" style="border-left-color:var(--accent-brand);">
+                                    <div class="mode-title">📊 增值服务</div>
+                                    <div class="mode-desc">风险评分、合规报告、人工审批等增值模块可单独付费。</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-2"></div>
+        </section>
+
+        <!-- 3. Product Analysis -->
+        <section class="chapter" id="ch-3">
+            <div class="chapter-header">
+                <h2>产品分析</h2>
+                <span class="ch-sub">🛠️ 核心功能与架构</span>
+                <span class="ch-counter" id="counter-3">1 / 4</span>
+            </div>
+
+            <div class="card-track" data-ch="3">
+                <div class="slide">
+                    <div class="card sparse">
+                        <h3>产品哲学</h3>
+                        <div class="card-body">
+                            <p>"信任 + 自动化"——将AI从被动问答者升级为主动执行者。</p>
+                            <p>通过编程驱动的策略执行、多层安全验证和完整审计追踪，让AI代理像银行员工一样安全地处理资金。</p>
+                            <div class="insight-highlight">
+                                Payman不是支付工具，而是AI的"决策护栏" + "安全沙箱" + "审计黑匣子"的组合体。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="card">
+                        <h3>核心功能</h3>
+                        <div class="card-body">
+                            <p><strong>1. 可编程策略</strong><br/>定义AI的支付规则：日支出限制、收款人白名单、金额阈值等。AI必须验证策略合规才能执行交易。</p>
+                            <p style="margin-top: 16px;"><strong>2. 人工审批</strong><br/>高风险交易自动路由至人工审批。通过Slack集成，审批人5秒内做决策。</p>
+                            <p style="margin-top: 16px;"><strong>3. 多层安全</strong><br/>SOC 2认证、256位加密、KYC/AML/BSA完全合规、异常检测。</p>
+                            <p style="margin-top: 16px;"><strong>4. ACH & USDC支付</strong><br/>同时支持传统和Web3支付，覆盖最广泛生态。</p>
+                            <p style="margin-top: 16px;"><strong>5. 审计与合规</strong><br/>完整操作日志、合规报告、OFAC核查。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="card">
+                        <h3>与竞品对比</h3>
+                        <div class="card-body">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>维度</th>
+                                        <th>Payman</th>
+                                        <th>传统银行API</th>
+                                        <th>通用AI框架</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>目标用户</td>
+                                        <td>AI代理开发者</td>
+                                        <td>人类使用者</td>
+                                        <td>通用开发者</td>
+                                    </tr>
+                                    <tr>
+                                        <td>AI友好性</td>
+                                        <td>🟢 极高</td>
+                                        <td>🔴 低</td>
+                                        <td>🟡 中</td>
+                                    </tr>
+                                    <tr>
+                                        <td>安全合规</td>
+                                        <td>🟢 金融级</td>
+                                        <td>🟢 金融级</td>
+                                        <td>🔴 无金融设计</td>
+                                    </tr>
+                                    <tr>
+                                        <td>集成速度</td>
+                                        <td>🟢 ~3周</td>
+                                        <td>🔴 数月</td>
+                                        <td>🟡 中等</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="card">
+                        <h3>用户旅程</h3>
+                        <div class="card-body">
+                            <div class="timeline">
+                                <div class="timeline-item">
+                                    <div class="timeline-year">Step 1</div>
+                                    <div class="timeline-text"><strong>集成API</strong>：开发者在应用中集成Payman SDK，连接银行账户。</div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-year">Step 2</div>
+                                    <div class="timeline-text"><strong>定义策略</strong>：配置支出限制、白名单、审批阈值等规则。</div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-year">Step 3</div>
+                                    <div class="timeline-text"><strong>AI发起交易</strong>：AI生成自然语言支付指令，Payman转换为结构化命令。</div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-year">Step 4</div>
+                                    <div class="timeline-text"><strong>多层验证</strong>：策略检查 → 风险评分 → 可能的人工审批。</div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-year">Step 5</div>
+                                    <div class="timeline-text"><strong>交易执行</strong>：ACH或USDC支付执行，完整审计日志记录。</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-3"></div>
+        </section>
+
+        <!-- 4. Technology Innovation -->
+        <section class="chapter" id="ch-4">
+            <div class="chapter-header">
+                <h2>技术创新</h2>
+                <span class="ch-sub">🤖 AI架构与核心竞争力</span>
+                <span class="ch-counter" id="counter-4">1 / 3</span>
+            </div>
+
+            <div class="card-track" data-ch="4">
+                <div class="slide">
+                    <div class="card">
+                        <h3>技术定位</h3>
+                        <div class="card-body">
+                            <p>Payman不是LLM模型公司，而是<strong>编排层</strong>（Orchestration Layer）。</p>
+                            <p style="margin-top: 16px;"><strong>核心价值：</strong>围绕AI代理的支付需求，构建信任、安全、合规的执行框架。</p>
+                            <div class="callout">
+                                <strong>技术堆栈分层：</strong>
+                                <br/>• LLM层：支持主流模型（OpenAI、Anthropic等）
+                                <br/>• 策略引擎：可编程规则执行
+                                <br/>• 风险评分：交易风险AI评估
+                                <br/>• 审批编排：人工审批工作流
+                                <br/>• 支付执行：ACH/USDC处理
+                                <br/>• 审计层：完整操作日志
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="card sparse">
+                        <h3>创新亮点</h3>
+                        <div class="card-body">
+                            <p><strong>1. Agentic Banking开创者</strong></p>
+                            <p>首次解决"如何让AI代理安全执行支付"的问题。这不是功能升级，而是范式转变。</p>
+                            <p style="margin-top: 16px;"><strong>2. 混合验证模式</strong></p>
+                            <p>编程规则 + AI风险评分 + 人工审批的三层防护，既保障安全又不过度中心化。</p>
+                            <p style="margin-top: 16px;"><strong>3. 跨生态支付</strong></p>
+                            <p>同时支持ACH（传统）和USDC（Web3），未来适应能力强。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="card">
+                        <h3>安全与合规</h3>
+                        <div class="card-body">
+                            <p><strong>加密与隐私</strong></p>
+                            <p>256位端到端加密，严格的数据隔离。客户资金数据完全独立存储。</p>
+                            <p style="margin-top: 16px;"><strong>认证与合规</strong></p>
+                            <p>✓ SOC 2 Type II认证<br/>✓ KYC/BSA/AML全覆盖<br/>✓ OFAC合规<br/>✓ 完整审计追踪</p>
+                            <p style="margin-top: 16px;"><strong>风险管理</strong></p>
+                            <p>AI异常检测、交易风险评分、黑名单验证、离群交易告警。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-4"></div>
+        </section>
+
+        <!-- 5. Market Competition -->
+        <section class="chapter" id="ch-5">
+            <div class="chapter-header">
+                <h2>市场竞争</h2>
+                <span class="ch-sub">🎯 赛道定位与竞争优势</span>
+                <span class="ch-counter" id="counter-5">1 / 2</span>
+            </div>
+
+            <div class="card-track" data-ch="5">
+                <div class="slide">
+                    <div class="card">
+                        <h3>市场规模</h3>
+                        <div class="card-body">
+                            <div class="metrics-grid">
+                                <div class="metric-card">
+                                    <div class="metric-value">~$200B</div>
+                                    <div class="metric-label">2024年市场</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">~$500B+</div>
+                                    <div class="metric-label">2030年预测</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">15%+</div>
+                                    <div class="metric-label">CAGR</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">新兴</div>
+                                    <div class="metric-label">赛道阶段</div>
+                                </div>
+                            </div>
+                            <div class="callout">
+                                <strong>市场驱动力：</strong>Agentic Banking是AI agent市场 + 支付基础设施市场的融合点。市场规模取决于AI代理在金融中的采纳速度。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="card">
+                        <h3>竞争格局与SWOT</h3>
+                        <div class="card-body">
+                            <p><strong>核心优势</strong></p>
+                            <p>✓ Agentic Banking赛道的唯一玩家<br/>✓ Visa、Coinbase等顶级投资方背书<br/>✓ 业界首笔AI代理ACH交易成就<br/>✓ 金融级合规框架从一开始就内置</p>
+                            <p style="margin-top: 16px;"><strong>主要威胁</strong></p>
+                            <p>✗ 团队规模小（2-10人），扩张能力有限<br/>✗ 商业化尚未成熟，收入模式未公开<br/>✗ 大型支付公司（Stripe、PayPal）可能进入<br/>✗ AI代理采纳速度存在不确定性</p>
+                            <div class="callout">
+                                <strong>机会窗口：</strong>AI代理爆发期（2026-2028）是Payman快速成长的黄金窗口。此时进入的竞争对手都会面临合规和技术壁垒。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-5"></div>
+        </section>
+
+        <!-- 6. Key Insights -->
+        <section class="chapter" id="ch-6">
+            <div class="chapter-header">
+                <h2>核心洞察</h2>
+                <span class="ch-sub">💡 行业启示与深度观点</span>
+                <span class="ch-counter" id="counter-6">1 / 4</span>
+            </div>
+
+            <div class="card-track" data-ch="6">
+                <div class="slide">
+                    <div class="insight-card">
+                        <div class="insight-emoji">🤖</div>
+                        <h3>范式转变：从"回答"到"执行"</h3>
+                        <div class="card-body" style="text-align: left; padding-top: 20px;">
+                            <p>传统AI金融应用停留在"智能顾问"阶段，而Payman推进到"自主执行者"阶段。AI从信息处理者升级为资金流动的直接参与者。</p>
+                            <div class="insight-highlight">
+                                这不仅是功能升级，而是金融科技的范式跃迁。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="insight-card">
+                        <div class="insight-emoji">🔐</div>
+                        <h3>信任基础设施的护城河</h3>
+                        <div class="card-body" style="text-align: left; padding-top: 20px;">
+                            <p>在AI代理处理真实资金的时代，"我信任这个AI不会搞砸我的钱"是最基础的需求。</p>
+                            <p>Payman的真正竞争力不是算法，而是完整的信任工程：SOC 2认证、KYC/AML、审计追踪。</p>
+                            <div class="insight-highlight">
+                                信任工程的难度和壁垒远高于算法创新。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="insight-card">
+                        <div class="insight-emoji">💳</div>
+                        <h3>支付碎片化催生编排层</h3>
+                        <div class="card-body" style="text-align: left; padding-top: 20px;">
+                            <p>ACH、USDC、Wire、国际汇款等支付方式各自成体系。AI代理需要一个统一的抽象层。</p>
+                            <p>Payman正在成为这个"支付路由大脑"。未来，编排层会成为最具杠杆效应的价值创造点。</p>
+                            <div class="insight-highlight">
+                                分层架构：底层支付 → 中间编排 → 上层AI应用。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="insight-card">
+                        <div class="insight-emoji">📈</div>
+                        <h3>Agentic Banking是最优结合点</h3>
+                        <div class="card-body" style="text-align: left; padding-top: 20px;">
+                            <p>金融是AI Agent最容易大规模落地的领地，因为：</p>
+                            <p>✓ 高度规则化（法律框架清晰）<br/>✓ 高自动化价值（成本直接转化）<br/>✓ 清晰的安全责任（风险可量化）<br/>✓ 标准化流程（易于自动化）</p>
+                            <div class="insight-highlight">
+                                金融是Agent采纳最快的行业。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-6"></div>
+        </section>
+
+        <!-- 7. References -->
+        <section class="chapter" id="ch-7">
+            <div class="chapter-header">
+                <h2>参考资源</h2>
+                <span class="ch-sub">📚 数据来源与深度阅读</span>
+            </div>
+
+            <div class="references">
+                <h4>📚 官方资源</h4>
+                <ul>
+                    <li><a href="https://paymanai.com" target="_blank">Payman AI官方网站</a></li>
+                    <li><a href="https://docs.paymanai.com" target="_blank">Payman API文档</a></li>
+                    <li><a href="https://paymanai.com/about-us" target="_blank">关于Payman - 团队与使命</a></li>
+                    <li><a href="https://paymanai.com/blog/two-questions-every-bank-asks-about-ai-agents" target="_blank">Payman博客：银行关于AI代理的两个问题</a></li>
+                </ul>
+            </div>
+
+            <div class="references">
+                <h4>💰 融资与商业信息</h4>
+                <ul>
+                    <li><a href="https://www.cypherhunter.com/en/e/payman-ai-raised-funding-2024-08-07/" target="_blank">Payman AI $3M Pre-Seed融资公告</a></li>
+                    <li><a href="https://tracxn.com/d/companies/paymanai/__NSTYOZtZdNiGZxC0Vkul0dzUfj3ZUgPqDRNO08pHBUE" target="_blank">Tracxn - Payman AI公司档案</a></li>
+                    <li><a href="https://www.chaincatcher.com/en/article/2137528" target="_blank">ChainCatcher - Payman AI融资轮分析</a></li>
+                </ul>
+            </div>
+
+            <div class="references">
+                <h4>🔗 合作与动态</h4>
+                <ul>
+                    <li><a href="https://www.businesswire.com/news/home/20251126300877/en/Payman-AI-Partners-with-Middlesex-Federal-Savings-to-Launch-their-Agentic-Banking-Experience" target="_blank">Payman AI与Middlesex Federal Savings合作</a></li>
+                    <li><a href="https://paymanai.com/events/ai-volution-trust-ai-money" target="_blank">Payman活动：信任AI处理金钱</a></li>
+                </ul>
+            </div>
+
+            <div class="references">
+                <h4>🎓 行业分析</h4>
+                <ul>
+                    <li><a href="https://www.gate.com/learn/articles/comprehensive-analysis-of-2024-crypto-vc-ai-investments/5380" target="_blank">2024年加密VC AI投资全景分析</a></li>
+                    <li><a href="https://www.panewslab.com/en/articles/uzo43465" target="_blank">PANews：顶级VC在AI agent领域的投资布局</a></li>
+                </ul>
+            </div>
+
+            <p style="margin-top: 40px; padding: 20px; background: var(--warm-base); border-radius: 8px; text-align: center; color: var(--text-2);">
+                本案例研究基于2026年3月的公开信息编制。<br/>
+                更新时间：2026年3月 | 数据来源：官方网站、融资数据库、新闻报道
+            </p>
+        </section>
+    </div>
+
+    <script>
+        // Scroll to chapter
+        function scrollTo(chIndex) {
+            const chapter = document.getElementById(`ch-${chIndex}`);
+            if (chapter) {
+                chapter.scrollIntoView({ behavior: 'smooth' });
+                updateNavActive(chIndex);
+            }
+        }
+
+        // Update nav active state
+        function updateNavActive(chIndex) {
+            document.querySelectorAll('.nav-btn').forEach((btn, idx) => {
+                btn.classList.toggle('active', idx === chIndex);
+            });
+        }
+
+        // Scroll listener
+        window.addEventListener('scroll', () => {
+            const chapters = document.querySelectorAll('.chapter, .cover');
+            let currentIndex = 0;
+
+            chapters.forEach((ch, idx) => {
+                const rect = ch.getBoundingClientRect();
+                if (rect.top <= 100) {
+                    currentIndex = idx;
+                }
+            });
+
+            updateNavActive(currentIndex);
+        });
+
+        // Dots bar
+        function setupDotsBar() {
+            document.querySelectorAll('[data-ch]').forEach(track => {
+                const chIndex = track.getAttribute('data-ch');
+                const slides = track.querySelectorAll('.slide');
+                const dotsBar = document.getElementById(`dots-${chIndex}`);
+
+                if (!dotsBar) return;
+
+                slides.forEach((_, idx) => {
+                    const dot = document.createElement('div');
+                    dot.className = `dot ${idx === 0 ? 'active' : ''}`;
+                    dot.onclick = () => {
+                        track.scrollLeft = (track.offsetWidth - 60) * idx;
+                    };
+                    dotsBar.appendChild(dot);
+                });
+
+                track.addEventListener('scroll', () => {
+                    const scrollIndex = Math.round(track.scrollLeft / (track.offsetWidth - 60));
+                    dotsBar.querySelectorAll('.dot').forEach((dot, idx) => {
+                        dot.classList.toggle('active', idx === scrollIndex);
+                    });
+
+                    // Update counter
+                    const counter = document.getElementById(`counter-${chIndex}`);
+                    if (counter) {
+                        counter.textContent = `${scrollIndex + 1} / ${slides.length}`;
+                    }
+                });
+            });
+        }
+
+        // Counter animation
+        function animateCounters() {
+            const statNumbers = document.querySelectorAll('.stat-number');
+            statNumbers.forEach(el => {
+                const target = parseFloat(el.getAttribute('data-count'));
+                const suffix = el.getAttribute('data-suffix') || '';
+                let current = 0;
+                const increment = target / 50;
+                const duration = 2000;
+                const startTime = Date.now();
+
+                const animate = () => {
+                    const elapsed = Date.now() - startTime;
+                    current = Math.min((elapsed / duration) * target, target);
+                    el.textContent = current.toFixed(1).replace(/\.0$/, '') + suffix;
+                    if (elapsed < duration) {
+                        requestAnimationFrame(animate);
+                    }
+                };
+
+                animate();
+            });
+        }
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            setupDotsBar();
+            animateCounters();
+        });
+    </script>
+</body>
+</html>

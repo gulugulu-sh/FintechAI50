@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upstart 深度调研报告</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --accent-purple: #7B5EA7;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #1A1514;
+            --cover-bg: #0B3D2E;
+            --cover-accent: #00C9A7;
+            --cover-highlight: #A7F3D0;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(217,119,87,0.2); color: var(--accent); font-weight: 600; }
+        .nav-dashboard {
+            display: block; width: calc(100% - 8px);
+            margin: 8px 4px 4px;
+            background: rgba(217,119,87,0.15);
+            border: 1px solid rgba(217,119,87,0.3);
+            color: var(--accent);
+            padding: 10px 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 12px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all .2s;
+            text-decoration: none;
+            font-weight: 600;
+            letter-spacing: .3px;
+        }
+        .nav-dashboard:hover {
+            background: rgba(217,119,87,0.25);
+            transform: translateY(-1px);
+        }
+
+        /* ===== MAIN ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, var(--cover-bg) 0%, #0D4A37 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(0,201,167,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 20px; background: rgba(255,255,255,0.1); object-fit: contain; }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(255,255,255,0.12); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        /* Fixed chapter header */
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        /* Horizontal card scroller */
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+
+        /* Each slide fills available height */
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Card inside slide — fills slide */
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        /* Dots bar at bottom */
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); cursor: pointer; transition: all 0.3s;
+            border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+        /* ===== REUSABLE COMPONENTS ===== */
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px; border-radius: 6px;
+            font-size: 13px; line-height: 1.7; color: var(--text-2);
+            margin: 14px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+
+        .quote-block {
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px; margin: 14px 0;
+            font-style: italic; font-size: 14px;
+            color: var(--text-2); line-height: 1.8;
+            background: var(--bg-muted); border-radius: 0 8px 8px 0;
+        }
+        .quote-attr { font-style: normal; font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 16px; border-radius: 10px; text-align: center;
+        }
+        .metric-value { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th { background: var(--bg-muted); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+
+        .mode-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 14px 0; }
+        .mode-box { background: var(--bg-muted); padding: 14px; border-radius: 10px; border-left: 4px solid var(--accent); }
+        .mode-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+        .mode-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .insight-card {
+            flex: 1; display: flex; flex-direction: column;
+            background: var(--bg-card); border-radius: 14px; padding: 28px 32px;
+            border: 1px solid var(--border);
+        }
+        .insight-emoji { font-size: 28px; margin-bottom: 10px; }
+        .insight-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+        .insight-card p { font-size: 15px; line-height: 1.9; color: var(--text-2); margin-bottom: 14px; }
+        .insight-highlight {
+            margin-top: auto;
+            background: var(--accent-light); border-left: 4px solid var(--accent);
+            padding: 12px 16px; border-radius: 6px;
+            font-size: 14px; font-weight: 600; color: var(--accent-2);
+        }
+
+        .news-item {
+            padding: 14px; background: var(--bg-card);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px; border: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+        .news-date { font-size: 11px; color: var(--text-3); font-weight: 600; margin-bottom: 4px; }
+        .news-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .news-title a { color: var(--accent-blue); text-decoration: none; }
+        .news-title a:hover { color: var(--accent); text-decoration: underline; }
+        .news-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .timeline { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+        .timeline-item { display: flex; gap: 12px; align-items: flex-start; }
+        .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
+        .timeline-year { font-weight: 700; font-size: 13px; color: var(--accent); min-width: 48px; }
+        .timeline-text { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            main { margin-left: 0; }
+            .chapter-header { padding: 12px 20px 0 20px; }
+            .slide { padding: 16px 20px; }
+            .cover-title { font-size: 28px; }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <img class="sidebar-logo" alt="Upstart" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAFm0lEQVR4nO2dO27bShiFjwPLecJ2k/pyB9YOzB3EgBp1dlYgF+qjBQi4VnubKB0bAsoO6B3IO1DqIIFunkisxLcY/rCvI1KkOOQ8eD5AMEDKw188n8gRNRwBhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQghxlR3TBTRKHB0B6AII0iVh+jdJ/y4AzNHrXzVZlkn8FyCOXgA4SR+HBf9rCWAGYIZe/21dpdmAvwLE0SmAEW7f7duyADBCr/+mYjtW4p8AcXQMYIrqwd9nAeAMvf6l5naN8sB0AVqJo7+hzudBDa0HAJJ0G97gxxEgjg6gztlhQ1ucQR0N/m1oe7XhvgAq/ASqd98kcwCh6xK4LYC58AXnJXBXAPPhC05L4KYA9oQvOCuBewLYF77gpARuCWBv+IJ1EtgjgP/hC1ZJYIcA7oQvWCuBfQL4F75gpQR2CeBv+IJ1EtgjgP/hC1ZJYIcA7QlfsEYC8wK0L3zBCgnMCtDe8AXjEpgTgOFnYUSCZgVg+JtoXILmBGD4RWlUgmYEyAt/tQJ+/fr/sk4HeODXPSslaUyC+gW4H/7Pn8C3b8D1NfDjR05lO8DeHvDoEfD4MbC7W3upltGIBPUKIOH//t3F16/Aly9/vtuL8vAh8OQJ8PSp1hItp3YJ6hNAwv/8uYtPn4CbGz3tdjrA4aESoh3UKkE9AsTRAa6vEyyX3dzDfBWePQP299vSV6hNAv0CxNEBvn9P8PFjV9u7PotOB3j+nBJUQK8Ak/EBdncTrFbNfdTb2VES7O01tkmDaJdAnwCTsbnP+ZRga/QIYDJ8gRJsRXUBbAhfoASlqSaATeELlKAU2wtgY/gCJSjMdgLYHL5ACQpRXgAXwhcowUbKCeBS+AIlyKW4AC6GL1CCTMpcQ53CxfAB9UXU+/fqq2j/6UJlVYhiAkzGr6AmW3aXdklwgjh6VeSJm08Bk/ExbqdTd592nQ7CTXMbFzkCXGgqxg7adSTYmF2+AJPxKVw97+fRHgk66bT5mWw6Aoz01WIZ7ZFglLcyWwB17g/01mIZ7ZAgSH9DYS15R4Az/bVYwxLq/Bji5ibEhw8XWK2WpouqkbOsFXljrUPtZdjBHMAJBsN3d5Zd4vU/F9jfn8HHPk9Olus/Bk7Gf0H9RIpvqKtkg+H6q2R+370UoNd/d39h1ikgqLcWI+SHDyC9fBqmz/WNYN3CLAHC2soww+bwBX8lCNctbMN46uLhC/5K8Ae+C1A+fKElEvgswPbhCy2QwFcBqocveC6BjwLoC1/wWIIsAZImi9CI/vAF9yVI1i3MEsDFF1lf+ILbEqyteb0AaicuaixGN/WHL7gpwSJrjGBeH2BWUzG6aS58wT0JMrPME2Cqvw7tNB++4JYE06wV2QIMhlewuzNoLnzBDQkS9PpXWStdHRFkPnzBfglGeSvzBRgML2HfUcCe8AV7JUh0jAo+11SMDuwLX7BPgiUKjOraLIDqC9gggb3hC3ZJMFo3AOQ+Ze4NfA1z4wTtD/8u5kcWTdHrvyzyxLJ3B5uQwK3wBXMSFA4f2G5+gCYlcDN8oXkJSoUPbPNt4GD4Es30CaZwOXzgbp9g2sDWzsuGD1SbI+gIMrZeLwsA5xgM32pu1yxx9AJqfwWaW06gws+82JOHjmniTqEuNgQVW5KbNS6cftfnoU4J5+njsGJrC6ie/psqjeicKfQYqm8QorgMSyiDZxgMK70Q51A3bZ5A7a+iMiyg9td00wWeotQzW7i6saSL285PF+pFzqFCXwBYpFcaSRwdQe2jIF0SQu0nuZ4wBzAv8rmeEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCHt4T+PqCheneBrKgAAAABJRU5ErkJggg==" />
+        <div>
+            <div class="sidebar-brand-text">Upstart</div>
+            <div class="sidebar-brand-sub">深度调研报告</div>
+        </div>
+    </div>
+    <div class="nav-items">
+        <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+        <button class="nav-btn" onclick="go(1)">📋 公司概况</button>
+        <button class="nav-btn" onclick="go(2)">💰 融资与财务</button>
+        <button class="nav-btn" onclick="go(3)">🛠️ 产品功能</button>
+        <button class="nav-btn" onclick="go(4)">🤖 AI技术</button>
+        <button class="nav-btn" onclick="go(5)">👥 用户反馈</button>
+        <button class="nav-btn" onclick="go(6)">💡 核心启示</button>
+        <button class="nav-btn" onclick="go(7)">📰 近期要闻</button>
+    </div>
+    <a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+<main id="main">
+
+<!-- ====== COVER ====== -->
+<section class="cover" id="ch-0">
+    <div class="cover-content">
+        <img class="cover-logo" alt="Upstart Logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAFm0lEQVR4nO2dO27bShiFjwPLecJ2k/pyB9YOzB3EgBp1dlYgF+qjBQi4VnubKB0bAsoO6B3IO1DqIIFunkisxLcY/rCvI1KkOOQ8eD5AMEDKw188n8gRNRwBhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQghxlR3TBTRKHB0B6AII0iVh+jdJ/y4AzNHrXzVZlkn8FyCOXgA4SR+HBf9rCWAGYIZe/21dpdmAvwLE0SmAEW7f7duyADBCr/+mYjtW4p8AcXQMYIrqwd9nAeAMvf6l5naN8sB0AVqJo7+hzudBDa0HAJJ0G97gxxEgjg6gztlhQ1ucQR0N/m1oe7XhvgAq/ASqd98kcwCh6xK4LYC58AXnJXBXAPPhC05L4KYA9oQvOCuBewLYF77gpARuCWBv+IJ1EtgjgP/hC1ZJYIcA7oQvWCuBfQL4F75gpQR2CeBv+IJ1EtgjgP/hC1ZJYIcA7QlfsEYC8wK0L3zBCgnMCtDe8AXjEpgTgOFnYUSCZgVg+JtoXILmBGD4RWlUgmYEyAt/tQJ+/fr/sk4HeODXPSslaUyC+gW4H/7Pn8C3b8D1NfDjR05lO8DeHvDoEfD4MbC7W3upltGIBPUKIOH//t3F16/Aly9/vtuL8vAh8OQJ8PSp1hItp3YJ6hNAwv/8uYtPn4CbGz3tdjrA4aESoh3UKkE9AsTRAa6vEyyX3dzDfBWePQP299vSV6hNAv0CxNEBvn9P8PFjV9u7PotOB3j+nBJUQK8Ak/EBdncTrFbNfdTb2VES7O01tkmDaJdAnwCTsbnP+ZRga/QIYDJ8gRJsRXUBbAhfoASlqSaATeELlKAU2wtgY/gCJSjMdgLYHL5ACQpRXgAXwhcowUbKCeBS+AIlyKW4AC6GL1CCTMpcQ53CxfAB9UXU+/fqq2j/6UJlVYhiAkzGr6AmW3aXdklwgjh6VeSJm08Bk/ExbqdTd592nQ7CTXMbFzkCXGgqxg7adSTYmF2+AJPxKVw97+fRHgk66bT5mWw6Aoz01WIZ7ZFglLcyWwB17g/01mIZ7ZAgSH9DYS15R4Az/bVYwxLq/Bji5ibEhw8XWK2WpouqkbOsFXljrUPtZdjBHMAJBsN3d5Zd4vU/F9jfn8HHPk9Olus/Bk7Gf0H9RIpvqKtkg+H6q2R+370UoNd/d39h1ikgqLcWI+SHDyC9fBqmz/WNYN3CLAHC2soww+bwBX8lCNctbMN46uLhC/5K8Ae+C1A+fKElEvgswPbhCy2QwFcBqocveC6BjwLoC1/wWIIsAZImi9CI/vAF9yVI1i3MEsDFF1lf+ILbEqyteb0AaicuaixGN/WHL7gpwSJrjGBeH2BWUzG6aS58wT0JMrPME2Cqvw7tNB++4JYE06wV2QIMhlewuzNoLnzBDQkS9PpXWStdHRFkPnzBfglGeSvzBRgML2HfUcCe8AV7JUh0jAo+11SMDuwLX7BPgiUKjOraLIDqC9gggb3hC3ZJMFo3AOQ+Ze4NfA1z4wTtD/8u5kcWTdHrvyzyxLJ3B5uQwK3wBXMSFA4f2G5+gCYlcDN8oXkJSoUPbPNt4GD4Es30CaZwOXzgbp9g2sDWzsuGD1SbI+gIMrZeLwsA5xgM32pu1yxx9AJqfwWaW06gws+82JOHjmniTqEuNgQVW5KbNS6cftfnoU4J5+njsGJrC6ie/psqjeicKfQYqm8QorgMSyiDZxgMK70Q51A3bZ5A7a+iMiyg9td00wWeotQzW7i6saSL285PF+pFzqFCXwBYpFcaSRwdQe2jIF0SQu0nuZ4wBzAv8rmeEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCHt4T+PqCheneBrKgAAAABJRU5ErkJggg==" />
+        <h1 class="cover-title">Upstart</h1>
+        <p class="cover-subtitle">AI如何重塑传统信贷评估的未来——从非FICO模型到行业领导者的AI金融科技之路</p>
+        <div class="cover-tags">
+            <span class="cover-tag">AI信贷科技</span>
+            <span class="cover-tag">非FICO评估</span>
+            <span class="cover-tag">普惠金融</span>
+            <span class="cover-tag">美国</span>
+            <span class="cover-tag">上市公司</span>
+        </div>
+        <div class="cover-stats">
+            <div class="stat-box">
+                <div class="stat-number">535亿+</div>
+                <div class="stat-label">累计贷款金额</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">400万+</div>
+                <div class="stat-label">服务客户</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">100+</div>
+                <div class="stat-label">合作机构</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">91%</div>
+                <div class="stat-label">自动化率</div>
+            </div>
+        </div>
+        <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+    </div>
+</section>
+
+<!-- ====== CHAPTER 1: 公司概况 ====== -->
+<section class="chapter" id="ch-1">
+    <div class="chapter-header">
+        <h2>AI重塑信贷评估：从非FICO模型到金融生态赋能</h2>
+        <span class="ch-sub">📋 公司概况</span>
+        <span class="ch-counter" id="counter-1">1 / 1</span>
+    </div>
+    <div class="card-track" data-ch="1">
+        <div class="slide"><div class="card"><h3>AI信贷平台的绝对领导者</h3><div class="card-body">
+            <p>Upstart成立于2012年，是全球领先的AI信贷科技平台。公司创始人Dave Girouard、Anna Counselman和Paul Gu都来自Google，他们观察到一个根本问题：传统FICO评分体系存在本质缺陷，它只考虑历史信用数据，导致数百万拥有稳定收入和良好还款意愿但信用历史不足的"信用薄"人群被系统性拒之门外。</p>
+            <p>Upstart的核心创新是开发了一套集成1600+非传统数据变量的专有AI模型，能够比FICO评分更精准地评估借款人的信用风险。通过将AI能力嵌入银行的信贷流程，而非直接竞争，Upstart采用轻资产的B2B2C运营模式，与全球100多家银行和信用社合作，为其提供自动化信贷解决方案。截至2025年12月，平台累计促成贷款超535亿美元，服务客户超400万。</p>
+            <div class="callout">
+                <strong>核心定位：</strong> 全球AI信贷平台的绝对领导者，拥有最完善的非FICO AI评估模型、最广泛的银行合作网络、最高的贷款自动化率（91%）。2020年12月在纳斯达克上市（NASDAQ: UPST），标志进入公众市场阶段。
+            </div>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">1600+</div>
+                    <div class="metric-label">AI模型数据变量</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">+43%</div>
+                    <div class="metric-label">批准率相比传统</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">-33%</div>
+                    <div class="metric-label">APR成本相比传统</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">91%</div>
+                    <div class="metric-label">贷款自动化率</div>
+                </div>
+            </div>
+        </div></div></div>
+    </div>
+    <div class="dots-bar"><button class="dot active" onclick="scrollTrack(1, 0)"></button></div>
+</section>
+
+<!-- ====== CHAPTER 2: 融资与财务 ====== -->
+<section class="chapter" id="ch-2">
+    <div class="chapter-header">
+        <h2>融资加速与财务成长：从融资到盈利的进化</h2>
+        <span class="ch-sub">💰 融资与财务</span>
+        <span class="ch-counter" id="counter-2">1 / 1</span>
+    </div>
+    <div class="card-track" data-ch="2">
+        <div class="slide"><div class="card"><h3>强劲的融资与增长轨迹</h3><div class="card-body">
+            <p>Upstart在融资历程中获得了顶级风投的持续支持。2013年完成Series A融资$590万，2015年Series C融资$3500万（由Third Point Ventures领投）。2020年12月，Upstart成功在纳斯达克上市，融资规模数十亿美元，标志着公司进入新的发展阶段。IPO前夕的融资者包括红杉资本、Tiger Global等业界领军机构。</p>
+            <p>财务表现持续向好。2023年营收$2.19亿，2024年营收$2.96亿，2025年财报显示收入达$2.96亿（Q4同比增35%），并自2023年起开始盈利。Q4 2025贷款成交量突破$32亿（同比增52%），贷款自动化率达91%。公司业务单位经济学优秀：推荐费、平台服务费和贷款管理费构成B端收入来源，毛利率约70%，EBITDA已处于盈利状态。</p>
+            <div class="callout">
+                <strong>关键数据（2025）：</strong> 累计促成贷款$535亿+，服务400万+客户，100+合作机构，Q4贷款量$32亿+（同比增52%），年度收入增速35%，自动化率91%，自2023年起保持盈利。
+            </div>
+            <table>
+                <thead><tr><th>融资轮次</th><th>时间</th><th>金额</th><th>领投方</th></tr></thead>
+                <tbody>
+                    <tr><td>Series A</td><td>2013-04</td><td>$590万</td><td>First Round Capital</td></tr>
+                    <tr><td>Series C</td><td>2015-07</td><td>$3500万</td><td>Third Point Ventures</td></tr>
+                    <tr><td>IPO</td><td>2020-12</td><td>上市融资</td><td>纳斯达克</td></tr>
+                    <tr><td>前向流协议</td><td>2025-2026</td><td>$25亿+</td><td>Castlelake等</td></tr>
+                </tbody>
+            </table>
+        </div></div></div>
+    </div>
+    <div class="dots-bar"><button class="dot active" onclick="scrollTrack(2, 0)"></button></div>
+</section>
+
+<!-- ====== CHAPTER 3: 产品功能 ====== -->
+<section class="chapter" id="ch-3">
+    <div class="chapter-header">
+        <h2>产品生态：从贷款到信用建设的完整解决方案</h2>
+        <span class="ch-sub">🛠️ 产品功能</span>
+        <span class="ch-counter" id="counter-3">1 / 1</span>
+    </div>
+    <div class="card-track" data-ch="3">
+        <div class="slide"><div class="card"><h3>多层次的信贷与信用产品矩阵</h3><div class="card-body">
+            <p>Upstart通过AI信贷平台为银行和信用社提供完整的解决方案。个人贷款产品支持$1,000–$50,000的无抵押贷款，APR范围6.2%–35.99%，期限3–5年。汽车再融资产品帮助消费者对现有汽车贷款进行再融资，争取更低利率，每月可节省数百美元。房屋净值信用额度（HELOC）针对有房产净值的房主，基于房产价值的灵活信用额度。</p>
+            <p>核心创新在于AI驱动的自动化审批流程——91%的贷款实现全端到端自动化，用户5分钟获得预批准，最快1工作日放款。AI模型用于欺诈检测、身份验证、违约预测，并通过宏观经济指数（UMI）调整模型应对经济周期波动。轻量级API接口可集成入银行现有系统，支持云端和本地部署。</p>
+            <div class="mode-boxes">
+                <div class="mode-box">
+                    <div class="mode-title">📊 AI信用评估模型</div>
+                    <div class="mode-desc">1600+变量的专有模型，远超FICO分数（通常10-20个变量），识别传统模型遗漏的优质借款人</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">⚡ 全自动化审批</div>
+                    <div class="mode-desc">91%贷款无需人工干预，流程简化，分钟级响应，大幅提升用户体验和银行效率</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">🛡️ 风险评估与检测</div>
+                    <div class="mode-desc">AI驱动的欺诈检测、身份验证、违约预测，确保交易安全和合规性</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">🔗 API集成</div>
+                    <div class="mode-desc">轻量级接口集成入银行系统，支持云端和本地部署，降低集成成本和门槛</div>
+                </div>
+            </div>
+        </div></div></div>
+    </div>
+    <div class="dots-bar"><button class="dot active" onclick="scrollTrack(3, 0)"></button></div>
+</section>
+
+<!-- ====== CHAPTER 4: AI技术 ====== -->
+<section class="chapter" id="ch-4">
+    <div class="chapter-header">
+        <h2>机器学习引擎：分层神经网络与动态模型优化</h2>
+        <span class="ch-sub">🤖 AI技术</span>
+        <span class="ch-counter" id="counter-4">1 / 1</span>
+    </div>
+    <div class="card-track" data-ch="4">
+        <div class="slide"><div class="card"><h3>自研分层神经网络架构与核心竞争力</h3><div class="card-body">
+            <p>Upstart的核心是自研的分层神经网络，基于深度学习优化的信用风险评估模型。与通用AI模型不同，Upstart的AI专门针对信贷风险评估和自动化审批优化，每日从实时贷款数据中学习，不断优化预测能力。核心模型包括：信用风险评估模型（分析借款人偿还能力和违约风险，集成教育、就业、收入、资产等多维信息）；欺诈检测模型（识别异常申请和潜在欺诈行为）；宏观经济调整模型（UMI，Upstart宏观指数，评估宏观经济条件对信贷表现的影响，动态调整模型参数）。</p>
+            <p>Upstart相比传统模型的性能优势显著：审批率提升43%（能够批准更多信用良好但被传统模型拒绝的借款人）；APR降低33%（同等信用风险下提供更低利率，降低借款成本）；自动化率91%（业界领先的端到端自动审批）；违约率更低（更精准的风险评估，降低银行违约风险）。数据护城河、模型独特性、持续学习能力和生态深度整合形成了持久的竞争优势。</p>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">1600+</div>
+                    <div class="metric-label">数据变量</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">+43%</div>
+                    <div class="metric-label">审批率优势</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">-33%</div>
+                    <div class="metric-label">APR优势</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">91%</div>
+                    <div class="metric-label">自动化率</div>
+                </div>
+            </div>
+        </div></div></div>
+    </div>
+    <div class="dots-bar"><button class="dot active" onclick="scrollTrack(4, 0)"></button></div>
+</section>
+
+<!-- ====== CHAPTER 5: 用户反馈 ====== -->
+<section class="chapter" id="ch-5">
+    <div class="chapter-header">
+        <h2>市场认可与用户评价：效率、可及性与信任</h2>
+        <span class="ch-sub">👥 用户反馈</span>
+        <span class="ch-counter" id="counter-5">1 / 1</span>
+    </div>
+    <div class="card-track" data-ch="5">
+        <div class="slide"><div class="card"><h3>消费者与机构的高度认可</h3><div class="card-body">
+            <p>Upstart在消费者和金融机构中获得了较高的认可和口碑。消费者正面反馈集中在三个方面：（1）审批速度与便捷性——快速便捷的贷款申请，5分钟内即可获得预批准，最快1工作日放款；（2）信贷可及性——帮助获得传统银行拒绝的贷款，AI评估更公平，考虑教育和就业，FICO分数不是唯一因素；（3）风险管理——金融机构普遍认可自动化程度高、大幅降低人工成本、新客户获取容易、违约率管理有效。</p>
+            <p>平台评分证实了这一点：Trustpilot评分4.9/5（57000+评价），Credit Karma 4.2/5，ConsumerAffairs 3.8/5，整体为好评。金融机构端的满意度高，衡量指标包括业务增长、风险降低、效率提升、客户扩展，采用趋势持续增长，更多银行加入平台。部分消费者对发起费和补充材料提交流程提出了反馈，但整体反馈为中低频。</p>
+            <div class="quote-block">
+                快速便捷的贷款申请、5分钟内即可获得预批准、最快1工作日放款——这是最高频的用户正面评价，反映出Upstart在自动化审批中的显著优势。
+                <div class="quote-attr">来自Trustpilot、Credit Karma等平台的用户评价汇总</div>
+            </div>
+        </div></div></div>
+    </div>
+    <div class="dots-bar"><button class="dot active" onclick="scrollTrack(5, 0)"></button></div>
+</section>
+
+<!-- ====== CHAPTER 6: 核心启示 ====== -->
+<section class="chapter" id="ch-6">
+    <div class="chapter-header">
+        <h2>战略启示：AI金融的四个成功法则</h2>
+        <span class="ch-sub">💡 核心启示</span>
+        <span class="ch-counter" id="counter-6">1 / 1</span>
+    </div>
+    <div class="card-track" data-ch="6">
+        <div class="slide"><div class="card"><h3>Upstart的四大战略启示</h3><div class="card-body">
+            <div class="insight-card" style="margin-bottom: 12px;">
+                <div class="insight-emoji">🎯</div>
+                <h3 style="font-size:16px;">超越传统，重塑范式</h3>
+                <p>Upstart用1600+变量的AI模型挑战FICO体系，证明更全面的数据整合和AI评估能识别传统模型遗漏的优质借款人。启示：金融机构应积极拥抱数据和AI，打破信息茧房，实现真正的普惠金融。</p>
+                <div class="insight-highlight">打破单一评估维度，用多维度AI模型实现更公平的金融评估</div>
+            </div>
+
+            <div class="insight-card" style="margin-bottom: 12px;">
+                <div class="insight-emoji">🤝</div>
+                <h3 style="font-size:16px;">赋能而非竞争</h3>
+                <p>Upstart选择与银行合作而非直接竞争，通过技术赋能让传统机构提升效率、拓展市场。这避免了巨大的资本压力和监管风险，同时实现规模化增长。启示：金融科技创新未必总是颠覆性，与现有巨头合作、通过技术赋能实现共赢是更可持续的路径。</p>
+                <div class="insight-highlight">轻资产B2B2C模式：技术赋能而非资本重压</div>
+            </div>
+
+            <div class="insight-card" style="margin-bottom: 12px;">
+                <div class="insight-emoji">⚖️</div>
+                <h3 style="font-size:16px;">平衡创新与合规</h3>
+                <p>Upstart在推进AI创新的同时应对模型可解释性、数据偏差和监管挑战。随着AI在金融领域的深入应用，监管会日趋严格。AI金融参与者必须将合规内嵌到产品设计和运营的每一个环节，才能实现长期可持续发展。</p>
+                <div class="insight-highlight">合规不是事后检查，而是产品设计的第一原则</div>
+            </div>
+
+            <div class="insight-card">
+                <div class="insight-emoji">📈</div>
+                <h3 style="font-size:16px;">自动化的倍增效应</h3>
+                <p>Upstart的91%贷款自动化率不仅是成本问题，更是市场扩展的基础。高自动化使平台能处理海量贷款请求，摊低单笔成本，从而能与更多银行合作，覆盖更广泛的借款人群体。自动化是规模增长的关键杠杆。</p>
+                <div class="insight-highlight">自动化 → 成本下降 → 市场覆盖扩大 → 规模增长</div>
+            </div>
+        </div></div></div>
+    </div>
+    <div class="dots-bar"><button class="dot active" onclick="scrollTrack(6, 0)"></button></div>
+</section>
+
+<!-- ====== CHAPTER 7: 近期要闻 ====== -->
+<section class="chapter" id="ch-7">
+    <div class="chapter-header">
+        <h2>最新进展：融资、财报与战略扩张</h2>
+        <span class="ch-sub">📰 近期要闻</span>
+        <span class="ch-counter" id="counter-7">1 / 1</span>
+    </div>
+    <div class="card-track" data-ch="7">
+        <div class="slide"><div class="card"><h3>2025-2026年关键事件</h3><div class="card-body">
+            <div class="news-item">
+                <div class="news-date">2026-03-17</div>
+                <div class="news-title">与Eltura Ventures和Aperture Investors签订$10亿前向流协议</div>
+                <div class="news-desc">进一步扩大资金来源，支持平台贷款增长。前向流协议显示机构投资者对Upstart长期增长的信心。</div>
+            </div>
+
+            <div class="news-item">
+                <div class="news-date">2026-02-10</div>
+                <div class="news-title">发布2025年Q4和全年财报</div>
+                <div class="news-desc">收入达$2.96亿，同比增长35%。贷款自动化率达到91%，累计促成贷款超535亿美元，服务400万+客户。继续保持强劲增长势头。</div>
+            </div>
+
+            <div class="news-item">
+                <div class="news-date">2025-11-06</div>
+                <div class="news-title">与Castlelake签订$15亿前向流协议</div>
+                <div class="news-desc">扩大与机构投资者的合作，增强平台资金支持能力。Castlelake是全球领先的资产管理公司，投资组合超$100亿。</div>
+            </div>
+
+            <div class="news-item">
+                <div class="news-date">2025-12-31</div>
+                <div class="news-title">累计促成贷款突破$535亿大关</div>
+                <div class="news-desc">平台规模持续扩大，服务客户超过400万，合作机构超过100家。验证了AI信贷平台的市场规模和可持续性。</div>
+            </div>
+
+            <div class="news-item">
+                <div class="news-date">2025-05-01</div>
+                <div class="news-title">发布AI模型性能研究</div>
+                <div class="news-desc">审批率+43%，APR-33%。独立研究验证了Upstart AI模型相比传统模型的显著优势，为业界树立了新的性能基准。</div>
+            </div>
+        </div></div></div>
+    </div>
+    <div class="dots-bar"><button class="dot active" onclick="scrollTrack(7, 0)"></button></div>
+</section>
+
+</main>
+
+<script>
+const chapters = document.querySelectorAll('.chapter');
+const cover = document.querySelector('.cover');
+const main = document.getElementById('main');
+const navBtns = document.querySelectorAll('.nav-btn');
+
+function go(index) {
+    const sections = [cover, ...chapters];
+    if (sections[index]) {
+        sections[index].scrollIntoView({ behavior: 'smooth' });
+        updateActiveNav(index);
+    }
+}
+
+function scrollTrack(chIndex, slideIndex) {
+    const track = document.querySelector(`.card-track[data-ch="${chIndex}"]`);
+    if (track) {
+        const slides = track.querySelectorAll('.slide');
+        if (slides[slideIndex]) {
+            slides[slideIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+            updateDots(chIndex, slideIndex);
+        }
+    }
+}
+
+function updateDots(chIndex, slideIndex) {
+    const dots = document.querySelectorAll(`.chapter[id="ch-${chIndex}"] .dot`);
+    dots.forEach((d, i) => d.classList.toggle('active', i === slideIndex));
+}
+
+function updateActiveNav(index) {
+    navBtns.forEach((btn, i) => btn.classList.toggle('active', i === index));
+}
+
+main.addEventListener('scroll', () => {
+    let activeIndex = 0;
+    const scrollY = main.scrollTop;
+    const sections = [cover, ...chapters];
+    sections.forEach((sec, i) => {
+        if (sec.offsetTop <= scrollY + 100) activeIndex = i;
+    });
+    updateActiveNav(activeIndex);
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    navBtns[0].classList.add('active');
+});
+</script>
+
+</body>
+</html>

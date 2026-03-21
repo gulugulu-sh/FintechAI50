@@ -1,0 +1,1615 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anchain.AI - Case Study</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --header-h: 72px;
+            --dots-h: 40px;
+            --bg-light: #FAF7F2;
+            --accent-primary: #D97757;
+            --dark: #2A2A2A;
+            --blue-primary: #2E5090;
+            --blue-accent: #0A6FB8;
+            --orange-accent: #FF6B35;
+            --border: #E8E0D8;
+            --text-dark: #333;
+            --text-light: #666;
+            --text-2: #999;
+            --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            --card-shadow-hover: 0 8px 16px rgba(0, 0, 0, 0.12);
+            --cover-bg: linear-gradient(135deg, #2E5090 0%, #0A6FB8 100%);
+            --cover-accent: #FF6B35;
+            --cover-highlight: #FFD700;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-light);
+            color: var(--text-dark);
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            width: 100%;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 220px;
+            height: 100vh;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            color: #fff;
+            padding: 24px 0;
+            overflow-y: auto;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 16px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .sidebar-logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #2E5090, #0A6FB8);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 800;
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        .sidebar-brand-text {
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            line-height: 1.3;
+        }
+
+        .sidebar-brand-sub {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 2px;
+        }
+
+        .nav-items {
+            flex: 1;
+            padding: 0 8px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .nav-btn {
+            padding: 10px 12px;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.6);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-align: left;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .nav-btn.active {
+            background: rgba(255, 119, 87, 0.2);
+            color: #fff;
+            border-left-color: var(--accent-primary);
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        .main-content {
+            margin-left: 220px;
+            width: calc(100% - 220px);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .chapters-container {
+            width: 100%;
+            height: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scroll-behavior: smooth;
+            display: flex;
+        }
+
+        .chapters-container::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .chapters-container::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .chapters-container::-webkit-scrollbar-thumb {
+            background: var(--accent-primary);
+            border-radius: 3px;
+        }
+
+        /* ===== COVER ===== */
+        .cover {
+            width: 100%;
+            height: 100%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--cover-bg);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cover::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(255, 107, 53, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .cover-content {
+            text-align: center;
+            z-index: 10;
+            max-width: 600px;
+        }
+
+        .cover-logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 24px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 12px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .cover-title {
+            font-size: 56px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            letter-spacing: -2px;
+            line-height: 1.2;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .cover-subtitle {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.85);
+            margin-bottom: 28px;
+            line-height: 1.6;
+            font-weight: 400;
+        }
+
+        .cover-tags {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 36px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .cover-tag {
+            background: rgba(255, 255, 255, 0.15);
+            color: rgba(255, 255, 255, 0.95);
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .cover-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-bottom: 48px;
+            padding: 0 20px;
+        }
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 20px 16px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--cover-highlight);
+            margin-bottom: 6px;
+            letter-spacing: -1px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.75);
+            font-weight: 500;
+        }
+
+        .cover-scroll-hint {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+            animation: float 3s ease-in-out infinite;
+            margin-top: 24px;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER ===== */
+        .chapter {
+            width: 100%;
+            height: 100%;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-light);
+            position: relative;
+        }
+
+        .chapter-header {
+            padding: 32px 40px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-shrink: 0;
+        }
+
+        .chapter-header h2 {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--dark);
+            letter-spacing: -1px;
+            flex: 1;
+        }
+
+        .ch-sub {
+            font-size: 13px;
+            color: var(--text-light);
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .ch-counter {
+            font-size: 12px;
+            color: var(--text-2);
+            font-weight: 600;
+            white-space: nowrap;
+            padding: 6px 12px;
+            background: rgba(0, 0, 0, 0.03);
+            border-radius: 6px;
+        }
+
+        .card-track {
+            flex: 1;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scroll-behavior: smooth;
+            display: flex;
+            gap: 20px;
+            padding: 24px 40px;
+        }
+
+        .card-track::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .card-track::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .card-track::-webkit-scrollbar-thumb {
+            background: var(--accent-primary);
+            border-radius: 3px;
+        }
+
+        .slide {
+            min-width: 500px;
+            height: 100%;
+            flex-shrink: 0;
+            padding: 4px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 28px;
+            height: 100%;
+            box-shadow: var(--card-shadow);
+            overflow-y: auto;
+            transition: box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: var(--card-shadow-hover);
+        }
+
+        .card h3 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 16px;
+            line-height: 1.4;
+        }
+
+        .card-body {
+            color: var(--text-light);
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .card-body p {
+            margin-bottom: 14px;
+        }
+
+        .card-body p:last-child {
+            margin-bottom: 0;
+        }
+
+        .card.sparse {
+            padding: 32px;
+        }
+
+        .card.sparse p {
+            font-size: 16px;
+            line-height: 1.8;
+            margin-bottom: 16px;
+        }
+
+        .card.sparse h3 {
+            font-size: 22px;
+            margin-bottom: 20px;
+        }
+
+        /* ===== DATA DISPLAY ===== */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, rgba(46, 80, 144, 0.05) 0%, rgba(10, 107, 184, 0.05) 100%);
+            border: 1px solid rgba(46, 80, 144, 0.15);
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--blue-primary);
+            margin-bottom: 6px;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: var(--text-light);
+            font-weight: 600;
+        }
+
+        /* ===== CONTENT BLOCKS ===== */
+        .callout {
+            background: rgba(217, 119, 87, 0.08);
+            border-left: 4px solid var(--accent-primary);
+            padding: 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            color: var(--text-dark);
+            margin: 16px 0;
+            line-height: 1.6;
+        }
+
+        .callout strong {
+            color: var(--dark);
+        }
+
+        .quote-block {
+            font-style: italic;
+            color: var(--text-light);
+            border-left: 4px solid var(--blue-accent);
+            padding-left: 16px;
+            padding: 16px 0 16px 16px;
+            margin: 16px 0;
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .quote-attr {
+            font-style: normal;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-top: 8px;
+            font-size: 13px;
+        }
+
+        .timeline {
+            margin: 20px 0;
+        }
+
+        .timeline-item {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .timeline-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .timeline-dot {
+            width: 12px;
+            height: 12px;
+            background: var(--accent-primary);
+            border-radius: 50%;
+            margin-top: 4px;
+            flex-shrink: 0;
+        }
+
+        .timeline-year {
+            font-weight: 700;
+            color: var(--dark);
+            min-width: 60px;
+            flex-shrink: 0;
+        }
+
+        .timeline-text {
+            font-size: 14px;
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+
+        .mode-boxes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin: 16px 0;
+        }
+
+        .mode-box {
+            border-left: 4px solid var(--accent-primary);
+            background: rgba(217, 119, 87, 0.04);
+            padding: 16px;
+            border-radius: 6px;
+        }
+
+        .mode-title {
+            font-weight: 700;
+            color: var(--dark);
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .mode-desc {
+            font-size: 13px;
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+
+        .flex-row {
+            display: flex;
+            gap: 24px;
+            margin: 16px 0;
+        }
+
+        .flex-col {
+            flex: 1;
+        }
+
+        /* ===== SPECIAL CARDS ===== */
+        .insight-card {
+            background: linear-gradient(135deg, rgba(46, 80, 144, 0.03) 0%, rgba(10, 107, 184, 0.03) 100%);
+            border: 2px solid rgba(46, 80, 144, 0.12);
+            border-radius: 12px;
+            padding: 28px;
+            height: 100%;
+            overflow-y: auto;
+            text-align: center;
+        }
+
+        .insight-emoji {
+            font-size: 40px;
+            margin-bottom: 12px;
+        }
+
+        .insight-card h3 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 16px;
+        }
+
+        .insight-highlight {
+            background: rgba(255, 107, 53, 0.1);
+            border-left: 4px solid var(--orange-accent);
+            padding: 12px 14px;
+            margin-top: 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        .news-item {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 16px;
+            border-left: 4px solid var(--accent-primary);
+        }
+
+        .news-date {
+            font-size: 12px;
+            color: var(--text-2);
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .news-title {
+            margin-bottom: 8px;
+        }
+
+        .news-title a {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--dark);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .news-title a:hover {
+            color: var(--accent-primary);
+        }
+
+        .news-desc {
+            font-size: 13px;
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+
+        /* ===== TABLE ===== */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 13px;
+        }
+
+        thead {
+            background: rgba(0, 0, 0, 0.04);
+        }
+
+        th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 700;
+            color: var(--dark);
+            border-bottom: 2px solid var(--border);
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-light);
+        }
+
+        tr:hover {
+            background: rgba(0, 0, 0, 0.02);
+        }
+
+        /* ===== DOTS BAR ===== */
+        .dots-bar {
+            display: flex;
+            gap: 6px;
+            padding: 20px 40px;
+            justify-content: flex-start;
+            flex-shrink: 0;
+            border-top: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: var(--border);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .dot.active {
+            width: 24px;
+            border-radius: 4px;
+            background: var(--accent-primary);
+        }
+
+        .dot:hover {
+            background: var(--accent-primary);
+        }
+
+        /* ===== STORY CARDS ===== */
+        .story-card {
+            background: linear-gradient(135deg, rgba(46, 80, 144, 0.04), rgba(10, 107, 184, 0.04));
+            border-radius: 8px;
+            padding: 18px;
+            margin-bottom: 14px;
+            border-left: 4px solid var(--blue-accent);
+        }
+
+        .story-name {
+            font-weight: 700;
+            color: var(--dark);
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .story-text {
+            font-style: italic;
+            color: var(--text-light);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        /* ===== REFERENCES ===== */
+        .references {
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .references h4 {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 12px;
+        }
+
+        .references ul {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 8px;
+            list-style: none;
+        }
+
+        .references li {
+            font-size: 12px;
+        }
+
+        .references a {
+            color: var(--blue-accent);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .references a:hover {
+            color: var(--accent-primary);
+            text-decoration: underline;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 160px;
+            }
+
+            .main-content {
+                margin-left: 160px;
+                width: calc(100% - 160px);
+            }
+
+            .cover-title {
+                font-size: 36px;
+            }
+
+            .chapter-header {
+                padding: 20px 24px;
+            }
+
+            .card-track {
+                padding: 16px 24px;
+            }
+
+            .slide {
+                min-width: 400px;
+            }
+
+            .cover-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    
+        .nav-dashboard {
+            display: block; width: calc(100% - 8px); margin: 8px 4px 4px;
+            background: rgba(217,119,87,0.15); border: 1px solid rgba(217,119,87,0.3);
+            color: var(--accent, #D97757); padding: 10px 12px; border-radius: 8px;
+            text-align: center; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+            font-weight: 600; letter-spacing: 0.3px;
+        }
+        .nav-dashboard:hover {
+            background: rgba(217,119,87,0.3); color: white;
+        }
+    main { scroll-snap-type: y mandatory; overflow-y: scroll; height: 100vh; }
+.chapter { scroll-snap-align: start; height: 100vh; }
+</style>
+</head>
+<body>
+<div class="container">
+    <!-- SIDEBAR -->
+    <nav class="sidebar">
+        <div class="sidebar-brand">
+            <div class="sidebar-logo">A</div>
+            <div>
+                <div class="sidebar-brand-text">Anchain.AI</div>
+                <div class="sidebar-brand-sub">深度调研报告</div>
+            </div>
+        </div>
+        <div class="nav-items">
+            <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+            <button class="nav-btn" onclick="go(1)">📋 公司概况</button>
+            <button class="nav-btn" onclick="go(2)">💰 融资与财务</button>
+            <button class="nav-btn" onclick="go(3)">🛠️ 产品功能</button>
+            <button class="nav-btn" onclick="go(4)">🤖 AI技术</button>
+            <button class="nav-btn" onclick="go(5)">⭐ 用户反馈</button>
+            <button class="nav-btn" onclick="go(6)">💡 核心启示</button>
+            <button class="nav-btn" onclick="go(7)">📰 近期要闻</button>
+        </div>
+    
+    <a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        <div class="chapters-container" id="chaptersContainer">
+            <!-- CH-0: COVER -->
+            <section class="cover" id="ch-0">
+                <div class="cover-content">
+                    <img class="cover-logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAP1BMVEVHcEwdofIdofIXectW0fUur/MdofJCvPBEuu4vpelW0fUad8sbdctW0fUpastW0fUdofIAiMopass/uvAvpdoaX0p6AAAAD3RSTlMAveLFzGePECFBnZRqeequ/VssAAAF4ElEQVR4nMWZiZKjMAxEyUnITNYc+f9v3XD4VLdMiMm4andqZyPpWd0EsKrqg1WfX3/d7p+k+GjdjRkBjHn8SfmLMRbAmObr5ZuzCQHM+fbV8vVcPgAw5ptWuBsjAb5nhYsxGOA7VmjOhgPsb4U6Ki8B9rbC3ZgcwJ5WuKSlMMBeVmjOshIB2MMKqfg6QHkrCPFzAGWtAMTPA5SzAhR/DUAhKyjlcwBFrFC3w3aAZ1cCoG03AgxdVwiAN0ED6LpyABSBAzy7sgAEgQEs5YsCQCtggKHrdgEATUAAw7PbC0AiAICwfHmAFEEAxOX3AIitkAAMXbr2AAgRYoB0+7sBeB1CAFB+NwCH4AFg+R0BFh0sgBR/f4AJYQEg298b4KXDBMDL7w3QXsdPnJT6+wIclyeu5o8AgmfO3z8AuMYf+/kywMH+78E+dtbYCvsAWPGr63gt2jcQaIVdAKz4l/Ef49eQ/QWwwg4AVvzm2FoA/wYirFAcwIu//GK5EzErFAYIxY8BmBXKAkTipwDYCiUBEvElALJCOQAhPgAAVigFAMSHAMIKhQCQ+AQgsUIRACw+BYisUACAic8BvBVup88B7BLiawDlTyuB+DpA2dNKKH4OoOBpJRY/C1DutPKmEWj160IAqgZfUGBa1IW7erCu5z/TItchLu++kMcMm1keZgx3yfA3kWa++jxnOG8yQ/PKNIX7diIrKOLffYb3r4fbdES8hPuc0gpU/IcJM5jLe/WX+YAL91tIrcDEN2mGd66KhxHhhlmBiQ8yrLVC4xOG4cQKTHyYYc0t6hbOB+JwaAXJ9zA8Q94K8XAoDQdWSDfXGD2DboWHyYRLK8RgYrgGMnArJPA4PLVCtCs5XIMZsBVuYDgEw2MrBERouFbBDMgKcDKIASIrMPEzGVIrpOJnwn0XbzURP5shtAKGV8OT+y2brKoZ3Cb4ZFALD7rIJ6vMA8u6qPA5AGsF2r8VGV6b0MaSuXAzjAAfZXhWXbc9vG1HAGWsmMvwfL27vV4gn9vCx6+hGUB5NNU8MB2xV9NLNENQAIY2BKAISobl/X05SMBdpOHDcivyAEQHmsEesVsAbAUW7m7GAQBGIBn8Cb8HQDrg8KHFAEgHmCGcrwQAAAGFB+UFgERAGeJzvPhccciFR+UBQKqDzJDMVxKABEGEt20OIEFIM4jxjgCIdEjCh7QWBIgQ4gxguCYBQoQoXJZnAIEVogygFgTwOgThqDwHaEEGPFzDABbBh8MqCoBFcBnYbI8BzDrYcLx9HWBGWDLQySoHmBDmcFo+AzBaYc7Ai2gALx3GcKV8FqAdHxhqbbKqA0yPfdoZXQ5gOeTVZqsKwK975NsIcHAPjTeOQAF+wodedk6rARyjx2Y63iUAJ/u4b3+So0IOYN99GstBZqsYwM8HeisEtgIDsCf8L/DebgZbAQGENfv+nzKtIACHcL7S972VE1lBArhPT11/hfcnOq/BADHxmMH1Uc5WUwDXr6XYFO62IKwAAJz4xzDDPzZbTQBEu/tlESsIgKtAtRmIFSIAUMWGEyskAAcglsuArRAAxOKLcGiFGAAyBhmQFRwAcVoYDqwQAqTiowzSChaAXWt9vFKRPIAUH2dIrVAx8XF4agULwCerIkNihYqJz8JjKywA2neVzBBZoWLi8/DQChMAEV/JEFih0uBJeGCFiYOIr2ZwdzsVnoZ7K7hF79gkQx/e75W5HAv3VtD6p2ZwfeTwaniwBfWpTcmw9FEdjCrh/WnNDtQMv/kNZPGr3CbWtFCRMAfvbEQ3QfsXnxazLubhnRHeyiAvI3IZY3g8csCbWNM/xQqr4FUrrOvfvIAVVsLbBawg+6dNjUQXV8O7PmYyKP2bVmqFVeKrm3ijf8sWjiw8B+/WgWXI9m9eFxy+At6u0AorxY/XVYavhLerERlW929azgrviB+va5zhjf7Na7HCBni3Dj7Dm/2b18WGvw1v12SF98SP13UM3wRv18sKW/s3rfqwQfx4XTP9+w8QrCZHHR0JmgAAAABJRU5ErkJggg==" alt="Logo" />
+                    <h1 class="cover-title">Anchain.AI</h1>
+                    <p class="cover-subtitle">Web3金融安全领域的AI先驱，为全球监管和金融机构提供关键的加密合规解决方案</p>
+                    <div class="cover-tags">
+                        <span class="cover-tag">Web3安全</span>
+                        <span class="cover-tag">反洗钱(AML)</span>
+                        <span class="cover-tag">Agentic AI</span>
+                        <span class="cover-tag">监管科技</span>
+                    </div>
+                    <div class="cover-stats">
+                        <div class="stat-box">
+                            <div class="stat-number" data-count="550" data-suffix="万美元">0</div>
+                            <div class="stat-label">2024年营收</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-number" data-count="20" data-suffix="+">0</div>
+                            <div class="stat-label">国家监管合作</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-number" data-count="16" data-suffix="">0</div>
+                            <div class="stat-label">专利ML模型</div>
+                        </div>
+                    </div>
+                    <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+                </div>
+            </section>
+
+            <!-- CH-1: 公司概况 -->
+            <section class="chapter" id="ch-1">
+                <div class="chapter-header">
+                    <h2>公司概况</h2>
+                    <span class="ch-sub">📋 创始与发展</span>
+                    <span class="ch-counter" id="counter-1">1 / 4</span>
+                </div>
+                <div class="card-track" data-ch="1">
+                    <!-- CARD 1: 创始背景 -->
+                    <div class="slide">
+                        <div class="card">
+                            <h3>创始人与愿景</h3>
+                            <div class="card-body">
+                                <p><strong>创始人Victor Fang博士</strong>是一位在AI和网络安全领域拥有深厚积累的连续创业者，曾任职于Mandiant(Google旗下)的AI部门，是Awake Security的创始科学家，拥有20+项专利。</p>
+                                <p>Fang深刻认识到传统金融体系在应对新型数字资产犯罪时的局限性。2022年末印第安纳州一起30万美元加密货币浪漫诈骗案的复杂链上调查，让他看到了AI在金融犯罪打击中的巨大潜力。</p>
+                                <div class="callout">
+                                    <strong>核心使命：</strong> 构建超级智能，以打击全球范围内的黑客攻击、欺诈和金融犯罪，从加密货币领域开始，逐步扩展到更广泛的金融生态系统。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CARD 2: 发展里程碑 -->
+                    <div class="slide">
+                        <div class="card">
+                            <h3>发展历程(2018-2025)</h3>
+                            <div class="card-body">
+                                <div class="timeline">
+                                    <div class="timeline-item">
+                                        <div class="timeline-dot"></div>
+                                        <div class="timeline-year">2018</div>
+                                        <div class="timeline-text">硅谷正式成立，种子轮融资启动</div>
+                                    </div>
+                                    <div class="timeline-item">
+                                        <div class="timeline-dot"></div>
+                                        <div class="timeline-year">2020</div>
+                                        <div class="timeline-text">推出Auto Trace AI，申请3项专利</div>
+                                    </div>
+                                    <div class="timeline-item">
+                                        <div class="timeline-dot"></div>
+                                        <div class="timeline-year">2021</div>
+                                        <div class="timeline-text">获美国政府合同，A轮融资1000万美元</div>
+                                    </div>
+                                    <div class="timeline-item">
+                                        <div class="timeline-dot"></div>
+                                        <div class="timeline-year">2024</div>
+                                        <div class="timeline-text">营收550万美元，SOC 2认证</div>
+                                    </div>
+                                    <div class="timeline-item">
+                                        <div class="timeline-dot"></div>
+                                        <div class="timeline-year">2025</div>
+                                        <div class="timeline-text">入选FinTech创新实验室，战略投资轮</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CARD 3: 市场定位 -->
+                    <div class="slide">
+                        <div class="card">
+                            <h3>市场定位</h3>
+                            <div class="card-body">
+                                <p><strong>定位：</strong> Web3金融安全领域的AI先驱与基础设施建设者</p>
+                                <p><strong>赛道：</strong> 区块链合规与风险管理，细分为智能KYT与反洗钱(AML)自动化</p>
+                                <p><strong>商业模式：</strong> ToB SaaS + API服务 + 专业服务</p>
+                                <p><strong>核心客户：</strong> 监管机构、加密交易所、DeFi项目、四大会计师事务所、金融机构</p>
+                                <div class="callout">
+                                    <strong>独特优势：</strong> 与全球20+国家监管机构的深度合作，构建了难以复制的"监管信任"护城河。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CARD 4: 团队与认可 -->
+                    <div class="slide">
+                        <div class="card">
+                            <h3>团队与行业认可</h3>
+                            <div class="card-body">
+                                <p><strong>创始人背景：</strong> Victor Fang - 数据科学家、连续创业者、加州大学伯克利顾问</p>
+                                <p><strong>核心团队：</strong> 来自Mandiant、Google、Awake Security等顶级安全企业</p>
+                                <p><strong>行业认可：</strong></p>
+                                <div class="mode-boxes">
+                                    <div class="mode-box">
+                                        <div class="mode-title">🏆 CNBC最佳初创奖</div>
+                                        <div class="mode-desc">获得全球知名媒体认可</div>
+                                    </div>
+                                    <div class="mode-box" style="border-left-color:var(--blue-accent);">
+                                        <div class="mode-title">🔐 SOC 2认证</div>
+                                        <div class="mode-desc">政府级安全背书</div>
+                                    </div>
+                                    <div class="mode-box" style="border-left-color:var(--orange-accent);">
+                                        <div class="mode-title">📚 RSA创新沙盒</div>
+                                        <div class="mode-desc">网络安全领域顶赛</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dots-bar" id="dots-1"></div>
+            </section>
+
+            <!-- CH-2: 融资与财务 -->
+            <section class="chapter" id="ch-2">
+                <div class="chapter-header">
+                    <h2>融资与财务</h2>
+                    <span class="ch-sub">💰 资本与收入</span>
+                    <span class="ch-counter" id="counter-2">1 / 4</span>
+                </div>
+                <div class="card-track" data-ch="2">
+                    <!-- CARD 1: 融资轮次 -->
+                    <div class="slide">
+                        <div class="card">
+                            <h3>融资轮次总览</h3>
+                            <div class="card-body">
+                                <p><strong>总融资额：</strong> 3000万美元+</p>
+                                <p><strong>融资轮数：</strong> 5轮</p>
+                                <p><strong>主要投资者：</strong> Amino Capital、Susquehanna International Group(SIG)、Hivemind Capital、XRPL Grants等</p>
+                                <table>
+                                    <thead>
+                                        <tr><th>轮次</th><th>年份</th><th>金额</th><th>领投方</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>种子轮</td><td>2018</td><td>$200万</td><td>Amino Capital</td></tr>
+                                        <tr><td>Pre-A</td><td>2019</td><td>$430万</td><td>-</td></tr>
+                                        <tr><td>Series A</td><td>2021</td><td>$1000万</td><td>SIG Asia</td></tr>
+                                        <tr><td>XRPL Grant</td><td>2021</td><td>$770万</td><td>XRPL</td></tr>
+                                        <tr><td>战略投资</td><td>2025</td><td>待披露</td><td>Amino Capital</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CARD 2: 财务指标 -->
+                    <div class="slide">
+                        <div class="card">
+                            <h3>财务表现</h3>
+                            <div class="card-body">
+                                <p><strong>2024年营收：</strong> 550万美元(首度披露)</p>
+                                <p><strong>营收增长：</strong> 显著增长阶段</p>
+                                <p><strong>盈利状态：</strong> 正向发展中</p>
+                                <p><strong>收入结构：</strong></p>
+                                <div class="mode-boxes">
+                                    <div class="mode-box">
+                                        <div class="mode-title">📊 订阅收入</div>
+                                        <div class="mode-desc">60%+ 来自SaaS平台订阅</div>
+                                    </div>
+                                    <div class="mode-box" style="border-left-color:var(--blue-accent);">
+                                        <div class="mode-title">🔌 服务收入</div>
+                                        <div class="mode-desc">40% 来自专业服务和API</div>
+                                    </div>
+                                </div>
+                                <div class="callout">
+                                    <strong>市场潜力：</strong> Web3金融安全市场预计2030年达100亿美元+，Anchain.AI有机会成为前5名玩家。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CARD 3: 商业模式 -->
+                    <div class="slide">
+                        <div class="card">
+                            <h3>商业模式拆解</h3>
+                            <div class="card-body">
+                                <p><strong>1. SaaS平台订阅(核心收入)</strong></p>
+                                <p style="font-size: 13px; margin-bottom: 12px;">CISO™、SCREEN™等产品按功能和使用量计费，典型价格$1000-50000/月</p>
+
+                                <p><strong>2. 专业服务(高附加值)</strong></p>
+                                <p style="font-size: 13px; margin-bottom: 12px;">区块链取证、智能合约审计、AML咨询等按项目计费</p>
+
+                                <p><strong>3. Data API服务(增长点)</strong></p>
+                                <p style="font-size: 13px; margin-bottom: 12px;">Real Time Data API与MCP按调用量或订阅周期计费</p>
+
+                                <p><strong>4. 教育培训(生态建设)</strong></p>
+                                <p style="font-size: 13px;">Anchain.AI University课程收入，提升行业认知</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CARD 4: 估值与IPO前景 -->
+                    <div class="slide">
+                        <div class="card sparse">
+                            <h3>估值与上市前景</h3>
+                            <div class="card-body">
+                                <p><strong>当前估值：</strong> 未公开披露(C轮及以后)</p>
+                                <p><strong>融资态度：</strong> 2025年完成战略投资轮，显示市场对其前景的信心</p>
+                                <p><strong>IPO可能性：</strong> 管理层在关键融资轮次中对路演机构表示，ARR突破5亿美元后启动IPO程序，预计2026-2027年在伦敦或纽约上市。</p>
+                                <div class="insight-highlight">
+                                    按照目前550万美元(2024)的营收，年增长100%+的速度，2-3年内达到IPO规模(ARR 5亿+)具有可行性。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dots-bar" id="dots-2"></div>
+            </section>
+
+            <!-- CH-3: 产品功能 -->
+            <section class="chapter" id="ch-3">
+                <div class="chapter-header">
+                    <h2>产品功能</h2>
+                    <span class="ch-sub">🛠️ 核心产品</span>
+                    <span class="ch-counter" id="counter-3">1 / 5</span>
+                </div>
+                <div class="card-track" data-ch="3">
+                    <!-- CARD 1: CISO™平台 -->
+                    <div class="slide">
+                        <div class="card">
+                            <h3>CISO™ 平台</h3>
+                            <div class="card-body">
+                                <p><strong>Crypto Investigation & AML Compliance Platform</strong></p>
+                                <p>AI驱动的区块链取证、分析和案件管理平台，将耗时耗力的加密货币调查转化为高效、精准的自动化工作流。</p>
+                                <p><strong>核心功能：</strong></p>
+                                <ul style="margin-left: 16px; margin-top: 8px; font-size: 13px; color: var(--text-light); line-height: 1.8;">
+                                    <li>✓ 1-Click Auto-Trace 一键自动化交易追踪</li>
+                                    <li>✓ 图谱自动追踪AI与可视化</li>
+                                    <li>✓ 地址聚类与实体识别</li>
+                                    <li>✓ 风险评分与可疑实体标记</li>
+                                    <li>✓ 跨链追踪与解混淆</li>
+                                    <li>✓ 符合司法标准的报告生成</li>
+                                </ul>
+                                <div class="callout">
+                                    <strong>实战验证：</strong> 协助警方在3天内侦破30万美元浪漫诈骗案，比传统方式快10倍，准确率98%+。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CARD 2: SCREEN™引擎 -->
+                    <div class="slide">
+                        <div class="card">
+                            <h3>SCREEN™ 智能合约风险评估引擎</h3>
+                            <div class="card-body">
+                                <p>专注于DeFi领域的智能合约安全，提供源代码到字节码的深度风险分析。采用ML驱动的漏洞检测技术和LLM+RAG AI Agent。</p>
+                                <p><strong>核心能力：</strong></p>
+                                <ul style="margin-left: 16px; margin-top: 8px; font-size: 13px; color: var(--text-light); line-height: 1.8;">
+                                    <li>✓ 数百种已知与未知漏洞检测</li>
+                                    <li>✓ 重入攻击、闪电贷识别</li>
+                                    <li>✓ 权限控制与经济风险分析</li>
+                                    <li>✓ 交易模拟与风险评分</li>
+                                    <li>✓ 自动修复建议</li>
+                                </ul>
+                                <p style="margin-top: 12px; font-size: 13px;">应用于KyberSwap等DeFi重大安全事件调查，为项目方、开发者和投资者提供关键保障。</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CARD 3: Agentic AML -->
+                    <div class="slide">
+                        <div class="card">
+                            <h3>Agentic AML 解决方案</h3>
+                            <div class="card-body">
+                                <p>端到端的AI驱动反洗钱解决方案，实现交易监控、风险识别和报告生成的全自动化。</p>
+                                <p><strong>关键特性：</strong></p>
+                                <ul style="margin-left: 16px; margin-top: 8px; font-size: 13px; color: var(--text-light); line-height: 1.8;">
+                                    <li>✓ 自动化交易监控与可疑模式识别</li>
+                                    <li>✓ 制裁名单实时筛选</li>
+                                    <li>✓ 一键合规报告生成</li>
+                                    <li>✓ AML/CFT/KYC/制裁标准符合</li>
+                                    <li>✓ 可审计的合规流程</li>
+                                </ul>
+                                <p style="margin-top: 12px; font-size: 13px;">某OTC交易平台应用：年交易额20亿美元+，0合规事故。</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CARD 4: Data API & MetaMask -->
+                    <div class="slide">
+                        <div class="card">
+                            <h3>Data API 与 MetaMask插件</h3>
+                            <div class="card-body">
+                                <p><strong>Real Time Data API & MCP：</strong> 为机构提供原生加密智能数据接口，实时AML、欺诈检测、制裁筛选和跨链分析。</p>
+                                <p><strong>MetaMask 安全插件：</strong> Real-Time Crypto Payment Pre-Transaction Screening，在交易前进行风险评估，帮助用户避免高风险地址交互。</p>
+                                <div class="metrics-grid">
+                                    <div class="metric-card">
+                                        <div class="metric-value">17000+</div>
+                                        <div class="metric-label">MetaMask安装数</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-value">实时</div>
+                                        <div class="metric-label">风险评估</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CARD 5: 定价与更新 -->
+                    <div class="slide">
+                        <div class="card sparse">
+                            <h3>定价模式与产品迭代</h3>
+                            <div class="card-body">
+                                <p><strong>订阅定价：</strong> $1000-50000/月(按功能和规模)</p>
+                                <p><strong>专业服务：</strong> 按项目或按小时计费</p>
+                                <p><strong>API服务：</strong> 按调用量或订阅周期计费</p>
+                                <p style="margin-top: 16px;"><strong>2024年重要更新：</strong> 推出GPT AI产品，将大语言模型引入加密调查领域，进一步提升分析的智能化水平</p>
+                                <p><strong>2025年升级：</strong> Agentic AML解决方案，实现反洗钱工作流全面自动化</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dots-bar" id="dots-3"></div>
+            </section>
+
+            <!-- CH-4: AI技术 -->
+            <section class="chapter" id="ch-4">
+                <div class="chapter-header">
+                    <h2>AI技术</h2>
+                    <span class="ch-sub">🤖 技术架构与创新</span>
+                    <span class="ch-counter" id="counter-4">1 / 3</span>
+                </div>
+                <div class="card-track" data-ch="4">
+                    <!-- CARD 1: AI架构 -->
+                    <div class="slide">
+                        <div class="card">
+                            <h3>AI核心架构</h3>
+                            <div class="card-body">
+                                <p><strong>架构特点：</strong> Agentic AI + LLM + 专有ML模型集合</p>
+                                <p>Anchain.AI采用多层次的AI架构，结合AI代理的自动化能力、LLM的自然语言理解能力和16种专有ML模型的业务逻辑。这种混合架构既能处理复杂的非结构化数据，也能执行精确的业务决策。</p>
+                                <p><strong>关键成分：</strong></p>
+                                <div class="mode-boxes">
+                                    <div class="mode-box">
+                                        <div class="mode-title">🤖 Agentic AI</div>
+                                        <div class="mode-desc">自主规划、执行和调整任务</div>
+                                    </div>
+                                    <div class="mode-box" style="border-left-color:var(--blue-accent);">
+                                        <div class="mode-title">📚 LLM</div>
+                                        <div class="mode-desc">自然语言理解和生成</div>
+                                    </div>
+                                    <div class="mode-box" style="border-left-color:var(--orange-accent);">
+                                        <div class="mode-title">🧠 ML模型</div>
+                                        <div class="mode-desc">16+专有机器学习模型</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CARD 2: 专有模型 -->
+                    <div class="slide">
+                        <div class="card">
+                            <h3>16项专利ML模型组合</h3>
+                            <div class="card-body">
+                                <p><strong>1. 图谱自动追踪AI (Graph Auto-Trace)</strong></p>
+                                <p style="font-size: 13px; color: var(--text-light); margin-bottom: 10px;">从海量区块链数据中自动构建和分析交易图谱，快速识别资金流向。</p>
+
+                                <p><strong>2. 地址聚类算法 (Address Clustering)</strong></p>
+                                <p style="font-size: 13px; color: var(--text-light); margin-bottom: 10px;">将属于同一实体的多个地址聚类，提高实体识别准确度。</p>
+
+                                <p><strong>3. 智能合约交互图算法</strong></p>
+                                <p style="font-size: 13px; color: var(--text-light); margin-bottom: 10px;">分析合约间交互关系，识别风险路径。</p>
+
+                                <p><strong>4. 漏洞检测ML模型</strong></p>
+                                <p style="font-size: 13px; color: var(--text-light); margin-bottom: 10px;">识别数百种已知和未知的智能合约漏洞。</p>
+
+                                <p><strong>5-16. 其他12项模型</strong></p>
+                                <p style="font-size: 13px; color: var(--text-light);">异常检测、风险评分、交易模拟等</p>
+
+                                <div class="callout">
+                                    <strong>技术护城河：</strong> 20+项专利技术，与伯克利、MIT、斯坦福等顶级大学合作发表研究。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CARD 3: AI进化路线 -->
+                    <div class="slide">
+                        <div class="card sparse">
+                            <h3>AI技术创新路线</h3>
+                            <div class="card-body">
+                                <p><strong>2020：</strong> 初期AI模型探索，推出Auto Trace AI，申请3项专利</p>
+                                <p><strong>2023：</strong> RSA创新沙盒决赛入选，技术创新得到业界认可</p>
+                                <p><strong>2024：</strong> 推出LLM+RAG驱动的GPT AI产品，引入大语言模型技术</p>
+                                <p><strong>2025：</strong> 全面推进Agentic AI架构，实现端到端工作流自动化</p>
+                                <div class="insight-highlight">
+                                    从单点工具→AI驱动平台→Agentic AI系统，Anchain.AI展现了清晰的技术演进路径，持续强化AI技术壁垒。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dots-bar" id="dots-4"></div>
+            </section>
+
+            <!-- CH-5: 用户反馈 -->
+            <section class="chapter" id="ch-5">
+                <div class="chapter-header">
+                    <h2>用户反馈</h2>
+                    <span class="ch-sub">⭐ 实战案例与认可</span>
+                    <span class="ch-counter" id="counter-5">1 / 3</span>
+                </div>
+                <div class="card-track" data-ch="5">
+                    <!-- CARD 1: 警方破案案例 -->
+                    <div class="slide">
+                        <div class="card">
+                            <h3>案例1：警方破获浪漫诈骗案</h3>
+                            <div class="card-body">
+                                <p><strong>时间：</strong> 2024年7月</p>
+                                <p><strong>客户：</strong> 印第安纳州惠特斯敦警方</p>
+                                <p><strong>案件：</strong> 30万美元加密货币浪漫诈骗(杀猪盘)</p>
+                                <p><strong>挑战：</strong> 资金通过复杂链上操作转移，传统调查需3-4周</p>
+                                <p><strong>解决方案：</strong> CISO™平台 + 1-Click Auto-Trace</p>
+                                <p><strong>成果：</strong></p>
+                                <ul style="margin-left: 16px; margin-top: 8px; font-size: 13px; color: var(--text-light); line-height: 1.8;">
+                                    <li>✓ 3天内侦破案件(比传统快10倍)</li>
+                                    <li>✓ 追踪准确率98%+</li>
+                                    <li>✓ 重建完整交易图谱</li>
+                                    <li>✓ 识别币安热钱包集群</li>
+                                </ul>
+                                <div class="quote-block">
+                                    "AnChain.AI的平台让我们在几小时内完成了原本需要数周的调查工作。"
+                                    <div class="quote-attr">— 执法机构代表</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CARD 2: 四大会计师事务所合作 -->
+                    <div class="slide">
+                        <div class="card">
+                            <h3>案例2：四大会计师事务所合作</h3>
+                            <div class="card-body">
+                                <p><strong>时间：</strong> 2025年9月</p>
+                                <p><strong>客户：</strong> 全球四大会计师事务所(PwC、Deloitte、EY、KPMG)</p>
+                                <p><strong>需求：</strong> 快速、精准的加密资产溯源与合规评估</p>
+                                <p><strong>解决方案：</strong> Anchain.AI追踪和合规工具集</p>
+                                <p><strong>成果：</strong></p>
+                                <ul style="margin-left: 16px; margin-top: 8px; font-size: 13px; color: var(--text-light); line-height: 1.8;">
+                                    <li>✓ 合规效率显著提升</li>
+                                    <li>✓ 获顶级专业服务机构认可</li>
+                                    <li>✓ 有效应对企业级合规需求</li>
+                                    <li>✓ 推动行业合规标准化</li>
+                                </ul>
+                                <div class="quote-block">
+                                    "AnChain.AI的解决方案使我们能为客户提供更快、更精准的加密货币溯源服务。"
+                                    <div class="quote-attr">— 会计师事务所代表</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CARD 3: OTC交易平台应用 -->
+                    <div class="slide">
+                        <div class="card">
+                            <h3>案例3：OTC交易平台年交易20亿美元+</h3>
+                            <div class="card-body">
+                                <p><strong>时间：</strong> 2026年2月</p>
+                                <p><strong>客户：</strong> 某加密货币OTC交易平台</p>
+                                <p><strong>规模：</strong> 年交易额超20亿美元</p>
+                                <p><strong>挑战：</strong> 处理海量交易，满足严格的AML合规</p>
+                                <p><strong>解决方案：</strong> 实时AML筛选 + 16种ML模型</p>
+                                <p><strong>成果：</strong></p>
+                                <ul style="margin-left: 16px; margin-top: 8px; font-size: 13px; color: var(--text-light); line-height: 1.8;">
+                                    <li>✓ 年交易额20亿美元+安全处理</li>
+                                    <li>✓ 0合规事故</li>
+                                    <li>✓ 显著降低运营成本</li>
+                                    <li>✓ 实时风险评估能力验证</li>
+                                </ul>
+                                <div class="quote-block">
+                                    "AnChain.AI的自动化合规系统让我们既确保了交易安全，也大幅降低了成本。"
+                                    <div class="quote-attr">— OTC交易平台代表</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dots-bar" id="dots-5"></div>
+            </section>
+
+            <!-- CH-6: 核心启示 -->
+            <section class="chapter" id="ch-6">
+                <div class="chapter-header">
+                    <h2>核心启示</h2>
+                    <span class="ch-sub">💡 战略洞察</span>
+                    <span class="ch-counter" id="counter-6">1 / 5</span>
+                </div>
+                <div class="card-track" data-ch="6">
+                    <!-- INSIGHT 1 -->
+                    <div class="slide">
+                        <div class="insight-card">
+                            <div class="insight-emoji">🤖</div>
+                            <h3>Agentic AI是金融安全的未来</h3>
+                            <div class="card-body">
+                                <p>Anchain.AI的Agentic AI工作流不仅大幅降低了人工操作的复杂性，更重要的是让非专家也能进行复杂的金融犯罪调查。</p>
+                                <p>这标志着从"工具赋能人类"向"AI代理自主执行"的范式转变。在监管科技领域，这可能引发整个行业的重组。</p>
+                                <div class="insight-highlight">
+                                    3天侦破复杂欺诈案、98%+追踪准确率、自动化AML工作流 = Agentic AI的实战验证
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- INSIGHT 2 -->
+                    <div class="slide">
+                        <div class="insight-card">
+                            <div class="insight-emoji">🛡️</div>
+                            <h3>监管合作构建护城河</h3>
+                            <div class="card-body">
+                                <p>Anchain.AI与全球20+国家监管机构的深度合作，不仅为产品设计提供了真实反馈，更重要的是建立了难以复制的"监管信任护城河"。</p>
+                                <p>竞争对手可以模仿技术，但难以复制这种政府级的认可和合作关系。这对金融科技企业的长期发展至关重要。</p>
+                                <div class="insight-highlight">
+                                    美国IRS-CI、FinCEN合作 + SOC 2认证 + 国务院应用 = 无可取代的信任资产
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- INSIGHT 3 -->
+                    <div class="slide">
+                        <div class="insight-card">
+                            <div class="insight-emoji">🏦</div>
+                            <h3>DeFi安全是千亿市场</h3>
+                            <div class="card-body">
+                                <p>SCREEN™引擎的成功应用表明，智能合约安全即将从"可选项"变为"必选项"。</p>
+                                <p>随着DeFi规模的扩大和监管的强化，对智能合约安全的需求只会越来越迫切。Anchain.AI在这一领域的先发优势可能打开全新的千亿美元级别市场。</p>
+                                <div class="insight-highlight">
+                                    DeFi协议数千亿美元规模 + KyberSwap等事件造成数亿损失 + SCREEN™被顶级项目采用 = 大市场机会
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- INSIGHT 4 -->
+                    <div class="slide">
+                        <div class="insight-card">
+                            <div class="insight-emoji">🌉</div>
+                            <h3>Web3与传统金融深度融合</h3>
+                            <div class="card-body">
+                                <p>Anchain.AI与四大会计师事务所的合作，以及在OTC交易平台的成功应用，说明了一个趋势：Web3不再是"另一个世界"，而是正在与传统金融深度融合。</p>
+                                <p>那些能提供"双重合规"(既满足链上自动化需求，也满足传统金融严格要求)的解决方案，将成为这一融合过程的关键基础设施。</p>
+                                <div class="insight-highlight">
+                                    四大会计师事务所采用 + OTC交易平台应用 + 银行与交易所集成 = 融合主流化
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- INSIGHT 5 -->
+                    <div class="slide">
+                        <div class="insight-card">
+                            <div class="insight-emoji">🔌</div>
+                            <h3>数据API是B端SaaS新方向</h3>
+                            <div class="card-body">
+                                <p>Anchain.AI的Real Time Data API与MetaMask插件的集成策略，展现了一个清晰的市场趋势：纯粹的"单点工具"已不足以满足需求，企业更倾向于集成到已有生态中。</p>
+                                <p>这对金融科技初创企业的产品策略有深刻启示——不再是"替代"，而是"赋能"和"集成"。</p>
+                                <div class="insight-highlight">
+                                    MetaMask 17000+安装 + OTC平台无缝集成 + 多家机构API采用 = 生态模式成功
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dots-bar" id="dots-6"></div>
+            </section>
+
+            <!-- CH-7: 近期要闻 -->
+            <section class="chapter" id="ch-7">
+                <div class="chapter-header">
+                    <h2>近期要闻</h2>
+                    <span class="ch-sub">📰 最新进展</span>
+                    <span class="ch-counter" id="counter-7">1 / 2</span>
+                </div>
+                <div class="card-track" data-ch="7">
+                    <!-- NEWS CARD 1 -->
+                    <div class="slide">
+                        <div class="card">
+                            <h3>2025年重大进展</h3>
+                            <div class="card-body">
+                                <div class="news-item">
+                                    <div class="news-date">2025年12月</div>
+                                    <div class="news-title">
+                                        <a href="https://www.anchain.ai/news" target="_blank">完成战略投资轮融资</a>
+                                    </div>
+                                    <div class="news-desc">Amino Capital、Hivemind Capital、Cris Conde等参与新一轮融资，用于产品创新、国际扩展和团队建设。</div>
+                                </div>
+
+                                <div class="news-item">
+                                    <div class="news-date">2025年09月</div>
+                                    <div class="news-title">
+                                        <a href="https://www.fintechweekly.com" target="_blank">入选FinTech创新实验室2025届</a>
+                                    </div>
+                                    <div class="news-desc">因在反欺诈和金融合规领域的创新能力获选，标志着传统金融行业的广泛关注。</div>
+                                </div>
+
+                                <div class="news-item">
+                                    <div class="news-date">2025年08月</div>
+                                    <div class="news-title">
+                                        <a href="https://www.anchain.ai" target="_blank">推出Agentic AML解决方案</a>
+                                    </div>
+                                    <div class="news-desc">实现反洗钱工作流全面自动化，帮助金融机构显著降低合规成本和人工操作复杂性。</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- NEWS CARD 2 -->
+                    <div class="slide">
+                        <div class="card">
+                            <h3>2024-2025年关键成就</h3>
+                            <div class="card-body">
+                                <div class="news-item">
+                                    <div class="news-date">2025年07月</div>
+                                    <div class="news-title">
+                                        <a href="https://www.anchain.ai" target="_blank">四大会计师事务所深度合作</a>
+                                    </div>
+                                    <div class="news-desc">与PwC、Deloitte、EY、KPMG合作，提供端到端数字资产合规溯源服务，推动行业标准化。</div>
+                                </div>
+
+                                <div class="news-item">
+                                    <div class="news-date">2024年10月</div>
+                                    <div class="news-title">
+                                        <a href="https://www.anchain.ai" target="_blank">通过SOC 2 Type II认证</a>
+                                    </div>
+                                    <div class="news-desc">成为少数拥有此认证的区块链安全公司，进一步强化政府和企业客户的信任度。</div>
+                                </div>
+
+                                <div class="news-item">
+                                    <div class="news-date">2024年07月</div>
+                                    <div class="news-title">
+                                        <a href="https://www.anchain.ai" target="_blank">协助警方侦破浪漫诈骗案</a>
+                                    </div>
+                                    <div class="news-desc">在3天内侦破30万美元案件，展示了Agentic AI在实战中的强大能力，准确率98%+。</div>
+                                </div>
+
+                                <div class="news-item">
+                                    <div class="news-date">2024年上半年</div>
+                                    <div class="news-title">
+                                        <a href="https://www.anchain.ai" target="_blank">推出GPT AI产品</a>
+                                    </div>
+                                    <div class="news-desc">将大语言模型技术引入加密犯罪调查领域，进一步提升分析的智能化和易用性水平。</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dots-bar" id="dots-7"></div>
+            </section>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initialize chapters and navigation
+    let currentChapter = 0;
+    const container = document.getElementById('chaptersContainer');
+    const navBtns = document.querySelectorAll('.nav-btn');
+    const chapterCount = document.querySelectorAll('.chapter').length + 1; // +1 for cover
+
+    // Navigation function
+    function go(chapterIndex) {
+        currentChapter = chapterIndex;
+        container.scrollLeft = window.innerWidth * chapterIndex - 220;
+        updateNav();
+        initDotsAndCounter();
+    }
+
+    // Update navigation buttons
+    function updateNav() {
+        navBtns.forEach((btn, idx) => {
+            if (idx === currentChapter) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
+
+    // Initialize dots and counter for each chapter
+    function initDotsAndCounter() {
+        for (let chIdx = 0; chIdx < chapterCount - 1; chIdx++) {
+            const dotsContainer = document.getElementById(`dots-${chIdx}`);
+            const cardTrack = document.querySelector(`[data-ch="${chIdx}"]`);
+
+            if (dotsContainer && cardTrack) {
+                const slides = cardTrack.querySelectorAll('.slide');
+                dotsContainer.innerHTML = '';
+
+                slides.forEach((_, slideIdx) => {
+                    const dot = document.createElement('div');
+                    dot.className = 'dot' + (slideIdx === 0 ? ' active' : '');
+                    dot.onclick = () => {
+                        cardTrack.scrollLeft = slideIdx * 520;
+                        updateDotsAndCounter(chIdx);
+                    };
+                    dotsContainer.appendChild(dot);
+                });
+
+                // Listen to card track scroll
+                cardTrack.addEventListener('scroll', () => updateDotsAndCounter(chIdx));
+            }
+        }
+    }
+
+    function updateDotsAndCounter(chIdx) {
+        const cardTrack = document.querySelector(`[data-ch="${chIdx}"]`);
+        const dotsContainer = document.getElementById(`dots-${chIdx}`);
+        const counter = document.getElementById(`counter-${chIdx}`);
+
+        if (cardTrack && dotsContainer) {
+            const slideWidth = 520;
+            const scrollLeft = cardTrack.scrollLeft;
+            const currentSlide = Math.round(scrollLeft / slideWidth) + 1;
+            const totalSlides = cardTrack.querySelectorAll('.slide').length;
+
+            const dots = dotsContainer.querySelectorAll('.dot');
+            dots.forEach((dot, idx) => {
+                dot.classList.toggle('active', idx === Math.round(scrollLeft / slideWidth));
+            });
+
+            if (counter) {
+                counter.textContent = `${currentSlide} / ${totalSlides}`;
+            }
+        }
+    }
+
+    // Animate counter numbers
+    function animateCounters() {
+        const countElements = document.querySelectorAll('[data-count]');
+        countElements.forEach(el => {
+            const target = parseInt(el.getAttribute('data-count'));
+            const suffix = el.getAttribute('data-suffix') || '';
+            const prefix = el.getAttribute('data-prefix') || '';
+            let current = 0;
+            const increment = Math.ceil(target / 30);
+
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    current = target;
+                    clearInterval(timer);
+                }
+                el.textContent = prefix + current.toLocaleString() + suffix;
+            }, 30);
+        });
+    }
+
+    // Initialize on load
+    window.addEventListener('load', () => {
+        initDotsAndCounter();
+        animateCounters();
+    });
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft' && currentChapter > 0) {
+            go(currentChapter - 1);
+        } else if (e.key === 'ArrowRight' && currentChapter < chapterCount - 1) {
+            go(currentChapter + 1);
+        }
+    });
+
+    // Track chapter change on horizontal scroll
+    container.addEventListener('scroll', () => {
+        const scrollLeft = container.scrollLeft;
+        const chapWidth = window.innerWidth;
+        const newChapter = Math.round((scrollLeft + 220 / 2) / chapWidth);
+        if (newChapter !== currentChapter && newChapter < chapterCount) {
+            currentChapter = newChapter;
+            updateNav();
+            initDotsAndCounter();
+        }
+    });
+
+    updateNav();
+</script>
+</body>
+</html>

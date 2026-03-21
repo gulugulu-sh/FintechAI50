@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>蚂蚁财富蚂小财 深度调研报告</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #1A1514;
+            --cover-bg: #1E50A2;
+            --cover-accent: #2E69D4;
+            --cover-highlight: #FFD700;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(30,80,162,0.3); color: #2E69D4; font-weight: 600; }
+
+        /* ===== MAIN ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, var(--cover-bg) 0%, #154D9A 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(46,105,212,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 20px; background: rgba(255,255,255,0.15); object-fit: contain; }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(255,255,255,0.12); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        /* Fixed chapter header */
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        /* Horizontal card scroller */
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+
+        /* Each slide fills available height */
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Card inside slide — fills slide */
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        /* Dots bar at bottom */
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); cursor: pointer; transition: all 0.3s;
+            border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+        /* ===== CONTENT-SPARSE: bigger text for cards with less content ===== */
+        .card.sparse p { font-size: 16px; line-height: 2; }
+        .card.sparse h3 { font-size: 22px; margin-bottom: 20px; }
+        .card.sparse .callout { font-size: 15px; padding: 18px 22px; }
+        .card.sparse .quote-block { font-size: 16px; padding: 20px 24px; }
+
+        /* ===== REUSABLE COMPONENTS ===== */
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px; border-radius: 6px;
+            font-size: 13px; line-height: 1.7; color: var(--text-2);
+            margin: 14px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+
+        .quote-block {
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px; margin: 14px 0;
+            font-style: italic; font-size: 14px;
+            color: var(--text-2); line-height: 1.8;
+            background: var(--bg-muted); border-radius: 0 8px 8px 0;
+        }
+        .quote-attr { font-style: normal; font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 16px; border-radius: 10px; text-align: center;
+        }
+        .metric-value { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+        .flex-row { display: flex; gap: 24px; margin: 14px 0; }
+        .flex-col { flex: 1; min-width: 0; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th { background: var(--bg-muted); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+
+        .mode-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 14px 0; }
+        .mode-box { background: var(--bg-muted); padding: 14px; border-radius: 10px; border-left: 4px solid var(--accent); }
+        .mode-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+        .mode-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .insight-card {
+            flex: 1; display: flex; flex-direction: column;
+            background: var(--bg-card); border-radius: 14px; padding: 28px 32px;
+            border: 1px solid var(--border);
+        }
+        .insight-emoji { font-size: 28px; margin-bottom: 10px; }
+        .insight-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+        .insight-card p { font-size: 15px; line-height: 1.9; color: var(--text-2); margin-bottom: 14px; }
+        .insight-highlight {
+            margin-top: auto;
+            background: var(--accent-light); border-left: 4px solid var(--accent);
+            padding: 12px 16px; border-radius: 6px;
+            font-size: 14px; font-weight: 600; color: var(--accent-2);
+        }
+
+        .news-item {
+            padding: 14px; background: var(--bg-card);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px; border: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+        .news-date { font-size: 11px; color: var(--text-3); font-weight: 600; margin-bottom: 4px; }
+        .news-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .news-title a { color: var(--accent-blue); text-decoration: none; }
+        .news-title a:hover { color: var(--accent); text-decoration: underline; }
+        .news-desc { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+
+        .position-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px; margin: 14px 0;
+        }
+        .position-card {
+            background: #FFE6E6;
+            padding: 16px; border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+        .position-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+        .position-desc { font-size: 12px; color: var(--text-2); }
+
+        .references {
+            margin-top: 16px; padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+        .references h4 { font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+        .references ul {
+            list-style: none;
+            columns: 2;
+            column-gap: 16px;
+        }
+        .references li { font-size: 11px; margin-bottom: 6px; }
+        .references a { color: var(--accent-blue); text-decoration: none; }
+        .references a:hover { text-decoration: underline; }
+
+        .timeline {
+            margin: 14px 0;
+        }
+        .timeline-item {
+            display: flex; gap: 16px; margin-bottom: 20px;
+        }
+        .timeline-dot {
+            width: 12px; height: 12px; border-radius: 50%;
+            background: var(--accent); flex-shrink: 0; margin-top: 4px;
+        }
+        .timeline-year { font-weight: 700; color: var(--accent); font-size: 13px; min-width: 60px; }
+        .timeline-text { font-size: 13px; color: var(--text-2); line-height: 1.7; }
+    
+        .nav-dashboard {
+            display: block; width: calc(100% - 8px); margin: 8px 4px 4px;
+            background: rgba(217,119,87,0.15); border: 1px solid rgba(217,119,87,0.3);
+            color: var(--accent, #D97757); padding: 10px 12px; border-radius: 8px;
+            text-align: center; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+            font-weight: 600; letter-spacing: 0.3px;
+        }
+        .nav-dashboard:hover {
+            background: rgba(217,119,87,0.3); color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- SIDEBAR -->
+    <nav class="sidebar">
+        <div class="sidebar-brand">
+            <img class="sidebar-logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAEe0lEQVRYhaWXXWhcRRTHf2fuoqbU2Fg1ye6aJqFCJIq2IgUFQUVEET8fCloRBCHxSShSEHwTtC+++SCxBsUXEemDiMUP9MUo1I8+FAw1bUWThY2NX7Vos7tzfJiZvXPv3r1JcOAud++cOf///OfMnDNCQVMQQARs+m1sEtrTwBSYXWB3gCSg58GcAU5A6zuhuep9GAGrkEB1CFoVEM1jSQG4CcDK2BB0HgB5FHQvUHOghbRboKeAD8HMCctLzsfIOCTzbqyuO/d9CGTB64+BPg/sS800/ORnIu4JdvYs8JLQeFO59gawX4FsL6JdyYMrVw7CwMugs24VFNBOCtJ9CsRT6/rMBOgRpboNOgsgLc+5nR+bZMHHhiB5A+QpbxiATQ44qGAjNWK7DogBbgcGQKaByyKb7iPqp6lQgdo8yAE/E7xR3KLveRE01496wECyMHYq6Wt9FjjguPTI7GcsnpCug10B+d1Ftg7iAnSb7/dLgRZMItPEea9OgXwCUveD40FeYhHQn0HeBf0I7Bm49E/X19oOugvkXuAJkEk/kS7GRgReAXOoD7iPbnsUeEFoLJY5VOq7QQ/7rRv5KG5GGR8Beaico52D0f1CY1Gd5omC8e/i3xMXzMtLMPA46Nvd+ZUpoNQfAX0PFyQxW+vWXBdg4D5h6S+FiritVKKAs1GGr4HKxyA3FSibKgD2Tn+6hcAJrI0/3Q5vFtzr1Xa2zVXgVS9A2BVFBGRvOjaeiAAch/XP/bfORuBR87btY8DJsqUwwGRBX4j8BeHc+XBWbIGAG01zFfTrrM9eAju69vFYN+Z0Qd8mgFFNx5wq82FwR2TcfCAqoH9sBbiXBwC/Rf97VOgbHL679BTbJI9w2vZdgn/yI+gGoQ7/D+QQR9Xof88yGOBcAcMweNozsrqFOIgSnAF7Y5mtAZYKfIcgvEOp1bPfNtW87dj1ILf5+fQLQj2eEo8dKCDXAfu3QiCrVPtJkGFK8oGB5AuXXjMBGfI4wEFl9BaBTjjvS8BdkQFWqd0FMrNRQjJgvwF+8P0226cWZBTMnFK7WaAT4iFKQN3EJGAd0fo+4DWQK7zPvqSNsLIGvB/NPF6KQGIP8IFSm1VqOwU0gAVSLuhqO5Xqs6BHQabKklBo/pAenvCZa7cvQPPlU8iMACdAPgU9CfKrF/8qt2P0HmCPn0cAL60HJC1Iq0+DHEkBC+vBXC0YakeJbDWyLQeHTOA15oHXvX0chDlbtU4lDfWece/a8YSULPhp4ELMLuM0HBhu37UPgr7l4gmDS6u57YkhXaL4kpKQqtZ2LuVb0BeBv/ul5Ir3ah2J5gVlfAbaTeA5kEsiSfMVbua6RKb8loorWvUZYM0RypTtGVmDN0/ip3+F5UNgHwT9DGi5NZaEbLluI4cS2ayDvgN6v9D4HkzH+TA4YmLip+hy2i0+3NWKu8E8DHqrL70HCy4lF4FfgC9d2b58LOtDZkDHwVx0O7hXxh4SkL+ej1wNlQmwE+5w4nIv+RrojyCLwspy5MNIgeT59h99SbrWF/4zLQAAAABJRU5ErkJggg==" alt="蚂蚁财富 Logo">
+            <div>
+                <div class="sidebar-brand-text">蚂蚁财富蚂小财</div>
+                <div class="sidebar-brand-sub">深度调研报告</div>
+            </div>
+        </div>
+        <div class="nav-items">
+            <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+            <button class="nav-btn" onclick="go(1)">📋 公司概况</button>
+            <button class="nav-btn" onclick="go(2)">💰 融资与财务</button>
+            <button class="nav-btn" onclick="go(3)">🎯 产品功能</button>
+            <button class="nav-btn" onclick="go(4)">🤖 AI技术</button>
+            <button class="nav-btn" onclick="go(5)">⭐ 用户反馈</button>
+            <button class="nav-btn" onclick="go(6)">💡 核心启示</button>
+            <button class="nav-btn" onclick="go(7)">📰 近期要闻</button>
+        </div>
+    
+    <a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+    <!-- MAIN CONTENT -->
+    <main>
+        <!-- CHAPTER 0: COVER -->
+        <section class="cover" id="ch-0">
+            <div class="cover-content">
+                <img class="cover-logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAEe0lEQVRYhaWXXWhcRRTHf2fuoqbU2Fg1ye6aJqFCJIq2IgUFQUVEET8fCloRBCHxSShSEHwTtC+++SCxBsUXEemDiMUP9MUo1I8+FAw1bUWThY2NX7Vos7tzfJiZvXPv3r1JcOAud++cOf///OfMnDNCQVMQQARs+m1sEtrTwBSYXWB3gCSg58GcAU5A6zuhuep9GAGrkEB1CFoVEM1jSQG4CcDK2BB0HgB5FHQvUHOghbRboKeAD8HMCctLzsfIOCTzbqyuO/d9CGTB64+BPg/sS800/ORnIu4JdvYs8JLQeFO59gawX4FsL6JdyYMrVw7CwMugs24VFNBOCtJ9CsRT6/rMBOgRpboNOgsgLc+5nR+bZMHHhiB5A+QpbxiATQ44qGAjNWK7DogBbgcGQKaByyKb7iPqp6lQgdo8yAE/E7xR3KLveRE01496wECyMHYq6Wt9FjjguPTI7GcsnpCug10B+d1Ftg7iAnSb7/dLgRZMItPEea9OgXwCUveD40FeYhHQn0HeBf0I7Bm49E/X19oOugvkXuAJkEk/kS7GRgReAXOoD7iPbnsUeEFoLJY5VOq7QQ/7rRv5KG5GGR8Beaico52D0f1CY1Gd5omC8e/i3xMXzMtLMPA46Nvd+ZUpoNQfAX0PFyQxW+vWXBdg4D5h6S+FiritVKKAs1GGr4HKxyA3FSibKgD2Tn+6hcAJrI0/3Q5vFtzr1Xa2zVXgVS9A2BVFBGRvOjaeiAAch/XP/bfORuBR87btY8DJsqUwwGRBX4j8BeHc+XBWbIGAG01zFfTrrM9eAju69vFYN+Z0Qd8mgFFNx5wq82FwR2TcfCAqoH9sBbiXBwC/Rf97VOgbHL679BTbJI9w2vZdgn/yI+gGoQ7/D+QQR9Xof88yGOBcAcMweNozsrqFOIgSnAF7Y5mtAZYKfIcgvEOp1bPfNtW87dj1ILf5+fQLQj2eEo8dKCDXAfu3QiCrVPtJkGFK8oGB5AuXXjMBGfI4wEFl9BaBTjjvS8BdkQFWqd0FMrNRQjJgvwF+8P0226cWZBTMnFK7WaAT4iFKQN3EJGAd0fo+4DWQK7zPvqSNsLIGvB/NPF6KQGIP8IFSm1VqOwU0gAVSLuhqO5Xqs6BHQabKklBo/pAenvCZa7cvQPPlU8iMACdAPgU9CfKrF/8qt2P0HmCPn0cAL60HJC1Iq0+DHEkBC+vBXC0YakeJbDWyLQeHTOA15oHXvX0chDlbtU4lDfWece/a8YSULPhp4ELMLuM0HBhu37UPgr7l4gmDS6u57YkhXaL4kpKQqtZ2LuVb0BeBv/ul5Ir3ah2J5gVlfAbaTeA5kEsiSfMVbua6RKb8loorWvUZYM0RypTtGVmDN0/ip3+F5UNgHwT9DGi5NZaEbLluI4cS2ayDvgN6v9D4HkzH+TA4YmLip+hy2i0+3NWKu8E8DHqrL70HCy4lF4FfgC9d2b58LOtDZkDHwVx0O7hXxh4SkL+ej1wNlQmwE+5w4nIv+RrojyCLwspy5MNIgeT59h99SbrWF/4zLQAAAABJRU5ErkJggg==" alt="蚂蚁财富">
+                <h1 class="cover-title">蚂蚁财富蚂小财</h1>
+                <p class="cover-subtitle">依托蚂蚁集团生态，AI理财管家服务超7000万用户</p>
+                <div class="cover-tags">
+                    <span class="cover-tag">AI理财</span>
+                    <span class="cover-tag">普惠金融</span>
+                    <span class="cover-tag">财富管理</span>
+                    <span class="cover-tag">语音交互</span>
+                </div>
+                <div class="cover-stats">
+                    <div class="stat-box">
+                        <div class="stat-number" data-count="7000" data-suffix="万+">0</div>
+                        <div class="stat-label">月活用户</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number" data-count="200" data-suffix="+">0</div>
+                        <div class="stat-label">合作机构</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number" data-count="15000" data-suffix="+">0</div>
+                        <div class="stat-label">创作者网络</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number" data-count="4.43">0</div>
+                        <div class="stat-label">综合评分</div>
+                    </div>
+                </div>
+                <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+            </div>
+        </section>
+
+        <!-- CHAPTER 1: 公司概况 -->
+        <section class="chapter" id="ch-1">
+            <div class="chapter-header">
+                <h2>公司概况</h2>
+                <span class="ch-sub">📋 企业发展背景</span>
+                <span class="ch-counter" id="counter-1">1 / 3</span>
+            </div>
+            <div class="card-track" data-ch="1">
+                <!-- Slide 1 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>企业背景与定位</h3>
+                        <div class="card-body">
+                            <p>蚂蚁财富蚂小财是蚂蚁集团旗下的AI理财管家产品，于2019年6月正式推出。作为蚂蚁财富生态中的核心智能服务，蚂小财致力于通过先进的AI技术，将复杂的金融分析普惠化，让普通大众也能轻松获取专业的市场解读和投资建议。</p>
+                            <p>蚂蚁集团本身成立于2014年，是全球领先的金融科技平台，旗下拥有支付宝、花呗、借呗等知名产品。蚂蚁财富是其在财富管理领域的战略布局，整合了基金、定期等多种理财产品。蚂小财作为蚂蚁财富的"大脑"，利用自研的AI大模型为用户赋能。</p>
+                            <p>截至2024年9月，蚂小财的月活用户数已达7000万，其中45%来自三线及以下城市，充分体现了其"普惠"的理念。这个数字不仅反映了产品的市场接受度，更彰显了AI理财在大众金融服务中的巨大潜力。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>发展历程与融资背景</h3>
+                        <div class="card-body">
+                            <p>蚂蚁财富蚂小财的发展历程，是蚂蚁集团在财富管理领域深耕的一个缩影。2013年，蚂蚁与天弘基金合作推出余额宝，开创了大众理财的新时代。2015年，蚂蚁聚宝平台上线，进一步整合理财产品。2017年升级为蚂蚁财富，成为一站式理财服务平台。</p>
+                            <p>蚂小财于2019年推出后，在2023年进行了重大升级，基于蚂蚁自研的百灵大模型和Finix金融大模型，开始提供更智能、更专业的服务。2024年9月，新版蚂小财Pro在支付宝App和蚂蚁财富App全面对外，标志着其成熟期的到来。</p>
+                            <p>蚂蚁集团本身融资实力雄厚，曾获得2015年Pre-A轮4.5亿美元、2016年B轮45亿美元、2018年C轮140亿美元等多轮融资，投资方包括新加坡政府投资公司、华平投资等全球顶尖机构。这些资金为蚂小财的技术研发奠定了坚实基础。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>战略地位与市场定位</h3>
+                        <div class="card-body">
+                            <p>在蚂蚁集团的战略版图中，蚂小财占据着独特地位。它既是蚂蚁财富平台的核心驱动力，也是蚂蚁集团布局AI金融的重要体现。蚂小财面向的是那些缺乏金融专业知识、希望轻松理财的大众用户，特别是关注二三线城市及以下市场。</p>
+                            <p>作为"AI驱动的普惠财富管理开放平台"，蚂小财的核心价值主张是降低金融服务门槛，让普通人也能享受到原本只有专业人士才能获得的金融分析和建议。其商业模式包括平台服务费、交易分成、技术赋能服务等，形成多元化的收入来源。</p>
+                            <p>蚂小财通过连接200多家金融机构和1.5万多位财经创作者，构建了一个开放的金融AI生态。这种生态不仅巩固了自身的市场地位，也为整个金融行业的数字化转型提供了创新路径。在普惠金融的大浪潮中，蚂小财正在成为连接大众与金融的桥梁。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-1"></div>
+        </section>
+
+        <!-- CHAPTER 2: 融资与财务 -->
+        <section class="chapter" id="ch-2">
+            <div class="chapter-header">
+                <h2>融资与财务</h2>
+                <span class="ch-sub">💰 商业化现状</span>
+                <span class="ch-counter" id="counter-2">1 / 3</span>
+            </div>
+            <div class="card-track" data-ch="2">
+                <!-- Slide 1 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>母公司蚂蚁集团融资历程</h3>
+                        <div class="card-body">
+                            <p>蚂蚁财富蚂小财本身没有独立的公开融资信息，但其母公司蚂蚁集团的融资历程反映了资本市场对其业务模式的认可。蚂蚁集团在上市前进行了多轮融资，吸引了全球顶级投资机构的参与。</p>
+                            <div class="metrics-grid">
+                                <div class="metric-card">
+                                    <div class="metric-value">4.5亿</div>
+                                    <div class="metric-label">Pre-A轮(2015)</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">45亿</div>
+                                    <div class="metric-label">B轮(2016)</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">140亿</div>
+                                    <div class="metric-label">C轮(2018)</div>
+                                </div>
+                            </div>
+                            <p>这些融资为蚂蚁集团提供了充足的资金支持，用于技术研发、市场拓展和生态建设，间接赋能了包括蚂小财在内的各项业务发展。蚂蚁集团的融资投资方包括中国投资公司、新加坡政府投资公司、华平投资、加拿大养老基金投资公司等全球重量级机构。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>商业化现状与路径</h3>
+                        <div class="card-body">
+                            <p>蚂蚁财富蚂小财的商业化模式已初具规模。其核心收入来源包括：首先，平台服务费与交易分成，通过整合200多家基金公司、券商等专业机构的服务，从合作金融机构处收取平台服务费或按交易量进行分成。</p>
+                            <p>其次，技术赋能服务。蚂蚁集团凭借在AI和大数据方面的技术优势，向金融机构输出AI技术解决方案，帮助它们提升数字化运营能力，从而获得技术服务收入。2025年9月，蚂蚁财富开放了三大AI助手，蚂小财Pro版已向基金公司等机构投资者开放，目前有上百家合作机构在使用。</p>
+                            <p>再次，基础的AI理财咨询和市场解读服务目前主要以免费形式提供，作为蚂蚁财富和支付宝App生态内的增值服务。但随着蚂小财Pro版的灰测，未来不排除对更高级、更个性化的深度服务或专业功能，探索订阅制或增值服务模式，以实现商业化变现。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>商业化评分与前景</h3>
+                        <div class="card-body">
+                            <p>基于市场评估，蚂小财的商业化成熟度得分为4.0/5.0，表明其商业化路径已相当清晰，但仍有提升空间。蚂蚁集团的支付宝月活用户超过10亿，为蚂小财提供了庞大的用户基础和流量入口。蚂小财利用这一优势，已实现7000万月活用户。</p>
+                            <p>随着蚂小财Pro版的推出，针对机构用户的B2B商业化空间正在打开。目前已有上百家合作机构在使用蚂小财Pro版进行投研和运营工作。这种B2B2C的商业模式，有望为蚂小财打开新的收入增长点。预计在未来，蚂小财将通过基础服务免费+高级功能付费的Freemium模式，实现用户规模和商业价值的平衡。</p>
+                            <p>从长期来看，蚂小财的商业化潜力巨大。一方面，它可以从交易转化中获得分成；另一方面，它可以通过向金融机构输出技术，获得专业化收入。同时，普惠金融市场的广阔空间，为蚂小财提供了持续增长的动力。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-2"></div>
+        </section>
+
+        <!-- CHAPTER 3: 产品功能 -->
+        <section class="chapter" id="ch-3">
+            <div class="chapter-header">
+                <h2>产品功能</h2>
+                <span class="ch-sub">🎯 核心能力拆解</span>
+                <span class="ch-counter" id="counter-3">1 / 3</span>
+            </div>
+            <div class="card-track" data-ch="3">
+                <!-- Slide 1 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>产品矩阵与核心功能</h3>
+                        <div class="card-body">
+                            <p>蚂蚁财富蚂小财以智能助理形式深度融入蚂蚁财富App和支付宝App，提供一系列AI驱动的金融服务。其核心功能模块包括智能问答与市场解读、财报可视化分析、个性化投资建议等。</p>
+                            <div class="mode-boxes">
+                                <div class="mode-box">
+                                    <div class="mode-title">📊 实时市场解读</div>
+                                    <div class="mode-desc">通过语音或文字交互，获取实时市场热点、行业板块分析和宏观经济趋势信息。</div>
+                                </div>
+                                <div class="mode-box" style="border-left-color:var(--accent-blue);">
+                                    <div class="mode-title">📈 财报分析</div>
+                                    <div class="mode-desc">对上市公司财报即时生成图文并茂的解读，清晰展示财务数据变化及原因。</div>
+                                </div>
+                                <div class="mode-box" style="border-left-color:var(--accent-green);">
+                                    <div class="mode-title">💡 投资建议</div>
+                                    <div class="mode-desc">基于用户画像、持仓和风险偏好，提供个性化投资建议和定制理财简报。</div>
+                                </div>
+                                <div class="mode-box" style="border-left-color:#7B5EA7;">
+                                    <div class="mode-title">🎯 专业服务</div>
+                                    <div class="mode-desc">集成200+金融机构服务，新增盯盘、诊基等专业功能，拓宽服务广度深度。</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>创新交互体验</h3>
+                        <div class="card-body">
+                            <p>蚂小财在交互体验上有多项创新突破。最具代表性的是2025年推出的"哪里不会按哪里"功能——用户在蚂蚁财富App中长按任何金融产品或数据，就可以唤起蚂小财进行即时解答。这种"随时随地"的交互方式，大大降低了用户的使用门槛。</p>
+                            <p>语音交互是蚂小财的另一大亮点。用户可以通过语音提问，蚂小财能够秒级响应，提供语音和图文结合的解读。这对于不擅长复杂操作或时间有限的用户特别友好。响应速度快、表达清晰、建议可信，成为了用户的普遍评价。</p>
+                            <p>在信息呈现上，蚂小财采用了图文并茂的方式，将复杂的财务数据和金融概念转化为直观的图表、简洁的文字和专业的观点。这种可视化能力有效解决了大众投资者"看不懂"的痛点，使得普通人也能轻松理解市场和产品。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>定价与用户获取</h3>
+                        <div class="card-body">
+                            <p>蚂小财采用Freemium的定价策略。基础的AI理财咨询、市场解读和财报分析服务目前完全免费，作为蚂蚁财富和支付宝App生态内的增值服务。这个策略有助于快速积累用户规模，已实现7000万月活。</p>
+                            <p>用户获取主要依赖于蚂蚁集团的生态优势。支付宝月活超10亿，蚂蚁财富App也有数千万用户。蚂小财在这两个App中的深度融合，使其能够以最低成本触达大量目标用户。2024年9月全量对外后，用户增长实现了快速提升。</p>
+                            <p>未来，随着蚂小财Pro版的推出和灰测，更高级的个性化服务和专业功能可能会探索付费模式，如订阅制或按服务量计费。但基础功能将持续保持免费，以维持普惠金融的初心和用户规模的持续增长。这种平衡策略，既满足了商业化需求，又不牺牲用户基础。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-3"></div>
+        </section>
+
+        <!-- CHAPTER 4: AI技术 -->
+        <section class="chapter" id="ch-4">
+            <div class="chapter-header">
+                <h2>AI技术</h2>
+                <span class="ch-sub">🤖 技术架构与创新</span>
+                <span class="ch-counter" id="counter-4">1 / 3</span>
+            </div>
+            <div class="card-track" data-ch="4">
+                <!-- Slide 1 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>大模型技术与融合架构</h3>
+                        <div class="card-body">
+                            <p>蚂小财的核心技术基础是蚂蚁集团自研的AI大模型。2023年升级时，引入了蚂蚁自研的百灵大模型，并在金融领域进行了专业训练，推出了Finix金融大模型。这两个模型的融合，赋予了蚂小财在金融领域的深度理解能力。</p>
+                            <p>2025年，蚂小财进一步接入了推理大模型，实现了从产品功能、沟通表达到交互体验的全面升级。推理大模型的引入，使得蚂小财在处理复杂财务问题、进行深度分析时，能够表现出更强的逻辑推理能力，提供更准确和更有见地的分析结果。</p>
+                            <p>在技术架构上，蚂小财并非简单地使用通用大模型，而是采用了"通用+专业"的融合策略。百灵大模型提供通用的自然语言理解和生成能力，Finix金融大模型则提供金融领域的专业知识和理解，两者结合形成了业界领先的金融AI能力。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>技术能力与应用场景</h3>
+                        <div class="card-body">
+                            <p>基于这些大模型，蚂小财展现出了多项领先的技术能力。首先是NLP文本分析，能够理解用户的多种表达方式，并准确把握其真实需求，即使是模糊或非结构化的问题也能有效处理。其次是财务数据可视化，能够自动抽取财报中的关键数据，生成多种图表形式，使复杂的财务信息变得易于理解。</p>
+                            <p>语音识别与交互能力也是蚂小财的核心竞争力。通过先进的语音识别技术，用户可以用自然的语言和口吻与蚂小财交互，系统能够准确理解并快速响应。同时，蚂小财也能用自然的语言和语调对用户进行反馈，提升了交互的自然性和用户体验。</p>
+                            <p>个性化推荐是另一项关键能力。蚂小财能够基于用户的历史行为、持仓信息、风险偏好等多维度数据，为每个用户生成定制化的投资建议和市场简报。这种个性化能力，使得每个用户都能获得"为我量身定制"的服务体验。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>技术壁垒与创新优势</h3>
+                        <div class="card-body">
+                            <p>蚂小财在AI金融领域建立了深厚的技术壁垒。蚂蚁集团拥有超过十年的金融科技积累，在数据、算法、算力等方面都有深厚的底蕴。Finix金融大模型经过海量金融数据的训练，对金融市场的理解深度远超通用大模型。这个壁垒是竞对难以短期内复制的。</p>
+                            <p>技术独特性评分达到4.5/5.0，体现了蚂小财在AI应用上的先进性。蚂蚁集团拥有大量的金融领域专利，覆盖从数据处理、模型训练到应用部署的全链条。这些专利不仅保护了核心竞争力，也体现了集团在技术创新上的持续投入。</p>
+                            <p>创新还体现在产品化能力上。蚂小财将复杂的AI技术以简洁易用的产品形式呈现给大众用户，"哪里不会按哪里"这样的创新交互，都是技术和产品设计完美融合的体现。这种将前沿技术转化为用户价值的能力，是蚂小财的核心竞争力所在。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-4"></div>
+        </section>
+
+        <!-- CHAPTER 5: 用户反馈 -->
+        <section class="chapter" id="ch-5">
+            <div class="chapter-header">
+                <h2>用户反馈</h2>
+                <span class="ch-sub">⭐ 市场评价与体验</span>
+                <span class="ch-counter" id="counter-5">1 / 3</span>
+            </div>
+            <div class="card-track" data-ch="5">
+                <!-- Slide 1 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>核心体验评价</h3>
+                        <div class="card-body">
+                            <p>蚂小财在用户中获得了广泛的认可。用户普遍反映其响应速度快、交互便捷，尤其是语音功能的引入，让不会操作复杂应用的用户也能轻松使用。当用户通过语音提问"最近黄金还能买吗？"时，蚂小财能够秒级响应，迅速给出结合金融机构观点的走势判断和配置参考。</p>
+                            <p>在信息呈现方面，用户高度认可蚂小财的可视化能力。财报分析时，复杂的财务数据被转化为清晰的图表和简洁的文字解读，让普通投资者也能一眼看懂。这种"化繁为简"的能力，显著提升了用户的理财自信心。</p>
+                            <p>从市场地位与认可度评分4.5/5.0来看，蚂小财已经获得了市场的广泛认可。作为蚂蚁集团旗下产品，月活用户超7000万，被央视等主流媒体报道，这些都体现了其市场影响力。特别是45%的用户来自三线及以下城市，充分说明了其在基层市场的渗透力。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>真实用户场景案例</h3>
+                        <div class="card-body">
+                            <p><strong>案例一：小李的AI概念股投资之旅</strong></p>
+                            <p>小李是一位普通上班族，工作繁忙但对理财感兴趣。午休时看到AI概念股的新闻，想了解但不知从何下手。他打开支付宝，通过语音唤起蚂小财："蚂小财，最近AI概念股很火，有什么值得关注的吗？"蚂小财立即给出了细分领域分析（芯片、AI应用、数据服务等）和具体公司案例，还特别提醒了波动性风险。小李不仅理解了AI投资的关键驱动因素，还获得了理性的投资建议。</p>
+                            <p><strong>案例二：老张的财报速读之旅</strong></p>
+                            <p>老张持有某科技公司股票，临近财报发布感到紧张。他在蚂蚁财富App查看财报时，长按页面唤起蚂小财："帮我分析这份财报"。蚂小财秒速生成了营收、利润、毛利率等核心指标的对比分析，还给出了业务趋势和风险提示。老张在5分钟内掌握了财报要点，消除了不确定性，做出了更有信心的投资决策。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>AI产品能力评分</h3>
+                        <div class="card-body">
+                            <p>蚂小财的AI产品能力评分为4.5/5.0。这个评分基于多个维度：功能丰富性（实时解读、财报分析、个性化建议、专业服务），用户体验（语音交互、可视化呈现、"哪里不会按哪里"），自动化水平（秒级响应、智能分析、主动推送）。</p>
+                            <p>高分的主要原因是蚂小财在金融领域的专业性和易用性的完美平衡。它不是简单的通用AI问答，而是针对金融场景进行了深度优化，理解用户的真实需求，提供金融专业级别的分析，但用最大众化的方式呈现。这种专业性+易用性的组合，正是其超越竞品的关键。</p>
+                            <p>用户规模的快速增长（7000万月活）、商业化探索的推进（Pro版灰测、机构合作）、媒体和市场的广泛认可，都证明了蚂小财在AI理财领域的领先地位。这个4.5分的评价，既反映了其当前的成就，也预示着其未来的发展潜力。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-5"></div>
+        </section>
+
+        <!-- CHAPTER 6: 核心启示 -->
+        <section class="chapter" id="ch-6">
+            <div class="chapter-header">
+                <h2>核心启示</h2>
+                <span class="ch-sub">💡 战略洞察与启发</span>
+                <span class="ch-counter" id="counter-6">1 / 3</span>
+            </div>
+            <div class="card-track" data-ch="6">
+                <!-- Slide 1 -->
+                <div class="slide">
+                    <div class="insight-card">
+                        <div class="insight-emoji">🏢</div>
+                        <h3>生态优势是护城河</h3>
+                        <p>蚂小财的成功，很大程度上源于蚂蚁集团强大的生态系统。支付宝月活10亿+，蚂蚁财富App有数千万用户，这为蚂小财提供了无可比拟的流量入口和用户基础。从0到7000万月活，蚂小财用了不到一年半的时间，这样的增长速度，离不开生态的助力。</p>
+                        <p>对于初创企业，这给出了重要启示：生态位置很重要。即使你的AI技术再先进，如果没有有效的分发渠道和用户基础，也很难形成规模效应。蚂小财的案例说明，战略性地融入或建立生态，往往比单纯的技术优势更能决定成败。这也解释了为什么互联网巨头总是新技术的赢家——他们已经拥有了最优的生态位置。</p>
+                        <div class="insight-highlight">
+                            生态赋能AI：蚂小财的7000万用户不是砸钱获取的，而是利用蚂蚁集团的生态优势实现的自然增长。
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2 -->
+                <div class="slide">
+                    <div class="insight-card">
+                        <div class="insight-emoji">🎯</div>
+                        <h3>垂直大模型是差异化利器</h3>
+                        <p>蚂小财没有选择使用通用大模型，而是投入巨资开发Finix金融大模型，这个选择至关重要。通用大模型在金融领域可能不够专业，而垂直大模型经过金融数据深度训练，对行业的理解远超通用模型。正因为这个差异化，蚂小财能提供更准确的财报分析、更专业的投资建议。</p>
+                        <p>这给AI企业的启示是，选择长尾领域深耕垂直大模型，往往比跟风开发通用大模型更有价值。蚂蚁集团有资源、有数据、有场景去打磨Finix，这种投入建立了难以复制的竞争壁垒。对于资源有限的初创企业，选择一个足够大的细分领域（如医疗、法律、工程），深耕垂直大模型，反而可能比模仿通用大模型更容易实现突破。</p>
+                        <div class="insight-highlight">
+                            专业+通用融合：百灵+Finix的架构，实现了通用理解能力与金融专业性的完美结合，这是蚂小财的技术核心。
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3 -->
+                <div class="slide">
+                    <div class="insight-card">
+                        <div class="insight-emoji">👥</div>
+                        <h3>普惠理念是商业基础</h3>
+                        <p>蚂小财面向的是大众用户，特别是二三线城市。正是这个"普惠"的定位，让它的市场空间变得极其广阔。中国有14亿人，其中理财意识和能力不足的大众占绝大多数，蚂小财用AI来帮助他们做出更好的理财选择，解决了真实的社会痛点。</p>
+                        <p>从商业的角度，普惠是最大的市场。相比于服务少数高净值人群，服务大众用户的市场容量是10倍、100倍的关系。蚂小财的7000万月活中，45%来自三线及以下城市，这说明基层市场的潜力远未开发。那些专注于高端市场的理财产品，虽然单客价值高，但市场容量有限。蚂小财走了不同的路——少赚单客，但赚取海量客户。</p>
+                        <div class="insight-highlight">
+                            普惠驱动规模：月活7000万，其中45%三线以下城市，普惠金融的市场容量让人刮目相看。
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-6"></div>
+        </section>
+
+        <!-- CHAPTER 7: 近期要闻 -->
+        <section class="chapter" id="ch-7">
+            <div class="chapter-header">
+                <h2>近期要闻</h2>
+                <span class="ch-sub">📰 最新进展与动态</span>
+                <span class="ch-counter" id="counter-7">1 / 3</span>
+            </div>
+            <div class="card-track" data-ch="7">
+                <!-- Slide 1 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>2025年最新升级</h3>
+                        <div class="card-body">
+                            <div class="news-item">
+                                <div class="news-date">2025年9月</div>
+                                <div class="news-title">蚂小财接入推理大模型，金融领域增强升级</div>
+                                <div class="news-desc">蚂小财推出全新版本，接入先进的推理大模型，实现从产品功能、沟通表达到交互体验的全面升级。新增盯盘功能，能提炼与用户持仓基金相关的国内外大事件并详细解读。</div>
+                            </div>
+                            <div class="news-item">
+                                <div class="news-date">2025年9月</div>
+                                <div class="news-title">蚂蚁财富开放三大AI助手，机构投研开启人机协作</div>
+                                <div class="news-desc">蚂蚁财富宣布开放蚂小财、基金AI助手等三大AI产品给金融机构。蚂小财Pro版已有上百家基金公司等机构在使用，辅助投研、运营和内容创作工作，开启了AI在金融机构中的人机协作新模式。</div>
+                            </div>
+                            <div class="news-item">
+                                <div class="news-date">2025年6月</div>
+                                <div class="news-title">理财AI蚂小财新版升级，实现"哪里不会按哪里"体验</div>
+                                <div class="news-desc">蚂小财在蚂蚁财富APP内实现创新交互——用户长按页面任何金融产品或数据，都可唤起蚂小财进行即时解答。这一交互方式大大降低了用户使用门槛，提升了用户体验。</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>2024-2025年发展历程</h3>
+                        <div class="card-body">
+                            <div class="timeline">
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-year">2024年9月</div>
+                                    <div class="timeline-text"><strong>全面对外：</strong>新版蚂小财Pro在支付宝App和蚂蚁财富App全面对外，月活用户快速增至7000万，标志着成熟期的到来。</div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-year">2023年9月</div>
+                                    <div class="timeline-text"><strong>模型升级：</strong>基于百灵大模型和Finix金融大模型融合通义千问，开始提供行情解读等专业服务，技术能力显著提升。</div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-year">2019年6月</div>
+                                    <div class="timeline-text"><strong>正式推出：</strong>蚂小财作为蚂蚁财富的智能理财助理首次推出，致力于用AI将普通人的理财变简单。</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>未来展望与战略方向</h3>
+                        <div class="card-body">
+                            <p><strong>用户规模拓展</strong>：蚂小财目前月活7000万，其中三线及以下城市占45%。未来的增长空间仍然巨大，特别是在更下沉的市场。预计随着功能完善和品牌传播，月活有望突破1亿。</p>
+                            <p><strong>商业化突破</strong>：从当前的完全免费Freemium模式，逐步探索付费化。Pro版的灰测和机构合作已经开始验证B2B2C的商业模式。预计未来会出现用户订阅、高级服务付费等新的收入来源。</p>
+                            <p><strong>技术迭代</strong>：推理大模型的接入只是开始，蚂小财在AI能力上仍有很大的升级空间。更强的推理能力、更精准的个性化推荐、更智能的风险评估，都是可能的技术方向。同时，multimodal AI（结合语音、视频、文本的多模态AI）也可能成为未来的一个重要升级方向。</p>
+                            <p><strong>生态整合</strong>：蚂小财可能会进一步整合蚂蚁集团生态中的其他产品，比如花呗、借呗等，提供更全面的财务管理服务。同时，开放平台能力给更多金融机构，建立开放的金融AI生态，是其长期的战略目标。</p>
+                            <div class="callout">
+                                <strong>核心判断：</strong>蚂小财代表了AI在金融领域的最佳实践案例。它证明了，大众对专业、易用、可信的金融AI服务有着巨大的需求，而蚂蚁集团有能力和资源去满足这个需求。在普惠金融的大浪潮中，蚂小财正在成为连接大众与专业金融的桥梁。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-7"></div>
+        </section>
+    </main>
+
+    <script>
+        // === Navigation ===
+        let currentChapter = 0;
+
+        function go(chapter) {
+            currentChapter = chapter;
+            document.querySelectorAll('.nav-btn').forEach((btn, idx) => {
+                btn.classList.toggle('active', idx === chapter);
+            });
+            const element = document.getElementById(`ch-${chapter}`);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        // === Counter & Dots ===
+        function setupChapter(ch) {
+            const track = document.querySelector(`.card-track[data-ch="${ch}"]`);
+            const dotsBar = document.getElementById(`dots-${ch}`);
+            const counter = document.getElementById(`counter-${ch}`);
+            if (!track) return;
+
+            const slides = track.querySelectorAll('.slide');
+            const slideCount = slides.length;
+
+            // Create dots
+            dotsBar.innerHTML = '';
+            for (let i = 0; i < slideCount; i++) {
+                const dot = document.createElement('button');
+                dot.className = `dot ${i === 0 ? 'active' : ''}`;
+                dot.onclick = () => {
+                    track.scrollLeft = slides[i].offsetLeft;
+                };
+                dotsBar.appendChild(dot);
+            }
+
+            // Update on scroll
+            track.addEventListener('scroll', () => {
+                const scrollLeft = track.scrollLeft;
+                const activeIndex = Math.round(scrollLeft / slides[0].offsetWidth);
+                document.querySelectorAll(`.dots-bar#dots-${ch} .dot`).forEach((dot, i) => {
+                    dot.classList.toggle('active', i === activeIndex);
+                });
+                if (counter) {
+                    counter.textContent = `${activeIndex + 1} / ${slideCount}`;
+                }
+            });
+        }
+
+        // Setup all chapters
+        for (let i = 1; i <= 7; i++) {
+            setupChapter(i);
+        }
+
+        // === Counter Animation ===
+        function animateCounter() {
+            document.querySelectorAll('[data-count]').forEach(el => {
+                const target = parseInt(el.getAttribute('data-count'));
+                const prefix = el.getAttribute('data-prefix') || '';
+                const suffix = el.getAttribute('data-suffix') || '';
+                let current = 0;
+                const step = Math.ceil(target / 30);
+                const interval = setInterval(() => {
+                    current += step;
+                    if (current >= target) {
+                        current = target;
+                        clearInterval(interval);
+                    }
+                    el.textContent = prefix + current.toLocaleString() + suffix;
+                }, 20);
+            });
+        }
+
+        // Animate on page load
+        window.addEventListener('load', animateCounter);
+    </script>
+</body>
+</html>

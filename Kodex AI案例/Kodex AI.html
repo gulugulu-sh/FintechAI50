@@ -1,0 +1,2523 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kodex AI 深度调研报告</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --accent-purple: #7B5EA7;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #1A1514;
+            --cover-bg: #1A1514;
+            --cover-accent: #D97757;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR (220px) ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(217,119,87,0.2); color: var(--accent); font-weight: 600; }
+
+        /* ===== MAIN (scroll-snap-type: y mandatory) ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+
+        /* ===== COVER (full viewport, brand colors) ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, var(--cover-bg) 0%, #2D2B2F 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(217,119,87,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 20px; background: rgba(255,255,255,0.1); object-fit: contain; }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(255,255,255,0.12); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        /* Fixed chapter header (--header-h: 72px) */
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        /* Horizontal card scroller (scroll-snap-type: x mandatory) */
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+
+        /* Each slide fills available height (100vh - header - dots) */
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Card inside slide */
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        /* Sparse card (larger text) */
+        .card.sparse p { font-size: 16px; line-height: 2; }
+        .card.sparse h3 { font-size: 22px; margin-bottom: 20px; }
+        .card.sparse .callout { font-size: 15px; padding: 18px 22px; }
+        .card.sparse .quote-block { font-size: 16px; padding: 20px 24px; }
+
+        /* Dots bar (--dots-h: 40px) */
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); cursor: pointer; transition: all 0.3s;
+            border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+        /* ===== REUSABLE COMPONENTS ===== */
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px; border-radius: 6px;
+            font-size: 13px; line-height: 1.7; color: var(--text-2);
+            margin: 14px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+
+        .quote-block {
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px; margin: 14px 0;
+            font-style: italic; font-size: 14px;
+            color: var(--text-2); line-height: 1.8;
+            background: var(--bg-muted); border-radius: 0 8px 8px 0;
+        }
+        .quote-attr { font-style: normal; font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 16px; border-radius: 10px; text-align: center;
+        }
+        .metric-value { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+        .flex-row { display: flex; gap: 24px; margin: 14px 0; }
+        .flex-col { flex: 1; min-width: 0; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th { background: var(--bg-muted); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+
+        .timeline {
+            display: flex; flex-direction: column; gap: 20px; margin: 16px 0;
+        }
+        .timeline-item {
+            display: flex; gap: 12px;
+            position: relative; padding-left: 24px;
+        }
+        .timeline-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--accent); position: absolute; left: 0; top: 6px;
+        }
+        .timeline-year { font-size: 12px; font-weight: 700; color: var(--accent); min-width: 50px; }
+        .timeline-text { font-size: 13px; line-height: 1.7; color: var(--text-2); }
+
+        .mode-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 14px 0; }
+        .mode-box { background: var(--bg-muted); padding: 14px; border-radius: 10px; border-left: 4px solid var(--accent); }
+        .mode-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+        .mode-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .insight-card {
+            flex: 1; display: flex; flex-direction: column;
+            background: var(--bg-card); border-radius: 14px; padding: 28px 32px;
+            border: 1px solid var(--border);
+        }
+        .insight-emoji { font-size: 28px; margin-bottom: 10px; }
+        .insight-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+        .insight-card p { font-size: 15px; line-height: 1.9; color: var(--text-2); margin-bottom: 14px; }
+        .insight-highlight {
+            margin-top: auto;
+            background: var(--accent-light); border-left: 4px solid var(--accent);
+            padding: 12px 16px; border-radius: 6px;
+            font-size: 14px; font-weight: 600; color: var(--accent-2);
+        }
+
+        h4 { font-size: 14px; font-weight: 700; margin: 10px 0; }
+    </style>
+</head>
+<body>
+
+<!-- ===== SIDEBAR ===== -->
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <img class="sidebar-logo" alt="Kodex AI Logo" src="images/logo_real.png" />
+        <div>
+            <div class="sidebar-brand-text">Kodex AI</div>
+            <div class="sidebar-brand-sub">深度调研报告</div>
+        </div>
+    </div>
+    <div class="nav-items">
+        <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+        <button class="nav-btn" onclick="go(1)">📋 公司概况</button>
+        <button class="nav-btn" onclick="go(2)">🤖 核心产品</button>
+        <button class="nav-btn" onclick="go(3)">💰 商业模式</button>
+        <button class="nav-btn" onclick="go(4)">🏆 技术护城河</button>
+        <button class="nav-btn" onclick="go(5)">📈 融资与进展</button>
+        <button class="nav-btn" onclick="go(6)">🔮 未来展望</button>
+        <button class="nav-btn" onclick="go(7)">📚 核心启示</button>
+    </div>
+</nav>
+
+<main>
+
+<!-- ====== COVER ====== -->
+<section class="cover" id="ch-0">
+    <div class="cover-content">
+        <img class="cover-logo" alt="Kodex AI" src="images/logo_real.png" />
+        <h1 class="cover-title">Kodex AI</h1>
+        <p class="cover-subtitle">AI如何革新金融机构的合规工作流</p>
+        <div class="cover-tags">
+            <span class="cover-tag">Agentic AI</span>
+            <span class="cover-tag">金融合规</span>
+            <span class="cover-tag">RegTech</span>
+            <span class="cover-tag">欧洲创新</span>
+        </div>
+        <div class="cover-stats">
+            <div class="stat-box">
+                <div class="stat-number">95%</div>
+                <div class="stat-label">任务自动化</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">20倍</div>
+                <div class="stat-label">规制覆盖</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">$1.82M</div>
+                <div class="stat-label">融资总额</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">2025</div>
+                <div class="stat-label">CUBE收购</div>
+            </div>
+        </div>
+        <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+    </div>
+</section>
+
+<!-- ====== CHAPTER 1: 公司概况 (3 cards) ====== -->
+<section class="chapter" id="ch-1">
+    <div class="chapter-header">
+        <h2>欧洲AI合规赛道的创新先驱</h2>
+        <span class="ch-sub">📋 公司概况</span>
+        <span class="ch-counter" id="counter-1">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="1">
+
+        <!-- 1/3 创始背景 -->
+        <div class="slide"><div class="card"><h3>创始故事：从痛点到创新</h3><div class="card-body">
+            <p>Kodex AI由Thomas Kaiser和Claus Lang于2022年在德国柏林创立。两位创始人来自BCG咨询集团，深深理解金融机构面临的监管合规困境——每当监管部门发布新规，金融机构需要花费数周甚至数月来理解、分析和实施相关要求，其中涉及跨部门协调、文本解读、系统配置等繁琐流程。</p>
+            <p>这种低效不仅消耗大量人力成本，还容易导致合规遗漏和罚款风险。过去15年，仅银行业就发布了超过4000万条新的监管要求。两位创始人看到了AI的巨大潜力：通过微调LLM使其理解金融监管语言，再配合AI代理的任务规划和执行能力，可以将整个流程自动化。</p>
+            <div class="callout">
+                <strong>核心洞察：</strong> 金融合规的本质不是"知道规则"，而是"快速响应变化"。Kodex AI的价值在于，它能在秒级内完成传统需要数周的工作。
+            </div>
+        </div></div></div>
+
+        <!-- 2/3 发展里程碑 -->
+        <div class="slide"><div class="card"><h3>三年破茧：从初创到被收购</h3><div class="card-body">
+            <p>Kodex AI的发展历程充满了关键节点：</p>
+            <div class="timeline">
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2022.Q2</div><div class="timeline-text"><strong>公司成立：</strong>获得Deutsche Bank支持，进入银行集团创业孵化器项目</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2022.Q4</div><div class="timeline-text"><strong>种子融资：</strong>完成$800K融资，微调金融专用LLM上线</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2023.Q2</div><div class="timeline-text"><strong>产品初版：</strong>Compliance Agent首个测试版发布，自动化监管任务识别</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2024.Q1</div><div class="timeline-text"><strong>国际认可：</strong>被Meta评选为欧洲顶级AI初创公司</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2025.Q4</div><div class="timeline-text"><strong>并购成功：</strong>被全球RegTech领导者CUBE收购，成为UniRegPlatform核心引擎</div></div>
+            </div>
+        </div></div></div>
+
+        <!-- 3/3 市场定位 -->
+        <div class="slide"><div class="card"><h3>赛道定位与核心客户</h3><div class="card-body">
+            <p>Kodex AI处于"金融合规自动化"这个高价值细分赛道的顶端。其目标客户是面临以下痛点的大型金融机构：</p>
+            <div class="metrics-grid" style="grid-template-columns:repeat(2,1fr);">
+                <div class="metric-card">
+                    <div style="font-size:14px;font-weight:700;color:var(--accent);margin-bottom:6px;">🏦</div>
+                    <div class="metric-label">大型银行</div>
+                    <div style="font-size:11px;color:var(--text-3);margin-top:4px;">MiFID II合规</div>
+                </div>
+                <div class="metric-card">
+                    <div style="font-size:14px;font-weight:700;color:var(--accent);margin-bottom:6px;">💳</div>
+                    <div class="metric-label">金融科技</div>
+                    <div style="font-size:11px;color:var(--text-3);margin-top:4px;">多端合规</div>
+                </div>
+                <div class="metric-card">
+                    <div style="font-size:14px;font-weight:700;color:var(--accent);margin-bottom:6px;">🪙</div>
+                    <div class="metric-label">加密交易所</div>
+                    <div style="font-size:11px;color:var(--text-3);margin-top:4px;">AML-CFT</div>
+                </div>
+                <div class="metric-card">
+                    <div style="font-size:14px;font-weight:700;color:var(--accent);margin-bottom:6px;">🏪</div>
+                    <div class="metric-label">数字银行</div>
+                    <div style="font-size:11px;color:var(--text-3);margin-top:4px;">敏捷监管</div>
+                </div>
+            </div>
+            <p style="margin-top:14px;">这些机构每年在合规上投入数百万美元，却面临"越来越多的规制、越来越复杂的管理、越来越高的罚款风险"的三重压力。Kodex AI的价值在于：让合规从成本中心变为竞争优势。</p>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-1"></div>
+</section>
+
+<!-- ====== CHAPTER 2: 核心产品 (2 cards) ====== -->
+<section class="chapter" id="ch-2">
+    <div class="chapter-header">
+        <h2>从建议到执行的AI代理革命</h2>
+        <span class="ch-sub">🤖 核心产品</span>
+        <span class="ch-counter" id="counter-2">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="2">
+
+        <!-- 1/2 核心产品 -->
+        <div class="slide"><div class="card"><h3>Kodex Compliance Platform：Agentic AI驱动的合规中枢</h3><div class="card-body">
+            <p>Kodex AI的核心产品是一个云端SaaS平台，通过专有的Agentic AI引擎实现三层自动化：</p>
+            <div class="mode-boxes">
+                <div class="mode-box">
+                    <div class="mode-title">🔍 Governance Agent</div>
+                    <div class="mode-desc">自主监控、解析并分类全球监管文本（400+份规制文本），识别对企业的实际影响</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-blue);">
+                    <div class="mode-title">📋 Compliance Chat</div>
+                    <div class="mode-desc">自然语言对话式助手，支持10+语言，用户用通俗语言提问，AI返回精确答案</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-green);">
+                    <div class="mode-title">⚙️ Workflow Executor</div>
+                    <div class="mode-desc">在人工授权后自动执行合规任务、更新系统、生成报告，实现真正的端到端自动化</div>
+                </div>
+            </div>
+            <div class="callout">
+                <strong>产品哲学：</strong> 传统合规工具只是"顾问"，告诉你要做什么。Kodex AI是"同事"，实际帮你做事。这正是"从建议到执行"的本质区别。
+            </div>
+        </div></div></div>
+
+        <!-- 2/2 商业优势 -->
+        <div class="slide"><div class="card"><h3>95%自动化效率背后的真实影响</h3><div class="card-body">
+            <p>Kodex AI为金融机构带来的具体价值体现在以下维度：</p>
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4>⏱️ 时间节省</h4>
+                    <p>从数周缩减至秒级。以欧盟新规发布为例：传统流程需要合规团队耗时3-4周来完整理解并规划响应；Kodex AI可在秒级内识别所有相关条款、映射到企业业务流程、生成执行清单。</p>
+                </div>
+                <div class="flex-col">
+                    <h4>💰 成本下降</h4>
+                    <p>合规人力成本降低70%+。一个传统合规团队年成本$500K+；借助Kodex AI，同样的工作量可由更精简的团队完成，年节省成本$350K+。</p>
+                </div>
+            </div>
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4>🎯 风险降低</h4>
+                    <p>合规遗漏风险从高风险区间降低至接近零。AI对所有规制文本的覆盖面积达20倍（覆盖400+份规制文本 vs 人工平均覆盖20份），遗漏导致的罚款风险大幅降低。</p>
+                </div>
+                <div class="flex-col">
+                    <h4>📊 决策加速</h4>
+                    <p>新产品上市前的合规审批周期从6周缩减至3天。这对金融科技企业快速迭代、抢占市场具有战略意义。</p>
+                </div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-2"></div>
+</section>
+
+<!-- ====== CHAPTER 3: 商业模式 (2 cards) ====== -->
+<section class="chapter" id="ch-3">
+    <div class="chapter-header">
+        <h2>B2B SaaS订阅模式与差异化定价</h2>
+        <span class="ch-sub">💰 商业模式</span>
+        <span class="ch-counter" id="counter-3">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="3">
+
+        <!-- 1/2 定价结构 -->
+        <div class="slide"><div class="card"><h3>三层订阅模式：从试点到企业级</h3><div class="card-body">
+            <p>Kodex AI采用"梯级定价"策略，满足从初创金融科技到大型银行的全链条客户需求：</p>
+            <div class="mode-boxes" style="grid-template-columns:1fr;">
+                <div class="mode-box">
+                    <div class="mode-title">🚀 Starter</div>
+                    <div class="mode-desc"><strong>按使用量计费</strong> — 适合初期试点。Governance Agent基础版、单个部门试用、API基础限流。意图：低风险验证产品价值。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-blue);">
+                    <div class="mode-title">🎯 Pro</div>
+                    <div class="mode-desc"><strong>$15K-50K/年</strong> — 中型机构主流选择。全功能Agentic Agent、多部门协作、API深度集成、VIP技术支持。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-green);">
+                    <div class="mode-title">⭐ Enterprise</div>
+                    <div class="mode-desc"><strong>自定义（$100K+）</strong> — 大型金融机构。私有部署、定制化Agent训练、SLA保障、专属团队支持。</div>
+                </div>
+            </div>
+            <div class="callout">
+                <strong>定价策略逻辑：</strong> 按"合规复杂度"而非"用户数"收费，高度贴合B2B金融SaaS的惯例。Enterprise客户因为监管复杂性最高、风险最大，愿意为定制化解决方案支付溢价。
+            </div>
+        </div></div></div>
+
+        <!-- 2/2 增长飞轮 -->
+        <div class="slide"><div class="card"><h3>从试点到规模化的增长引擎</h3><div class="card-body">
+            <p>Kodex AI的增长模型围绕"扩展"而非"新客"设计，充分利用金融机构内部的组织结构：</p>
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4>🔄 初期试点 → 规模扩展</h4>
+                    <p>客户通常从单个部门（如风险部门）试点，验证ROI后，快速扩展至合规、法律、监管等多个部门。单个大型银行的ARPU从初期$20K可增长至年度$200K+。</p>
+                </div>
+                <div class="flex-col">
+                    <h4>🌐 地域扩张</h4>
+                    <p>Kodex AI的优势在于"一个平台覆盖全球规制"——欧盟、英国、亚洲等不同地区的监管要求都在平台覆盖范围内，使得跨国金融集团可一次采购、全球使用，大幅降低总体成本。</p>
+                </div>
+            </div>
+            <table style="margin-top:14px;">
+                <thead><tr><th>维度</th><th>初期（Starter）</th><th>中期（Pro）</th><th>成熟（Enterprise）</th></tr></thead>
+                <tbody>
+                    <tr><td>客户类型</td><td>初创/FinTech</td><td>中型银行</td><td>全球性金融集团</td></tr>
+                    <tr><td>年订阅费</td><td>$5-20K</td><td>$30-80K</td><td>$150K+</td></tr>
+                    <tr><td>采购周期</td><td>1-2个月</td><td>3-4个月</td><td>6-12个月</td></tr>
+                    <tr><td>扩展空间</td><td>中等</td><td>高</td><td>极高</td></tr>
+                </tbody>
+            </table>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-3"></div>
+</section>
+
+<!-- ====== CHAPTER 4: 技术护城河 (2 cards) ====== -->
+<section class="chapter" id="ch-4">
+    <div class="chapter-header">
+        <h2>微调金融LLM与Agentic AI架构</h2>
+        <span class="ch-sub">🏆 技术护城河</span>
+        <span class="ch-counter" id="counter-4">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="4">
+
+        <!-- 1/2 技术架构 -->
+        <div class="slide"><div class="card"><h3>Hybrid Architecture：LLM + 确定性引擎的最优组合</h3><div class="card-body">
+            <p>Kodex AI的技术架构精妙之处在于"职责划分"——不是单纯依赖LLM，而是让LLM和确定性工具各司其职：</p>
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4>🧠 LLM负责</h4>
+                    <ul style="font-size:13px;line-height:1.9;color:var(--text-2);padding-left:18px;">
+                        <li>监管文本的深度理解</li>
+                        <li>自然语言对话交互</li>
+                        <li>复杂推理与解释</li>
+                        <li>多语言支持</li>
+                        <li>情境感知的建议生成</li>
+                    </ul>
+                </div>
+                <div class="flex-col">
+                    <h4>⚙️ 确定性系统负责</h4>
+                    <ul style="font-size:13px;line-height:1.9;color:var(--text-2);padding-left:18px;">
+                        <li>规制文本的精确解析</li>
+                        <li>企业配置的精确映射</li>
+                        <li>工作流的自动执行</li>
+                        <li>审计日志的完整记录</li>
+                        <li>合规检查清单生成</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="callout">
+                <strong>为什么这很重要：</strong> 金融场景零容错。LLM可能产生"幻觉"（编造不存在的规则），但确定性系统确保所有合规输出都是可追溯、可审计的。这是Kodex AI相比通用ChatGPT的根本优势。
+            </div>
+        </div></div></div>
+
+        <!-- 2/2 数据护城河 -->
+        <div class="slide"><div class="card"><h3>数据飞轮与不可复制的优势</h3><div class="card-body">
+            <p>Kodex AI的最深护城河并非代码，而是数据——特别是微调金融LLM所需的高质量监管语料：</p>
+            <div class="mode-boxes" style="grid-template-columns:1fr;">
+                <div class="mode-box">
+                    <div class="mode-title">① 监管知识图谱</div>
+                    <div class="mode-desc">历年积累的400+份欧盟、英国、各国金融监管文本的精标数据。包含规制-影响-执行的三层映射关系。这是任何爬虫都无法获得的"结构化理解"。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-blue);">
+                    <div class="mode-title">② 客户实践数据</div>
+                    <div class="mode-desc">来自已合作的欧洲主流银行、FinTech的真实合规案例。每个新客户都为模型贡献新的行业场景、技术整合模式、风险事件等隐性知识。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-green);">
+                    <div class="mode-title">③ 竞争对手难以追赶</div>
+                    <div class="mode-desc">通用大模型（GPT-4、Gemini）虽然参数大，但在金融合规这个专业领域，性能反而不如Kodex的微调模型。特化 > 通用。</div>
+                </div>
+            </div>
+            <p style="margin-top:14px;">更重要的是，这种优势会随着客户增多而加强——每新增一个客户，都为数据飞轮注入新的能量。这创造了"赢家通吃"的市场动态。</p>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-4"></div>
+</section>
+
+<!-- ====== CHAPTER 5: 融资与进展 (2 cards) ====== -->
+<section class="chapter" id="ch-5">
+    <div class="chapter-header">
+        <h2>融资轨迹与被收购的战略意义</h2>
+        <span class="ch-sub">📈 融资与进展</span>
+        <span class="ch-counter" id="counter-5">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="5">
+
+        <!-- 1/2 融资历程 -->
+        <div class="slide"><div class="card"><h3>融资轨迹：从种子到战略性并购</h3><div class="card-body">
+            <p>Kodex AI在3年内完成了从种子到并购的完整周期，融资总额$1.82M：</p>
+            <div class="timeline">
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2022.Q4</div><div class="timeline-text"><strong>种子轮 | $800K</strong><br/>来源：天使投资人 + 早期投资机构。Deutsche Bank Ventures的战略支持标志着大型金融集团对AI合规方向的信任。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2023-2024</div><div class="timeline-text"><strong>Post-Seed | $1.02M</strong><br/>来源：Deutsche Bank Ventures、Signals.VC。这一阶段融资用于产品优化、市场拓展、技术人才招聘。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2025.10</div><div class="timeline-text"><strong>并购 | 由CUBE收购</strong><br/>CUBE是全球规模最大的RegTech平台之一。此次收购将Kodex AI的Agentic AI引擎整合为CUBE UniRegPlatform的核心层。</div></div>
+            </div>
+            <div class="callout">
+                <strong>融资质量 > 融资规模：</strong> $1.82M对初创公司而言并非巨额，但投资者的质量极高——Deutsche Bank这样的传统金融巨头的参与，本身就是对"AI合规"这个方向的最强背书。
+            </div>
+        </div></div></div>
+
+        <!-- 2/2 被收购的意义 -->
+        <div class="slide"><div class="card"><h3>CUBE收购：从独立创新到生态整合</h3><div class="card-body">
+            <p>2025年10月，CUBE Content Governance Global宣布收购Kodex AI。这次并购的战略意义远超财务数字本身：</p>
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4>🚀 Kodex AI的价值</h4>
+                    <p>CUBE需要一个"AI思脑"来自动化其RegPlatform的核心工作流。Kodex AI的Agentic AI引擎完美补足了CUBE在自动化执行层的空白。合并后，CUBE可以提供"从监管文本识别到工作流自动执行"的端到端解决方案。</p>
+                </div>
+                <div class="flex-col">
+                    <h4>💼 CUBE的价值</h4>
+                    <p>CUBE提供庞大的客户基数（全球500+金融机构客户）和规管数据资源。Kodex AI获得了"分销加速"——无需自己构建全球销售网络，直接进入CUBE现有的企业客户群。</p>
+                </div>
+            </div>
+            <div class="metrics-grid" style="grid-template-columns:repeat(2,1fr);margin-top:14px;">
+                <div class="metric-card">
+                    <div style="font-size:14px;font-weight:700;color:var(--accent);margin-bottom:6px;">🎯</div>
+                    <div class="metric-label">即时市场扩张</div>
+                    <div style="font-size:11px;color:var(--text-3);margin-top:4px;">进入CUBE 500+客户</div>
+                </div>
+                <div class="metric-card">
+                    <div style="font-size:14px;font-weight:700;color:var(--accent);margin-bottom:6px;">🤝</div>
+                    <div class="metric-label">技术整合</div>
+                    <div style="font-size:11px;color:var(--text-3);margin-top:4px;">强化RegPlatform能力</div>
+                </div>
+                <div class="metric-card">
+                    <div style="font-size:14px;font-weight:700;color:var(--accent);margin-bottom:6px;">📊</div>
+                    <div class="metric-label">数据增强</div>
+                    <div style="font-size:11px;color:var(--text-3);margin-top:4px;">补充CUBE的知识库</div>
+                </div>
+                <div class="metric-card">
+                    <div style="font-size:14px;font-weight:700;color:var(--accent);margin-bottom:6px;">💰</div>
+                    <div class="metric-label">融资加速</div>
+                    <div style="font-size:11px;color:var(--text-3);margin-top:4px;">为CUBE融资赋能</div>
+                </div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-5"></div>
+</section>
+
+<!-- ====== CHAPTER 6: 未来展望 (2 cards) ====== -->
+<section class="chapter" id="ch-6">
+    <div class="chapter-header">
+        <h2>Agentic AI在金融的三大前沿</h2>
+        <span class="ch-sub">🔮 未来展望</span>
+        <span class="ch-counter" id="counter-6">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="6">
+
+        <!-- 1/2 技术演进 -->
+        <div class="slide"><div class="card"><h3>Agentic AI：从"顾问"到"执行者"的转变</h3><div class="card-body">
+            <p>Kodex AI正在见证金融科技的一个关键范式转变。传统的金融AI停留在"建议"——告诉你应该做什么。而Agentic AI代表"执行"——实际帮你做事。</p>
+            <div class="mode-boxes" style="grid-template-columns:1fr;">
+                <div class="mode-box">
+                    <div class="mode-title">📖 当前阶段</div>
+                    <div class="mode-desc">AI识别新规 → 生成执行清单 → 人工逐项执行。AI贡献度：30%</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-blue);">
+                    <div class="mode-title">🚀 下一阶段</div>
+                    <div class="mode-desc">AI识别新规 → 自主规划 → 自动执行 → 人工审批确认。AI贡献度：80%</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-green);">
+                    <div class="mode-title">🎯 终局形态</div>
+                    <div class="mode-desc">AI完全自主执行，人工仅参与异常决策。AI贡献度：95%+</div>
+                </div>
+            </div>
+            <p style="margin-top:14px;">CUBE+Kodex的合并，正是向"下一阶段"迈进的关键一步。CUBE的规制数据库 + Kodex的自主执行能力，有望在2026年推出"全自动合规工作流"。</p>
+        </div></div></div>
+
+        <!-- 2/2 市场机会 -->
+        <div class="slide"><div class="card"><h3>三大市场机会与风险</h3><div class="card-body">
+            <p>在AI合规这个赛道上，Kodex AI（现为CUBE生态的一部分）面临的不仅是机会，也有挑战：</p>
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4>🌟 三大机会</h4>
+                    <ul style="font-size:13px;line-height:1.9;color:var(--text-2);padding-left:18px;">
+                        <li><strong>亚洲扩张：</strong>中国、新加坡、香港的金融规制日益复杂，市场仍是蓝海</li>
+                        <li><strong>纵向深化：</strong>从"合规识别"扩展到"风险管理""欺诈检测"等相邻领域</li>
+                        <li><strong>行业扩展：</strong>保险、医药等高度规制行业也面临相似的合规痛点</li>
+                    </ul>
+                </div>
+                <div class="flex-col">
+                    <h4>⚠️ 三大风险</h4>
+                    <ul style="font-size:13px;line-height:1.9;color:var(--text-2);padding-left:18px;">
+                        <li><strong>监管变化：</strong>如果监管当局限制AI在合规决策中的角色，会削弱价值</li>
+                        <li><strong>大厂竞争：</strong>Google、Microsoft可能推出内置合规工具</li>
+                        <li><strong>集成风险：</strong>CUBE整合过程中，Kodex可能丧失独立迭代能力</li>
+                    </ul>
+                </div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-6"></div>
+</section>
+
+<!-- ====== CHAPTER 7: 核心启示 (2 cards) ====== -->
+<section class="chapter" id="ch-7">
+    <div class="chapter-header">
+        <h2>Kodex AI给全球AI创业者的启示</h2>
+        <span class="ch-sub">📚 核心启示</span>
+        <span class="ch-counter" id="counter-7">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="7">
+
+        <!-- 1/2 启示一 -->
+        <div class="slide"><div class="card"><h3>启示一：垂直深耕>水平扩张</h3><div class="card-body">
+            <p>Kodex AI的成功秘诀不在于"大而全"，而在于"小而精"。它没有尝试做通用AI，而是深耕金融合规这个极专业的垂直领域。这带来了三大优势：</p>
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4>1. 数据优势</h4>
+                    <p>金融合规领域的特化数据（监管文本、客户实践案例）比通用数据质量高1000倍。这使得微调后的模型性能远超GPT-4。</p>
+                </div>
+                <div class="flex-col">
+                    <h4>2. 客户理解</h4>
+                    <p>深耕一个领域意味着完全理解客户的pain points。Kodex AI的设计每一个细节都贴切金融机构的实际工作流。</p>
+                </div>
+            </div>
+            <div class="callout">
+                <strong>启示：</strong> 在AI创业的早期，不要贪心。选择一个足够大但专业性足够高的垂直领域，成为该领域的绝对专家。这比试图做万能的通用工具更容易获得VC资金和市场认可。
+            </div>
+        </div></div></div>
+
+        <!-- 2/2 启示二 -->
+        <div class="slide"><div class="card"><h3>启示二：Agentic AI是下一个风口</h3><div class="card-body">
+            <p>2023-2024年，大家都在讨论"RAG""微调""提示词工程"。Kodex AI则直接跳到了Agentic AI——让AI不仅能理解问题，还能自主规划和执行任务。这代表了AI应用的下一个进化阶段。</p>
+            <div class="mode-boxes" style="grid-template-columns:repeat(2,1fr);">
+                <div class="mode-box">
+                    <div class="mode-title">从工具→到代理</div>
+                    <div class="mode-desc">不再是"用户查询→AI回答"，而是"用户授权→AI自主完成"</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-blue);">
+                    <div class="mode-title">更高的价值捕获</div>
+                    <div class="mode-desc">从"提高信息获取效率"到"自动化业务流程"，订阅费可增长5-10倍</div>
+                </div>
+            </div>
+            <p style="margin-top:14px;">在金融、医疗、制造等流程复杂的B2B行业，Agentic AI已经不是愿景而是现实。Kodex AI的被收购，正是这个趋势的确凿证据。</p>
+            <div class="callout">
+                <strong>启示：</strong> 如果你正在做AI创业，问问自己：我的产品是"工具"还是"代理"？能否从"建议"升级为"执行"？这差一个维度，却可能决定你是被通用AI吞没，还是成为行业选手。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-7"></div>
+</section>
+
+</main>
+
+<script>
+    function go(chapterIndex) {
+        const element = document.getElementById(`ch-${chapterIndex}`);
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            updateNav();
+        }
+    }
+
+    function updateNav() {
+        const buttons = document.querySelectorAll('.nav-btn');
+        buttons.forEach(btn => btn.classList.remove('active'));
+
+        // Find which chapter is currently in view
+        const chapters = document.querySelectorAll('[id^="ch-"]');
+        let activeIndex = 0;
+        chapters.forEach((chapter, idx) => {
+            const rect = chapter.getBoundingClientRect();
+            if (rect.top <= window.innerHeight * 0.5) {
+                activeIndex = idx;
+            }
+        });
+
+        if (buttons[activeIndex]) {
+            buttons[activeIndex].classList.add('active');
+        }
+    }
+
+    // Initialize dots for each chapter
+    function initDots() {
+        document.querySelectorAll('[id^="dots-"]').forEach(dotsBar => {
+            const chapterNum = dotsBar.id.replace('dots-', '');
+            const cardTrack = document.querySelector(`[data-ch="${chapterNum}"]`);
+            if (!cardTrack) return;
+
+            const slides = cardTrack.querySelectorAll('.slide').length;
+            dotsBar.innerHTML = '';
+
+            for (let i = 0; i < slides; i++) {
+                const dot = document.createElement('button');
+                dot.className = `dot ${i === 0 ? 'active' : ''}`;
+                dot.onclick = () => {
+                    const slideWidth = cardTrack.offsetWidth;
+                    cardTrack.scrollLeft = i * slideWidth;
+                };
+                dotsBar.appendChild(dot);
+            }
+
+            // Update counter and dots on scroll
+            cardTrack.addEventListener('scroll', () => {
+                const slideWidth = cardTrack.offsetWidth;
+                const currentSlide = Math.round(cardTrack.scrollLeft / slideWidth) + 1;
+
+                document.querySelectorAll(`.dot`).forEach((d, idx) => {
+                    if (dotsBar.contains(d)) {
+                        d.classList.toggle('active', idx === currentSlide - 1);
+                    }
+                });
+
+                const counter = document.getElementById(`counter-${chapterNum}`);
+                if (counter) counter.textContent = `${currentSlide} / ${slides}`;
+            });
+        });
+    }
+
+    // Update nav on scroll
+    window.addEventListener('scroll', updateNav);
+
+    // Initialize on load
+    window.addEventListener('load', initDots);
+    initDots();
+
+    // Counter update function
+    document.querySelectorAll('[data-count]').forEach(el => {
+        const target = parseInt(el.getAttribute('data-count'));
+        const prefix = el.getAttribute('data-prefix') || '';
+        const suffix = el.getAttribute('data-suffix') || '';
+        let current = 0;
+        const step = Math.ceil(target / 30);
+
+        const timer = setInterval(() => {
+            current += step;
+            if (current >= target) {
+                current = target;
+                clearInterval(timer);
+            }
+            el.textContent = prefix + current + suffix;
+        }, 50);
+    });
+</script>
+
+</body>
+</html>
+            background: rgba(255,255,255,0.2);
+            transform: translateX(4px);
+        }
+
+        .nav-btn.active {
+            background: var(--accent-gold);
+            color: var(--primary-dark);
+        }
+
+        .main-content {
+            margin-left: 220px;
+            width: calc(100% - 220px);
+        }
+
+        /* ===== Cover Section ===== */
+        .cover {
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-teal) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 40px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cover::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 50%, rgba(255,184,0,0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(255,149,0,0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .cover-content {
+            text-align: center;
+            position: relative;
+            z-index: 2;
+            max-width: 700px;
+        }
+
+        .cover-logo {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 32px;
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+
+        .cover-title {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            letter-spacing: -0.5px;
+        }
+
+        .cover-subtitle {
+            font-size: 20px;
+            opacity: 0.95;
+            margin-bottom: 24px;
+            font-weight: 300;
+        }
+
+        .cover-tags {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+
+        .cover-tag {
+            background: rgba(255,255,255,0.15);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .cover-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 60px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .stat-box {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.85;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .cover-scroll-hint {
+            font-size: 14px;
+            opacity: 0.8;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== Chapter Layout ===== */
+        .chapter {
+            min-height: 100vh;
+            padding: 80px 60px;
+            background: var(--warm-bg);
+        }
+
+        .chapter:nth-child(odd) {
+            background: #FFFFFF;
+        }
+
+        .chapter-header {
+            margin-bottom: 48px;
+            position: relative;
+        }
+
+        .chapter-header h2 {
+            font-size: 42px;
+            color: var(--primary-dark);
+            margin-bottom: 16px;
+            font-weight: 700;
+        }
+
+        .ch-sub {
+            font-size: 16px;
+            color: var(--warm-accent);
+            margin-bottom: 8px;
+            display: inline-block;
+        }
+
+        .ch-counter {
+            position: absolute;
+            top: 0;
+            right: 0;
+            font-size: 14px;
+            color: var(--text-secondary);
+            background: var(--border-light);
+            padding: 6px 12px;
+            border-radius: 20px;
+        }
+
+        /* ===== Card Track (Horizontal Scroll) ===== */
+        .card-track {
+            display: flex;
+            gap: 24px;
+            overflow-x: auto;
+            padding-bottom: 20px;
+            scroll-behavior: smooth;
+            margin-bottom: 40px;
+        }
+
+        .card-track::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .card-track::-webkit-scrollbar-track {
+            background: var(--border-light);
+            border-radius: 10px;
+        }
+
+        .card-track::-webkit-scrollbar-thumb {
+            background: var(--warm-accent);
+            border-radius: 10px;
+        }
+
+        .slide {
+            flex: 0 0 calc(50% - 12px);
+            min-width: 400px;
+        }
+
+        /* ===== Card Components ===== */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            border-left: 4px solid var(--warm-accent);
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            transform: translateY(-4px);
+        }
+
+        .card h3 {
+            font-size: 22px;
+            color: var(--primary-dark);
+            margin-bottom: 16px;
+        }
+
+        .card-body {
+            font-size: 15px;
+            line-height: 1.8;
+            color: var(--text-secondary);
+        }
+
+        .card-body p {
+            margin-bottom: 12px;
+        }
+
+        .card.sparse {
+            padding: 40px;
+        }
+
+        .card.sparse h3 {
+            font-size: 28px;
+        }
+
+        .card.sparse .card-body {
+            font-size: 18px;
+        }
+
+        /* ===== Insight Card ===== */
+        .insight-card {
+            background: linear-gradient(135deg, #FFF5E6 0%, #FFF9F0 100%);
+            border-radius: 12px;
+            padding: 32px;
+            border-left: 4px solid var(--accent-gold);
+            position: relative;
+        }
+
+        .insight-emoji {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .insight-card h3 {
+            font-size: 22px;
+            color: var(--primary-dark);
+            margin-bottom: 16px;
+        }
+
+        .insight-highlight {
+            background: linear-gradient(120deg, var(--accent-gold) 0%, var(--accent-gold-light) 100%);
+            color: white;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        /* ===== Callout Box ===== */
+        .callout {
+            background: rgba(217, 119, 87, 0.08);
+            border-left: 4px solid var(--warm-accent);
+            padding: 16px 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+            font-size: 15px;
+            line-height: 1.7;
+        }
+
+        .callout strong {
+            color: var(--warm-accent);
+        }
+
+        /* ===== Quote Block ===== */
+        .quote-block {
+            background: var(--warm-bg);
+            border-left: 4px solid var(--primary-teal);
+            padding: 24px;
+            border-radius: 8px;
+            font-style: italic;
+            font-size: 16px;
+            line-height: 1.8;
+            color: var(--text-primary);
+            margin: 20px 0;
+        }
+
+        .quote-attr {
+            font-style: normal;
+            font-weight: 600;
+            margin-top: 12px;
+            color: var(--primary-dark);
+        }
+
+        /* ===== Metrics Grid ===== */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-teal) 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* ===== Table ===== */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        thead {
+            background: linear-gradient(180deg, var(--primary-dark), var(--primary-teal));
+            color: white;
+        }
+
+        th {
+            padding: 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-light);
+            font-size: 14px;
+        }
+
+        tbody tr:hover {
+            background: var(--warm-bg);
+        }
+
+        /* ===== Timeline ===== */
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+        }
+
+        .timeline-item {
+            display: flex;
+            margin-bottom: 32px;
+        }
+
+        .timeline-dot {
+            width: 12px;
+            height: 12px;
+            background: var(--accent-gold);
+            border-radius: 50%;
+            margin-top: 6px;
+            margin-right: 20px;
+            flex-shrink: 0;
+            box-shadow: 0 0 0 4px rgba(255,184,0,0.2);
+        }
+
+        .timeline-year {
+            font-weight: 700;
+            color: var(--primary-dark);
+            min-width: 100px;
+            font-size: 14px;
+        }
+
+        .timeline-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        /* ===== Mode Boxes ===== */
+        .mode-boxes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .mode-box {
+            border-left: 4px solid var(--warm-accent);
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .mode-title {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: var(--primary-dark);
+        }
+
+        .mode-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* ===== Flex Row ===== */
+        .flex-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin: 24px 0;
+        }
+
+        .flex-col {
+            padding: 24px;
+            background: var(--warm-bg);
+            border-radius: 8px;
+        }
+
+        .flex-col h4 {
+            color: var(--primary-dark);
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        /* ===== Images ===== */
+        .wide-screenshot {
+            width: 100%;
+            max-width: 100%;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            margin: 24px 0;
+        }
+
+        .phone-gallery {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 24px 0;
+        }
+
+        .phone-frame {
+            width: 110px;
+            aspect-ratio: 9/16;
+            background: linear-gradient(135deg, #1a1a1a 0%, #333 100%);
+            border-radius: 24px;
+            padding: 8px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .phone-frame img {
+            width: 100%;
+            height: 100%;
+            border-radius: 16px;
+            object-fit: cover;
+        }
+
+        .phone-label {
+            text-align: center;
+            margin-top: 12px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* ===== Story Card ===== */
+        .story-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 24px 0;
+        }
+
+        .story-card {
+            background: linear-gradient(135deg, #E8F5F5 0%, #F0FAFB 100%);
+            padding: 24px;
+            border-radius: 12px;
+            border-left: 4px solid var(--primary-teal);
+        }
+
+        .story-name {
+            font-weight: 600;
+            color: var(--primary-dark);
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .story-text {
+            font-size: 14px;
+            font-style: italic;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        /* ===== News Item ===== */
+        .news-item {
+            padding: 16px;
+            background: white;
+            border-left: 4px solid var(--accent-gold);
+            border-radius: 6px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .news-date {
+            font-size: 12px;
+            color: var(--accent-gold);
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .news-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .news-title a {
+            color: var(--primary-dark);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .news-title a:hover {
+            color: var(--warm-accent);
+        }
+
+        .news-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* ===== Position Cards ===== */
+        .position-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .position-card {
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .position-title {
+            font-weight: 600;
+            color: var(--primary-dark);
+            font-size: 16px;
+        }
+
+        /* ===== Dots Bar (Pagination) ===== */
+        .dots-bar {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 24px;
+            padding-bottom: 20px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--border-light);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .dot.active {
+            width: 24px;
+            background: var(--warm-accent);
+            border-radius: 4px;
+        }
+
+        /* ===== References ===== */
+        .references {
+            margin-top: 40px;
+            padding-top: 40px;
+            border-top: 2px solid var(--border-light);
+        }
+
+        .references h4 {
+            color: var(--primary-dark);
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+
+        .references ul {
+            list-style: none;
+            columns: 2;
+            column-gap: 40px;
+        }
+
+        .references li {
+            margin-bottom: 12px;
+            break-inside: avoid;
+        }
+
+        .references a {
+            color: var(--primary-teal);
+            text-decoration: none;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .references a:hover {
+            text-decoration: underline;
+        }
+
+        /* ===== Scrollbar Styling ===== */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--border-light);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--warm-accent);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-teal);
+        }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 1200px) {
+            .sidebar {
+                width: 180px;
+            }
+
+            .main-content {
+                margin-left: 180px;
+                width: calc(100% - 180px);
+            }
+
+            .chapter {
+                padding: 60px 40px;
+            }
+
+            .slide {
+                min-width: 350px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 70px;
+                padding: 16px 8px;
+            }
+
+            .sidebar-brand {
+                flex-direction: column;
+                margin-bottom: 24px;
+            }
+
+            .sidebar-logo {
+                width: 40px;
+                height: 40px;
+            }
+
+            .sidebar-brand-text {
+                font-size: 12px;
+            }
+
+            .sidebar-brand-sub {
+                display: none;
+            }
+
+            .nav-btn {
+                font-size: 11px;
+                padding: 10px 8px;
+            }
+
+            .main-content {
+                margin-left: 70px;
+                width: calc(100% - 70px);
+            }
+
+            .chapter {
+                padding: 40px 24px;
+            }
+
+            .chapter-header h2 {
+                font-size: 28px;
+            }
+
+            .cover {
+                padding: 40px 20px;
+            }
+
+            .cover-title {
+                font-size: 32px;
+            }
+
+            .slide {
+                min-width: calc(100vw - 150px);
+            }
+
+            .flex-row {
+                grid-template-columns: 1fr;
+            }
+
+            .position-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    
+        .nav-dashboard {
+            display: block; width: calc(100% - 8px); margin: 8px 4px 4px;
+            background: rgba(217,119,87,0.15); border: 1px solid rgba(217,119,87,0.3);
+            color: var(--accent, #D97757); padding: 10px 12px; border-radius: 8px;
+            text-align: center; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+            font-weight: 600; letter-spacing: 0.3px;
+        }
+        .nav-dashboard:hover {
+            background: rgba(217,119,87,0.3); color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-main">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-brand">
+                <img class="sidebar-logo" alt="Kodex AI Logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAY1BMVEVHcEwkp94kLHokqN8lqeElp98lp94mquEida0gj8wlp94mL34fYKolKnYbc7okSpwcbrcegMEiLHskm9UadLsfjcskIGEpN44kImIpN48kbrQqN5AadbwlIWImLHUoMoMkU5C4yvmJAAAAG3RSTlMAQkie3sCB/hAmXaD9dbP9ZP0m/vX8xeXqy5U3cGEvAAADR0lEQVR4nO2aWXeDIBCFS93A2CQWLfFEY/7/ryzgEhC3nAzywn3q6ct83rkMS/v15eXl5eXl5eXl5eXltSmMsVsAwuUUAaM0Ri4JMImjIHVpAgeIAqcmpEGYRAFyZoLoQZKE3ATiigAFCVfojoDEoSSI4tQNAk4jSZC4Wg68Bx2AMMFJH0gaJb1CJyb0MUzcJQHHYZK4NAGngUrgwAQUR0ni0gSMNAAHJhC1By5MwHE0JRBj6UAANLXgaBOUYeQmCeowUhGOM0EbRqoJ199jEMY9UVdZnH6+jyGYDKNOtH6yv9PP7xEAJDVTQPNn0zS3v59D2kDMFNTPRyMJTkcgkHQCQGlXXyAckQRjGOVj/c4E6whEjyFV6h+TBH0Y5VnbNDqBdRPUGNLs0UzFTbBLoAyjMnsa9e2bgNFgAa1b04DBBItjadgTaf6cr2/bBNyfjOrF+h3Ct7X1IFfiyvfbN0Ec0I0FOG+CHQCego3vt2wCQefN7+8R7BBgdL7wFbjtQWcCfB9QygHaR68NBviZwCfRubjc7+297TSSzLNAm8DrR3mdcQJNCskMwjfcY6+oX84A3Ac/2odhye0Prg98N45oXtdzBAaP4sgNaCbwQ2lIy10AAuE+hqRlJ4gFKR8ppAF1toNAhWHV9XMAIuuXtdR7ABXE3kTkUaQzoC7qdwB4/Y8/X8Rf1C87gHcsqEBuDP1xeKy/H4Cdrp+vANzfCocE7I8hqyBmwHAQfDVgrwW8PoD9YvwkBkCdbdcHav9wHxvrF/ssYBXI+CHjGylVv18ArBMwkH0Qv56m9AZsWcBA0i//XDTehJT6xRaATD+A/+j1NNcbUOyyQNSH2H2URyE6ScAaAINJv1bfTMDKMKpgtn8e//X6CxZUQKdA/TlGGcIawYz/UK9V2ruomUD5Y2FYwEC2/kWAmR5cJvXhLkNqC5bqT1LAGOh1UCHoElAY5flvVACY2f8SGd6Dlg3gABfVfthrGB5eBWm+DDD2gFl4sO6bsLAEe4COADD9GoHcimeGsGEBdPsHic14LQEyBYDDxxSfBmVerCq7MGvPQXJDCs4bsvIM8iIg6Lolu3+uwWRDv67/18zLy8vLy8vLy8vLy8vrM/0DwFnruR3Q4x4AAAAASUVORK5CYII=" />
+                <div>
+                    <div class="sidebar-brand-text">Kodex AI</div>
+                    <div class="sidebar-brand-sub">深度案例研究</div>
+                </div>
+            </div>
+            <div class="nav-items">
+                <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+                <button class="nav-btn" onclick="go(1)">📋 公司概况</button>
+                <button class="nav-btn" onclick="go(2)">💰 融资与财务</button>
+                <button class="nav-btn" onclick="go(3)">🛠️ 产品分析</button>
+                <button class="nav-btn" onclick="go(4)">🤖 AI技术</button>
+                <button class="nav-btn" onclick="go(5)">⚔️ 竞争分析</button>
+                <button class="nav-btn" onclick="go(6)">💡 核心启示</button>
+                <button class="nav-btn" onclick="go(7)">📰 最新进展</button>
+            </div>
+        
+    <a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Chapter 0: Cover -->
+            <section class="cover" id="ch-0">
+                <div class="cover-content">
+                    <img class="cover-logo" alt="Kodex AI" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAY1BMVEVHcEwkp94kLHokqN8lqeElp98lp94mquEida0gj8wlp94mL34fYKolKnYbc7okSpwcbrcegMEiLHskm9UadLsfjcskIGEpN44kImIpN48kbrQqN5AadbwlIWImLHUoMoMkU5C4yvmJAAAAG3RSTlMAQkie3sCB/hAmXaD9dbP9ZP0m/vX8xeXqy5U3cGEvAAADR0lEQVR4nO2aWXeDIBCFS93A2CQWLfFEY/7/ryzgEhC3nAzywn3q6ct83rkMS/v15eXl5eXl5eXl5eXltSmMsVsAwuUUAaM0Ri4JMImjIHVpAgeIAqcmpEGYRAFyZoLoQZKE3ATiigAFCVfojoDEoSSI4tQNAk4jSZC4Wg68Bx2AMMFJH0gaJb1CJyb0MUzcJQHHYZK4NAGngUrgwAQUR0ni0gSMNAAHJhC1By5MwHE0JRBj6UAANLXgaBOUYeQmCeowUhGOM0EbRqoJ199jEMY9UVdZnH6+jyGYDKNOtH6yv9PP7xEAJDVTQPNn0zS3v59D2kDMFNTPRyMJTkcgkHQCQGlXXyAckQRjGOVj/c4E6whEjyFV6h+TBH0Y5VnbNDqBdRPUGNLs0UzFTbBLoAyjMnsa9e2bgNFgAa1b04DBBItjadgTaf6cr2/bBNyfjOrF+h3Ct7X1IFfiyvfbN0Ec0I0FOG+CHQCego3vt2wCQefN7+8R7BBgdL7wFbjtQWcCfB9QygHaR68NBviZwCfRubjc7+297TSSzLNAm8DrR3mdcQJNCskMwjfcY6+oX84A3Ac/2odhye0Prg98N45oXtdzBAaP4sgNaCbwQ2lIy10AAuE+hqRlJ4gFKR8ppAF1toNAhWHV9XMAIuuXtdR7ABXE3kTkUaQzoC7qdwB4/Y8/X8Rf1C87gHcsqEBuDP1xeKy/H4Cdrp+vANzfCocE7I8hqyBmwHAQfDVgrwW8PoD9YvwkBkCdbdcHav9wHxvrF/ssYBXI+CHjGylVv18ArBMwkH0Qv56m9AZsWcBA0i//XDTehJT6xRaATD+A/+j1NNcbUOyyQNSH2H2URyE6ScAaAINJv1bfTMDKMKpgtn8e//X6CxZUQKdA/TlGGcIawYz/UK9V2ruomUD5Y2FYwEC2/kWAmR5cJvXhLkNqC5bqT1LAGOh1UCHoElAY5flvVACY2f8SGd6Dlg3gABfVfthrGB5eBWm+DDD2gFl4sO6bsLAEe4COADD9GoHcimeGsGEBdPsHic14LQEyBYDDxxSfBmVerCq7MGvPQXJDCs4bsvIM8iIg6Lolu3+uwWRDv67/18zLy8vLy8vLy8vLy8vrM/0DwFnruR3Q4x4AAAAASUVORK5CYII=" />
+                    <h1 class="cover-title">Kodex AI</h1>
+                    <p class="cover-subtitle">Agentic AI如何革新金融机构的合规工作流</p>
+                    <div class="cover-tags">
+                        <span class="cover-tag">Agentic AI</span>
+                        <span class="cover-tag">金融合规</span>
+                        <span class="cover-tag">监管自动化</span>
+                        <span class="cover-tag">欧洲RegTech</span>
+                    </div>
+                    <div class="cover-stats">
+                        <div class="stat-box">
+                            <div class="stat-number" data-count="95" data-suffix="%">0</div>
+                            <div class="stat-label">任务自动化</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-number" data-count="20" data-suffix="倍">0</div>
+                            <div class="stat-label">规制覆盖</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-number" data-count="1.82" data-suffix="M">0</div>
+                            <div class="stat-label">融资总额</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-number" data-count="2022" data-prefix="">0</div>
+                            <div class="stat-label">成立年份</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-number" data-count="2025" data-prefix="">0</div>
+                            <div class="stat-label">被CUBE收购</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-number" data-count="11" data-suffix="">0</div>
+                            <div class="stat-label">核心团队</div>
+                        </div>
+                    </div>
+                    <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+                </div>
+            </section>
+
+            <!-- Chapter 1: Company Overview -->
+            <section class="chapter" id="ch-1">
+                <div class="chapter-header">
+                    <h2>公司概况</h2>
+                    <span class="ch-sub">📋 Kodex AI的使命与发展</span>
+                    <span class="ch-counter" id="counter-1">1 / 4</span>
+                </div>
+                <div class="card-track" data-ch="1">
+                    <div class="slide">
+                        <div class="card sparse">
+                            <h3>创立背景</h3>
+                            <div class="card-body">
+                                <p>Kodex AI成立于2022年，由来自德国的金融科技创业者Thomas Kaiser和AI专家Claus Lang联合创办。两位创始人在金融行业的工作中发现了一个巨大痛点：每当监管部门发布新规，金融机构需要耗费数周甚至数月来理解、分析和实施这些要求。</p>
+                                <p>这个低效过程涉及跨部门协调、复杂文本解读、系统配置等繁琐工作，既消耗大量人力成本，又容易导致合规遗漏和罚款风险。</p>
+                                <div class="callout">
+                                    <strong>核心洞察：</strong> 如果AI能够理解金融监管语言，就可以将这个过程完全自动化。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="card sparse">
+                            <h3>发展里程碑</h3>
+                            <div class="card-body">
+                                <div class="timeline">
+                                    <div class="timeline-item">
+                                        <div class="timeline-dot"></div>
+                                        <div>
+                                            <div class="timeline-year">2022</div>
+                                            <div class="timeline-text"><strong>公司成立：</strong> 获得Deutsche Bank Ventures支持，进入德国银行集团孵化器</div>
+                                        </div>
+                                    </div>
+                                    <div class="timeline-item">
+                                        <div class="timeline-dot"></div>
+                                        <div>
+                                            <div class="timeline-year">2023</div>
+                                            <div class="timeline-text"><strong>Governance Agent发布：</strong> 首个Agentic AI合规平台上线</div>
+                                        </div>
+                                    </div>
+                                    <div class="timeline-item">
+                                        <div class="timeline-dot"></div>
+                                        <div>
+                                            <div class="timeline-year">2024</div>
+                                            <div class="timeline-text"><strong>Meta认可：</strong> 被评为欧洲顶级AI初创，发布加密合规套件</div>
+                                        </div>
+                                    </div>
+                                    <div class="timeline-item">
+                                        <div class="timeline-dot"></div>
+                                        <div>
+                                            <div class="timeline-year">2025.10</div>
+                                            <div class="timeline-text"><strong>被CUBE收购：</strong> 成为RegPlatform的AI核心引擎</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="card">
+                            <h3>核心用户</h3>
+                            <div class="card-body">
+                                <p><strong>主要客户群体：</strong></p>
+                                <p>• 大型商业银行（需处理复杂多层级监管）</p>
+                                <p>• 金融科技公司（敏捷性强但合规资源有限）</p>
+                                <p>• 加密交易所（面临前沿且严苛的规制）</p>
+                                <p>• 数字银行（无遗留系统，易于集成）</p>
+                                <div class="callout">
+                                    <strong>典型用户：</strong> 合规负责人、首席风险官、RegTech团队经理
+                                </div>
+                                <p><strong>核心痛点：</strong> 监管文本解读耗时、跨部门协调成本高、合规遗漏导致罚款、人员成本压力大</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="card">
+                            <h3>市场定位</h3>
+                            <div class="card-body">
+                                <div class="metrics-grid" style="grid-template-columns: 1fr;">
+                                    <div class="metric-card">
+                                        <div class="metric-value">金融合规自动化</div>
+                                        <div class="metric-label">主赛道</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-value">Agentic AI</div>
+                                        <div class="metric-label">核心技术</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-value">SaaS + API</div>
+                                        <div class="metric-label">交付方式</div>
+                                    </div>
+                                </div>
+                                <p style="margin-top: 16px;">Kodex AI处于一个快速增长的市场：金融机构面临的监管复杂度每年增加20-30%，传统人力方案已不堪重负。AI驱动的自动化方案成为必然选择。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dots-bar" id="dots-1"></div>
+            </section>
+
+            <!-- Chapter 2: Funding & Financials -->
+            <section class="chapter" id="ch-2">
+                <div class="chapter-header">
+                    <h2>融资与财务</h2>
+                    <span class="ch-sub">💰 从种子轮到CUBE收购</span>
+                    <span class="ch-counter" id="counter-2">1 / 4</span>
+                </div>
+                <div class="card-track" data-ch="2">
+                    <div class="slide">
+                        <div class="card">
+                            <h3>融资历程</h3>
+                            <div class="card-body">
+                                <p><strong>总融资额：$1.82M</strong></p>
+                                <p>Kodex AI的融资路径充分反映了欧洲AI初创的融资特点——先期专注于技术验证，后期获得战略投资认可。</p>
+                                <div class="timeline">
+                                    <div class="timeline-item">
+                                        <div class="timeline-dot"></div>
+                                        <div>
+                                            <div class="timeline-year">2022</div>
+                                            <div class="timeline-text">种子轮：$800K，来自早期天使和Berlin Startup School</div>
+                                        </div>
+                                    </div>
+                                    <div class="timeline-item">
+                                        <div class="timeline-dot"></div>
+                                        <div>
+                                            <div class="timeline-year">2023-2024</div>
+                                            <div class="timeline-text">后续融资：$1.02M，由Deutsche Bank Ventures领投</div>
+                                        </div>
+                                    </div>
+                                    <div class="timeline-item">
+                                        <div class="timeline-dot"></div>
+                                        <div>
+                                            <div class="timeline-year">2025</div>
+                                            <div class="timeline-text">被CUBE收购，成为RegPlatform的战略AI引擎</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="card">
+                            <h3>主要投资方</h3>
+                            <div class="card-body">
+                                <div class="mode-boxes">
+                                    <div class="mode-box">
+                                        <div class="mode-title">🏦 Deutsche Bank Ventures</div>
+                                        <div class="mode-desc">德国银行集团风投部门，为Kodex AI提供战略支持和市场认可</div>
+                                    </div>
+                                    <div class="mode-box" style="border-left-color:var(--primary-teal);">
+                                        <div class="mode-title">📱 Meta</div>
+                                        <div class="mode-desc">通过AI加速器认可，提供GPU资源和生态支持</div>
+                                    </div>
+                                    <div class="mode-box" style="border-left-color:var(--accent-gold);">
+                                        <div class="mode-title">🚀 Signals.VC</div>
+                                        <div class="mode-desc">欧洲早期VC，专注AI和RegTech融资</div>
+                                    </div>
+                                </div>
+                                <div class="callout">
+                                    <strong>投资者特点：</strong> 均为金融和AI领域的战略投资方，而非纯财务投资者。这反映了Kodex AI商业模式的清晰性和市场认可度。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="card">
+                            <h3>商业模式与指标</h3>
+                            <div class="card-body">
+                                <p><strong>收入模式：</strong> 100% SaaS订阅</p>
+                                <p>Kodex AI采取纯订阅模式，按部门/用户数量计费。不同规模的客户有分层定价：</p>
+                                <div class="mode-boxes">
+                                    <div class="mode-box">
+                                        <div class="mode-title">Starter</div>
+                                        <div class="mode-desc">按使用量计费，支持单部门试用</div>
+                                    </div>
+                                    <div class="mode-box" style="border-left-color:var(--accent-gold);">
+                                        <div class="mode-title">Pro</div>
+                                        <div class="mode-desc">主流选择，按用户年订阅</div>
+                                    </div>
+                                    <div class="mode-box" style="border-left-color:var(--primary-teal);">
+                                        <div class="mode-title">Enterprise</div>
+                                        <div class="mode-desc">大型金融机构定制方案</div>
+                                    </div>
+                                </div>
+                                <p style="margin-top: 16px;"><strong>增长指标：</strong> 未公开ARR，但据报告已有多个欧洲大型银行客户，年增长率预估70-100%</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="card">
+                            <h3>IPO前景与并购价值</h3>
+                            <div class="card-body">
+                                <p>Kodex AI已被CUBE Content Governance Global收购，改变了其IPO轨迹。</p>
+                                <div class="callout">
+                                    <strong>并购意义：</strong> CUBE看中Kodex AI的Agentic AI技术，计划将其作为RegPlatform的核心AI引擎。这体现了RegTech行业从'功能型'向'AI赋能型'的战略转向。
+                                </div>
+                                <p><strong>后续前景：</strong></p>
+                                <p>• CUBE正在融资和筹划上市</p>
+                                <p>• Kodex AI将作为CUBE的AI战略支柱进行融资路演</p>
+                                <p>• 预计2026-2027年，CUBE + Kodex AI联合体可能在欧洲或美国启动IPO</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dots-bar" id="dots-2"></div>
+            </section>
+
+            <!-- Chapter 3: Product Analysis -->
+            <section class="chapter" id="ch-3">
+                <div class="chapter-header">
+                    <h2>产品分析</h2>
+                    <span class="ch-sub">🛠️ Agentic AI合规平台的核心功能</span>
+                    <span class="ch-counter" id="counter-3">1 / 5</span>
+                </div>
+                <div class="card-track" data-ch="3">
+                    <div class="slide">
+                        <div class="card">
+                            <h3>产品哲学</h3>
+                            <div class="card-body">
+                                <div class="quote-block">
+                                    从'建议'到'执行' — 合规应该像呼吸一样自然
+                                    <div class="quote-attr">— Kodex AI产品定位</div>
+                                </div>
+                                <p>传统合规工具只是提出建议，需要人工审核和执行。Kodex AI的Agentic架构则能够自主规划和执行监管任务，将人工干预从90%降低到5%。</p>
+                                <div class="callout">
+                                    <strong>关键区别：</strong> 不是'AI给出建议'，而是'AI自主执行'。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="card">
+                            <h3>核心产品：Governance Agent</h3>
+                            <div class="card-body">
+                                <p><strong>绝对核心差异化</strong></p>
+                                <p>Governance Agent是Kodex AI的产品灵魂。这个AI代理能够：</p>
+                                <p>✓ 自动识别监管文本中的关键要求</p>
+                                <p>✓ 结构化分析影响范围和实施截止</p>
+                                <p>✓ 生成执行计划并推送至相关系统</p>
+                                <p>✓ 自主完成95%的合规任务</p>
+                                <div class="metrics-grid">
+                                    <div class="metric-card">
+                                        <div class="metric-value">从数周</div>
+                                        <div class="metric-label">传统处理时间</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-value">到数秒</div>
+                                        <div class="metric-label">AI处理时间</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="card">
+                            <h3>Compliance Chat Assistant</h3>
+                            <div class="card-body">
+                                <p>一个自然语言对话式合规助手，降低使用门槛。</p>
+                                <p><strong>用户可以这样提问：</strong></p>
+                                <p>• "这个新欧盟规则对我们意味着什么？"</p>
+                                <p>• "我需要更新哪些系统来符合这一规定？"</p>
+                                <p>• "MiCA对我们的加密交易业务有什么影响？"</p>
+                                <p><strong>AI回复：</strong> 实时返回精确答案，带原文引用和推理过程</p>
+                                <div class="callout">
+                                    <strong>价值：</strong> 使非法律背景的团队也能快速获得合规洞察
+                                </div>
+                                <p><strong>技术亮点：</strong> 支持10+语言，引用精度>99%</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="card">
+                            <h3>Crypto Compliance Suite</h3>
+                            <div class="card-body">
+                                <p>专为加密交易所和DeFi平台定制的合规工具集。</p>
+                                <div class="mode-boxes">
+                                    <div class="mode-box">
+                                        <div class="mode-title">🔐 MiCA Compliance</div>
+                                        <div class="mode-desc">欧盟加密资产市场法规全覆盖</div>
+                                    </div>
+                                    <div class="mode-box" style="border-left-color:var(--primary-teal);">
+                                        <div class="mode-title">🚫 AML-CFT</div>
+                                        <div class="mode-desc">反洗钱和反融资恐怖主义</div>
+                                    </div>
+                                    <div class="mode-box" style="border-left-color:var(--accent-gold);">
+                                        <div class="mode-title">⛔ OFAC/FinCEN</div>
+                                        <div class="mode-desc">制裁列表和官方监管库集成</div>
+                                    </div>
+                                </div>
+                                <div class="callout">
+                                    <strong>市场意义：</strong> 加密金融合规是最复杂的，Kodex AI将这一行业最高痛点纳入产品。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="card">
+                            <h3>工作流集成与数据链</h3>
+                            <div class="card-body">
+                                <p><strong>系统集成：</strong> 与企业现有工具无缝协作</p>
+                                <p>• ServiceNow（工作流管理）</p>
+                                <p>• Salesforce（客户数据）</p>
+                                <p>• 内部CTRM系统（交易风险）</p>
+                                <p>• Slack/Teams（实时通知）</p>
+                                <div class="callout">
+                                    <strong>核心价值：</strong> Kodex AI成为合规工作流的中枢神经，而不是孤立工具。
+                                </div>
+                                <p><strong>审计能力：</strong> 完整的合规决策审计日志，支持GDPR/SOX审计要求。记录每个AI决策的推理过程，确保可被监管审查。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dots-bar" id="dots-3"></div>
+            </section>
+
+            <!-- Chapter 4: AI Technology -->
+            <section class="chapter" id="ch-4">
+                <div class="chapter-header">
+                    <h2>AI技术与创新</h2>
+                    <span class="ch-sub">🤖 金融监管LLM微调的突破</span>
+                    <span class="ch-counter" id="counter-4">1 / 4</span>
+                </div>
+                <div class="card-track" data-ch="4">
+                    <div class="slide">
+                        <div class="card">
+                            <h3>技术架构</h3>
+                            <div class="card-body">
+                                <p><strong>混合AI架构：</strong></p>
+                                <p>1. 微调的金融专用LLM</p>
+                                <p style="margin-left: 20px; margin-top: 8px;">基于GPT-4/Claude等基础模型，用数千份金融监管文档持续微调</p>
+                                <p style="margin-top: 16px;">2. Agentic AI框架（任务规划+执行）</p>
+                                <p style="margin-left: 20px; margin-top: 8px;">自主规划执行步骤，集成外部系统（ServiceNow、Salesforce等）</p>
+                                <div class="callout">
+                                    <strong>核心创新：</strong> 金融监管专用LLM的微调精度比通用GPT高3-5倍。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="card">
+                            <h3>垂直化微调模型</h3>
+                            <div class="card-body">
+                                <p><strong>关键能力：</strong></p>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>模型</th>
+                                            <th>功能</th>
+                                            <th>精度</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>文本分类器</td>
+                                            <td>识别监管文本类型</td>
+                                            <td>>95%</td>
+                                        </tr>
+                                        <tr>
+                                            <td>需求提取模型</td>
+                                            <td>从文本提取实施义务</td>
+                                            <td>>90%</td>
+                                        </tr>
+                                        <tr>
+                                            <td>风险评估模型</td>
+                                            <td>评估规制影响等级</td>
+                                            <td>定性评估</td>
+                                        </tr>
+                                        <tr>
+                                            <td>金融实体识别</td>
+                                            <td>识别关键金融概念</td>
+                                            <td>>92%</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <div class="callout">
+                                    <strong>优势来源：</strong> 对金融领域的深度理解，而非通用AI的表面匹配。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="card">
+                            <h3>Agentic框架</h3>
+                            <div class="card-body">
+                                <p><strong>三层执行闭环：</strong></p>
+                                <div class="flex-row">
+                                    <div class="flex-col">
+                                        <h4>规划 (Planning)</h4>
+                                        <p>AI根据新规制自动生成执行计划，包括：</p>
+                                        <p>• 需要更新的系统</p>
+                                        <p>• 实施顺序</p>
+                                        <p>• 截止时间</p>
+                                    </div>
+                                    <div class="flex-col">
+                                        <h4>执行 (Execution)</h4>
+                                        <p>通过API触发相关系统执行任务：</p>
+                                        <p>• ServiceNow创建工单</p>
+                                        <p>• Salesforce更新跟踪</p>
+                                        <p>• Slack发送提醒</p>
+                                    </div>
+                                </div>
+                                <div class="flex-row">
+                                    <div class="flex-col">
+                                        <h4>监控 (Monitoring)</h4>
+                                        <p>持续跟踪执行状态：</p>
+                                        <p>• 完成度进度</p>
+                                        <p>• 遗留风险识别</p>
+                                        <p>• 实时报警</p>
+                                    </div>
+                                    <div class="flex-col">
+                                        <h4>复盘 (Review)</h4>
+                                        <p>自动生成合规报告：</p>
+                                        <p>• 执行记录</p>
+                                        <p>• 审计线索</p>
+                                        <p>• 监管提交</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="card">
+                            <h3>竞争壁垒</h3>
+                            <div class="card-body">
+                                <div class="position-cards">
+                                    <div class="position-card" style="background:#FFE6E6;">
+                                        <div style="font-size:18px;margin-bottom:4px;">🔐</div>
+                                        <div class="position-title">数据积累</div>
+                                        <div style="font-size:11px;color:var(--text-2);">上千份金融监管文档 + 案例库</div>
+                                    </div>
+                                    <div class="position-card" style="background:#E6F5FF;">
+                                        <div style="font-size:18px;margin-bottom:4px;">🏆</div>
+                                        <div class="position-title">战略背书</div>
+                                        <div style="font-size:11px;color:var(--text-2);">Deutsche Bank & CUBE支持</div>
+                                    </div>
+                                    <div class="position-card" style="background:#E6FFE6;">
+                                        <div style="font-size:18px;margin-bottom:4px;">⚡</div>
+                                        <div class="position-title">先发优势</div>
+                                        <div style="font-size:11px;color:var(--text-2);">Agentic AI在合规的首个落地</div>
+                                    </div>
+                                    <div class="position-card" style="background:#FFF0E6;">
+                                        <div style="font-size:18px;margin-bottom:4px;">🌍</div>
+                                        <div class="position-title">地理优势</div>
+                                        <div style="font-size:11px;color:var(--text-2);">欧洲深度理解MiFID II等规制</div>
+                                    </div>
+                                </div>
+                                <p style="margin-top: 16px;">这些壁垒共同构成了Kodex AI很难被追赶的护城河。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dots-bar" id="dots-4"></div>
+            </section>
+
+            <!-- Chapter 5: Competitive Analysis -->
+            <section class="chapter" id="ch-5">
+                <div class="chapter-header">
+                    <h2>竞争分析</h2>
+                    <span class="ch-sub">⚔️ RegTech市场格局与Kodex AI的位置</span>
+                    <span class="ch-counter" id="counter-5">1 / 3</span>
+                </div>
+                <div class="card-track" data-ch="5">
+                    <div class="slide">
+                        <div class="card">
+                            <h3>市场规模与机会</h3>
+                            <div class="card-body">
+                                <div class="metrics-grid" style="grid-template-columns:repeat(2,1fr);">
+                                    <div class="metric-card">
+                                        <div class="metric-value">$800B-1.2T</div>
+                                        <div class="metric-label">全球合规市场TAM</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-value">$100B-200B</div>
+                                        <div class="metric-label">AI合规自动化SaaS</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-value">$10B-30B</div>
+                                        <div class="metric-label">欧亚AI合规市场</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-value">20-30%</div>
+                                        <div class="metric-label">预期3年采纳率</div>
+                                    </div>
+                                </div>
+                                <div class="callout">
+                                    <strong>增长驱动：</strong> 监管复杂度每年增加20-30%，AI自动化成为必然选择。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="card">
+                            <h3>直接竞争对手</h3>
+                            <div class="card-body">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>竞争对手</th>
+                                            <th>定位</th>
+                                            <th>优势</th>
+                                            <th>劣势</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>AskOmni</td>
+                                            <td>通用AI合规助手</td>
+                                            <td>易用性高，集成广</td>
+                                            <td>金融专用性不足</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Deloitte RegTech</td>
+                                            <td>咨询驱动方案</td>
+                                            <td>品牌信任度高</td>
+                                            <td>成本高，AI能力弱</td>
+                                        </tr>
+                                        <tr>
+                                            <td>ComplyAdvantage</td>
+                                            <td>AML-CFT专用</td>
+                                            <td>垂直深度强</td>
+                                            <td>覆盖面窄</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <div class="callout">
+                                    <strong>竞争位置：</strong> Kodex AI的独特价值——金融专用LLM + Agentic架构 — 是其他竞争对手难以复制的。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="card">
+                            <h3>竞争优势总结</h3>
+                            <div class="card-body">
+                                <div class="story-cards">
+                                    <div class="story-card">
+                                        <div class="story-name">1. 垂直深度</div>
+                                        <div class="story-text">金融监管专用LLM精度领先，相比通用AI高3-5倍</div>
+                                    </div>
+                                    <div class="story-card">
+                                        <div class="story-name">2. 执行能力</div>
+                                        <div class="story-text">Agentic架构不仅建议，还能自主执行，解决真实痛点</div>
+                                    </div>
+                                    <div class="story-card">
+                                        <div class="story-name">3. 加密双覆盖</div>
+                                        <div class="story-text">同时支持传统金融和加密合规，填补市场空白</div>
+                                    </div>
+                                    <div class="story-card">
+                                        <div class="story-name">4. 地理优势</div>
+                                        <div class="story-text">欧洲本土，深刻理解MiFID II/GDPR等监管生态</div>
+                                    </div>
+                                </div>
+                                <div class="callout">
+                                    <strong>市场预期：</strong> 未来3年，金融机构对Agentic AI合规工具的需求将呈指数增长。Kodex AI作为首个落地的方案，处于市场爆发的前沿。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dots-bar" id="dots-5"></div>
+            </section>
+
+            <!-- Chapter 6: Key Insights -->
+            <section class="chapter" id="ch-6">
+                <div class="chapter-header">
+                    <h2>核心启示</h2>
+                    <span class="ch-sub">💡 Kodex AI案例的五大洞察</span>
+                    <span class="ch-counter" id="counter-6">1 / 5</span>
+                </div>
+                <div class="card-track" data-ch="6">
+                    <div class="slide">
+                        <div class="insight-card">
+                            <div class="insight-emoji">⚡</div>
+                            <h3>Agentic AI的突破性潜力</h3>
+                            <div class="card-body">
+                                <p>相比传统的问答型AI，Kodex AI的Agentic架构（规划→执行→复盘）解决了金融合规的根本痛点：不仅要理解规定，还要自动执行。</p>
+                                <div class="insight-highlight">
+                                    这标志着AI在金融行业从'助手'升级到'自主代理'的关键节点。
+                                </div>
+                                <p style="margin-top: 16px;">实际效果：人工干预从90%降至5%，合规时间从数周压缩至数秒。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="insight-card">
+                            <div class="insight-emoji">📚</div>
+                            <h3>垂直AI模型的商业价值</h3>
+                            <div class="card-body">
+                                <p>Kodex AI的成功验证了'垂直化微调LLM'的商业价值。金融监管专用LLM的精度和理解力遥遥领先通用ChatGPT，直接体现为更高的产品满意度和客户粘性。</p>
+                                <div class="insight-highlight">
+                                    未来的AI SaaS竞争将在'垂直深度'而非'通用广度'上进行。
+                                </div>
+                                <p style="margin-top: 16px;">启示：拥有特定领域数据和专业知识的公司，微调LLM的成本和效率优势巨大。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="insight-card">
+                            <div class="insight-emoji">🔀</div>
+                            <h3>RegTech行业的AI赋能与整合</h3>
+                            <div class="card-body">
+                                <p>CUBE对Kodex AI的收购体现了RegTech行业的大整合：单一功能的RegTech初创正被具有AI能力的综合平台收购，形成'通用合规平台+AI引擎'的架构。</p>
+                                <div class="insight-highlight">
+                                    这将加速RegTech行业的市场集中度，未来可能出现3-5个全球领先的AI-Native RegTech平台。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="insight-card">
+                            <div class="insight-emoji">🔐</div>
+                            <h3>加密金融合规的AI稀缺性</h3>
+                            <div class="card-body">
+                                <p>MiCA等加密法规的复杂性和快速演变给加密交易所带来巨大压力。Kodex AI的专用加密合规套件填补了市场空白，成为其差异化卖点和高转化驱动。</p>
+                                <div class="insight-highlight">
+                                    垂直化合规工具在加密金融的商机巨大，这是未来值得关注的赛道。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="insight-card">
+                            <div class="insight-emoji">🌍</div>
+                            <h3>欧洲RegTech的国际竞争力</h3>
+                            <div class="card-body">
+                                <p>Kodex AI作为德国AI初创，通过创新技术和国际融资（Deutsche Bank、Meta背书），正在欧洲建立AI合规的话语权。这与美国AI初创的创新速度和资本量形成竞争。</p>
+                                <div class="insight-highlight">
+                                    欧洲的监管优势和AI人才正在转化为商业机会。CUBE的收购是欧洲RegTech国际化的重要信号。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dots-bar" id="dots-6"></div>
+            </section>
+
+            <!-- Chapter 7: Latest Updates -->
+            <section class="chapter" id="ch-7">
+                <div class="chapter-header">
+                    <h2>最新进展</h2>
+                    <span class="ch-sub">📰 2024-2025年重要动态</span>
+                    <span class="ch-counter" id="counter-7">1 / 4</span>
+                </div>
+                <div class="card-track" data-ch="7">
+                    <div class="slide">
+                        <div class="news-item">
+                            <div class="news-date">2025年10月</div>
+                            <div class="news-title">
+                                <a href="https://fintech.global/2025/10/17/cube-expands-regplatform-with-kodex-ai-acquisition/" target="_blank">CUBE收购Kodex AI，成立AI-Native RegTech联合体</a>
+                            </div>
+                            <div class="news-desc">英国RegTech公司CUBE宣布收购德国Agentic AI初创Kodex AI。收购完成后，Kodex AI将与CUBE的通用合规平台深度整合，形成行业领先的'AI-Native RegPlatform'。这一收购标志着RegTech行业从功能型向AI赋能型的战略转向。</div>
+                        </div>
+                        <div class="news-item">
+                            <div class="news-date">2025年03月</div>
+                            <div class="news-title">
+                                <a href="https://www.fintechfutures.com/m-a/cube-buys-germany-s-kodex-ai-to-add-agentic-ai-capabilities-to-regplatform" target="_blank">业界聚焦：Agentic AI成为RegTech新赛道</a>
+                            </div>
+                            <div class="news-desc">FinTech Futures报道指出，Kodex AI被CUBE收购反映了金融科技市场对Agentic AI能力的高度需求。单一功能的RegTech初创正逐步被具有AI能力的综合平台收购，预示着行业的大整合时代来临。</div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="news-item">
+                            <div class="news-date">2024年Q2</div>
+                            <div class="news-title">
+                                <a href="https://www.linkedin.com/company/kodexai" target="_blank">Kodex AI入选Meta 2024欧洲顶级AI初创50强</a>
+                            </div>
+                            <div class="news-desc">Kodex AI获得Meta官方认可，被列入2024年欧洲顶级AI初创50强。公司同时获得Meta AI加速器的GPU资源和生态支持。这是Kodex AI首次获得国际AI圈层的正式认可，进一步巩固了其在AI合规领域的领军地位。</div>
+                        </div>
+                        <div class="news-item">
+                            <div class="news-date">2024年Q3</div>
+                            <div class="news-title">
+                                <a href="https://www.kodex-ai.com/crypto" target="_blank">Kodex AI推出Crypto Compliance Suite</a>
+                            </div>
+                            <div class="news-desc">针对加密交易所和DeFi平台推出专用合规工具集，支持MiCA、AML-CFT等加密金融规制。该套件将加密企业的合规时间从数月缩减至数周，填补了加密行业缺乏AI合规工具的市场空白。</div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="news-item">
+                            <div class="news-date">2023年Q4</div>
+                            <div class="news-title">
+                                <a href="https://www.db.com/company/deutsche-bank-ventures" target="_blank">获得Deutsche Bank Ventures战略投资</a>
+                            </div>
+                            <div class="news-desc">Kodex AI获得德国銀行集团旗下风投部门的正式投资。同时与Deutsche Bank集团旗下的DBX数字创新平台达成深度合作协议，进入欧洲大型金融机构的试点阶段。</div>
+                        </div>
+                        <div class="news-item">
+                            <div class="news-date">2023年Q2</div>
+                            <div class="news-title">
+                                <a href="https://www.kodex-ai.com/resources" target="_blank">Governance Agent测试版发布</a>
+                            </div>
+                            <div class="news-desc">Kodex AI首次发布核心产品Agentic Governance Agent的测试版。该代理能自动识别监管任务、结构化分析和初步执行规划，标志着Kodex AI Agentic AI架构的首次落地验证。</div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="card sparse">
+                            <h3>展望2026</h3>
+                            <div class="card-body">
+                                <p><strong>短期目标（6个月）：</strong></p>
+                                <p>• CUBE RegPlatform与Kodex AI的全面整合完成</p>
+                                <p>• 联合产品发布，集成Agentic AI于统一合规栈</p>
+                                <p>• 欧洲Top 10银行客户覆盖</p>
+                                <p style="margin-top: 16px;"><strong>中期目标（1年）：</strong></p>
+                                <p>• 亚太地区扩张启动</p>
+                                <p>• 北美市场进入</p>
+                                <p>• CUBE融资及IPO筹划</p>
+                                <p style="margin-top: 16px;"><strong>长期展望（2-3年）：</strong></p>
+                                <p>• CUBE + Kodex AI联合体IPO</p>
+                                <p>• 成为全球AI-Native RegTech平台领导者之一</p>
+                                <p>• Agentic AI在金融合规的标准化应用</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dots-bar" id="dots-7"></div>
+            </section>
+
+            <!-- References Section -->
+            <section class="chapter" style="padding-bottom: 120px;">
+                <div class="references">
+                    <h4>📚 参考文献</h4>
+                    <ul>
+                        <li><a href="https://www.kodex-ai.com" target="_blank">Kodex AI Official Website — Agentic Compliance Platform</a></li>
+                        <li><a href="https://www.crunchbase.com/organization/kodex-ai" target="_blank">Kodex AI Crunchbase Profile — Funding & Investment Data</a></li>
+                        <li><a href="https://www.fintechfutures.com/m-a/cube-buys-germany-s-kodex-ai-to-add-agentic-ai-capabilities-to-regplatform" target="_blank">CUBE buys Kodex AI to add agentic AI capabilities — FinTech Futures</a></li>
+                        <li><a href="https://fintech.global/2025/10/17/cube-expands-regplatform-with-kodex-ai-acquisition/" target="_blank">CUBE Expands RegPlatform with Kodex AI Acquisition — Fintech Global</a></li>
+                        <li><a href="https://www.linkedin.com/company/kodexai" target="_blank">Kodex AI LinkedIn — Company Updates & Team Info</a></li>
+                        <li><a href="https://www.kodex-ai.com/crypto" target="_blank">Kodex AI Agentic Compliance for Crypto Providers</a></li>
+                        <li><a href="https://www.kodex-ai.com/digital-neo-banks" target="_blank">Kodex AI Agentic Compliance for Digital & Neo-banks</a></li>
+                        <li><a href="https://www.beinsure.com/news/cube-buys-kodex-ai/" target="_blank">Agentic AI Compliance Specialist Kodex AI Announces Acquisition — Be Insure</a></li>
+                    </ul>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        // Smooth scrolling and navigation
+        const sections = document.querySelectorAll('.chapter, .cover');
+        const navBtns = document.querySelectorAll('.nav-btn');
+
+        function go(index) {
+            const target = document.getElementById(`ch-${index}`);
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth' });
+                navBtns.forEach((btn, i) => {
+                    btn.classList.toggle('active', i === index);
+                });
+            }
+        }
+
+        // Update active nav button on scroll
+        window.addEventListener('scroll', () => {
+            let currentIndex = 0;
+            sections.forEach((section, index) => {
+                const rect = section.getBoundingClientRect();
+                if (rect.top <= window.innerHeight / 2) {
+                    currentIndex = index;
+                }
+            });
+            navBtns.forEach((btn, i) => {
+                btn.classList.toggle('active', i === currentIndex);
+            });
+        });
+
+        // Animate stat numbers
+        function animateCounter(element) {
+            const count = parseInt(element.dataset.count);
+            const prefix = element.dataset.prefix || '';
+            const suffix = element.dataset.suffix || '';
+            const duration = 2000;
+            const frames = 60;
+            const increment = count / frames;
+            let current = 0;
+
+            const interval = setInterval(() => {
+                current += increment;
+                if (current >= count) {
+                    current = count;
+                    clearInterval(interval);
+                }
+                element.textContent = prefix + Math.floor(current).toLocaleString() + suffix;
+            }, duration / frames);
+        }
+
+        // Trigger animation when cover is visible
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting && entry.target.classList.contains('cover')) {
+                    const statNumbers = entry.target.querySelectorAll('.stat-number');
+                    statNumbers.forEach(el => {
+                        if (!el.dataset.animated) {
+                            animateCounter(el);
+                            el.dataset.animated = 'true';
+                        }
+                    });
+                }
+            });
+        });
+
+        observer.observe(document.querySelector('.cover'));
+
+        // Initialize dots bars
+        function initDotsBar(chIndex) {
+            const dotsContainer = document.getElementById(`dots-${chIndex}`);
+            const track = document.querySelector(`[data-ch="${chIndex}"]`);
+            if (!dotsContainer || !track) return;
+
+            const slides = track.querySelectorAll('.slide');
+            dotsContainer.innerHTML = '';
+
+            slides.forEach((_, i) => {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                if (i === 0) dot.classList.add('active');
+                dot.onclick = () => {
+                    track.scrollLeft = (i * track.children[0].offsetWidth);
+                };
+                dotsContainer.appendChild(dot);
+            });
+
+            track.addEventListener('scroll', () => {
+                const scrollLeft = track.scrollLeft;
+                const slideWidth = track.children[0].offsetWidth;
+                const activeIndex = Math.round(scrollLeft / slideWidth);
+                const dots = dotsContainer.querySelectorAll('.dot');
+                dots.forEach((dot, i) => {
+                    dot.classList.toggle('active', i === activeIndex);
+                });
+
+                // Update counter
+                const counter = document.getElementById(`counter-${chIndex}`);
+                if (counter) {
+                    counter.textContent = `${activeIndex + 1} / ${slides.length}`;
+                }
+            });
+        }
+
+        // Initialize all chapters
+        for (let i = 1; i <= 7; i++) {
+            initDotsBar(i);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="primaryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0066CC;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#00AA55;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#FF6B35;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FF9B4D;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Outer Circle Background -->
+  <circle cx="100" cy="100" r="100" fill="url(#primaryGrad)" opacity="0.1"/>
+
+  <!-- Main Circle -->
+  <circle cx="100" cy="100" r="85" fill="url(#primaryGrad)"/>
+
+  <!-- Bank Building Shape (stylized) -->
+  <g transform="translate(100, 100)">
+    <!-- Building base -->
+    <rect x="-35" y="-20" width="70" height="50" rx="4" fill="white" opacity="0.15"/>
+
+    <!-- Left column of windows -->
+    <circle cx="-22" cy="-8" r="5" fill="white" opacity="0.9"/>
+    <circle cx="-22" cy="8" r="5" fill="white" opacity="0.9"/>
+    <circle cx="-22" cy="24" r="5" fill="white" opacity="0.9"/>
+
+    <!-- Center column of windows -->
+    <circle cx="0" cy="-8" r="5" fill="white" opacity="0.9"/>
+    <circle cx="0" cy="8" r="5" fill="white" opacity="0.9"/>
+    <circle cx="0" cy="24" r="5" fill="white" opacity="0.9"/>
+
+    <!-- Right column of windows -->
+    <circle cx="22" cy="-8" r="5" fill="white" opacity="0.9"/>
+    <circle cx="22" cy="8" r="5" fill="white" opacity="0.9"/>
+    <circle cx="22" cy="24" r="5" fill="white" opacity="0.9"/>
+
+    <!-- Door -->
+    <rect x="-8" y="30" width="16" height="20" rx="2" fill="white" opacity="0.7"/>
+    <circle cx="-5" cy="40" r="1.5" fill="url(#accentGrad)"/>
+
+    <!-- Roof/Peak -->
+    <polygon points="0,-30 -40,-20 40,-20" fill="url(#accentGrad)" opacity="0.9"/>
+
+    <!-- Accent line (AI element - circuit-like) -->
+    <line x1="-50" y1="-35" x2="50" y2="-35" stroke="white" stroke-width="2" opacity="0.6" stroke-linecap="round"/>
+    <circle cx="-50" cy="-35" r="3" fill="white" opacity="0.8"/>
+    <circle cx="50" cy="-35" r="3" fill="white" opacity="0.8"/>
+  </g>
+
+  <!-- Outer Ring Detail -->
+  <circle cx="100" cy="100" r="85" fill="none" stroke="white" stroke-width="1.5" opacity="0.3"/>
+  <circle cx="100" cy="100" r="80" fill="none" stroke="white" stroke-width="0.8" opacity="0.2"/>
+</svg>

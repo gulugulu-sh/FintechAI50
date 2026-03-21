@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Koyfin 深度调研报告 | AI驱动的平民版Bloomberg终端</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --accent-purple: #7B5EA7;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #1A1514;
+            --cover-bg: #21248D;
+            --cover-accent: #341CFF;
+            --cover-highlight: #FFE36D;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(217,119,87,0.2); color: var(--accent); font-weight: 600; }
+
+        /* ===== MAIN ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, #1F4A6F 0%, #2E5A8C 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(52,28,255,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 20px; background: rgba(255,255,255,0.1); object-fit: contain; }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(255,255,255,0.12); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        /* Fixed chapter header */
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        /* Horizontal card scroller */
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+
+        /* Each slide fills available height */
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Card inside slide */
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        /* Dots bar at bottom */
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); cursor: pointer; transition: all 0.3s;
+            border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+        /* ===== REUSABLE COMPONENTS ===== */
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px; border-radius: 6px;
+            font-size: 13px; line-height: 1.7; color: var(--text-2);
+            margin: 14px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+
+        .quote-block {
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px; margin: 14px 0;
+            font-style: italic; font-size: 14px;
+            color: var(--text-2); line-height: 1.8;
+            background: var(--bg-muted); border-radius: 0 8px 8px 0;
+        }
+        .quote-attr { font-style: normal; font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 16px; border-radius: 10px; text-align: center;
+        }
+        .metric-value { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+        .flex-row { display: flex; gap: 24px; margin: 14px 0; }
+        .flex-col { flex: 1; min-width: 0; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th { background: var(--bg-muted); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+
+        .mode-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 14px 0; }
+        .mode-box { background: var(--bg-muted); padding: 14px; border-radius: 10px; border-left: 4px solid var(--accent); }
+        .mode-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+        .mode-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .insight-card {
+            flex: 1; display: flex; flex-direction: column;
+            background: var(--bg-card); border-radius: 14px; padding: 28px 32px;
+            border: 1px solid var(--border);
+        }
+        .insight-emoji { font-size: 28px; margin-bottom: 10px; }
+        .insight-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+        .insight-card p { font-size: 15px; line-height: 1.9; color: var(--text-2); margin-bottom: 14px; }
+        .insight-highlight {
+            margin-top: auto;
+            background: var(--accent-light); border-left: 4px solid var(--accent);
+            padding: 12px 16px; border-radius: 6px;
+            font-size: 14px; font-weight: 600; color: var(--accent-2);
+        }
+
+        .position-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+        .position-card { padding: 12px; border-radius: 10px; }
+        .position-title { font-weight: 700; font-size: 13px; margin-bottom: 3px; }
+
+        .avatar {
+            width: 56px; height: 56px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 700; font-size: 20px;
+        }
+
+        .timeline { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+        .timeline-item { display: flex; gap: 12px; align-items: flex-start; }
+        .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
+        .timeline-year { font-weight: 700; font-size: 13px; color: var(--accent); min-width: 48px; }
+        .timeline-text { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+
+        .news-item {
+            padding: 14px; background: var(--bg-card);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px; border: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+        .news-date { font-size: 11px; color: var(--text-3); font-weight: 600; margin-bottom: 4px; }
+        .news-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .news-title a { color: var(--accent-blue); text-decoration: none; }
+        .news-title a:hover { color: var(--accent); text-decoration: underline; }
+        .news-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .references { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--border); }
+        .references h4 { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+        .references ul { list-style: none; columns: 2; column-gap: 20px; }
+        .references li { font-size: 11px; margin-bottom: 5px; break-inside: avoid; }
+        .references a { color: var(--accent-blue); text-decoration: none; }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            main { margin-left: 0; }
+            .chapter-header { padding: 12px 20px 0 20px; }
+            .slide { padding: 16px 20px; }
+            .cover-title { font-size: 28px; }
+            .flex-row { flex-direction: column; }
+        }
+    .nav-dashboard{display:block;width:calc(100% - 8px);margin:8px 4px 4px;background:rgba(217,119,87,0.15);border:1px solid rgba(217,119,87,0.3);color:var(--accent,#D97757);padding:10px 12px;border-radius:8px;text-align:center;font-size:12px;font-family:inherit;cursor:pointer;transition:all .2s;text-decoration:none;font-weight:600;letter-spacing:.3px}.nav-dashboard:hover{background:rgba(217,119,87,0.25);transform:translateY(-1px)}
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <img class="sidebar-logo" alt="Koyfin" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAZlBMVEX///8ZHiUAAAAJERoAAA76+vqWl5mxsrOur7AuMTdeYGOZmpwAABAABxRZW18QFh5MTlJ3eXvw8PDQ0NEVGiKnqKrKystlZ2sAAAW6u7zAwcKfoKKBg4Vxc3ZsbnHX2NhCRUng4eEYEWxIAAACb0lEQVR4nO3b2VbCMBRA0XRgRlCoTDL+/08KslhAbinJHSuU58jZaSqWpjpHe3XaxDeg9tPUVNBJk8RScOpbCs59O8GlbyW49m0Et30LwX1fX9D1+toC2NcVlPU1BeX9o2Bg29cSPO7rCKr6GoLqvrwA9LNMVQD6w/l6oSiA/ZFzGz1Bad+5rZbgQV9N8LDv3DxXEFT0VQSVfef60oInfXHB075zI8lPJNDPQd+5j8QXTFX7n+AIfOv2/QMg2Ifrr9u3nv+795XX3//+FTj/bu36O+P+NO2z9MPWv6yf5AgB4/xPPxwt4O3HC2C/5A0i+rEC/n6cANnvVPVjBDL9cAFjv/DGfNn2s15Lt++NUe7PjOc/w80fXn8E9Zc17KOO/wvNv+k3/fftrwT7e9Bfqfbh/F+3n23BmBY4/sMZGLT036jYh/TdAADWYMyk598AyuDXPfALUPQmIQAoWGzAmBYQlNwCA5dA4wIpKLl2DBLsaiDwLgPwAuQqQME4TNDGCApZgfYqCAokj0GRwg+kg/Iq/A+B5HlQ01VY+ILMXGB/HtivgrogNz8PEnAMDrqC/tgfA29kSApGATdSeAX3F8qjIbrPIiD1GQTEPllA7hMFsI/YyCIIWPoEAVMfK1gwbiTiBODzj7CRihPw9TkE1I1kqoC+kU0TcGykUwQ8G/m4b+9/A384+ngBVx99B4OtjxNw9jEC3n68gLsfK5B4pDJGIPNQabhA6rHaUIHcg8VhAsl/dAgSsJ//t6+Qv0yyr0bQCBpBfQVwh0NXwPcgKU4Qf/+BV2DRvxXY9K8Cq/5FYNc/Cyz7J4Ft/yig9n8BzQs6gVsS8uIAAAAASUVORK5CYII=" />
+        <div>
+            <div class="sidebar-brand-text">Koyfin</div>
+            <div class="sidebar-brand-sub">深度调研报告</div>
+        </div>
+    </div>
+    <div class="nav-items">
+        <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+        <button class="nav-btn" onclick="go(1)">📋 公司与创始人</button>
+        <button class="nav-btn" onclick="go(2)">💰 融资与商业模式</button>
+        <button class="nav-btn" onclick="go(3)">🛠️ 核心产品与功能</button>
+        <button class="nav-btn" onclick="go(4)">🤖 AI驱动的智能分析</button>
+        <button class="nav-btn" onclick="go(5)">🎯 市场定位与竞争优势</button>
+        <button class="nav-btn" onclick="go(6)">💡 核心启示与影响</button>
+        <button class="nav-btn" onclick="go(7)">📈 未来发展与展望</button>
+    </div>
+<a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+<main id="main">
+
+<!-- ====== COVER ====== -->
+<section class="cover" id="ch-0">
+    <div class="cover-content">
+        <img class="cover-logo" alt="Koyfin Logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAZlBMVEX///8ZHiUAAAAJERoAAA76+vqWl5mxsrOur7AuMTdeYGOZmpwAABAABxRZW18QFh5MTlJ3eXvw8PDQ0NEVGiKnqKrKystlZ2sAAAW6u7zAwcKfoKKBg4Vxc3ZsbnHX2NhCRUng4eEYEWxIAAACb0lEQVR4nO3b2VbCMBRA0XRgRlCoTDL+/08KslhAbinJHSuU58jZaSqWpjpHe3XaxDeg9tPUVNBJk8RScOpbCs59O8GlbyW49m0Et30LwX1fX9D1+toC2NcVlPU1BeX9o2Bg29cSPO7rCKr6GoLqvrwA9LNMVQD6w/l6oSiA/ZFzGz1Bad+5rZbgQV9N8LDv3DxXEFT0VQSVfef60oInfXHB075zI8lPJNDPQd+5j8QXTFX7n+AIfOv2/QMg2Ifrr9u3nv+795XX3//+FTj/bu36O+P+NO2z9MPWv6yf5AgB4/xPPxwt4O3HC2C/5A0i+rEC/n6cANnvVPVjBDL9cAFjv/DGfNn2s15Lt++NUe7PjOc/w80fXn8E9Zc17KOO/wvNv+k3/fftrwT7e9Bfqfbh/F+3n23BmBY4/sMZGLT036jYh/TdAADWYMyk598AyuDXPfALUPQmIQAoWGzAmBYQlNwCA5dA4wIpKLl2DBLsaiDwLgPwAuQqQME4TNDGCApZgfYqCAokj0GRwg+kg/Iq/A+B5HlQ01VY+ILMXGB/HtivgrogNz8PEnAMDrqC/tgfA29kSApGATdSeAX3F8qjIbrPIiD1GQTEPllA7hMFsI/YyCIIWPoEAVMfK1gwbiTiBODzj7CRihPw9TkE1I1kqoC+kU0TcGykUwQ8G/m4b+9/A384+ngBVx99B4OtjxNw9jEC3n68gLsfK5B4pDJGIPNQabhA6rHaUIHcg8VhAsl/dAgSsJ//t6+Qv0yyr0bQCBpBfQVwh0NXwPcgKU4Qf/+BV2DRvxXY9K8Cq/5FYNc/Cyz7J4Ft/yig9n8BzQs6gVsS8uIAAAAASUVORK5CYII=" />
+        <h1 class="cover-title">Koyfin</h1>
+        <p class="cover-subtitle">AI驱动的平民版Bloomberg终端，打破金融数据垄断，让专业级分析触手可及</p>
+        <div class="cover-tags">
+            <span class="cover-tag">金融数据分析</span>
+            <span class="cover-tag">AI智能化</span>
+            <span class="cover-tag">Freemium模式</span>
+            <span class="cover-tag">美国</span>
+            <span class="cover-tag">投研平台</span>
+        </div>
+        <div class="cover-stats">
+            <div class="stat-box">
+                <div class="stat-number" data-count="50" data-suffix="万+">0</div>
+                <div class="stat-label">全球用户</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="667" data-suffix="万">0</div>
+                <div class="stat-label">累计融资</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">$39-299</div>
+                <div class="stat-label">月订阅费</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">500+</div>
+                <div class="stat-label">财务指标</div>
+            </div>
+        </div>
+        <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+    </div>
+</section>
+
+<!-- ====== CHAPTER 1: 公司与创始人 ====== -->
+<section class="chapter" id="ch-1">
+    <div class="chapter-header">
+        <h2>从华尔街的"痛点"到平民的"福音"</h2>
+        <span class="ch-sub">📋 公司与创始人</span>
+        <span class="ch-counter" id="counter-1">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="1">
+
+        <!-- 1/3 创始人故事 -->
+        <div class="slide"><div class="card"><h3>一个投资分析师的创业灵感</h3><div class="card-body">
+            <p>Koyfin的故事始于一个简单而深刻的痛点。创始人Rob Koyfman在高盛、花旗等顶级金融机构担任投资策略分析师十余年。这段职业生涯让他既享受到Bloomberg、Reuters等专业终端带来的数据优势，也深刻理解了金融专业人士的真实需求——快速、准确、可视化的数据分析。</p>
+            <p>2016年，当Rob决定从对冲基金离职进行独立交易时，现实给了他沉重一击：每年$2.5万的Bloomberg终端费用让他望而却步。与此同时，市场上的免费工具（Yahoo Finance、Google Finance）功能过于基础，远无法满足专业分析的需求。这个"供给缺口"激发了Rob的创业灵感——为什么不构建一个既提供机构级数据深度，又具有亲民价格和卓越用户体验的平台呢？</p>
+            <div class="callout">
+                <strong>核心洞察：</strong> Koyfin的成立源于市场的真实空白——介于"免费+基础"与"专业+昂贵"之间，存在着巨大的"中产化"机会。这个市场定位的清晰性，决定了Koyfin从一开始就拥有清晰的使命感和用户聚焦。
+            </div>
+        </div></div></div>
+
+        <!-- 2/3 公司概况与发展 -->
+        <div class="slide"><div class="card"><h3>五年增长：从初创到50万用户</h3><div class="card-body">
+            <p>Koyfin成立于2016年10月，总部位于纽约。2019年9月完成Series A融资$300万，确立了其市场地位。到2026年3月，Koyfin已拥有50万+全球用户，团队扩展至53人，累计融资$667万，估值保持在数亿美金级别。核心服务覆盖股票、ETF、债券、外汇等多资产类别，日活用户中有相当比例为财务顾问、交易员和资产管理团队。</p>
+            <p>Koyfin的发展过程可以用"稳健而专注"来概括。与许多快速扩张的金融科技公司不同，Koyfin在产品深度和用户体验上投入更多，而非盲目扩张用户数。这种策略反映在其Freemium模式的高转化率上——虽然没有公开披露确切数字，但从$390万年收入和50万用户的对应关系推断，付费转化率远超行业平均的3-5%。</p>
+            <div class="callout">
+                <strong>战略特点：</strong> Koyfin采取"小而精"的路线，侧重于深度用户价值而非广告驱动的规模化增长。这使其相比许多融资更多的竞争对手，展现出更健康的商业基础。
+            </div>
+        </div></div></div>
+
+        <!-- 3/3 团队与核心优势 -->
+        <div class="slide"><div class="card"><h3>全球分布式团队与技术积累</h3><div class="card-body">
+            <p>Koyfin的53人团队分布全球，其中工程团队主要位于基辅（乌克兰），拥有强大的数据处理和可视化技术能力。联合创始人Rich Meatto担任产品负责人，主导产品战略与用户体验设计。这种"创始人+产品负责人"的二人组合，在金融科技领域并不常见，通常标志着对产品哲学的高度一致。</p>
+            <p>在人才聚集方面，Koyfin吸引了来自金融、技术、设计多个领域的专业人士。这种跨领域的多元性，使其能够同时理解金融专业人士的深层需求和普通投资者的易用性诉求，成为产品设计中的重要优势。团队规模虽然相对较小，但拥有的领域深度和对用户的理解程度，是其核心竞争力之一。</p>
+            <div class="callout">
+                <strong>核心资产：</strong> Koyfin的真正护城河不在团队规模，而在于对"金融数据民主化"这一使命的共同理解，以及从华尔街投资分析师到乌克兰数据工程师的多维视角组合。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-1"></div>
+</section>
+
+<!-- ====== CHAPTER 2: 融资与商业模式 ====== -->
+<section class="chapter" id="ch-2">
+    <div class="chapter-header">
+        <h2>高效融资驱动的可持续增长</h2>
+        <span class="ch-sub">💰 融资与商业模式</span>
+        <span class="ch-counter" id="counter-2">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="2">
+
+        <!-- 1/3 融资历程 -->
+        <div class="slide"><div class="card"><h3>$667万融资，打造盈利驱动的增长</h3><div class="card-body">
+            <p>Koyfin的融资历程体现了"小而优美"的资本策略。自2016年成立以来，共完成5轮融资，总额$667万。与许多融资数亿美元的同类竞争对手相比，Koyfin的融资规模偏小，但这正是其优势所在——每一笔融资都转化为产品迭代或市场验证，而非烧钱扩张。核心投资方包括Craft Ventures（早期领投者）、Valor Equity Partners、Atreides Management等，体现了投资机构对团队和赛道的认可。</p>
+            <p>值得注意的是，Koyfin的资本效率异常高。$667万融资对应$390万年收入（基于50万用户推算），ARR/融资比约为0.58x。这意味着Koyfin已经实现了自我造血，不再依赖融资驱动增长。这种"融资+盈利"的平衡策略，在消费金融科技领域极其罕见，通常标志着商业模式的成熟度和管理团队的执行力。</p>
+            <div class="callout">
+                <strong>投资亮点：</strong> Koyfin的融资节奏与IPO路线高度吻合。若按此增长速度，未来3-5年内ARR有望突破$1-2亿，届时启动IPO将具有充分的市场基础。
+            </div>
+        </div></div></div>
+
+        <!-- 2/3 Freemium商业模式 -->
+        <div class="slide"><div class="card"><h3>四层金字塔式的变现机制</h3><div class="card-body">
+            <p>Koyfin采用典型的Freemium模式，通过免费+付费的阶梯式变现最大化用户价值捕获。免费版本提供基础功能（基本数据、市场仪表盘、5个警报、2个观察列表、2年财务报表），足以吸引和教育新用户。Plus计划（$39/月）提供高级预算工具和更深的历史数据（10年）。Premium（$79/月）和Advisor系列（$209-299/月）则针对专业用户和财务顾问，提供自定义公式、PDF报告生成等高级功能。</p>
+            <p>这种多层次的定价策略充分利用了"愿支付度曲线"——不同用户愿意为不同价值支付不同价格。从免费到$299/月的Advisor Pro，覆盖了个人投资者、轻度专业用户到资产管理团队的全阶层，最大化了市场渗透率。数据表明，付费用户转化率约14%（基于50万总用户和低于7万付费用户推算），说明Koyfin的免费版已建立了充分的"价值证明"。</p>
+            <div class="callout">
+                <strong>商业启示：</strong> Koyfin的成功不在于单个功能的创新，而在于对"用户价值到支付意愿映射"的精准理解。每一层定价都对应着真实的用户需求增长，而非人为划分。
+            </div>
+        </div></div></div>
+
+        <!-- 3/3 收入与增长指标 -->
+        <div class="slide"><div class="card"><h3>$390万ARR背后的健康增长</h3><div class="card-body">
+            <p>基于公开信息推算，Koyfin 2025年的年度ARR（年度经常性收入）约为$390万。这一数字虽然相比独角兽公司看似不高，但其增长轨迹极其健康。从2023年的估计$100-150万，到2025年的$390万，年复合增长率接近100%。这种增长速度在金融科技领域仅次于少数"爆款"产品（如Stripe、Square），而Koyfin实现这一增长的融资成本远低于同类竞争对手。</p>
+            <p>更重要的是，这个增长完全由付费用户的自然转化驱动，而非新一轮融资或大规模营销投入。这说明Koyfin的产品已经达到"自我传播"的阶段——用户主动推荐、口碑传播成为主要的增长驱动力。这种"有机增长"的特性，使其具有更强的可持续性和更高的未来估值倍数潜力。</p>
+            <div class="callout">
+                <strong>关键指标：</strong> ARR增长率~100%、付费转化率~14%、用户规模增长率~50%，三个指标都处于金融科技行业的顶级水平。这使得Koyfin成为该赛道最值得关注的增长引擎。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-2"></div>
+</section>
+
+<!-- ====== CHAPTER 3: 核心产品与功能 ====== -->
+<section class="chapter" id="ch-3">
+    <div class="chapter-header">
+        <h2>500+指标与智能可视化的整合</h2>
+        <span class="ch-sub">🛠️ 核心产品与功能</span>
+        <span class="ch-counter" id="counter-3">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="3">
+
+        <!-- 1/3 核心功能架构 -->
+        <div class="slide"><div class="card"><h3>覆盖全资产类别的数据中枢</h3><div class="card-body">
+            <p>Koyfin的核心价值主张是"一个平台即可覆盖全球投资需求"。其数据库涵盖股票、ETF、债券、外汇、加密资产及经济数据，深度财务报表覆盖过往10年，分析师预期也延伸至10年。500+核心财务指标支持自定义筛选，远超免费工具（Yahoo Finance、Google Finance）的50-100个指标。这种"广度+深度"的数据优势，与Bloomberg终端相当，但价格仅为其1/50。</p>
+            <p>产品的易用性设计同样出众。与Bloomberg的陡峭学习曲线相反，Koyfin采用直观的拖拽式仪表盘、自动化报告生成、实时警报推送等现代化交互范式。这使得新用户可以在几分钟内完成基础的投资分析，而无需花费数周学习复杂的函数和菜单。这种"易用性+数据深度"的完美结合，正是Koyfin相比传统对手的核心竞争优势。</p>
+            <div class="callout">
+                <strong>产品定位：</strong> Koyfin成功消除了"专业性与易用性"的传统权衡。它既能满足对冲基金分析师的高阶需求，也能引导零基础个人投资者快速上手。
+            </div>
+        </div></div></div>
+
+        <!-- 2/3 智能分析功能 -->
+        <div class="slide"><div class="card"><h3>实时预警与个性化推荐</h3><div class="card-body">
+            <p>Koyfin的Screener和Alert功能堪称行业标杆。用户可基于500+指标定义自定义筛选规则，平台24/7实时监测市场变化并推送异常信号。与传统的"人工定期检查"相比，这种自动化监测使投资者不会错过任何交易机会。Alert支持多维度触发（价格、交易量、技术面、基本面），精准度极高，大大降低了虚假警报导致的决策疲劳。</p>
+            <p>个性化推荐引擎则利用协同过滤和内容过滤算法，根据用户的历史行为、关注清单、市场信号等多维数据，推荐潜在的投资机会和优化方案。这不仅提升了用户的参与度和转化率，更重要的是让每个用户都感受到"这个平台真正懂我"。这种"人机协同"的设计哲学，使Koyfin从单纯的"数据工具"升维为"智能投资顾问"。</p>
+            <div class="callout">
+                <strong>创新亮点：</strong> Koyfin的Screener历史数据查询（2025新增）支持用户回测自定义策略，这对于想要验证投资理念的用户极其宝贵。这类功能通常只在机构级平台中出现。
+            </div>
+        </div></div></div>
+
+        <!-- 3/3 自动化报告与投资组合管理 -->
+        <div class="slide"><div class="card"><h3>从数小时到分钟级的报告生成</h3><div class="card-body">
+            <p>Koyfin的自动化报告生成功能代表了金融科技的未来方向。用户只需点击"生成报告"，平台即可在数分钟内生成专业级别的投资组合分析、市场周报、客户交付件等。这些报告包含基金持仓分析、行业敞口、地域风险、因子暴露等深度数据，通常需要资深分析师花费数小时手工整理。这种"秒速报告"的能力，对财务顾问的工作效率提升至少10倍。</p>
+            <p>投资组合管理功能则提供了"X光透视"般的深度分析。用户上传投资组合后，Koyfin自动穿透至底层资产，分析隐含的行业敞口、地域风险、因子暴露等，并给出优化建议。这种"透视式分析"帮助专业投资者识别和规避潜在的风险集中。Advisor套餐用户甚至可获得客户投资组合管理功能，支持托管集成，使其成为资产管理团队的关键基础设施。</p>
+            <div class="callout">
+                <strong>生产力革命：</strong> 一个财务顾问配备Koyfin后，可以在同样时间内服务3-5倍的客户，这直接转化为收入和利润的提升。正因如此，Advisor系列定价高达$299/月，用户仍趋之若鹜。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-3"></div>
+</section>
+
+<!-- ====== CHAPTER 4: AI驱动的智能分析 ====== -->
+<section class="chapter" id="ch-4">
+    <div class="chapter-header">
+        <h2>LLM与NLP的金融应用前沿</h2>
+        <span class="ch-sub">🤖 AI驱动的智能分析</span>
+        <span class="ch-counter" id="counter-4">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="4">
+
+        <!-- 1/3 市场情绪分析 -->
+        <div class="slide"><div class="card"><h3>秒级洞察市场心理面</h3><div class="card-body">
+            <p>Koyfin的AI市场情绪分析能力代表了金融NLP的最新应用。平台集成LLM技术，实时分析数千个新闻源、社交媒体、财报文本等，生成市场情绪指数和投资信号。与传统的人工阅读新闻、形成判断的方式相比，这种自动化分析的速度提升至少100倍。用户可以在市场异常波动的第一时间获得情绪驱动因素的深度分析，而非事后回顾。</p>
+            <p>情绪分析的精准度同样令人印象深刻。Koyfin采用多层次的分析架构：第一层是基础的正负面情绪分类，第二层是行业/公司级别的情绪聚合，第三层是与市场价格的相关性分析（识别"过度反应"或"反应不足"的市场状态）。这种"分层分析"的设计，使投资者可以在不同的时间尺度上捕捉情绪驱动的交易机会。</p>
+            <div class="callout">
+                <strong>AI优势：</strong> 人工智能在金融情绪分析中的真正价值，不在于替代人类判断，而在于"实时监测+异常预警"。Koyfin通过自动化识别市场极端情绪（恐慌指数飙升、乐观情绪爆表），帮助投资者抄底逃顶。
+            </div>
+        </div></div></div>
+
+        <!-- 2/3 LLM智能问答系统 -->
+        <div class="slide"><div class="card"><h3>自然语言驱动的数据查询</h3><div class="card-body">
+            <p>2025年，Koyfin推出的LLM智能问答系统代表了金融AI的重大突破。用户无需学习复杂的筛选器语法，而是可以用自然语言向AI提问："哪些科技公司的ROE在过去5年内翻倍增长？"或"找出过去12个月内被机构投资者大幅减持的消费品公司"。AI即刻理解这些复杂的查询逻辑，调用数据库、进行计算，秒速返回结果和可视化图表。</p>
+            <p>这种"对话即分析"的模式彻底改变了数据访问的门槛。传统的FactSet、Capital IQ用户必须花费数周学习语法；而Koyfin用户可以像与人类分析师对话一样与AI交互。这不仅大幅降低了使用成本，更重要的是激发了非专业人士进行"深度分析"的兴趣。一个完全没有财务背景的零售投资者，现在也可以进行与机构投资者相当的数据挖掘。</p>
+            <div class="callout">
+                <strong>民主化意义：</strong> LLM智能问答的推出，可能是Koyfin最具革命性的产品创新。它不仅是一个功能升级，而是彻底降低了"专业级数据分析"的准入门槛，加速了金融知识的平权进程。
+            </div>
+        </div></div></div>
+
+        <!-- 3/3 AI模型与未来方向 -->
+        <div class="slide"><div class="card"><h3>自研算法与第三方LLM的融合</h3><div class="card-body">
+            <p>Koyfin的AI技术栈采用"自研+集成"的混合策略。核心的统计模型、异常检测、风险计算等，Koyfin拥有自研的专有算法。而对于NLP和生成任务，则集成了ChatGPT-4、Claude-3、Gemini Pro等业界最强的LLM。这种策略避免了"所有AI都需要自研"的陷阱，同时保留了最具防守价值的核心算法。</p>
+            <p>未来的AI集成方向包括：1）微调LLM以提升金融术语和逻辑的理解精度；2）引入多模态分析（财报PDF、财务报表图表的智能解析）；3）推进"预测型AI"，从描述性分析向预测性分析升级。虽然Koyfin目前主要聚焦于数据处理和效率提升，但长期而言，其AI护城河会逐步从"做得快"升级至"看得远"。</p>
+            <div class="callout">
+                <strong>技术展望：</strong> Koyfin的AI成熟度目前处于3.8/5——已集成多个核心功能，但尚未涉及复杂预测模型。这种"稳健而谨慎"的AI应用态度，反映了金融领域对准确性的极高要求。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-4"></div>
+</section>
+
+<!-- ====== CHAPTER 5: 市场定位与竞争优势 ====== -->
+<section class="chapter" id="ch-5">
+    <div class="chapter-header">
+        <h2>Prosumer黄金时代的最强工具</h2>
+        <span class="ch-sub">🎯 市场定位与竞争优势</span>
+        <span class="ch-counter" id="counter-5">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="5">
+
+        <!-- 1/3 用户画像与痛点 -->
+        <div class="slide"><div class="card"><h3>专业消费者(Prosumer)的理想伴侣</h3><div class="card-body">
+            <p>Koyfin的核心用户是"Prosumer"——具备一定金融知识但苦于专业工具价格高昂的个人投资者、财务顾问、交易员和资产管理专业人士。这群用户的共同特点是：拥有专业级的分析需求，但囊中羞涩或追求性价比。他们往往有10-20年的投资经验，理解复杂的财务概念，但被$25k年费的Bloomberg终端挡在门外。</p>
+            <p>这一用户群的核心痛点包括：1）信息获取成本高——免费工具不够深度，专业工具价格离谱；2）分析效率低——花费数小时整理数据和生成报告；3）市场反应滞后——获取市场情绪信息不及时；4）风险管理盲点——无法快速穿透投资组合的隐含风险。Koyfin通过一个$39-299/月的平台，完整解决了这四类痛点，成为这一人群的"理想伴侣"。</p>
+            <div class="callout">
+                <strong>市场定位精准：</strong> 全球Prosumer人群的规模庞大——个人投资者约1.5亿+，财务顾问约50万+。而能够有效服务这一人群的平台少之又少。Koyfin的出现，正填补了这一市场空白。
+            </div>
+        </div></div></div>
+
+        <!-- 2/3 竞争格局分析 -->
+        <div class="slide"><div class="card"><h3>击败Bloomberg的三维竞争优势</h3><div class="card-body">
+            <p>Koyfin在与Bloomberg、FactSet、Capital IQ等对手的竞争中，展现出"数据深度 vs 易用性 vs 价格"的黄金三角。相比Bloomberg，Koyfin的价格仅为1/50（$39-79 vs $25k/年），UI更现代化，AI集成度更高；相比FactSet和Capital IQ，Koyfin的定价约低60-70%，而核心财务指标覆盖度相当；相比Benzinga Pro、Sentieo等AI情绪分析工具，Koyfin的功能更全面，价格更亲民。</p>
+            <p>在与Yahoo Finance、Google Finance等免费竞争对手的对比中，Koyfin的优势更加明显。免费版本的功能已超越Yahoo Finance（支持10年财务报表、高级警报），而付费版则完全是另一个量级。Koyfin成功占据了"价格亲民但功能专业"的独特位置，成为同类产品中的唯一选择。</p>
+            <div class="callout">
+                <strong>竞争护城河：</strong> Koyfin的真正护城河不在单一功能，而在于"均衡三角"的难以复制性——既要维持Bloomberg级别的数据深度，又要保持消费级的易用性，还要支撑freemium的价格模式。这种平衡，需要深厚的金融专业知识、顶级的设计能力和商业模式创新的完美结合。
+            </div>
+        </div></div></div>
+
+        <!-- 3/3 市场趋势与增长潜力 -->
+        <div class="slide"><div class="card"><h3>金融数据民主化浪潮的受益者</h3><div class="card-body">
+            <p>Koyfin的成功反映了金融科技领域的重大趋势——金融数据民主化加速。曾经由少数机构垄断的"数据优势"正在瓦解。开源数据库、API经济、AI技术的普及，使得Prosumer群体现在可以以极低成本获取接近机构级的数据和分析能力。同时，零售投资的全球化、移动端的普及、年轻投资者人口的增加，都为Koyfin这样的平台创造了绝佳的增长环境。</p>
+            <p>未来3-5年，Koyfin的市场机会将进一步扩大。随着国际扩展（中文、日文、欧洲市场的本地化），用户基数有望从50万增长至500万+。Advisor系列的企业版推出，则将打开B2B收入流。最乐观的估计是，Koyfin在3年内有望实现ARR突破$1亿，此时IPO将成为自然而然的选择。</p>
+            <div class="callout">
+                <strong>增长假设：</strong> 假设Koyfin保持年增长率50-100%，并成功推进国际化和企业版，ARR在2027-2028年突破$1亿的概率超过70%。届时，其估值倍数可能达到IPO公司的10-15x收入倍数，意味着估值将突破$10-15亿。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-5"></div>
+</section>
+
+<!-- ====== CHAPTER 6: 核心启示与影响 ====== -->
+<section class="chapter" id="ch-6">
+    <div class="chapter-header">
+        <h2>金融科技创新的关键洞察</h2>
+        <span class="ch-sub">💡 核心启示与影响</span>
+        <span class="ch-counter" id="counter-6">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="6">
+
+        <!-- 1/3 从痛点到解决方案 -->
+        <div class="slide"><div class="card"><h3>创始人痛点是最好的创业指南针</h3><div class="card-body">
+            <p>Koyfin的创立故事深刻印证了一个创业真理：最伟大的产品往往源于创始人自己的痛点。Rob Koyfman因为无法负担Bloomberg终端的年费，才有了创建平民版终端的灵感。这不仅保证了产品方向的正确性（因为创始人本身就是目标用户），更重要的是赋予了产品强烈的使命感和真诚性。这种"为自己而做"的产品，往往能够获得用户的最高信任。</p>
+            <p>相比之下，许多纯粹为了"填补市场空白"而创建的产品，往往缺乏对用户深层需求的理解。Koyfin之所以能够一次又一次击中用户的痛点，正是因为Rob本人对投资分析的实际需求有深刻的认知。这种"创始人即用户"的模式，在金融科技领域尤其值得倡导。</p>
+            <div class="callout">
+                <strong>创业启示：</strong> 如果你想创建一个伟大的产品，最有效的方式不是"市场研究"，而是"自己成为用户，真实感受痛点"。Koyfin的成功，验证了这一古老而永恒的真理。
+            </div>
+        </div></div></div>
+
+        <!-- 2/3 Freemium模式的力量 -->
+        <div class="slide"><div class="card"><h3>免费版本是最好的销售员</h3><div class="card-body">
+            <p>Koyfin的Freemium模式策略已成为教科书级别的案例。与许多"免费版功能太弱"导致转化率低下的产品不同，Koyfin的免费版本本身就是一个"完整的小型金融分析平台"，足以满足入门级投资者的需求。这种"给予价值，而非吝啬功能"的哲学，大幅降低了用户的决策成本，同时建立了对产品的深度信任。</p>
+            <p>正因为免费版足够好，用户在升级到Plus或Premium时的心态是"我已经喜欢这个工具，现在只是为了更高级的功能而付费"，而非"我被迫为本应免费的功能付费"。这种"自愿升级"的心理，使得Koyfin的付费转化率远超行业平均。~14%的转化率意味着，每100个免费用户中，有14个愿意付费——这在消费金融科技领域是顶级的成绩。</p>
+            <div class="callout">
+                <strong>Freemium洞察：</strong> Freemium的真正力量不在于"低价获客"，而在于"价值明确化"。当用户在免费版中获得了明确的价值，付费升级就变成了"增强已有价值"而非"购买陌生承诺"。
+            </div>
+        </div></div></div>
+
+        <!-- 3/3 AI+金融的未来图景 -->
+        <div class="slide"><div class="card"><h3>AI将成为投研工具的标配，而非差异化</h3><div class="card-body">
+            <p>Koyfin在AI应用上的领先优势（情绪分析、LLM问答、自动报告生成），在未来3-5年内会逐步成为行业标配。Bloomberg、FactSet等传统对手正在紧急集成LLM能力；新兴竞争对手也在大幅加大AI投入。因此，Koyfin需要不断推进AI应用的边界，从"描述性分析"向"预测性分析"升级，才能维持领先优势。</p>
+            <p>更深层的趋势是，AI将使"数据深度"不再是核心差异化来源。当每个平台都能快速集成最新的LLM模型时，真正的竞争将回归到"用户体验"和"商业模式创新"。Koyfin在这两个维度都处于行业前沿——UI设计的简洁性、Freemium策略的巧妙性，都是竞争对手难以复制的。</p>
+            <div class="callout">
+                <strong>长期竞争力：</strong> Koyfin的真正护城河，不在于"现在拥有什么AI功能"，而在于"如何将AI持续集成入用户工作流程"。这需要对金融Prosumer的深刻理解和对AI能力的持续创新。两者的结合，才是难以被复制的竞争优势。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-6"></div>
+</section>
+
+<!-- ====== CHAPTER 7: 未来发展与展望 ====== -->
+<section class="chapter" id="ch-7">
+    <div class="chapter-header">
+        <h2>从$667万融资到IPO候选人的进阶之路</h2>
+        <span class="ch-sub">📈 未来发展与展望</span>
+        <span class="ch-counter" id="counter-7">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="7">
+
+        <!-- 1/3 近期发展方向 -->
+        <div class="slide"><div class="card"><h3>6-12个月的重点迭代</h3><div class="card-body">
+            <p>根据Koyfin的路线图，未来6-12个月的重点方向包括：1）扩展LLM智能问答的覆盖范围，支持更复杂的投资分析查询和多步骤推理；2）推出AI驱动的投资组合优化器，自动分析风险因子并建议配置调整；3）集成更多替代数据源（区块链交易数据、社交媒体实时feed、卫星图像等），增强市场洞察的前瞻性；4）完成移动App功能与Web平台的完全对齐，为移动端用户提供台式级的完整体验。</p>
+            <p>这些迭代的共同目标是：进一步降低使用难度、提升分析深度、扩展市场覆盖。特别是AI投资组合优化器的推出，有望成为Advisor系列用户的强大吸引力，进一步提升高端用户的ARPU。移动App的完善则针对零售投资者，有助于扩大用户基数。</p>
+            <div class="callout">
+                <strong>重点预测：</strong> AI投资组合优化器如果设计得当，可能成为Koyfin的下一个"杀手级功能"。这个功能同时满足零售和机构用户的需求，预计将提升付费转化率至20%+。
+            </div>
+        </div></div></div>
+
+        <!-- 2/3 中期扩展战略 -->
+        <div class="slide"><div class="card"><h3>12-24个月的商业模式创新</h3><div class="card-body">
+            <p>中期规划的重点是从ToC向"ToB+ToC"的转型。具体包括：1）推出企业版Koyfin，针对小型对冲基金、投资顾问公司、资产管理公司，提供权限管理、多账户支持、API接口等机构级功能；2）建立Koyfin数据开放平台，允许第三方开发者基于Koyfin的API和数据库构建专业应用，形成应用生态；3）进行国际扩展，推进中文、日文、欧洲主要语言的本地化，进入亚洲和欧洲市场。</p>
+            <p>这三个方向都有明显的商业潜力。企业版可以在Advisor基础上衍生出更高级的定价层，预计ARPU可达$1000-5000/月；数据平台可以吸引第三方开发者，创造平台生态的网络效应；国际扩展则直接打开3倍以上的市场空间。如果这些战略顺利推进，Koyfin的用户基数有望从50万扩大至500万+，ARR也将翻倍增长。</p>
+            <div class="callout">
+                <strong>战略转折点：</strong> 企业版的成功上线，将标志着Koyfin从"消费金融工具"向"金融基础设施"的升级。这种定位变化，会大幅提升其未来的估值倍数。
+            </div>
+        </div></div></div>
+
+        <!-- 3/3 长期愿景与IPO预期 -->
+        <div class="slide"><div class="card"><h3>3-5年内，从平民工具到行业标准</h3><div class="card-body">
+            <p>Koyfin的长期愿景是成为全球投资者和顾问的首选数据分析平台。按照目前的增长轨迹，假设：2026年ARR突破$600万（+50%YoY）、2027年达$1亿（+67%YoY）、2028年突破$2亿（+100%YoY）。在这样的增长基础上，Koyfin有望在2028-2029年启动IPO。IPO时的估值倍数取决于市场环境和竞争格局，但保守估计应在10x ARR（即$20亿估值），乐观估计可达15-20x（$30-40亿估值）。</p>
+            <p>到2030年，Koyfin的目标是：全球用户500万+（其中付费用户100万+），ARR超$3亿，成为金融科技领域最具盈利能力的平台之一。在此基础上，可能探索向人工智能驱动的量化投资工具和研究平台升级，进一步扩大市场影响力。建立行业标准和研究机构地位，发布年度金融数据和市场洞察报告，成为华尔街和硅谷都尊敬的声音。</p>
+            <div class="callout">
+                <strong>终极愿景：</strong> Koyfin的创始人Rob在2016年的梦想是"打破金融数据垄断"。如果按照这条路走下去，Koyfin有机会成为金融科技领域的"平权倡导者"，推动投资工具和知识的全球平权。这种使命感，不仅是商业成功的基础，更是长期吸引优秀人才的源动力。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-7"></div>
+</section>
+
+</main>
+
+<script>
+    const main = document.getElementById('main');
+    const totalSections = 8; // cover + 7 chapters
+    let currentSection = 0;
+
+    // Initialize dots for each chapter
+    function initDots() {
+        for (let ch = 1; ch < totalSections; ch++) {
+            const dotsContainer = document.getElementById(`dots-${ch}`);
+            const cardTrack = document.querySelector(`[data-ch="${ch}"]`);
+            if (!cardTrack || !dotsContainer) continue;
+
+            const slideCount = cardTrack.querySelectorAll('.slide').length;
+            dotsContainer.innerHTML = '';
+
+            for (let i = 0; i < slideCount; i++) {
+                const dot = document.createElement('button');
+                dot.className = 'dot' + (i === 0 ? ' active' : '');
+                dot.onclick = () => {
+                    cardTrack.scrollLeft = cardTrack.offsetWidth * i;
+                };
+                dotsContainer.appendChild(dot);
+            }
+
+            // Update dots on scroll
+            cardTrack.addEventListener('scroll', () => {
+                const index = Math.round(cardTrack.scrollLeft / cardTrack.offsetWidth);
+                document.querySelectorAll(`#dots-${ch} .dot`).forEach((d, i) => {
+                    d.classList.toggle('active', i === index);
+                });
+
+                // Update counter
+                const counter = document.getElementById(`counter-${ch}`);
+                if (counter) counter.textContent = `${index + 1} / ${slideCount}`;
+            });
+        }
+    }
+
+    // Navigation
+    function go(sectionIndex) {
+        const sections = document.querySelectorAll('section');
+        if (sections[sectionIndex]) {
+            sections[sectionIndex].scrollIntoView({ behavior: 'smooth' });
+            updateNav();
+        }
+    }
+
+    function updateNav() {
+        const sections = document.querySelectorAll('section');
+        let currentIdx = 0;
+        const scrollPos = main.scrollTop + main.clientHeight / 2;
+
+        sections.forEach((section, idx) => {
+            if (section.offsetTop <= scrollPos) currentIdx = idx;
+        });
+
+        document.querySelectorAll('.nav-btn').forEach((btn, idx) => {
+            btn.classList.toggle('active', idx === currentIdx);
+        });
+    }
+
+    // Animate stats on cover
+    function animateStats() {
+        document.querySelectorAll('.stat-number').forEach(el => {
+            const count = el.getAttribute('data-count');
+            const prefix = el.getAttribute('data-prefix') || '';
+            const suffix = el.getAttribute('data-suffix') || '';
+
+            if (!count) return; // Skip non-numeric stats
+
+            let current = 0;
+            const target = parseInt(count);
+            const increment = target / 50;
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    el.textContent = prefix + target + suffix;
+                    clearInterval(timer);
+                } else {
+                    el.textContent = prefix + Math.floor(current) + suffix;
+                }
+            }, 30);
+        });
+    }
+
+    // Initialize on load
+    window.addEventListener('load', () => {
+        initDots();
+        animateStats();
+        main.addEventListener('scroll', updateNav);
+    });
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown') main.scrollTop += window.innerHeight;
+        if (e.key === 'ArrowUp') main.scrollTop -= window.innerHeight;
+        if (e.key === 'ArrowRight') {
+            const currentTrack = document.querySelector('.card-track');
+            if (currentTrack) currentTrack.scrollLeft += currentTrack.offsetWidth;
+        }
+        if (e.key === 'ArrowLeft') {
+            const currentTrack = document.querySelector('.card-track');
+            if (currentTrack) currentTrack.scrollLeft -= currentTrack.offsetWidth;
+        }
+    });
+</script>
+
+</body>
+</html>

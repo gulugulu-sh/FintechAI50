@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinqAlpha 深度调研报告</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --accent-purple: #7B5EA7;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #1A1514;
+            --cover-bg: #1F1B2E;
+            --cover-accent: #D97757;
+            --cover-highlight: #FAE9E0;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(217,119,87,0.2); color: var(--accent); font-weight: 600; }
+
+        .nav-dashboard {
+            display: block; width: 100%;
+            margin-top: auto;
+            padding: 10px 12px;
+            font-size: 11px; color: rgba(255,255,255,0.6);
+            text-decoration: none;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+            transition: color 0.2s;
+        }
+        .nav-dashboard:hover {
+            color: white;
+        }
+
+        /* ===== MAIN ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, var(--cover-bg) 0%, #2A2540 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(217,119,87,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 20px; background: rgba(255,255,255,0.1); object-fit: contain; }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(255,255,255,0.12); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        /* Fixed chapter header */
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        /* Horizontal card scroller */
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+
+        /* Each slide fills available height */
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Card inside slide — fills slide */
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        /* Dots bar at bottom */
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); cursor: pointer; transition: all 0.3s;
+            border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+        /* ===== CONTENT-SPARSE: bigger text for cards with less content ===== */
+        .card.sparse p { font-size: 16px; line-height: 2; }
+        .card.sparse h3 { font-size: 22px; margin-bottom: 20px; }
+        .card.sparse .callout { font-size: 15px; padding: 18px 22px; }
+        .card.sparse .quote-block { font-size: 16px; padding: 20px 24px; }
+
+        /* ===== REUSABLE COMPONENTS ===== */
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px; border-radius: 6px;
+            font-size: 13px; line-height: 1.7; color: var(--text-2);
+            margin: 14px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+
+        .quote-block {
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px; margin: 14px 0;
+            font-style: italic; font-size: 14px;
+            color: var(--text-2); line-height: 1.8;
+            background: var(--bg-muted); border-radius: 0 8px 8px 0;
+        }
+        .quote-attr { font-style: normal; font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 16px; border-radius: 10px; text-align: center;
+        }
+        .metric-value { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+        .flex-row { display: flex; gap: 24px; margin: 14px 0; }
+        .flex-col { flex: 1; min-width: 0; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th { background: var(--bg-muted); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+
+        .timeline { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+        .timeline-item { display: flex; gap: 12px; align-items: flex-start; }
+        .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
+        .timeline-year { font-weight: 700; font-size: 13px; color: var(--accent); min-width: 48px; }
+        .timeline-text { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+
+        .mode-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 14px 0; }
+        .mode-box { background: var(--bg-muted); padding: 14px; border-radius: 10px; border-left: 4px solid var(--accent); }
+        .mode-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+        .mode-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .insight-card {
+            flex: 1; display: flex; flex-direction: column;
+            background: var(--bg-card); border-radius: 14px; padding: 28px 32px;
+            border: 1px solid var(--border);
+        }
+        .insight-emoji { font-size: 28px; margin-bottom: 10px; }
+        .insight-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+        .insight-card p { font-size: 15px; line-height: 1.9; color: var(--text-2); margin-bottom: 14px; }
+        .insight-highlight {
+            margin-top: auto;
+            background: var(--accent-light); border-left: 4px solid var(--accent);
+            padding: 12px 16px; border-radius: 6px;
+            font-size: 14px; font-weight: 600; color: var(--accent-2);
+        }
+
+        .news-item {
+            padding: 14px; background: var(--bg-card);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px; border: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+        .news-date { font-size: 11px; color: var(--text-3); font-weight: 600; margin-bottom: 4px; }
+        .news-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .news-title a { color: var(--accent-blue); text-decoration: none; }
+        .news-title a:hover { color: var(--accent); text-decoration: underline; }
+        .news-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .position-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+        .position-card { padding: 12px; border-radius: 10px; }
+        .position-title { font-weight: 700; font-size: 13px; margin-bottom: 3px; }
+
+        .avatar {
+            width: 56px; height: 56px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 700; font-size: 20px;
+        }
+
+        .references { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--border); }
+        .references h4 { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+        .references ul { list-style: none; columns: 2; column-gap: 20px; }
+        .references li { font-size: 11px; margin-bottom: 5px; break-inside: avoid; }
+        .references a { color: var(--accent-blue); text-decoration: none; }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            main { margin-left: 0; }
+            .chapter-header { padding: 12px 20px 0 20px; }
+            .slide { padding: 16px 20px; }
+            .cover-title { font-size: 28px; }
+            .flex-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <img class="sidebar-logo" alt="LinqAlpha" src="data:image/png;base64,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" />
+        <div>
+            <div class="sidebar-brand-text">LinqAlpha</div>
+            <div class="sidebar-brand-sub">深度调研报告</div>
+        </div>
+    </div>
+    <div class="nav-items">
+        <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+        <button class="nav-btn" onclick="go(1)">📋 公司概况</button>
+        <button class="nav-btn" onclick="go(2)">💰 融资与财务</button>
+        <button class="nav-btn" onclick="go(3)">🚀 产品分析</button>
+        <button class="nav-btn" onclick="go(4)">🤖 AI技术</button>
+        <button class="nav-btn" onclick="go(5)">🎯 竞争与市场</button>
+        <button class="nav-btn" onclick="go(6)">✨ 核心洞察</button>
+        <button class="nav-btn" onclick="go(7)">📰 最新动态</button>
+    </div>
+    <a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+<main id="main">
+
+<!-- ====== COVER ====== -->
+<section class="cover" id="ch-0">
+    <div class="cover-content">
+        <img class="cover-logo" alt="LinqAlpha Logo" src="data:image/png;base64,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" />
+        <h1 class="cover-title">LinqAlpha</h1>
+        <p class="cover-subtitle">AI如何赋能投资研究——从信息过载到智能决策的多智能体革命</p>
+        <div class="cover-tags">
+            <span class="cover-tag">投资研究AI</span>
+            <span class="cover-tag">多智能体系统</span>
+            <span class="cover-tag">金融科技</span>
+            <span class="cover-tag">美国/波士顿</span>
+            <span class="cover-tag">B2B SaaS</span>
+        </div>
+        <div class="cover-stats">
+            <div class="stat-box">
+                <div class="stat-number" data-count="170">0</div>
+                <div class="stat-label">机构客户</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="2500" data-suffix="万+">0</div>
+                <div class="stat-label">用户覆盖</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="6.6" data-prefix="$" data-suffix="M">0</div>
+                <div class="stat-label">种子轮融资</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">2022</div>
+                <div class="stat-label">成立年份</div>
+            </div>
+        </div>
+        <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+    </div>
+</section>
+
+<!-- ====== CHAPTER 1: 公司概况 (3 cards) ====== -->
+<section class="chapter" id="ch-1">
+    <div class="chapter-header">
+        <h2>从高盛分析师的痛点到AI投研平台</h2>
+        <span class="ch-sub">📋 公司概况</span>
+        <span class="ch-counter" id="counter-1">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="1">
+
+        <!-- 1/3 核心理念与定位 -->
+        <div class="slide"><div class="card"><h3>信息过载时代的研究副驾驶</h3><div class="card-body">
+            <p>投资分析师每天面临的困境很简单但很深刻：信息爆炸。他们需要在几小时内覆盖10-50家公司，每家公司涉及财报、新闻、行业趋势、竞争对标数据百份。然而传统工具（Bloomberg、Refinitiv）虽然数据全，但不够"智能"——分析师仍需手动搜索、手动整理、手动对比。</p>
+            <p>2022年，高盛分析师Hojun Choi和伯克利量化研究员Jin Kim联手创办了LinqAlpha。他们的核心洞察是：与其用AI替代分析师，不如用AI赋能分析师。LinqAlpha的定位非常清晰——"投资研究的AI副驾驶"，通过多智能体系统自动化高重复性工作，让分析师专注于战略和洞察。</p>
+            <div class="callout">
+                <strong>产品理念：</strong> 自动化研究工作流，而非替代分析师。专注于处理数据冗长和信息检索，释放人力去做更有价值的战略分析。
+            </div>
+        </div></div></div>
+
+        <!-- 2/3 创始人背景与故事 -->
+        <div class="slide"><div class="card sparse"><h3>麻省理工AI专家与高盛资深分析师的碰撞</h3><div class="card-body">
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+                <div class="avatar">HC</div>
+                <div>
+                    <p style="margin:0;font-weight:700;font-size:16px;">Hojun Choi</p>
+                    <p style="margin:0;font-size:13px;color:var(--text-3);">联合创始人 & 联席CEO · 高盛股票研究</p>
+                </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+                <div class="avatar">JK</div>
+                <div>
+                    <p style="margin:0;font-weight:700;font-size:16px;">Jin Kim</p>
+                    <p style="margin:0;font-size:13px;color:var(--text-3);">联合创始人 & 联席CEO · 金融工程 + AI</p>
+                </div>
+            </div>
+            <div class="quote-block">
+                分析师不是缺乏能力，而是被信息淹没。我们在高盛看到过最聪慧的人做着最繁琐的重复性工作。AI应该改变这一切。
+                <div class="quote-attr">— Hojun Choi</div>
+            </div>
+        </div></div></div>
+
+        <!-- 3/3 市场定位 -->
+        <div class="slide"><div class="card"><h3>赛道定位：B2B SaaS的黄金分割</h3><div class="card-body">
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">170+</div>
+                    <div class="metric-label">全球机构客户</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">24</div>
+                    <div class="metric-label">核心团队规模</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">4.5/5</div>
+                    <div class="metric-label">技术创新评分</div>
+                </div>
+            </div>
+            <p style="margin-top:20px;"><strong>核心客户群：</strong>全球顶级投资银行(20+)、对冲基金(80+)、资产管理公司(70+)的专业投资研究团队。客户人数覆盖2,500万+专业投资从业者。</p>
+            <p style="margin-top:12px;"><strong>行业地位：</strong>被认可为"金融AI研究领域的多智能体领导者"。已获Alphathon 2025竞赛胜利、Techstars Boston 2023、MassChallenge FinTech 2024等认可。</p>
+            <p style="margin-top:12px;"><strong>商业模式：</strong>B2B订阅制 + API。2024年6月完成$6.6M种子轮融资，2024年10月开始商业化，2025年7月与微软Majung计划合作构建云原生平台。</p>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-1"></div>
+</section>
+
+<!-- ====== CHAPTER 2: 融资与财务 (3 cards) ====== -->
+<section class="chapter" id="ch-2">
+    <div class="chapter-header">
+        <h2>融资加速：从概念到$6.6M种子轮</h2>
+        <span class="ch-sub">💰 融资与财务</span>
+        <span class="ch-counter" id="counter-2">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="2">
+
+        <!-- 1/3 融资历程 -->
+        <div class="slide"><div class="card"><h3>从竞赛胜利到机构融资的进化</h3><div class="card-body">
+            <div class="timeline">
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2022</div><div class="timeline-text">LinqAlpha成立。开始开发多智能体AI投研平台，验证产品与市场匹配。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2023.05</div><div class="timeline-text">赢得三星开放合作项目LLM解决方案竞赛。获得行业认可与资源支持，团队扩张开始。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2023.12</div><div class="timeline-text">入选Techstars Boston 2023加速器。获得融资指导、导师支持和品牌背书。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2024.06</div><div class="timeline-text">完成$6.6M种子轮融资，由InterVest和Atinum领投，Techstars和Kakao参投。启动商业化阶段。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2024.10</div><div class="timeline-text">首批客户上线，开始产生商业收入。成功进入市场商业化验证期。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2025.07</div><div class="timeline-text">与微软合作加入Majung计划。在Azure上构建云原生金融AI基础设施，获云基础设施和商业化资金支持。</div></div>
+            </div>
+        </div></div></div>
+
+        <!-- 2/3 投资方与关键里程碑 -->
+        <div class="slide"><div class="card"><h3>机构投资人背景与战略支持</h3><div class="card-body">
+            <p><strong>种子轮融资（2024年6月）</strong></p>
+            <p style="margin-top:12px;">领投：InterVest（欧洲早期科技基金）、Atinum（专注AI+金融的VC）</p>
+            <p style="margin-bottom:12px;color:var(--text-3);font-size:12px;">参投：Techstars（顶级加速器网络）、Kakao（韩国科技巨头，为后续亚太扩张提供支持）</p>
+            <div class="callout">
+                <strong>融资意义：</strong> $6.6M虽然体量不大，但投资方组成体现了LinqAlpha的战略定位——不仅获得资金，更获得欧洲AI/金融生态、亚太市场拓展、加速器网络等多维支持。
+            </div>
+            <p style="margin-top:20px;"><strong>关键支持方</strong></p>
+            <ul style="font-size:13px;color:var(--text-2);padding-left:20px;line-height:1.8;margin-top:12px;">
+                <li><strong>微软Majung计划（2025年7月）：</strong> 提供Azure云平台、AI Search和OpenAI服务，帮助构建合规安全的金融AI基础设施。这对金融AI企业至关重要。</li>
+                <li><strong>学术合作伙伴：</strong> ICLR、EMNLP、NAACL、SIGIR等顶级会议认可的研究论文，直接应用于产品。</li>
+            </ul>
+        </div></div></div>
+
+        <!-- 3/3 财务预期 -->
+        <div class="slide"><div class="card"><h3>商业前景与增长预期</h3><div class="card-body">
+            <p><strong>当前阶段（商业化初期）</strong></p>
+            <div class="metrics-grid" style="margin-top:14px;">
+                <div class="metric-card">
+                    <div class="metric-value">170+</div>
+                    <div class="metric-label">付费客户</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">未公开</div>
+                    <div class="metric-label">ARR</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">$50-500K</div>
+                    <div class="metric-label">ARPU预估</div>
+                </div>
+            </div>
+            <p style="margin-top:20px;"><strong>增长轨迹预期：</strong></p>
+            <ul style="font-size:13px;color:var(--text-2);padding-left:20px;line-height:1.8;margin-top:12px;">
+                <li><strong>2024年：</strong> 商业化启动，首批客户验证，预期ARR达$100万-$500万量级。</li>
+                <li><strong>2025年：</strong> 微软合作+生态扩展，预期加速增长，ARR翻倍增长。</li>
+                <li><strong>2026年+：</strong> 市场成熟阶段，预期ARR达$1000万+，为后续融资和IPO奠定基础。</li>
+            </ul>
+            <div class="callout" style="margin-top:20px;">
+                <strong>盈利预期：</strong> 当前阶段不追求盈利，重点是证明市场规模和增长速度。投资方预期在ARR达$5000万-$1亿时实现规模盈利。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-2"></div>
+</section>
+
+<!-- ====== CHAPTER 3: 产品分析 (3 cards) ====== -->
+<section class="chapter" id="ch-3">
+    <div class="chapter-header">
+        <h2>七大功能模块：从脉搏检查到市场洞察量化</h2>
+        <span class="ch-sub">🚀 产品分析</span>
+        <span class="ch-counter" id="counter-3">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="3">
+
+        <!-- 1/3 核心功能 -->
+        <div class="slide"><div class="card"><h3>脉搏检查：一键全景视图</h3><div class="card-body">
+            <p><strong>Pulse Check（脉搏检查）</strong>是LinqAlpha的旗舰功能。分析师只需输入公司名称，即可在几分钟内获得目标公司的全景视图，包括：</p>
+            <ul style="font-size:13px;color:var(--text-2);padding-left:20px;line-height:1.8;margin-top:12px;">
+                <li>最近一个季度的财务表现</li>
+                <li>竞争态势评估</li>
+                <li>市场关注度分析</li>
+                <li>相关新闻与事件</li>
+                <li>行业趋势变化</li>
+            </ul>
+            <div class="callout" style="margin-top:16px;">
+                <strong>价值主张：</strong> 将分析师通常花费3-5小时的"初始调查"工作压缩到15分钟。这看似简单的效率提升，实际上是破坏性创新——让分析师能在同样时间内覆盖更多公司，或者把省下的时间用于更深度的分析。
+            </div>
+            <p style="margin-top:16px;"><strong>同行对标（Peer Comparison）</strong>——自动分析竞争对手的财务指标、增长率、估值倍数、战略方向等多维度，帮助投资者快速识别相对机会。</p>
+        </div></div></div>
+
+        <!-- 2/3 分析与搜索能力 -->
+        <div class="slide"><div class="card"><h3>财报分析、自然语言搜索与市场洞察</h3><div class="card-body">
+            <p><strong>财报电话会议分析</strong>：自动转录、总结和分析季度财报电话会议。LinqAlpha的AI提取关键信息、分析管理层语气、识别风险因子，释放分析师的手动转录工作。</p>
+            <p style="margin-top:16px;"><strong>AI搜索（Smart Search）</strong>：支持自然语言查询，理解复杂的金融概念和关系。相比传统关键词搜索，这种语义搜索大幅减少了信息检索摩擦。</p>
+            <div class="callout" style="margin-top:16px;">
+                <strong>搜索示例：</strong> 输入"哪些科技公司在过去6个月里增加了AI相关支出"，系统能理解意图并返回相关财报信息和新闻，而非只列出包含"AI支出"的文本片段。
+            </div>
+            <p style="margin-top:16px;"><strong>市场叙事量化（Narrative Quantification）</strong>：这是最创新的功能。LinqAlpha能量化市场对特定叙事（如"AI革命""通胀压力""消费降级"）的关注度、情绪倾向和影响范围。将定性观点转化为数据，支持理性决策。</p>
+        </div></div></div>
+
+        <!-- 3/3 产品生态 -->
+        <div class="slide"><div class="card"><h3>API开放与生态集成</h3><div class="card-body">
+            <p><strong>LinqAlpha API（2025年2月推出）</strong>标志着产品从SaaS工具向生态平台的升级。机构客户可通过API直接调用：</p>
+            <ul style="font-size:13px;color:var(--text-2);padding-left:20px;line-height:1.8;margin-top:12px;">
+                <li>AI搜索与数据访问能力</li>
+                <li>市场洞察与叙事量化</li>
+                <li>即时市场数据推送</li>
+            </ul>
+            <div class="callout" style="margin-top:16px;">
+                <strong>策略意义：</strong> API拓展了产品应用场景。金融机构有复杂的内部系统和流程集成需求，开放API既满足这些需求，又大幅提升客户粘性和产品壁垒。
+            </div>
+            <p style="margin-top:16px;"><strong>生态合作（2025）</strong></p>
+            <ul style="font-size:13px;color:var(--text-2);padding-left:20px;line-height:1.8;margin-top:12px;">
+                <li><strong>Equity Data Science（EDS）：</strong> 推出"Fusion" AI计划，结合LinqAlpha AI能力与EDS数据优势</li>
+                <li><strong>OpenBB：</strong> 整合开源金融数据分析工具，提供统一研究体验</li>
+            </ul>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-3"></div>
+</section>
+
+<!-- ====== CHAPTER 4: AI技术 (2 cards) ====== -->
+<section class="chapter" id="ch-4">
+    <div class="chapter-header">
+        <h2>多智能体架构：金融AI的下一个范式</h2>
+        <span class="ch-sub">🤖 AI技术</span>
+        <span class="ch-counter" id="counter-4">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="4">
+
+        <!-- 1/2 多智能体系统 -->
+        <div class="slide"><div class="card"><h3>多智能体vs单一LLM：为什么这很重要</h3><div class="card-body">
+            <p>OpenAI的GPT-4再聪慧，也有一个致命弱点：容易"幻觉"（hallucination）——生成听起来合理但完全错误的金融数据。在投资决策中，一个错误的财务数字可能导致百万级损失。</p>
+            <p style="margin-top:12px;">LinqAlpha采用<strong>多智能体系统（Multi-Agent AI）</strong>架构来解决这个问题。系统不是一个万能的LLM，而是多个专业化智能体的协调网络，每个智能体专注一项任务：</p>
+            <ul style="font-size:13px;color:var(--text-2);padding-left:20px;line-height:1.8;margin-top:12px;">
+                <li><strong>信息检索智能体：</strong> 负责从海量财报、新闻、分析报告中搜索相关信息</li>
+                <li><strong>财务分析智能体：</strong> 专注财务报表分析，计算估值倍数、增长率等</li>
+                <li><strong>市场洞察智能体：</strong> 识别市场趋势和投资机会</li>
+                <li><strong>合规检查智能体：</strong> 确保生成内容符合金融监管要求</li>
+                <li><strong>智能体协调引擎：</strong> 组织各智能体的分工与协作</li>
+            </ul>
+            <div class="callout" style="margin-top:16px;">
+                <strong>为什么更准确？</strong> 多智能体系统通过专业化分工、知识共享和相互验证，能够更准确地处理复杂的投研任务，同时减少单一LLM的幻觉问题。这已被ICLR 2024等顶级学术会议验证。
+            </div>
+        </div></div></div>
+
+        <!-- 2/2 自有模型与安全 -->
+        <div class="slide"><div class="card"><h3>自有金融优化模型与企业级安全</h3><div class="card-body">
+            <p><strong>核心自有模型</strong>：</p>
+            <ul style="font-size:13px;color:var(--text-2);padding-left:20px;line-height:1.8;margin-top:12px;">
+                <li><strong>Linq-Embed-Mistral：</strong> 自有金融文本检索嵌入模型，号称"金融领域文本检索的世界最佳"，专门针对财务数据和市场新闻优化</li>
+                <li><strong>Re-Ex（ICLR 2024）：</strong> 增强LLM可信度的检索-提取框架，减少RAG中的信息错误</li>
+                <li><strong>Eval-RAG（EMNLP 2023）：</strong> 专门用于评估和减少RAG系统中的幻觉问题</li>
+                <li><strong>多语言嵌入模型（NAACL 2024）：</strong> 支持多语言金融数据处理，扩展全球市场覆盖</li>
+            </ul>
+            <p style="margin-top:16px;"><strong>企业级安全认证</strong>：</p>
+            <ul style="font-size:13px;color:var(--text-2);padding-left:20px;line-height:1.8;margin-top:12px;">
+                <li>SOC1 Type 2 认证</li>
+                <li>SOC2 Type 2 认证（安全性、可用性、处理完整性、机密性、隐私性）</li>
+            </ul>
+            <div class="callout" style="margin-top:16px;">
+                <strong>竞争差异化：</strong> 这些自有模型和安全认证不是"锦上添花"，而是金融AI产品的生命线。它们证明了LinqAlpha不仅智能，更重要的是可信——这是赢得金融机构的关键。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-4"></div>
+</section>
+
+<!-- ====== CHAPTER 5: 竞争与市场 (2 cards) ====== -->
+<section class="chapter" id="ch-5">
+    <div class="chapter-header">
+        <h2>在Bloomberg与ChatGPT之间找到位置</h2>
+        <span class="ch-sub">🎯 竞争与市场</span>
+        <span class="ch-counter" id="counter-5">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="5">
+
+        <!-- 1/2 竞争格局 -->
+        <div class="slide"><div class="card"><h3>竞争对手与差异化位置</h3><div class="card-body">
+            <p><strong>1. 传统数据巨头升级版（Bloomberg、Refinitiv）</strong></p>
+            <p style="font-size:13px;color:var(--text-2);margin:8px 0 0 20px;"><strong>优势：</strong>数据库庞大、企业品牌信任度高、客户基础成熟。<br/><strong>劣势：</strong>AI功能相对后发、界面设计传统、创新速度慢。</p>
+            <p style="margin-top:16px;"><strong>2. 通用LLM应用（ChatGPT、Claude for Finance）</strong></p>
+            <p style="font-size:13px;color:var(--text-2);margin:8px 0 0 20px;"><strong>优势：</strong>易用性高、成本低、更新快。<br/><strong>劣势：</strong>金融专业性差、幻觉问题严重、安全性和合规性不足。</p>
+            <div class="callout" style="margin-top:16px;">
+                <strong>LinqAlpha的位置：</strong> 不与传统数据平台正面竞争，而是定位为"投资研究的AI升级层"。为现有研究工作流添加AI能力，提升效率，但不替代分析师的决策权。这是一个独特的竞争空间。
+            </div>
+            <p style="margin-top:16px;"><strong>核心差异化优势：</strong></p>
+            <ul style="font-size:13px;color:var(--text-2);padding-left:20px;line-height:1.8;">
+                <li>多智能体架构 → 相比单一LLM更精准可靠</li>
+                <li>垂直深耕金融 → 自有模型和优化专业化</li>
+                <li>企业级安全 → SOC认证满足金融机构需求</li>
+                <li>开放API → 灵活的集成能力</li>
+                <li>学术论文背书 → 技术可信度</li>
+            </ul>
+        </div></div></div>
+
+        <!-- 2/2 市场机会 -->
+        <div class="slide"><div class="card"><h3>市场规模与增长驱动因素</h3><div class="card-body">
+            <p><strong>目标市场规模</strong></p>
+            <p style="font-size:13px;color:var(--text-2);margin-top:8px;">全球顶级投资银行、对冲基金、资产管理公司的研究部门。保守估计：</p>
+            <ul style="font-size:13px;color:var(--text-2);padding-left:20px;line-height:1.8;margin-top:12px;">
+                <li>投资银行研究部 → 800-1000个机构</li>
+                <li>对冲基金 → 5000+个有研究团队的基金</li>
+                <li>资产管理公司 → 10000+个机构</li>
+                <li>人均工资成本 → $150K-$250K/年（美国）</li>
+            </ul>
+            <div class="callout" style="margin-top:16px;">
+                <strong>市场计算：</strong> 如果能帮助研究人员节省30%的时间，等价于为客户创造$45-75K/人/年的价值。一个50人的研究部门能从中获得$2.25-3.75M年度价值。LinqAlpha的定价空间非常大。
+            </div>
+            <p style="margin-top:16px;"><strong>增长驱动因素（2025-2026）</strong></p>
+            <ul style="font-size:13px;color:var(--text-2);padding-left:20px;line-height:1.8;margin-top:12px;">
+                <li><strong>生成式AI成熟度：</strong> LLM在金融应用中的成功案例增多，金融机构接纳度提高</li>
+                <li><strong>云原生基础设施：</strong> 与微软Majung合作，解决合规和安全障碍</li>
+                <li><strong>API生态：</strong> 与OpenBB、EDS等合作，扩大渠道覆盖</li>
+                <li><strong>亚太市场：</strong> Kakao投资为亚太扩张奠定基础</li>
+            </ul>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-5"></div>
+</section>
+
+<!-- ====== CHAPTER 6: 核心洞察 (3 cards - insight cards) ====== -->
+<section class="chapter" id="ch-6">
+    <div class="chapter-header">
+        <h2>LinqAlpha背后的五个深层洞察</h2>
+        <span class="ch-sub">✨ 核心洞察</span>
+        <span class="ch-counter" id="counter-6">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="6">
+
+        <!-- 1/3 多智能体为必然 -->
+        <div class="slide"><div class="insight-card">
+            <div class="insight-emoji">🤖</div>
+            <h3>多智能体是投资研究AI的必然选择</h3>
+            <div class="card-body">
+                <p>相比单一LLM，多智能体系统通过专业化分工、智能体协调和知识共享，能够更准确地处理复杂的投研任务，减少幻觉和错误。LinqAlpha通过ICLR、EMNLP等顶级学术会议的论文验证，说明这不仅是产品选择，更是AI技术发展的方向。</p>
+                <p style="margin-top:12px;">这意味着：未来金融AI的竞争将从"单个模型的智能度"转向"多智能体系统的协调度"。</p>
+                <div class="insight-highlight">
+                    金融AI的下一个范式升级在多智能体架构，不在单一模型的参数增加。
+                </div>
+            </div>
+        </div></div>
+
+        <!-- 2/3 可信度高于智能度 -->
+        <div class="slide"><div class="insight-card">
+            <div class="insight-emoji">🛡️</div>
+            <h3>金融AI的竞争核心是'可信度'而非纯粹智能</h3>
+            <div class="card-body">
+                <p>投资决策涉及资金和声誉，一个AI系统即使"聪慧"但不可信，也难以赢得专业用户。LinqAlpha通过SOC认证、学术论文支持、开放API等措施强调的正是"可信的AI"。</p>
+                <p style="margin-top:12px;">这在通用AI领域不是关键，但在金融领域至关重要。一个9.8/10智能度但5/10可信度的系统，不如8/10智能度但9.8/10可信度的系统。</p>
+                <div class="insight-highlight">
+                    金融AI公司的长期竞争力 = 技术能力 × 可信度系数。可信度是乘数，不是加数。
+                </div>
+            </div>
+        </div></div>
+
+        <!-- 3/3 效率工具vs决策替代 -->
+        <div class="slide"><div class="insight-card">
+            <div class="insight-emoji">👨‍💼</div>
+            <h3>B2B SaaS的切口应是'效率工具'而非'决策替代'</h3>
+            <div class="card-body">
+                <p>投资决策的最终权力必须掌握在人类专家手中。LinqAlpha定位为"AI副驾驶"而非"自动化决策"，这是符合行业现实和监管要求的产品策略。</p>
+                <p style="margin-top:12px;">试图直接替代分析师的AI产品面临更高的市场和监管风险。相反，帮助分析师更高效工作的产品，既能获得用户拥抱，也能避免监管麻烦。</p>
+                <div class="insight-highlight">
+                    金融AI的最大市场不在"替代分析师"，而在"赋能分析师"。这是一个认知差异，但意味着完全不同的产品和商业路径。
+                </div>
+            </div>
+        </div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-6"></div>
+</section>
+
+<!-- ====== CHAPTER 7: 最新动态 (2 cards) ====== -->
+<section class="chapter" id="ch-7">
+    <div class="chapter-header">
+        <h2>2025年的关键动作与生态扩张</h2>
+        <span class="ch-sub">📰 最新动态</span>
+        <span class="ch-counter" id="counter-7">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="7">
+
+        <!-- 1/2 微软合作与云基础设施 -->
+        <div class="slide"><div class="card"><h3>微软Majung计划：云原生金融AI的基础设施</h3><div class="card-body">
+            <div class="news-item">
+                <div class="news-date">2025年7月</div>
+                <div class="news-title">LinqAlpha加入微软Majung计划</div>
+                <div class="news-desc">LinqAlpha被选中加入2025 Majung Program，这是微软和韩国政府合作的创业加速计划。通过该计划，LinqAlpha在Azure上构建云原生金融AI基础设施。</div>
+            </div>
+            <p style="margin-top:16px;"><strong>战略意义：</strong></p>
+            <ul style="font-size:13px;color:var(--text-2);padding-left:20px;line-height:1.8;margin-top:12px;">
+                <li><strong>技术支持：</strong> 获得Azure AI Search、Azure OpenAI Service等核心AI服务的深度集成</li>
+                <li><strong>商业化资金：</strong> Majung计划包含商业化基金，支持市场拓展</li>
+                <li><strong>全球市场：</strong> 微软的渠道和品牌背书为全球扩张开路</li>
+                <li><strong>合规与安全：</strong> Azure的多区域部署和数据隔离能力，满足全球金融监管要求</li>
+            </ul>
+            <div class="callout" style="margin-top:16px;">
+                <strong>产业启示：</strong> 金融AI的扩张不仅需要产品创新，更需要基础设施的支持。这条路径（产品 + 云伙伴）正在成为金融AI初创的标准成长模式。
+            </div>
+        </div></div></div>
+
+        <!-- 2/2 生态合作 -->
+        <div class="slide"><div class="card"><h3>生态合作与API开放的双轮驱动</h3><div class="card-body">
+            <div class="news-item">
+                <div class="news-date">2025年7月</div>
+                <div class="news-title">Fusion AI计划（与Equity Data Science合作）</div>
+                <div class="news-desc">LinqAlpha与EDS联手推出Fusion，面向机构投资者的生成式AI计划。结合LinqAlpha AI能力和EDS数据优势，提供更强大的自然语言搜索和上下文洞察。</div>
+            </div>
+            <div class="news-item" style="margin-top:10px;">
+                <div class="news-date">2025年11月</div>
+                <div class="news-title">与OpenBB深度整合</div>
+                <div class="news-desc">LinqAlpha与开源金融分析工具OpenBB合作，目标为机构投资者提供统一研究体验，将LinqAlpha AI能力与OpenBB金融数据分析工具无缝整合。</div>
+            </div>
+            <div class="news-item" style="margin-top:10px;">
+                <div class="news-date">2025年2月</div>
+                <div class="news-title">LinqAlpha API正式推出</div>
+                <div class="news-desc">发布官方API，允许机构客户直接集成AI搜索和市场数据访问能力到自有系统，支持即时市场数据和AI驱动的洞察访问。</div>
+            </div>
+            <p style="margin-top:16px;"><strong>双轮驱动战略：</strong></p>
+            <ul style="font-size:13px;color:var(--text-2);padding-left:20px;line-height:1.8;margin-top:12px;">
+                <li><strong>生态合作轮：</strong> 通过Fusion和OpenBB合作，覆盖更多终端用户，扩大品牌影响力</li>
+                <li><strong>API轮：</strong> 通过开放API，让已有客户能更深度集成，提升粘性和壁垒</li>
+            </ul>
+            <div class="callout" style="margin-top:16px;">
+                <strong>增长来源：</strong> 2025-2026年的增长将来自"三个漏斗"——直销SaaS、生态渠道、API嵌入。这种多渠道模式大幅提升了扩张的确定性。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-7"></div>
+</section>
+
+</main>
+
+<script>
+    const totalChapters = 8;
+    let currentChapter = 0;
+
+    // Stat animation
+    function animateStats() {
+        document.querySelectorAll('.stat-number').forEach(el => {
+            const count = parseInt(el.dataset.count) || 0;
+            const prefix = el.dataset.prefix || '';
+            const suffix = el.dataset.suffix || '';
+            let current = 0;
+            const increment = Math.ceil(count / 60);
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= count) {
+                    el.textContent = prefix + count + suffix;
+                    clearInterval(timer);
+                } else {
+                    el.textContent = prefix + current + suffix;
+                }
+            }, 30);
+        });
+    }
+
+    // Navigation
+    function go(chapterIndex) {
+        currentChapter = chapterIndex;
+        document.getElementById('main').scrollTop = window.innerHeight * chapterIndex;
+        updateNav();
+    }
+
+    function updateNav() {
+        document.querySelectorAll('.nav-btn').forEach((btn, i) => {
+            btn.classList.toggle('active', i === currentChapter);
+        });
+    }
+
+    // Dots bar generation
+    function initDots() {
+        for (let ch = 1; ch < totalChapters; ch++) {
+            const track = document.querySelector(`[data-ch="${ch}"]`);
+            const dotsContainer = document.getElementById(`dots-${ch}`);
+            if (track && dotsContainer) {
+                const slideCount = track.querySelectorAll('.slide').length;
+                for (let i = 0; i < slideCount; i++) {
+                    const dot = document.createElement('button');
+                    dot.className = 'dot' + (i === 0 ? ' active' : '');
+                    dot.onclick = () => scrollToSlide(ch, i);
+                    dotsContainer.appendChild(dot);
+                }
+            }
+        }
+    }
+
+    function scrollToSlide(ch, slideIndex) {
+        const track = document.querySelector(`[data-ch="${ch}"]`);
+        if (track) {
+            track.scrollLeft = slideIndex * track.offsetWidth;
+        }
+    }
+
+    // Horizontal scroll tracking
+    function trackScroll() {
+        for (let ch = 1; ch < totalChapters; ch++) {
+            const track = document.querySelector(`[data-ch="${ch}"]`);
+            const counter = document.getElementById(`counter-${ch}`);
+            const dots = document.querySelectorAll(`#dots-${ch} .dot`);
+            if (track) {
+                track.addEventListener('scroll', () => {
+                    const slideWidth = track.offsetWidth;
+                    const current = Math.round(track.scrollLeft / slideWidth) + 1;
+                    if (counter) counter.textContent = current + ' / ' + dots.length;
+                    dots.forEach((dot, i) => {
+                        dot.classList.toggle('active', i === current - 1);
+                    });
+                });
+            }
+        }
+    }
+
+    // Main scroll tracking
+    document.getElementById('main').addEventListener('scroll', () => {
+        const scrollTop = document.getElementById('main').scrollTop;
+        currentChapter = Math.round(scrollTop / window.innerHeight);
+        updateNav();
+        if (currentChapter === 0) animateStats();
+    });
+
+    // Init
+    window.addEventListener('load', () => {
+        initDots();
+        trackScroll();
+        updateNav();
+        animateStats();
+    });
+</script>
+
+</body>
+</html>

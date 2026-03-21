@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skyfire 深度调研报告</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #1A1514;
+            --cover-bg: #1E40AF;
+            --cover-accent: #3B82F6;
+            --cover-highlight: #60A5FA;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(217,119,87,0.2); color: var(--accent); font-weight: 600; }
+
+        /* ===== MAIN ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, var(--cover-bg) 0%, #1E3A8A 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(96,165,250,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 20px; background: rgba(255,255,255,0.1); object-fit: contain; }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(255,255,255,0.12); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        /* Fixed chapter header */
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        /* Horizontal card scroller */
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+
+        /* Each slide fills available height */
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Card inside slide */
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        /* Dots bar at bottom */
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); cursor: pointer; transition: all 0.3s;
+            border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+        /* ===== REUSABLE COMPONENTS ===== */
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px; border-radius: 6px;
+            font-size: 13px; line-height: 1.7; color: var(--text-2);
+            margin: 14px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+
+        .quote-block {
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px; margin: 14px 0;
+            font-style: italic; font-size: 14px;
+            color: var(--text-2); line-height: 1.8;
+            background: var(--bg-muted); border-radius: 0 8px 8px 0;
+        }
+        .quote-attr { font-style: normal; font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 16px; border-radius: 10px; text-align: center;
+        }
+        .metric-value { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+        .flex-row { display: flex; gap: 24px; margin: 14px 0; }
+        .flex-col { flex: 1; min-width: 0; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th { background: var(--bg-muted); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+
+        .mode-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin: 14px 0; }
+        .mode-box { background: var(--bg-muted); padding: 14px; border-radius: 10px; border-left: 4px solid var(--accent); }
+        .mode-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+        .mode-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .insight-card {
+            flex: 1; display: flex; flex-direction: column;
+            background: var(--bg-card); border-radius: 14px; padding: 28px 32px;
+            border: 1px solid var(--border);
+        }
+        .insight-emoji { font-size: 28px; margin-bottom: 10px; }
+        .insight-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+        .insight-card p { font-size: 15px; line-height: 1.9; color: var(--text-2); margin-bottom: 14px; }
+        .insight-highlight {
+            margin-top: auto;
+            background: var(--accent-light); border-left: 4px solid var(--accent);
+            padding: 12px 16px; border-radius: 6px;
+            font-size: 14px; font-weight: 600; color: var(--accent-2);
+        }
+
+        .news-item {
+            padding: 14px; background: var(--bg-card);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px; border: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+        .news-date { font-size: 11px; color: var(--text-3); font-weight: 600; margin-bottom: 4px; }
+        .news-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .news-title a { color: var(--accent-blue); text-decoration: none; }
+        .news-title a:hover { color: var(--accent); text-decoration: underline; }
+        .news-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .references { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--border); }
+        .references h4 { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+        .references ul { list-style: none; columns: 2; column-gap: 20px; }
+        .references li { font-size: 11px; margin-bottom: 5px; break-inside: avoid; }
+        .references a { color: var(--accent-blue); text-decoration: none; }
+
+        .avatar {
+            width: 56px; height: 56px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 700; font-size: 20px;
+        }
+
+        .position-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+        .position-card { padding: 12px; border-radius: 10px; }
+        .position-title { font-weight: 700; font-size: 13px; margin-bottom: 3px; }
+
+        .timeline { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+        .timeline-item { display: flex; gap: 12px; align-items: flex-start; }
+        .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
+        .timeline-year { font-weight: 700; font-size: 13px; color: var(--accent); min-width: 52px; }
+        .timeline-text { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            main { margin-left: 0; }
+            .chapter-header { padding: 12px 20px 0 20px; }
+            .slide { padding: 16px 20px; }
+            .cover-title { font-size: 28px; }
+            .flex-row { flex-direction: column; }
+        }
+    
+        .nav-dashboard {
+            display: block; width: calc(100% - 8px); margin: 8px 4px 4px;
+            background: rgba(217,119,87,0.15); border: 1px solid rgba(217,119,87,0.3);
+            color: var(--accent, #D97757); padding: 10px 12px; border-radius: 8px;
+            text-align: center; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+            font-weight: 600; letter-spacing: 0.3px;
+        }
+        .nav-dashboard:hover {
+            background: rgba(217,119,87,0.3); color: white;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <img class="sidebar-logo" alt="Skyfire" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAMFBMVEVHcEzzdTXzdTXzdTTzdTTzdTTzdTX////zdDP708Hzci/4uZz+8uz1g0v2mm/95drByx0SAAAABnRSTlMA3G+lGDVK/bFtAAAECklEQVR4nNWb25arIAyGxQPloPj+bzugbXdrSSCRw9pZnavOmG/+hGgkDANg87yM4zhNQggpJMv8HwoxTf4yyzxDfuLOl9E75nkFWMTkKTLdB+8lnb8hPEOW+yrenwxJhLmm+xMBDcQy1XUfbEJEqP3vnyZGSP4G//5pUzQM7fzHCVr6jxG09R8haOzfE1zyv7V/Kb/WwtJk/X2b+KgHrRPgtI806BCAYGPPAAR7B6GTAG8JMAFUlnEBnhLAAigj5SbTP4aLMOJLwEhndYZZtxkewLEQ4Ahsen1k2aodT4QjBlAEzKbz3B8ITIIQgyn+lyT/gYCVi/6OMAMRUC5T/zeBZBCIGQSQluTfE1iGBh5giX+jaBEItnPyYIFykAHAysSxJACHoCwAIxNH6FmMB0AnmAoDkOvBNEBlgAkQ8oACIIoDPFbSnakCwENT0kAMwBc3AGhBqKDAwxIAqihAAZAVAEgK1AAg5kB5ANIqqABArETFAWgpWBxg1ZZ4N7oFsPqeQNt/H+s7BOpz2Q0A7dyzNdqeTdJG830PQDtpjucf9focnVwrgN3yG8ISADv22KFMsFw8FgD68KmkcyEbMxFYAFgL4lu6ffWmM58OOQBord32l0x5FYEBgNVa8/YfhMohYACg19XZv8kGyBYgj4AOsGN3u0tPn5EHdAC9IUvAXl4qpAkYAPAl1Q9AmoAOYJEL/gIk86AoQESBJEF9BRIEDRTA86CFAigBBAC/JaMrgNYOEOBa1O4ogK1dWIFrVbujwGMHqxcCIONXYykA30AQABUnYCnAApBKRetKMwUADRoqENcAVyDunw0gza8GmAJg8WADRKKAATAeo1IAPwTIE5kyDihedwBCZn1eCi4p/lehHLwF8K0B9kjKepTPAPhcC6uFOy4FroG7AGEHM2whriu2K+MzAN7mugngL745m+g4wdtnCYCAoBTac+P7jPcBEmbgFVgB4Gf73pgNXIDFAX5fBG0+P1K7rOUAzmz8Mr2nN3mLARin0VjXBkikWnUAhS31FgBIrW0CwBegEABW7P9jAMIYF3WqIwcA3LaLAlTJAcogW4VVAO4dF5agFED5SiiI06xcAhAAnKAAjUeAABCnGZViEYAA4BQNTMCKQkEAXh4gAMAoFwbAIABfky3wMBtsjChAr9ixaTrUqATQm0oPwBprp2oARmDiThUrtBG7GnwrGvlz1coRRl6hfcZjqJU52W5Ch5Az9Kst3NKe8+3MyW7fkPmmKG3Y5PV4c7Y9bFMrhX7Qjvo13d57uL3/eH/3Aw79j3h0P+TS/5hP/4NO/Y96dT/s1v+4X/8Dj0P3I59D/0Ov/Y/9Dt0PPp8IXY9+H4E4D7+XmdeTYdOHdPj9CdHo+P8fKlCLdQsKoFgAAAAASUVORK5CYII=" />
+        <div>
+            <div class="sidebar-brand-text">Skyfire</div>
+            <div class="sidebar-brand-sub">深度调研报告</div>
+        </div>
+    </div>
+    <div class="nav-items">
+        <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+        <button class="nav-btn" onclick="go(1)">📋 公司概况</button>
+        <button class="nav-btn" onclick="go(2)">💰 融资与财务</button>
+        <button class="nav-btn" onclick="go(3)">🛠️ 产品功能</button>
+        <button class="nav-btn" onclick="go(4)">🤖 AI技术</button>
+        <button class="nav-btn" onclick="go(5)">🎯 市场与竞争</button>
+        <button class="nav-btn" onclick="go(6)">💡 核心启示</button>
+        <button class="nav-btn" onclick="go(7)">📰 近期要闻</button>
+    </div>
+
+    <a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+<main id="main">
+
+<!-- ====== COVER ====== -->
+<section class="cover" id="ch-0">
+    <div class="cover-content">
+        <img class="cover-logo" alt="Skyfire Logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAMFBMVEVHcEzzdTXzdTXzdTTzdTTzdTTzdTX////zdDP708Hzci/4uZz+8uz1g0v2mm/95drByx0SAAAABnRSTlMA3G+lGDVK/bFtAAAECklEQVR4nNWb25arIAyGxQPloPj+bzugbXdrSSCRw9pZnavOmG/+hGgkDANg87yM4zhNQggpJMv8HwoxTf4yyzxDfuLOl9E75nkFWMTkKTLdB+8lnb8hPEOW+yrenwxJhLmm+xMBDcQy1XUfbEJEqP3vnyZGSP4G//5pUzQM7fzHCVr6jxG09R8haOzfE1zyv7V/Kb/WwtJk/X2b+KgHrRPgtI806BCAYGPPAAR7B6GTAG8JMAFUlnEBnhLAAigj5SbTP4aLMOJLwEhndYZZtxkewLEQ4Ahsen1k2aodT4QjBlAEzKbz3B8ITIIQgyn+lyT/gYCVi/6OMAMRUC5T/zeBZBCIGQSQluTfE1iGBh5giX+jaBEItnPyYIFykAHAysSxJACHoCwAIxNH6FmMB0AnmAoDkOvBNEBlgAkQ8oACIIoDPFbSnakCwENT0kAMwBc3AGhBqKDAwxIAqihAAZAVAEgK1AAg5kB5ANIqqABArETFAWgpWBxg1ZZ4N7oFsPqeQNt/H+s7BOpz2Q0A7dyzNdqeTdJG830PQDtpjucf9focnVwrgN3yG8ISADv22KFMsFw8FgD68KmkcyEbMxFYAFgL4lu6ffWmM58OOQBord32l0x5FYEBgNVa8/YfhMohYACg19XZv8kGyBYgj4AOsGN3u0tPn5EHdAC9IUvAXl4qpAkYAPAl1Q9AmoAOYJEL/gIk86AoQESBJEF9BRIEDRTA86CFAigBBAC/JaMrgNYOEOBa1O4ogK1dWIFrVbujwGMHqxcCIONXYykA30AQABUnYCnAApBKRetKMwUADRoqENcAVyDunw0gza8GmAJg8WADRKKAATAeo1IAPwTIE5kyDihedwBCZn1eCi4p/lehHLwF8K0B9kjKepTPAPhcC6uFOy4FroG7AGEHM2whriu2K+MzAN7mugngL745m+g4wdtnCYCAoBTac+P7jPcBEmbgFVgB4Gf73pgNXIDFAX5fBG0+P1K7rOUAzmz8Mr2nN3mLARin0VjXBkikWnUAhS31FgBIrW0CwBegEABW7P9jAMIYF3WqIwcA3LaLAlTJAcogW4VVAO4dF5agFED5SiiI06xcAhAAnKAAjUeAABCnGZViEYAA4BQNTMCKQkEAXh4gAMAoFwbAIABfky3wMBtsjChAr9ixaTrUqATQm0oPwBprp2oARmDiThUrtBG7GnwrGvlz1coRRl6hfcZjqJU52W5Ch5Az9Kst3NKe8+3MyW7fkPmmKG3Y5PV4c7Y9bFMrhX7Qjvo13d57uL3/eH/3Aw79j3h0P+TS/5hP/4NO/Y96dT/s1v+4X/8Dj0P3I59D/0Ov/Y/9Dt0PPp8IXY9+H4E4D7+XmdeTYdOHdPj9CdHo+P8fKlCLdQsKoFgAAAAASUVORK5CYII=" />
+        <h1 class="cover-title">Skyfire</h1>
+        <p class="cover-subtitle">AI代理自主支付与身份验证的金融基础设施——万亿级Agent Commerce时代的支付操作系统</p>
+        <div class="cover-tags">
+            <span class="cover-tag">支付基础设施</span>
+            <span class="cover-tag">Agent Commerce</span>
+            <span class="cover-tag">AI-Native</span>
+            <span class="cover-tag">Web3</span>
+            <span class="cover-tag">ToB</span>
+        </div>
+        <div class="cover-stats">
+            <div class="stat-box">
+                <div class="stat-number" data-count="95" data-suffix="M">$0</div>
+                <div class="stat-label">总融资额</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="50" data-suffix="+">0</div>
+                <div class="stat-label">企业客户</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">2024</div>
+                <div class="stat-label">成立年份</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">18</div>
+                <div class="stat-label">顶级投资方</div>
+            </div>
+        </div>
+        <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+    </div>
+</section>
+
+<!-- ====== CHAPTER 1: 公司概况 ====== -->
+<section class="chapter" id="ch-1">
+    <div class="chapter-header">
+        <h2>AI代理支付革命的先驱</h2>
+        <span class="ch-sub">📋 公司概况</span>
+        <span class="ch-counter" id="counter-1">1 / 6</span>
+    </div>
+    <div class="card-track" data-ch="1">
+
+        <div class="slide"><div class="card"><h3>Agent Commerce的必然性</h3><div class="card-body">
+            <p>2024年，AI代理不再是科幻小说中的概念——它们正在成为真实的经济参与者。从自动化数据分析、内容生成、到复杂的商业谈判，AI代理的能力日益强大。但一个根本问题浮出水面：这些拥有"数字大脑"的AI代理，如何进行安全、可信赖的价值交换？</p>
+            <p>传统支付系统为人类而生。KYC流程需要身份证件、交易需要人工授权、合规框架基于人类行为模式。这些对AI代理来说，都格格不入。</p>
+            <div class="callout">
+                <strong>核心洞察：</strong> Skyfire抓住了一个前所未有的历史机遇——成为"AI经济的金融堆栈"，为即将到来的万亿级Agent Commerce市场提供基础设施。
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card sparse"><h3>创始团队背景</h3><div class="card-body">
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+                <div class="avatar">AS</div>
+                <div>
+                    <p style="margin:0;font-weight:700;font-size:16px;">Amir Sarhangi</p>
+                    <p style="margin:0;font-size:13px;color:var(--text-3);">CEO & 创始人 · 前Google高管</p>
+                </div>
+            </div>
+            <div class="quote-block">
+                在Google构建大规模技术平台让我深刻理解可扩展系统的重要性。而当我看到AI代理的兴起时，我意识到，这次我们需要从零开始，为一个全新的世界构建金融基础设施。
+                <div class="quote-attr">— Amir Sarhangi</div>
+            </div>
+            <p style="font-size:14px;color:var(--text-2);margin-top:16px;"><strong>Craig DeWitt</strong>（共同创始人）在Ripple建立的区块链支付网络经验，为Skyfire的去中心化支付架构提供了核心技术方向。两人的结合，是AI、区块链和支付领域的深度融合。</p>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>AI代理的四大核心痛点</h3><div class="card-body">
+            <div class="position-cards">
+                <div class="position-card" style="background:#FFE6E6;">
+                    <div style="font-size:18px;margin-bottom:4px;">🆔</div>
+                    <div class="position-title">身份悖论</div>
+                    <div style="font-size:11px;color:var(--text-2);line-height:1.5;">AI代理无法提供身份证件，但需要数字身份才能进行交易</div>
+                </div>
+                <div class="position-card" style="background:#F5F0FF;">
+                    <div style="font-size:18px;margin-bottom:4px;">🚫</div>
+                    <div class="position-title">支付困境</div>
+                    <div style="font-size:11px;color:var(--text-2);line-height:1.5;">传统支付需要人工授权，无法适应Agent自主交易</div>
+                </div>
+                <div class="position-card" style="background:#E8F5FF;">
+                    <div style="font-size:18px;margin-bottom:4px;">🌍</div>
+                    <div class="position-title">全球交易</div>
+                    <div style="font-size:11px;color:var(--text-2);line-height:1.5;">跨境支付成本高、效率低，不适合AI代理的高频微额交易</div>
+                </div>
+                <div class="position-card" style="background:#E8FFE8;">
+                    <div style="font-size:18px;margin-bottom:4px;">💰</div>
+                    <div class="position-title">变现困难</div>
+                    <div style="font-size:11px;color:var(--text-2);line-height:1.5;">企业难以向AI代理销售API、数据等服务</div>
+                </div>
+            </div>
+            <p style="font-size:13px;color:var(--text-3);margin-top:16px;text-align:center;font-style:italic;">这些痛点为Skyfire的诞生创造了绝佳的市场机会。</p>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>发展历程：从概念到商业化</h3><div class="card-body">
+            <div class="timeline">
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2024.08</div><div class="timeline-text"><strong>种子轮融资：</strong> 获得$8.5M融资，投资方包括a16z CSX、Coinbase Ventures等顶级机构，市场对其商业模式的认可。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2024.10</div><div class="timeline-text"><strong>技术验证：</strong> KYA协议和KYAPay支付网络完成关键技术验证，发布白皮书，为商业化奠定基础。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2025.02</div><div class="timeline-text"><strong>融资扩展：</strong> 再获$6M融资，总融资达$14.5M，进一步巩固资金实力，加速团队和产品迭代。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2025.03</div><div class="timeline-text"><strong>正式商业化：</strong> 退出Beta阶段，推出企业级支付网络，Skyfire Playground开发者平台上线，接纳50+企业客户。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2025.12</div><div class="timeline-text"><strong>传统金融接轨：</strong> 演示KYAPay与Visa Intelligent Commerce集成，实现Agent-Native支付与传统卡网络结合。</div></div>
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>市场定位与商业模式</h3><div class="card-body">
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;">核心用户</h4>
+                    <ul style="font-size:13px;line-height:1.9;color:var(--text-2);padding-left:18px;">
+                        <li>AI代理开发者</li>
+                        <li>LLM平台运营商</li>
+                        <li>API/数据服务提供商</li>
+                        <li>企业AI应用部门</li>
+                        <li>初创科技公司</li>
+                    </ul>
+                </div>
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;">收入来源</h4>
+                    <ul style="font-size:13px;line-height:1.9;color:var(--text-2);padding-left:18px;">
+                        <li>API调用费用</li>
+                        <li>交易手续费</li>
+                        <li>KYA验证订阅</li>
+                        <li>企业定制服务</li>
+                        <li>增值金融服务</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="callout" style="margin-top:16px;">
+                <strong>市场定位：</strong> "AI经济的Stripe" — 为即将到来的万亿级Agent Commerce市场提供底层支付基础设施。
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>早期市场验证</h3><div class="card-body">
+            <p>在Beta测试期间，Skyfire已经展示了显著的市场吸引力：</p>
+            <table>
+                <thead><tr><th>企业客户</th><th>应用场景</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Pricing Culture</strong></td><td>向AI代理按需销售数据洞察</td></tr>
+                    <tr><td><strong>Bazaars</strong></td><td>AI代理在市场上进行自主交易</td></tr>
+                    <tr><td><strong>Zinc</strong></td><td>自动化采购和订单管理</td></tr>
+                    <tr><td><strong>Linkup</strong></td><td>AI驱动的API集成</td></tr>
+                    <tr><td><strong>50+</strong></td><td>其他早期客户</td></tr>
+                </tbody>
+            </table>
+            <p style="margin-top:14px;font-size:13px;color:var(--text-2);"><em>"如果没有Skyfire，我们无法以可扩展的方式向AI代理按需销售数据。"</em> — Pricing Culture CEO</p>
+            <p style="font-size:13px;color:var(--text-3);margin-top:12px;">这表明Skyfire正在为早期采用者创造真实的商业价值，并为大规模应用奠定基础。</p>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-1"></div>
+</section>
+
+<!-- ====== CHAPTER 2: 融资与财务 ====== -->
+<section class="chapter" id="ch-2">
+    <div class="chapter-header">
+        <h2>资本加速的Agent Commerce基础设施</h2>
+        <span class="ch-sub">💰 融资与财务</span>
+        <span class="ch-counter" id="counter-2">1 / 4</span>
+    </div>
+    <div class="card-track" data-ch="2">
+
+        <div class="slide"><div class="card"><h3>融资历程与投资方阵容</h3><div class="card-body">
+            <table>
+                <thead><tr><th>轮次</th><th>时间</th><th>金额</th><th>主要投资方</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>种子轮</strong></td><td>2024年8月</td><td><strong>$8.5M</strong></td><td>a16z CSX, Coinbase Ventures, Neuberger Berman, Inception Capital</td></tr>
+                    <tr><td><strong>种子扩展</strong></td><td>2025年2月</td><td><strong>$6.0M</strong></td><td>Plug and Play Tech Center, DCVC, PayU</td></tr>
+                    <tr><td colspan="4"><strong>总融资额：$14.5M（约$9.5M官方披露）</strong></td></tr>
+                </tbody>
+            </table>
+            <div class="callout" style="margin-top:16px;">
+                <strong>投资亮点：</strong> a16z CSX和Coinbase Ventures分别代表了AI和Web3领域的顶级投资机构，他们的联合参与表明市场对Agent Commerce赛道和Skyfire商业模式的高度认可。
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>融资驱动的产品路线图</h3><div class="card-body">
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;">第一轮（8.5M）：2024年8月</h4>
+                    <ul style="font-size:13px;line-height:1.8;color:var(--text-2);padding-left:18px;">
+                        <li>✓ KYA协议研发完成</li>
+                        <li>✓ KYAPay网络上线</li>
+                        <li>✓ Beta产品验证</li>
+                        <li>✓ 核心团队组建</li>
+                    </ul>
+                </div>
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;">第二轮（6.0M）：2025年2月</h4>
+                    <ul style="font-size:13px;line-height:1.8;color:var(--text-2);padding-left:18px;">
+                        <li>✓ Playground开发者平台</li>
+                        <li>✓ 支付规则引擎</li>
+                        <li>✓ Enterprise工具套件</li>
+                        <li>✓ 市场扩展和销售</li>
+                    </ul>
+                </div>
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>财务指标与商业前景</h3><div class="card-body">
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">成长期</div>
+                    <div class="metric-label">发展阶段</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">11-50</div>
+                    <div class="metric-label">员工规模</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">2024</div>
+                    <div class="metric-label">成立年</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">18</div>
+                    <div class="metric-label">投资方数</div>
+                </div>
+            </div>
+            <p style="margin-top:16px;font-size:13px;color:var(--text-2);">作为一家成立仅18个月的初创公司，Skyfire能在短时间内获得顶级资本的连续融资支持，充分说明了市场对其商业模式和市场机会的高度认可。</p>
+            <div class="callout" style="margin-top:14px;">
+                <strong>融资思启：</strong> 与其他消费金融科技不同，Skyfire的融资亮点不在于用户规模或ARR，而在于它所瞄准的市场机会——一个尚未被开发、规模达万亿级的新兴市场。
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card sparse"><h3>未来融资与上市前景</h3><div class="card-body">
+            <p style="font-size:16px;line-height:2;"><strong>短期目标（6-12个月）：</strong> 完成Series A融资，进一步加强产品能力和市场拓展，目标达到$50M+企业客户年度交易规模。</p>
+            <p style="font-size:16px;line-height:2;"><strong>中期目标（1-2年）：</strong> 成为Agent Commerce的行业标准，建立全球生态合作网络，实现规模化盈利。</p>
+            <p style="font-size:16px;line-height:2;"><strong>长期前景：</strong> 随着Agent Commerce市场的爆发，Skyfire有望成长为一家估值数十亿美元的独角兽企业，最终通过IPO成为公众公司。</p>
+            <div class="quote-block" style="margin-top:20px;">
+                AI代理支付基础设施是一场万亿美元的赛道。谁能成为这个赛道的"Stripe"或"PayPal"，谁就能在未来的AI经济中拥有巨大的话语权。
+                <div class="quote-attr">— 行业分析师观点</div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-2"></div>
+</section>
+
+<!-- ====== CHAPTER 3: 产品功能 ====== -->
+<section class="chapter" id="ch-3">
+    <div class="chapter-header">
+        <h2>Agent-First的产品架构</h2>
+        <span class="ch-sub">🛠️ 产品功能</span>
+        <span class="ch-counter" id="counter-3">1 / 7</span>
+    </div>
+    <div class="card-track" data-ch="3">
+
+        <div class="slide"><div class="card"><h3>产品理念：Agent-First</h3><div class="card-body">
+            <p>Skyfire的产品设计不是"为人类设计支付系统，然后硬生生适配Agent"，而是从AI代理的独特需求出发，从零开始构建一套完全以Agent为中心的金融堆栈。</p>
+            <p>这体现在三个关键的产品决策上：</p>
+            <div style="margin:16px 0;">
+                <p style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:6px;">1. KYA优先 — 身份是基础</p>
+                <p style="font-size:13px;color:var(--text-2);margin-bottom:12px;">传统支付给予人权利，但AI代理首先需要身份。Skyfire从KYA身份验证开始，为每个Agent创建可验证的数字身份。</p>
+            </div>
+            <div style="margin:16px 0;">
+                <p style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:6px;">2. 可编程化 — 规则优于界面</p>
+                <p style="font-size:13px;color:var(--text-2);margin-bottom:12px;">AI代理不需要漂亮的UI，需要可编程的支付规则。细粒度的配置能力，让企业对Agent财务行为有完全控制。</p>
+            </div>
+            <div style="margin:16px 0;">
+                <p style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:6px;">3. 全球化 — 无国界交易</p>
+                <p style="font-size:13px;color:var(--text-2);">AI代理天生就是全球的。Skyfire基于稳定币的支付网络，使得跨境交易成本极低、效率极高。</p>
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>KYA — AI代理的数字身份</h3><div class="card-body">
+            <p><strong>什么是KYA？</strong> Know Your Agent（KYA）是Skyfire最核心的创新。它为AI代理提供了一个可验证的数字身份，使其能够：</p>
+            <ul style="font-size:13px;line-height:1.9;color:var(--text-2);padding-left:18px;margin:12px 0;">
+                <li>✓ 安全地创建账户</li>
+                <li>✓ 进行身份验证</li>
+                <li>✓ 访问付费服务</li>
+                <li>✓ 建立信用记录</li>
+                <li>✓ 进行可审计的交易</li>
+            </ul>
+            <div class="callout">
+                <strong>技术基础：</strong> KYA结合了去中心化身份(DID)、零知识证明等Web3技术，为AI代理创建了一套从未有过的身份验证系统。这是传统KYC概念在AI时代的创新重构。
+            </div>
+            <p style="margin-top:14px;font-size:13px;color:var(--text-2);"><em>想象这样一个场景：一个AI代理需要购买API服务。通过KYA，它可以在数秒内证明自己的身份、建立信用记录、完成支付——所有这一切都无需人工干预。</em></p>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>KYAPay — Agent-Native支付网络</h3><div class="card-body">
+            <p><strong>什么是KYAPay？</strong> 基于稳定币(USDC on Base)的支付协议，允许AI代理进行即时、全球化的自主支付。</p>
+            <div class="mode-boxes">
+                <div class="mode-box">
+                    <div class="mode-title">💳 稳定币支付</div>
+                    <div class="mode-desc">基于USDC稳定币，避免加密货币波动风险</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-blue);">
+                    <div class="mode-title">💰 法币资金来源</div>
+                    <div class="mode-desc">支持信用卡、借记卡、ACH、电汇充资</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-green);">
+                    <div class="mode-title">🌍 全球交易</div>
+                    <div class="mode-desc">支持150+国家交易，无地域限制</div>
+                </div>
+                <div class="mode-box" style="border-left-color:#7B5EA7;">
+                    <div class="mode-title">⚡ 即时结算</div>
+                    <div class="mode-desc">秒级确认，适合高频微额交易</div>
+                </div>
+            </div>
+            <p style="margin-top:14px;font-size:13px;color:var(--text-2);">KYAPay的妙处在于：它既保留了区块链的高效和透明，又通过稳定币和法币接入，解决了传统加密支付的波动性和用户体验问题。</p>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>支付规则引擎 — 可控的自主性</h3><div class="card-body">
+            <p>企业如何在赋予AI代理自主权的同时，确保支付行为始终在可控范围内？答案是Skyfire的支付规则引擎。</p>
+            <table>
+                <thead><tr><th>规则类型</th><th>示例</th><th>作用</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>交易限额</strong></td><td>单笔上限$1000，日上限$10000</td><td>防止过度支出</td></tr>
+                    <tr><td><strong>时间限制</strong></td><td>仅工作时间内交易</td><td>降低风险</td></tr>
+                    <tr><td><strong>白名单</strong></td><td>仅与认可的API提供商交易</td><td>过滤风险</td></tr>
+                    <tr><td><strong>类型限制</strong></td><td>仅允许API购买，禁止转账</td><td>用途管制</td></tr>
+                    <tr><td><strong>动态规则</strong></td><td>基于风险评分动态调整限额</td><td>智能控制</td></tr>
+                </tbody>
+            </table>
+            <div class="callout" style="margin-top:14px;">
+                <strong>创新意义：</strong> 支付规则引擎实现了"可控的自主"——AI代理拥有自主交易能力，但企业对其行为有完全的掌控。这是Skyfire相比其他支付方案的重大优势。
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>Skyfire for Enterprise — 企业管理平台</h3><div class="card-body">
+            <p>Skyfire为企业提供了一套完整的Web Dashboard，用于管理AI代理的财务行为：</p>
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4 style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--accent);">钱包管理</h4>
+                    <ul style="font-size:12px;line-height:1.8;color:var(--text-2);padding-left:16px;">
+                        <li>创建AI代理钱包</li>
+                        <li>充值和提现</li>
+                        <li>余额查询</li>
+                        <li>交易历史</li>
+                    </ul>
+                </div>
+                <div class="flex-col">
+                    <h4 style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--accent);">支付控制</h4>
+                    <ul style="font-size:12px;line-height:1.8;color:var(--text-2);padding-left:16px;">
+                        <li>设置支出限额</li>
+                        <li>管理白名单</li>
+                        <li>定义交易规则</li>
+                        <li>实时监控</li>
+                    </ul>
+                </div>
+                <div class="flex-col">
+                    <h4 style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--accent);">合规与报告</h4>
+                    <ul style="font-size:12px;line-height:1.8;color:var(--text-2);padding-left:16px;">
+                        <li>交易报告</li>
+                        <li>审计日志</li>
+                        <li>合规证明</li>
+                        <li>数据导出</li>
+                    </ul>
+                </div>
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>可编程货币化工具 — 为API赋能</h3><div class="card-body">
+            <p>Skyfire不仅为使用支付的企业赋能，还为提供服务的企业赋能。通过可编程货币化工具，API提供商可以：</p>
+            <div style="margin:14px 0;">
+                <p style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:6px;">快速集成</p>
+                <p style="font-size:13px;color:var(--text-2);margin-bottom:12px;">无代码/低代码接入Skyfire支付网络，数分钟即可上线付费功能。</p>
+            </div>
+            <div style="margin:14px 0;">
+                <p style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:6px;">灵活定价</p>
+                <p style="font-size:13px;color:var(--text-2);margin-bottom:12px;">支持多种定价模式：按次数、按数据量、按时间订阅等，充分发挥创意。</p>
+            </div>
+            <div style="margin:14px 0;">
+                <p style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:6px;">自动结算</p>
+                <p style="font-size:13px;color:var(--text-2);">AI代理的支付自动流转到服务提供商账户，T+0结算，无需担心风险。</p>
+            </div>
+            <p style="font-size:13px;color:var(--text-3);margin-top:16px;font-style:italic;">早期采用者包括Pricing Culture、Bazaars、Zinc等公司，他们通过Skyfire开启了"向AI代理销售"的全新商业模式。</p>
+        </div></div></div>
+
+        <div class="slide"><div class="card sparse"><h3>Skyfire Playground — 开发者乐园</h3><div class="card-body">
+            <p style="font-size:16px;line-height:2;">Skyfire Playground是一个专为开发者设计的实时测试和开发环境。开发者可以：</p>
+            <p style="font-size:14px;line-height:1.9;color:var(--text-2);margin-top:14px;">✓ <strong>模拟Agent交易</strong> — 在没有真实资金的情况下，完全模拟AI代理的支付流程</p>
+            <p style="font-size:14px;line-height:1.9;color:var(--text-2);">✓ <strong>与LLM交互</strong> — 直接在环境中测试与OpenAI、Claude等大模型的集成</p>
+            <p style="font-size:14px;line-height:1.9;color:var(--text-2);">✓ <strong>执行AI工作流</strong> — 从端到端测试完整的自动化流程</p>
+            <p style="font-size:14px;line-height:1.9;color:var(--text-2);">✓ <strong>调试支付逻辑</strong> — 实时查看交易日志、支付规则执行、错误追踪</p>
+            <div class="quote-block" style="margin-top:20px;">
+                Skyfire Playground大幅降低了开发者的接入门槛，使得任何规模的团队都能快速构建Agent Commerce应用。
+                <div class="quote-attr">— 开发者反馈</div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-3"></div>
+</section>
+
+<!-- ====== CHAPTER 4: AI技术 ====== -->
+<section class="chapter" id="ch-4">
+    <div class="chapter-header">
+        <h2>AI与Web3的深度融合</h2>
+        <span class="ch-sub">🤖 AI技术</span>
+        <span class="ch-counter" id="counter-4">1 / 4</span>
+    </div>
+    <div class="card-track" data-ch="4">
+
+        <div class="slide"><div class="card"><h3>技术架构：混合AI系统</h3><div class="card-body">
+            <p>Skyfire采用了一套独特的混合AI架构，结合了传统确定性系统、现代AI模型和Web3技术：</p>
+            <div style="margin:16px 0;">
+                <p style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:6px;">层级1：身份验证层</p>
+                <p style="font-size:13px;color:var(--text-2);margin-bottom:12px;">去中心化身份(DID) + 零知识证明 = KYA身份系统。为每个AI代理生成唯一的可验证身份，确保身份安全性同时保护隐私。</p>
+            </div>
+            <div style="margin:16px 0;">
+                <p style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:6px;">层级2：支付执行层</p>
+                <p style="font-size:13px;color:var(--text-2);margin-bottom:12px;">区块链(Base) + 稳定币(USDC) = KYAPay网络。确定性的智能合约处理交易逻辑，保证交易的正确性和不可篡改性。</p>
+            </div>
+            <div style="margin:16px 0;">
+                <p style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:6px;">层级3：智能决策层</p>
+                <p style="font-size:13px;color:var(--text-2);">ML模型用于风险评估、欺诈检测、规则优化。这层利用AI实现更智能的支付决策，但决策的执行依然回到确定性系统。</p>
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>AI能力：智能风险与规则优化</h3><div class="card-body">
+            <p>Skyfire的AI应用主要集中在三个关键方向：</p>
+            <table>
+                <thead><tr><th>AI能力</th><th>应用</th><th>价值</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>KYA验证模型</strong></td><td>AI代理身份识别与风险评估</td><td>秒级验证，支持数百万代理</td></tr>
+                    <tr><td><strong>欺诈检测</strong></td><td>实时识别异常交易和伪造Agent</td><td>保护网络安全性</td></tr>
+                    <tr><td><strong>支付规则优化</strong></td><td>学习代理行为，动态调整交易限额</td><td>在安全和效率间平衡</td></tr>
+                    <tr><td><strong>风险评分</strong></td><td>多维度评估Agent信用等级</td><td>个性化的支付体验</td></tr>
+                </tbody>
+            </table>
+            <div class="callout" style="margin-top:14px;">
+                <strong>关键设计：</strong> 所有AI决策最后都需要落实到确定性的支付规则执行。这保证了系统的安全性和可审计性，这是金融系统的必须要求。
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>技术创新：KYA协议</h3><div class="card-body">
+            <p><strong>KYA是什么？</strong> 一套为AI代理设计的身份验证和可信度评估协议。这是Skyfire最核心的技术创新。</p>
+            <p style="margin-top:14px;font-size:13px;color:var(--text-2);"><strong>技术构成：</strong></p>
+            <div style="margin:12px 0;padding:12px;background:var(--bg-muted);border-radius:8px;font-size:13px;color:var(--text-2);line-height:1.8;">
+                <p style="margin:6px 0;">✓ <strong>去中心化身份(DID)：</strong> 为每个Agent生成自主可控的身份标识</p>
+                <p style="margin:6px 0;">✓ <strong>可验证凭证(VC)：</strong> 记录Agent的各类属性、权限、历史行为</p>
+                <p style="margin:6px 0;">✓ <strong>零知识证明(ZKP)：</strong> 验证身份而无需暴露隐私信息</p>
+                <p style="margin:6px 0;">✓ <strong>链上声誉系统：</strong> 记录Agent的交易历史，建立信用等级</p>
+            </div>
+            <div class="callout" style="margin-top:14px;">
+                <strong>历史意义：</strong> KYA是从"Know Your Customer"到"Know Your Agent"的范式转变，这可能成为整个金融科技行业在AI时代的标准。
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>生态合作：与传统金融接轨</h3><div class="card-body">
+            <p>Skyfire的强大之处还在于它如何打通AI世界和传统金融世界：</p>
+            <div style="margin:14px 0;">
+                <p style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:6px;">✨ Ory Corp合作</p>
+                <p style="font-size:12px;color:var(--text-2);margin-bottom:12px;">将企业级的OAuth2和OIDC引入AI代理账户创建，确保企业级应用的集成能力和安全性。</p>
+            </div>
+            <div style="margin:14px 0;">
+                <p style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:6px;">💳 Visa Intelligent Commerce集成</p>
+                <p style="font-size:12px;color:var(--text-2);margin-bottom:12px;">2025年12月演示，实现KYAPay与Visa卡网络的无缝衔接。这意味着AI代理不仅能在Web3世界支付，也能支付传统商业网络。</p>
+            </div>
+            <div style="margin:14px 0;">
+                <p style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:6px;">🔗 MCP/LLM生态</p>
+                <p style="font-size:12px;color:var(--text-2);">与MCP服务器、主流LLM平台的原生集成，使AI代理能直接访问Skyfire的支付能力，无需复杂配置。</p>
+            </div>
+            <div class="quote-block" style="margin-top:14px;">
+                Skyfire的未来不是单纯的加密支付，而是"Hybrid Finance"——传统金融与现代金融的深度融合。
+                <div class="quote-attr">— 行业观点</div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-4"></div>
+</section>
+
+<!-- ====== CHAPTER 5: 市场与竞争 ====== -->
+<section class="chapter" id="ch-5">
+    <div class="chapter-header">
+        <h2>万亿级市场的竞争格局</h2>
+        <span class="ch-sub">🎯 市场与竞争</span>
+        <span class="ch-counter" id="counter-5">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="5">
+
+        <div class="slide"><div class="card"><h3>Agent Commerce的市场规模</h3><div class="card-body">
+            <p>Agent Commerce的潜在市场规模是多少？虽然目前尚无公认的市场研究报告，但我们可以从几个维度推断：</p>
+            <div style="margin:16px 0;">
+                <p style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:6px;">维度1：API经济</p>
+                <p style="font-size:12px;color:var(--text-2);margin-bottom:12px;">当前全球API经济已达数千亿美元规模。如果其中10-20%流向AI代理，就是数百亿美元的市场。</p>
+            </div>
+            <div style="margin:16px 0;">
+                <p style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:6px;">维度2：数据与内容交易</p>
+                <p style="font-size:12px;color:var(--text-2);margin-bottom:12px;">数据、内容、知识资产的自动化交易市场。未来AI代理可以在市场上实时交易数据和洞察，规模同样巨大。</p>
+            </div>
+            <div style="margin:16px 0;">
+                <p style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:6px;">维度3：企业内部自动化</p>
+                <p style="font-size:12px;color:var(--text-2);">企业AI代理与供应商、合作伙伴之间的自动化交易。这将释放巨大的效率增益和新商业模式。</p>
+            </div>
+            <div class="callout" style="margin-top:14px;">
+                <strong>保守估计：</strong> Agent Commerce市场规模在未来5年内可能达到万亿级美元。Skyfire作为基础设施提供商，即使占据1-2%的手续费，也将是一个百亿美元级别的业务。
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>竞争格局与Skyfire的优势</h3><div class="card-body">
+            <p>目前Agent Commerce支付领域的竞争格局如何？</p>
+            <table>
+                <thead><tr><th>竞争对手</th><th>特点</th><th>Skyfire优势</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Crossmint</strong></td><td>Agent Commerce平台</td><td>Skyfire专注支付基础设施，更聚焦、更深度</td></tr>
+                    <tr><td><strong>传统支付</strong></td><td>Stripe、Square</td><td>Skyfire专为Agent设计，而非勉强适配</td></tr>
+                    <tr><td><strong>加密支付</strong></td><td>Circle、Ripple</td><td>Skyfire有企业级身份验证和支付规则，更安全</td></tr>
+                    <tr><td><strong>LLM平台</strong></td><td>OpenAI、Anthropic</td><td>Skyfire是中立的基础设施，与所有平台兼容</td></tr>
+                </tbody>
+            </table>
+            <p style="margin-top:14px;font-size:13px;color:var(--text-2);">Skyfire的核心优势在于：</p>
+            <ul style="font-size:12px;line-height:1.9;color:var(--text-2);padding-left:18px;margin-top:8px;">
+                <li>✓ <strong>专业的支付基础设施背景</strong> — CEO来自Google，联合创始人来自Ripple</li>
+                <li>✓ <strong>创新的KYA身份验证</strong> — 业界首创，难以被复制</li>
+                <li>✓ <strong>与传统金融的接轨</strong> — Visa集成是其他竞争对手缺乏的</li>
+                <li>✓ <strong>开放的生态架构</strong> — 与所有LLM、API平台兼容，而非形成孤岛</li>
+                <li>✓ <strong>顶级资本支持</strong> — a16z、Coinbase等提供的不仅是资金，还有战略指导</li>
+            </ul>
+        </div></div></div>
+
+        <div class="slide"><div class="card sparse"><h3>未来演进路线图</h3><div class="card-body">
+            <p style="font-size:14px;line-height:2;"><strong>6-12个月：</strong> 完成Series A融资，扩大企业客户规模至100+，推出更多支付产品，与更多LLM平台合作集成。</p>
+            <p style="font-size:14px;line-height:2;"><strong>1-2年：</strong> 成为Agent Commerce的行业标准，建立全球生态合作网络，推出信贷、保险等增值金融服务。</p>
+            <p style="font-size:14px;line-height:2;"><strong>3-5年：</strong> 随着Agent Commerce市场爆发，实现规模化盈利，估值达数十亿美元，为IPO做准备。</p>
+            <div class="quote-block" style="margin-top:20px;">
+                如果AI代理将成为未来的主要经济参与者，那么谁掌握了这些代理的身份和支付，谁就掌握了未来的金融命脉。Skyfire正在争取成为那个掌权者。
+                <div class="quote-attr">— 深度思考</div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-5"></div>
+</section>
+
+<!-- ====== CHAPTER 6: 核心启示 ====== -->
+<section class="chapter" id="ch-6">
+    <div class="chapter-header">
+        <h2>关键启示与深度洞察</h2>
+        <span class="ch-sub">💡 核心启示</span>
+        <span class="ch-counter" id="counter-6">1 / 4</span>
+    </div>
+    <div class="card-track" data-ch="6">
+
+        <div class="slide"><div class="card"><div class="card-body">
+            <div class="insight-card" style="border:none;padding:0;">
+                <div class="insight-emoji">🎯</div>
+                <h3>1. Agent Commerce是必然，不是偶然</h3>
+                <p>AI代理将成为未来的经济参与者，这不是猜测，而是已经在发生的事实。OpenAI、Anthropic、Google等都在推动AI模型的自主性增强。一旦AI代理能自主决策和执行任务，它们必然需要支付和身份能力。Skyfire抓住了这个历史机遇窗口。</p>
+                <div class="insight-highlight">关键启示：第一批构建Agent Commerce基础设施的公司，将获得最大的市场红利和话语权。</div>
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><div class="card-body">
+            <div class="insight-card" style="border:none;padding:0;">
+                <div class="insight-emoji">🔐</div>
+                <h3>2. KYA是范式转变，不仅仅是技术</h3>
+                <p>从"Know Your Customer"到"Know Your Agent"，这不是技术升级，而是对金融身份系统的根本性重新定义。KYA代表了一个新的思维方式：承认AI代理作为独立经济参与者的合法性，为它们构建专属的身份和信用体系。这可能会对整个金融科技产业产生深远影响。</p>
+                <div class="insight-highlight">关键启示：KYA可能成为未来金融身份的行业标准，就像OAuth成为互联网身份认证的标准一样。</div>
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><div class="card-body">
+            <div class="insight-card" style="border:none;padding:0;">
+                <div class="insight-emoji">🌉</div>
+                <h3>3. Hybrid Finance是未来趋势</h3>
+                <p>Skyfire与Visa的合作演示表明，未来的金融生态不是单纯的传统金融或加密金融，而是两者的深度融合。AI代理可以在Web3世界的稳定币中交易，也可以通过Visa卡网络支付传统商业。这种"Hybrid Finance"将释放巨大的商业潜力和创新可能。</p>
+                <div class="insight-highlight">关键启示：未来的金融基础设施需要同时拥抱传统金融和现代金融，而不是二选一。</div>
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><div class="card-body">
+            <div class="insight-card" style="border:none;padding:0;">
+                <div class="insight-emoji">🌐</div>
+                <h3>4. 生态优于技术的竭尽所能</h3>
+                <p>Skyfire的成功不仅取决于KYA和KYAPay技术的优秀（虽然它们确实优秀），更取决于它能否建立一个繁荣的生态。能否与OpenAI、Anthropic等LLM平台紧密合作？能否吸引更多的API提供商接入？能否形成网络效应？这些生态因素，比单纯的技术优势更关键。</p>
+                <div class="insight-highlight">关键启示：在基础设施赛道，生态网络效应往往比技术本身更决定性。Stripe的成功印证了这一点。</div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-6"></div>
+</section>
+
+<!-- ====== CHAPTER 7: 近期要闻 ====== -->
+<section class="chapter" id="ch-7">
+    <div class="chapter-header">
+        <h2>Skyfire 最新进展</h2>
+        <span class="ch-sub">📰 近期要闻</span>
+        <span class="ch-counter" id="counter-7">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="7">
+
+        <div class="slide"><div class="card"><h3>2024-2025关键事件</h3><div class="card-body">
+            <div class="news-item">
+                <div class="news-date">2024年8月</div>
+                <div class="news-title">
+                    <a href="https://techcrunch.com/2024/08/21/skyfire-lets-ai-agents-spend-your-money/" target="_blank">Skyfire Raises $8.5M Seed Funding to Enable AI Agents Spend Money</a>
+                </div>
+                <div class="news-desc">TechCrunch报道：Skyfire获得a16z CSX和Coinbase Ventures领投的$8.5M种子轮融资，正式启动AI代理支付基础设施建设。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2025年2月</div>
+                <div class="news-title">
+                    <a href="https://www.businesswire.com/news/home/20250306938250/en/Skyfire-Exits-Beta-with-Enterprise-Ready-Payment-Network-for-AI-Agents" target="_blank">Skyfire Exits Beta with Enterprise-Ready Payment Network</a>
+                </div>
+                <div class="news-desc">BusinessWire报道：Skyfire正式退出Beta阶段，推出企业级支付网络，50+早期客户已接入包括Pricing Culture、Bazaars、Zinc等公司。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2025年3月</div>
+                <div class="news-title">
+                    <a href="https://theaiinsider.tech/2025/03/12/skyfire-launches-ai-native-payments-infrastructure-to-power-autonomous-transactions/" target="_blank">Skyfire Launches AI-Native Payments Infrastructure</a>
+                </div>
+                <div class="news-desc">The AI Insider报道：Skyfire推出完整的AI原生支付基础设施，包括KYA身份验证、KYAPay支付网络、支付规则引擎等核心产品。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2025年12月</div>
+                <div class="news-title">
+                    <a href="https://www.businesswire.com/news/home/20251218520399/en/Skyfire-Demonstrates-Secure-Agentic-Commerce-Purchase-Using-the-KYAPay-Protocol-and-Visa-Intelligent-Commerce" target="_blank">Skyfire Demonstrates KYAPay with Visa Intelligent Commerce</a>
+                </div>
+                <div class="news-desc">BusinessWire报道：Skyfire演示KYAPay与Visa Intelligent Commerce的集成，实现AI代理支付与传统卡网络的无缝衔接，是历史性的一刻。</div>
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card sparse"><h3>参考文献</h3><div class="card-body">
+            <div class="references">
+                <h4>📚 官方渠道</h4>
+                <ul>
+                    <li><a href="https://skyfire.xyz/" target="_blank">Skyfire官方网站</a></li>
+                    <li><a href="https://tracxn.com/d/companies/skyfire/" target="_blank">Tracxn - Skyfire公司档案</a></li>
+                </ul>
+                <h4>📰 媒体报道</h4>
+                <ul>
+                    <li><a href="https://techcrunch.com/2024/08/21/skyfire-lets-ai-agents-spend-your-money/" target="_blank">TechCrunch - Skyfire让AI代理花你的钱</a></li>
+                    <li><a href="https://thefintechtimes.com/new-skyfire-solution-enables-ai-agents-to-authenticate-themselves-as-genuine-paying-customers/" target="_blank">The Fintech Times - Skyfire新方案</a></li>
+                    <li><a href="https://theaiinsider.tech/2025/03/12/skyfire-launches-ai-native-payments-infrastructure-to-power-autonomous-transactions/" target="_blank">The AI Insider - Skyfire推出AI原生支付</a></li>
+                    <li><a href="https://blockeden.xyz/blog/2026/03/16/crossmint-ai-agent-virtual-cards-autonomous-payments-kya-stripe-for-agents/" target="_blank">BlockEden - AI Agent信用卡赛道分析</a></li>
+                </ul>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-7"></div>
+</section>
+
+</main>
+
+<script>
+// Nav and scroll logic
+let currentChapter = 0;
+const numChapters = 8;
+let scrolling = false;
+
+function go(ch) {
+    currentChapter = ch;
+    scrolling = true;
+    const elem = document.getElementById(`ch-${ch}`);
+    elem.scrollIntoView({behavior: 'smooth'});
+    updateNav();
+    setTimeout(() => { scrolling = false; }, 1000);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    initStats();
+    setupScrollListeners();
+});
+
+function setupScrollListeners() {
+    const main = document.getElementById('main');
+    main.addEventListener('scroll', () => {
+        if (scrolling) return;
+        const sectionHeight = window.innerHeight;
+        const scrollPos = main.scrollTop + window.innerHeight / 2;
+        currentChapter = Math.round(scrollPos / sectionHeight);
+        if (currentChapter >= numChapters) currentChapter = numChapters - 1;
+        updateNav();
+        initHorizontalScroll();
+    });
+}
+
+function updateNav() {
+    document.querySelectorAll('.nav-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', i === currentChapter);
+    });
+}
+
+function initHorizontalScroll() {
+    document.querySelectorAll('.card-track').forEach((track, chIdx) => {
+        track.addEventListener('scroll', () => {
+            const slides = track.querySelectorAll('.slide').length;
+            const scrollWidth = track.scrollWidth - track.clientWidth;
+            const scrollPos = track.scrollLeft;
+            const cardIndex = Math.round((scrollPos / scrollWidth) * (slides - 1));
+            updateDots(chIdx, cardIndex, slides);
+            updateCounter(chIdx, cardIndex + 1, slides);
+        });
+    });
+}
+
+function updateDots(chIdx, cardIndex, total) {
+    const dotsBar = document.getElementById(`dots-${chIdx}`);
+    if (!dotsBar) return;
+    let dots = dotsBar.querySelectorAll('.dot');
+    if (dots.length === 0) {
+        for (let i = 0; i < total; i++) {
+            const dot = document.createElement('button');
+            dot.className = 'dot';
+            if (i === 0) dot.classList.add('active');
+            dot.onclick = () => {
+                const track = document.querySelector(`.card-track[data-ch="${chIdx}"]`);
+                track.scrollLeft = (track.scrollWidth / total) * i;
+            };
+            dotsBar.appendChild(dot);
+        }
+        dots = dotsBar.querySelectorAll('.dot');
+    }
+    dots.forEach((dot, i) => {
+        dot.classList.toggle('active', i === cardIndex);
+    });
+}
+
+function updateCounter(chIdx, current, total) {
+    const counter = document.getElementById(`counter-${chIdx}`);
+    if (counter) counter.textContent = `${current} / ${total}`;
+}
+
+function initStats() {
+    document.querySelectorAll('[data-count]').forEach(el => {
+        const target = parseInt(el.getAttribute('data-count'));
+        const prefix = el.getAttribute('data-prefix') || '';
+        const suffix = el.getAttribute('data-suffix') || '';
+        let current = 0;
+        const increment = Math.ceil(target / 60);
+        const timer = setInterval(() => {
+            current = Math.min(current + increment, target);
+            el.textContent = prefix + current + suffix;
+            if (current === target) clearInterval(timer);
+        }, 20);
+    });
+}
+</script>
+
+</body>
+</html>

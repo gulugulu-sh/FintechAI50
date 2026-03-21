@@ -1,0 +1,37 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="100" fill="#1a1a1a"/>
+
+  <!-- Minotaur head (stylized bull/minotaur symbolism) -->
+  <g transform="translate(100, 100)">
+    <!-- Horns -->
+    <path d="M -35 -20 Q -50 -40 -45 -60" stroke="#D97757" stroke-width="6" fill="none" stroke-linecap="round"/>
+    <path d="M 35 -20 Q 50 -40 45 -60" stroke="#D97757" stroke-width="6" fill="none" stroke-linecap="round"/>
+
+    <!-- Head (stylized) -->
+    <circle cx="0" cy="0" r="38" fill="#2A2A2A" stroke="#D97757" stroke-width="3"/>
+
+    <!-- Eyes -->
+    <circle cx="-12" cy="-8" r="5" fill="#D97757"/>
+    <circle cx="12" cy="-8" r="5" fill="#D97757"/>
+
+    <!-- Snout/mouth hint -->
+    <path d="M -8 8 Q 0 12 8 8" stroke="#D97757" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+
+    <!-- AI circuit pattern (stylized tech element) -->
+    <g opacity="0.6">
+      <circle cx="-15" cy="-20" r="2" fill="#4A90E2"/>
+      <circle cx="0" cy="-25" r="2" fill="#4A90E2"/>
+      <circle cx="15" cy="-20" r="2" fill="#4A90E2"/>
+      <path d="M -15 -20 L 0 -25 L 15 -20" stroke="#4A90E2" stroke-width="1" fill="none"/>
+    </g>
+  </g>
+
+  <!-- Company name below -->
+  <text x="100" y="160" font-family="Inter, sans-serif" font-size="16" font-weight="700" fill="#D97757" text-anchor="middle" letter-spacing="1">
+    MINOTAUR
+  </text>
+  <text x="100" y="178" font-family="Inter, sans-serif" font-size="10" font-weight="500" fill="#888888" text-anchor="middle" letter-spacing="1">
+    CAPITAL
+  </text>
+</svg>

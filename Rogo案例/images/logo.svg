@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+    <!-- Background -->
+    <rect width="200" height="200" fill="#003D82" rx="16"/>
+
+    <!-- Main brand mark: stylized "R" with digital/AI aesthetic -->
+    <g transform="translate(50, 50)">
+        <!-- Vertical stem of R -->
+        <rect x="20" y="10" width="12" height="90" fill="white" rx="2"/>
+
+        <!-- Upper curve of R -->
+        <path d="M 32 10 Q 50 10 50 30 Q 50 50 32 50 L 32 50" stroke="white" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+        <!-- Diagonal leg of R -->
+        <path d="M 32 50 L 65 95" stroke="white" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+
+    <!-- Accent element: digital dots suggesting AI/data -->
+    <circle cx="30" cy="30" r="4" fill="#FFD700" opacity="0.8"/>
+    <circle cx="170" cy="30" r="4" fill="#FFD700" opacity="0.6"/>
+    <circle cx="30" cy="170" r="4" fill="#0052CC" opacity="0.6"/>
+    <circle cx="170" cy="170" r="4" fill="#0052CC" opacity="0.8"/>
+</svg>

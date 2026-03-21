@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OffDeal 深度调研报告</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #1A1514;
+            --cover-bg: #2C5AA8;
+            --cover-accent: #D97757;
+            --cover-highlight: #FFE36D;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(217,119,87,0.2); color: var(--accent); font-weight: 600; }
+
+        /* ===== MAIN ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, var(--cover-bg) 0%, #1F3F7F 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(217,119,87,0.12) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 20px; background: rgba(255,255,255,0.1); object-fit: contain; }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(255,255,255,0.12); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        /* Fixed chapter header */
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        /* Horizontal card scroller */
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+
+        /* Each slide fills available height */
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Card inside slide — fills slide */
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        /* Dots bar at bottom */
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); cursor: pointer; transition: all 0.3s;
+            border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+        /* ===== CONTENT-SPARSE ===== */
+        .card.sparse p { font-size: 16px; line-height: 2; }
+        .card.sparse h3 { font-size: 22px; margin-bottom: 20px; }
+        .card.sparse .callout { font-size: 15px; padding: 18px 22px; }
+        .card.sparse .quote-block { font-size: 16px; padding: 20px 24px; }
+
+        /* ===== REUSABLE COMPONENTS ===== */
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px; border-radius: 6px;
+            font-size: 13px; line-height: 1.7; color: var(--text-2);
+            margin: 14px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+
+        .quote-block {
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px; margin: 14px 0;
+            font-style: italic; font-size: 14px;
+            color: var(--text-2); line-height: 1.8;
+            background: var(--bg-muted); border-radius: 0 8px 8px 0;
+        }
+        .quote-attr { font-style: normal; font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 16px; border-radius: 10px; text-align: center;
+        }
+        .metric-value { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+        .flex-row { display: flex; gap: 24px; margin: 14px 0; }
+        .flex-col { flex: 1; min-width: 0; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th { background: var(--bg-muted); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+
+        .mode-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 14px 0; }
+        .mode-box { background: var(--bg-muted); padding: 14px; border-radius: 10px; border-left: 4px solid var(--accent); }
+        .mode-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+        .mode-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .insight-card {
+            flex: 1; display: flex; flex-direction: column;
+            background: var(--bg-card); border-radius: 14px; padding: 28px 32px;
+            border: 1px solid var(--border);
+        }
+        .insight-emoji { font-size: 28px; margin-bottom: 10px; }
+        .insight-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+        .insight-card p { font-size: 15px; line-height: 1.9; color: var(--text-2); margin-bottom: 14px; }
+        .insight-highlight {
+            margin-top: auto;
+            background: var(--accent-light); border-left: 4px solid var(--accent);
+            padding: 12px 16px; border-radius: 6px;
+            font-size: 14px; font-weight: 600; color: var(--accent-2);
+        }
+
+        .story-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin: 14px 0; }
+        .story-card { background: var(--bg-muted); border-radius: 10px; padding: 18px; }
+        .story-name { font-weight: 700; font-size: 14px; margin-bottom: 2px; }
+        .story-text { font-size: 13px; color: var(--text-2); line-height: 1.7; font-style: italic; }
+
+        .news-item {
+            padding: 14px; background: var(--bg-card);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px; border: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+        .news-date { font-size: 11px; color: var(--text-3); font-weight: 600; margin-bottom: 4px; }
+        .news-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .news-title a { color: var(--accent-blue); text-decoration: none; }
+        .news-title a:hover { color: var(--accent); text-decoration: underline; }
+        .news-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .avatar {
+            width: 56px; height: 56px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 700; font-size: 20px;
+        }
+
+        .timeline { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+        .timeline-item { display: flex; gap: 12px; align-items: flex-start; }
+        .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
+        .timeline-year { font-weight: 700; font-size: 13px; color: var(--accent); min-width: 48px; }
+        .timeline-text { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            main { margin-left: 0; }
+            .chapter-header { padding: 12px 20px 0 20px; }
+            .slide { padding: 16px 20px; }
+            .cover-title { font-size: 28px; }
+            .flex-row { flex-direction: column; }
+        }
+    .nav-dashboard{display:block;width:calc(100% - 8px);margin:8px 4px 4px;background:rgba(217,119,87,0.15);border:1px solid rgba(217,119,87,0.3);color:var(--accent,#D97757);padding:10px 12px;border-radius:8px;text-align:center;font-size:12px;font-family:inherit;cursor:pointer;transition:all .2s;text-decoration:none;font-weight:600;letter-spacing:.3px}.nav-dashboard:hover{background:rgba(217,119,87,0.25);transform:translateY(-1px)}
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <img class="sidebar-logo" alt="OffDeal" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAJ1BMVEVHcEwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB+jSoGAAAADHRSTlMArlSPzg8+9CbmvnBNXHsSAAADsUlEQVR4nMWb25qDIAyEKyqi7fs/727t7ldRDjNhaHPdmt+ckBBut6oENw7bujwej2WdtvHu5/p/ZOLH6XGVdXQfgfDjktD+J5vrrd6tee27LGNPM5Re/i3dEBykvhtCSAVe1hH6WLgT6p8yaY0wM6//J16o38PeP8pdpt9Z1P/KINLPuv8tm0T/aNavCUX7+2tsYPX/v7TGgW/U/1sVm/TPpvyLpakoGurPVYJdf0sCvGUy6w8S/Q0lUeKApxid0FYBjmKsBoIM+BfTyqgzgDEOhQYwmUBpAFMUyFLgJXQitC8CsdBLgqYIvmVlAaQh+BQyDNUeoH2g9gDtA3EOPIXLA71+7sNEtRAfhQqC1k/RlFDrgT4GySgcOgAszCalQxJwaVDrBJmEqYXyQswC9NBPFQL8qesAy915H8BIxAGIzeeeWss6ja4ejngMEADbwW5jJSDwLLAB7AwlO+B1gAC4PHTKmwGvhDjAnDBrFgFfCwiA5P+3tCPwTQEOkFvik8s0/kmIA2SX+ClhhLS52gAKbk3USDgPcYBSZl3dAKcBDFA26uUx8DcZDFAJq+28SMgBajY9fzJuld+zAKkyFMtpB4/6AAUAEvv0KDEAYtE4F8BqDAJgO51oZQBrEQgAvk6UClgpwADQyhoFImY1DABeXR39LwgAX1qi7RN0WAABEDu9KBOQWoAAUP2eaG0GkhcBoDZ60QMB3wEA5FY7SsW68eoAbLODrIdVAL7bw9mvBlBfBS9y+kCrBGINwNBpOHfWy7ukCoCp1XI2YvEhRQDL3MMj8ZFcioMSgMH/mWcWcqEAEKyNnkRDL5/LeYCGZmeijZId4skBzC2txuSeOeOGDEB15Kso6bPekKwISYDQ2GnN9bV9wg8JgLm505wPrCvC5bcBm3grSqmxHsbYuzHA7NEdVVEqjXV/ZDgAzG4Q9ZiXMsBtnyid9oHSF8A8BzcoO+xVgNcbB+/dfdi2Sd5cxwB26XG4832Aegx0BmCOl7oAMAdsXQCYAbQuAMwZZxcA5nCnCwBzwNcFgND//VPmHgBfP2enxk06ADCFuAsAN+7SAYAb+NEDkJN3egByAFQOwIVgBwB2AlYNwBpADkCPAIsB+OFTMQA/gawFMIziSwEs079KAGrWqgeAaf5aCGC7CaEDMF4CkAFY76KoAMyXIEQA9pswEoCl4WaeAqDpQpgAoO1aYDNAaojngwDtl1ObAJa2i2itAKvkaq4VYKmNNHYFmFTaWYB13QZkovT2A9A/s0AwsR4eAAAAAElFTkSuQmCC" />
+        <div>
+            <div class="sidebar-brand-text">OffDeal</div>
+            <div class="sidebar-brand-sub">深度调研报告</div>
+        </div>
+    </div>
+    <div class="nav-items">
+        <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+        <button class="nav-btn" onclick="go(1)">📋 公司概况</button>
+        <button class="nav-btn" onclick="go(2)">💰 市场机遇</button>
+        <button class="nav-btn" onclick="go(3)">🛠️ 产品与服务</button>
+        <button class="nav-btn" onclick="go(4)">🤖 AI技术驱动</button>
+        <button class="nav-btn" onclick="go(5)">💼 融资与财务</button>
+        <button class="nav-btn" onclick="go(6)">💡 核心启示</button>
+        <button class="nav-btn" onclick="go(7)">📰 近期要闻</button>
+    </div>
+<a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+<main id="main">
+
+<!-- ====== COVER ====== -->
+<section class="cover" id="ch-0">
+    <div class="cover-content">
+        <img class="cover-logo" alt="OffDeal Logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAJ1BMVEVHcEwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB+jSoGAAAADHRSTlMArlSPzg8+9CbmvnBNXHsSAAADsUlEQVR4nMWb25qDIAyEKyqi7fs/727t7ldRDjNhaHPdmt+ckBBut6oENw7bujwej2WdtvHu5/p/ZOLH6XGVdXQfgfDjktD+J5vrrd6tee27LGNPM5Re/i3dEBykvhtCSAVe1hH6WLgT6p8yaY0wM6//J16o38PeP8pdpt9Z1P/KINLPuv8tm0T/aNavCUX7+2tsYPX/v7TGgW/U/1sVm/TPpvyLpakoGurPVYJdf0sCvGUy6w8S/Q0lUeKApxid0FYBjmKsBoIM+BfTyqgzgDEOhQYwmUBpAFMUyFLgJXQitC8CsdBLgqYIvmVlAaQh+BQyDNUeoH2g9gDtA3EOPIXLA71+7sNEtRAfhQqC1k/RlFDrgT4GySgcOgAszCalQxJwaVDrBJmEqYXyQswC9NBPFQL8qesAy915H8BIxAGIzeeeWss6ja4ejngMEADbwW5jJSDwLLAB7AwlO+B1gAC4PHTKmwGvhDjAnDBrFgFfCwiA5P+3tCPwTQEOkFvik8s0/kmIA2SX+ClhhLS52gAKbk3USDgPcYBSZl3dAKcBDFA26uUx8DcZDFAJq+28SMgBajY9fzJuld+zAKkyFMtpB4/6AAUAEvv0KDEAYtE4F8BqDAJgO51oZQBrEQgAvk6UClgpwADQyhoFImY1DABeXR39LwgAX1qi7RN0WAABEDu9KBOQWoAAUP2eaG0GkhcBoDZ60QMB3wEA5FY7SsW68eoAbLODrIdVAL7bw9mvBlBfBS9y+kCrBGINwNBpOHfWy7ukCoCp1XI2YvEhRQDL3MMj8ZFcioMSgMH/mWcWcqEAEKyNnkRDL5/LeYCGZmeijZId4skBzC2txuSeOeOGDEB15Kso6bPekKwISYDQ2GnN9bV9wg8JgLm505wPrCvC5bcBm3grSqmxHsbYuzHA7NEdVVEqjXV/ZDgAzG4Q9ZiXMsBtnyid9oHSF8A8BzcoO+xVgNcbB+/dfdi2Sd5cxwB26XG4832Aegx0BmCOl7oAMAdsXQCYAbQuAMwZZxcA5nCnCwBzwNcFgND//VPmHgBfP2enxk06ADCFuAsAN+7SAYAb+NEDkJN3egByAFQOwIVgBwB2AlYNwBpADkCPAIsB+OFTMQA/gawFMIziSwEs079KAGrWqgeAaf5aCGC7CaEDMF4CkAFY76KoAMyXIEQA9pswEoCl4WaeAqDpQpgAoO1aYDNAaojngwDtl1ObAJa2i2itAKvkaq4VYKmNNHYFmFTaWYB13QZkovT2A9A/s0AwsR4eAAAAAElFTkSuQmCC" />
+        <h1 class="cover-title">OffDeal</h1>
+        <p class="cover-subtitle">全球首家AI原生投资银行如何赋能中小企业并购市场，用AI重构M&A流程，30天内获得优质报价</p>
+        <div class="cover-tags">
+            <span class="cover-tag">AI原生投行</span>
+            <span class="cover-tag">M&A顾问</span>
+            <span class="cover-tag">SaaS平台</span>
+            <span class="cover-tag">美国</span>
+            <span class="cover-tag">ToB</span>
+        </div>
+        <div class="cover-stats">
+            <div class="stat-box">
+                <div class="stat-number" data-count="1700" data-prefix="$" data-suffix="万">$0</div>
+                <div class="stat-label">融资总额</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="1000" data-suffix="+">0</div>
+                <div class="stat-label">AI匹配买家</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="30" data-suffix="天">0</div>
+                <div class="stat-label">获得报价周期</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="30" data-suffix="%">0</div>
+                <div class="stat-label">报价溢价提升</div>
+            </div>
+        </div>
+        <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+    </div>
+</section>
+
+<!-- ====== CHAPTER 1: 公司概况 ====== -->
+<section class="chapter" id="ch-1">
+    <div class="chapter-header">
+        <h2>AI原生投行的诞生与使命</h2>
+        <span class="ch-sub">📋 公司概况</span>
+        <span class="ch-counter" id="counter-1">1 / 8</span>
+    </div>
+    <div class="card-track" data-ch="1">
+
+        <!-- 1/8 公司定位与价值主张 -->
+        <div class="slide"><div class="card"><h3>一个长期被忽视的市场机会</h3><div class="card-body">
+            <p>美国有数百万中小企业（年收入5000万-10亿美元），它们的老板希望出售或转手，但传统的大型投行因为交易规模小、利润低而不愿服务。中小企业主面临的困境是：大型投行瞧不上他们，中小投行收费高昂（通常是交易额的5-10%）、周期漫长（6-12个月）、买家网络有限。许多企业主最终选择扣减价格或错失最佳出售时机。</p>
+            <p>2023年成立于纽约的OffDeal正是为了填补这一市场空白。OffDeal是全球首家AI-native投资银行，采用"零前期费用"的风险共担模式，仅在交易成功后收取3-5%的佣金。通过AI驱动的自动化技术和资深投行顾问的协作，OffDeal将传统投行数月的工作压缩为数周，为数百万中小企业主民主化了机构级别的M&A服务。</p>
+            <div class="callout">
+                <strong>核心价值：</strong> 零前期费用 + AI买家匹配（1000+) + 30天快速交易 + 平均30%报价溢价
+            </div>
+        </div></div></div>
+
+        <!-- 2/8 创始人与团队背景 -->
+        <div class="slide"><div class="card sparse"><h3>金融与技术的完美组合</h3><div class="card-body">
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+                <div class="avatar">OE</div>
+                <div>
+                    <p style="margin:0;font-weight:700;font-size:16px;">Ori Eldarov</p>
+                    <p style="margin:0;font-size:13px;color:var(--text-3);">CEO & Co-Founder · 哈佛MBA</p>
+                </div>
+            </div>
+            <div class="quote-block">
+                在RBC投资银行的7年经历让我看清了一个巨大的痛点：传统投行对中小交易完全不感兴趣。数百万企业主被市场忽视，这就是为什么我创立了OffDeal——用AI来重构投行流程。
+                <div class="quote-attr">— Ori Eldarov</div>
+            </div>
+            <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+                <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+                    <div class="avatar" style="background:linear-gradient(135deg,var(--accent-green) 0%,#3A6D56 100%);">AL</div>
+                    <div>
+                        <p style="margin:0;font-weight:700;font-size:16px;">Alston Lin</p>
+                        <p style="margin:0;font-size:13px;color:var(--text-3);">CTO & Co-Founder · Meta/Google工程师</p>
+                    </div>
+                </div>
+            </div>
+        </div></div></div>
+
+        <!-- 3/8 目标用户与痛点 -->
+        <div class="slide"><div class="card"><h3>谁在寻求OffDeal的服务？</h3><div class="card-body">
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;">核心用户画像</h4>
+                    <p style="font-size:14px;"><strong>35-60岁美国中小企业主</strong></p>
+                    <ul style="font-size:13px;line-height:1.9;color:var(--text-2);padding-left:18px;margin-bottom:12px;">
+                        <li>年收入500万-10亿美元的稳定企业</li>
+                        <li>寻求出售或战略退出</li>
+                        <li>对传统投行费用感到困扰</li>
+                        <li>需要专业的买家匹配与谈判支持</li>
+                        <li>重视成本效益与交易透明度</li>
+                    </ul>
+                </div>
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;">五大核心痛点</h4>
+                    <div class="metrics-grid" style="gap:8px;margin:0;">
+                        <div style="background:var(--bg-muted);padding:12px;border-radius:8px;text-align:center;">
+                            <div style="font-size:20px;margin-bottom:6px;">💰</div>
+                            <div style="font-size:11px;font-weight:600;color:var(--accent);">高昂费用</div>
+                            <div style="font-size:10px;color:var(--text-3);">5-10%佣金压力</div>
+                        </div>
+                        <div style="background:var(--bg-muted);padding:12px;border-radius:8px;text-align:center;">
+                            <div style="font-size:20px;margin-bottom:6px;">⏱️</div>
+                            <div style="font-size:11px;font-weight:600;color:var(--accent);">漫长周期</div>
+                            <div style="font-size:10px;color:var(--text-3);">6-12个月折磨</div>
+                        </div>
+                        <div style="background:var(--bg-muted);padding:12px;border-radius:8px;text-align:center;">
+                            <div style="font-size:20px;margin-bottom:6px;">🕵️</div>
+                            <div style="font-size:11px;font-weight:600;color:var(--accent);">信息不对称</div>
+                            <div style="font-size:10px;color:var(--text-3);">买家渠道有限</div>
+                        </div>
+                        <div style="background:var(--bg-muted);padding:12px;border-radius:8px;text-align:center;">
+                            <div style="font-size:20px;margin-bottom:6px;">❓</div>
+                            <div style="font-size:11px;font-weight:600;color:var(--accent);">估值黑箱</div>
+                            <div style="font-size:10px;color:var(--text-3);">无法理解定价</div>
+                        </div>
+                        <div style="background:var(--bg-muted);padding:12px;border-radius:8px;text-align:center;">
+                            <div style="font-size:20px;margin-bottom:6px;">😰</div>
+                            <div style="font-size:11px;font-weight:600;color:var(--accent);">谈判乏力</div>
+                            <div style="font-size:10px;color:var(--text-3);">缺乏专业指导</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div></div></div>
+
+        <!-- 4/8 发展历程 -->
+        <div class="slide"><div class="card"><h3>从创立到融资的快速成长</h3><div class="card-body">
+            <div class="timeline">
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2023</div><div class="timeline-text">Ori Eldarov与Alston Lin创立OffDeal，完成种子轮融资，团队组建</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2023-24</div><div class="timeline-text">进入Y Combinator冬季班（YC W24），打磨核心产品MVP，推出免费AI估值工具</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2024</div><div class="timeline-text">种子轮融资470万美元，由Y Combinator、Rebel Fund、Centre投资。累积5000+企业主用户</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2024-25</div><div class="timeline-text">推出全流程M&A平台，支持30+并购交易，验证商业模式闭环</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2025.07</div><div class="timeline-text">完成Series A融资1200万美元，由Radical Ventures领投，总融资达1700万美元，估值突破1亿</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2026.03</div><div class="timeline-text">发布核心成就：16天完成HVAC业务交易、71份NDA签署、平均30%报价溢价</div></div>
+            </div>
+        </div></div></div>
+
+        <!-- 5/8 商业模式 -->
+        <div class="slide"><div class="card"><h3>突破传统投行的商业模式</h3><div class="card-body">
+            <h4 style="font-size:14px;font-weight:700;margin-bottom:12px;">三层定价结构</h4>
+            <div class="mode-boxes">
+                <div class="mode-box">
+                    <div class="mode-title">🆓 免费估值工具</div>
+                    <div class="mode-desc">在线快速估值，60秒内生成详细市场报告。基于200000+真实交易数据，吸引用户进入漏斗。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-blue);">
+                    <div class="mode-title">💼 免费顾问咨询</div>
+                    <div class="mode-desc">1次免费初期M&A顾问咨询，获取定制化交易策略建议，从工具转化至服务的关键桥梁。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-green);">
+                    <div class="mode-title">💎 全流程M&A服务</div>
+                    <div class="mode-desc">交易额的3-5%佣金。仅在成功交易后收费，零前期费用，风险完全共担。</div>
+                </div>
+            </div>
+            <div class="callout" style="margin-top:16px;">
+                <strong>创新点：</strong> 零前期费用模式打破传统投行$50000-200000的前期保留金壁垒，与客户利益完全一致，"我们赚钱，你的交易才成功"。
+            </div>
+        </div></div></div>
+
+        <!-- 6/8 市场规模 -->
+        <div class="slide"><div class="card"><h3>十倍增长的市场空间</h3><div class="card-body">
+            <div class="metrics-grid" style="margin-top:8px;">
+                <div class="metric-card">
+                    <div class="metric-value">$1000亿+</div>
+                    <div class="metric-label">全球中小企业M&A市场</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">$200亿</div>
+                    <div class="metric-label">美国中小企业M&A市场</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">$50亿</div>
+                    <div class="metric-label">OffDeal可攻取（5年）</div>
+                </div>
+            </div>
+            <p style="margin-top:16px;"><strong>市场现状：</strong> 美国中小企业（年收入5M-10亿）每年有5-10%考虑出售，创造数百亿美元的交易机会。但该市场长期被大型投行忽视，仅由零散的地方小投行和顾问服务，缺乏规模化、标准化的解决方案——这正是OffDeal的机会。</p>
+            <div class="callout">
+                <strong>竞争格局：</strong> Goldman Sachs等大型投行服务10亿+交易；Piper Sandler等中型投行服务100M+交易；M&A工具（Pitchbook）仅提供数据不服务。5M-100M的中小企业陷入"投行空白"——OffDeal是首个用AI填补这一空白的创新者。
+            </div>
+        </div></div></div>
+
+        <!-- 7/8 竞争优势 -->
+        <div class="slide"><div class="card"><h3>无法复制的五道护城河</h3><div class="card-body">
+            <div class="timeline">
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">🏗️</div><div class="timeline-text"><strong>AI-native架构：</strong> 从底层重建投行流程，而非在传统流程上贴工具。AI驱动估值、买家匹配、文档生成、进度管理全闭环。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">💰</div><div class="timeline-text"><strong>零前期费用模式：</strong> 打破传统投行高门槛，与客户利益完全一致。这种风险共担的模式是行业首创，难以被大投行快速复制。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">📊</div><div class="timeline-text"><strong>专有M&A数据集：</strong> 拥有200000+经过清洗、标注、丰富化的真实交易数据，形成强大的数据壁垒。随着交易增加而不断扩大。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">👔</div><div class="timeline-text"><strong>混合服务模式：</strong> AI自动化 + 资深投行顾问协作。既保证高效率，又在关键环节保证专业度——这种平衡传统投行难以复制。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">🎯</div><div class="timeline-text"><strong>中小企业专焦：</strong> 专注5M-100M交易市场，与大型投行差异化竞争，避免正面冲突，专业深度无人能及。</div></div>
+            </div>
+        </div></div></div>
+
+        <!-- 8/8 关键成就 -->
+        <div class="slide"><div class="card sparse"><h3>市场验证的成功案例</h3><div class="card-body">
+            <div style="background:var(--accent-light);padding:16px;border-radius:8px;margin-bottom:14px;">
+                <div style="font-size:22px;font-weight:800;color:var(--accent);margin-bottom:4px;">16天</div>
+                <div style="font-size:13px;color:var(--text-2);font-weight:600;">完成HVAC业务M&A交易</div>
+                <div style="font-size:11px;color:var(--text-3);margin-top:4px;">相比传统投行的4-6个月，快速了20倍</div>
+            </div>
+            <div style="background:var(--bg-muted);padding:16px;border-radius:8px;margin-bottom:14px;">
+                <div style="font-size:20px;font-weight:800;color:var(--text);margin-bottom:4px;">71份 NDA + 4份报价</div>
+                <div style="font-size:13px;color:var(--text-2);">某客户在AI买家匹配下获得的竞争拍卖成果</div>
+            </div>
+            <div style="background:var(--bg-muted);padding:16px;border-radius:8px;">
+                <div style="font-size:22px;font-weight:800;color:var(--accent-2);margin-bottom:4px;">+30%</div>
+                <div style="font-size:13px;color:var(--text-2);">平均报价溢价幅度</div>
+                <div style="font-size:11px;color:var(--text-3);margin-top:4px;">来自1000+买家竞争而非传统的100</div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-1"></div>
+</section>
+
+<!-- ====== CHAPTER 2: 市场机遇 ====== -->
+<section class="chapter" id="ch-2">
+    <div class="chapter-header">
+        <h2>被长期忽视的$1000亿市场</h2>
+        <span class="ch-sub">💰 市场机遇</span>
+        <span class="ch-counter" id="counter-2">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="2">
+
+        <!-- 1/2 市场规模与机会 -->
+        <div class="slide"><div class="card"><h3>为什么中小企业被投行遗弃？</h3><div class="card-body">
+            <p><strong>投行的尴尬困局：</strong> 大型投行（Goldman Sachs、JP Morgan等）的最小服务范围是5亿美元以上的交易，因为这样的交易才能产生足够的佣金（通常5-10%，即2500万-5000万美元）来支撑庞大的投行团队。而美国中小企业（年收入5000万-10亿美元）的交易规模仅为1000万-5000万美元，对大投行而言是"不值得的"。</p>
+            <p><strong>中小投行的局限：</strong> 中小型地方投行虽然服务中小企业，但他们的问题是：1) 收费同样高昂（5-10%），2) 买家网络有限（通常只有50-200个潜在买家），3) 周期漫长（6-12个月），4) 定价依赖顾问主观判断，缺乏数据支撑。</p>
+            <div class="callout">
+                <strong>市场空白：</strong> 一个约为$200亿的美国中小企业M&A市场被长期忽视。这些企业主渴望获得机构级的M&A服务，却被价格和周期拒之门外。
+            </div>
+        </div></div></div>
+
+        <!-- 2/2 增长驱动因素 -->
+        <div class="slide"><div class="card sparse"><h3>四大增长驱动</h3><div class="card-body">
+            <div class="timeline">
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">🤖</div><div class="timeline-text"><strong>AI技术成熟度提升：</strong> 生成式AI、机器学习在M&A领域的应用日益成熟，使得自动化估值、买家匹配成为可能。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">👴</div><div class="timeline-text"><strong>代际更替加速出售意愿：</strong> 老一代企业主进入退休期，更多寻求出售或转手。同时新一代更接纳数字化工具。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">💡</div><div class="timeline-text"><strong>"零前期费用"模式认可：</strong> SaaS时代的风险共担模式被OffDeal验证，越来越多企业主愿意采纳这种对齐的商业模式。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">📻</div><div class="timeline-text"><strong>品牌与口碑扩展：</strong> 16天完成交易、30%报价溢价等成功案例的广泛传播，快速建立市场信任。</div></div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-2"></div>
+</section>
+
+<!-- ====== CHAPTER 3: 产品与服务 ====== -->
+<section class="chapter" id="ch-3">
+    <div class="chapter-header">
+        <h2>从工具到全流程平台的产品生态</h2>
+        <span class="ch-sub">🛠️ 产品与服务</span>
+        <span class="ch-counter" id="counter-3">1 / 5</span>
+    </div>
+    <div class="card-track" data-ch="3">
+
+        <!-- 1/5 产品哲学 -->
+        <div class="slide"><div class="card sparse"><h3>产品设计核心：AI重构而非优化</h3><div class="card-body">
+            <p>OffDeal的产品哲学与传统投行的产品升级逻辑截然不同。传统投行是在既有流程基础上加工具、加自动化，而OffDeal则是从零开始，用AI代理和算法完全重建M&A的每个环节。</p>
+            <div class="callout">
+                <strong>核心理念：</strong> 高效自动化 + 人类专业判断的完美组合。将传统投行数月的工作压缩为数周，将高端服务成本从数百万降低到可接受范围。
+            </div>
+        </div></div></div>
+
+        <!-- 2/5 AI快速估值工具 -->
+        <div class="slide"><div class="card"><h3>AI快速估值：60秒洞察业务价值</h3><div class="card-body">
+            <p><strong>核心体验：</strong> 企业主只需输入基本业务数据（年收入、EBITDA、行业、地点等），OffDeal的AI在60秒内生成一份详细的市场估值报告。传统投行这个环节需要顾问花费2-3周精心分析。</p>
+            <p><strong>技术支撑：</strong> OffDeal拥有200000+真实M&A交易数据集。AI估值模型基于历史交易数据、行业倍数、财务指标进行实时分析，而非黑箱定价。用户可以看到估值的每一个影响因素。</p>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">60</div>
+                    <div class="metric-label">秒生成估值</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">200K+</div>
+                    <div class="metric-label">交易数据基础</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">5000+</div>
+                    <div class="metric-label">已使用用户</div>
+                </div>
+            </div>
+            <div class="callout" style="margin-top:12px;">
+                <strong>用户价值：</strong> 零成本快速了解业务价值，激发出售意愿，为后续咨询打下信息基础。是从免费用户到付费用户的关键转化漏斗。
+            </div>
+        </div></div></div>
+
+        <!-- 3/5 AI买家智能匹配 -->
+        <div class="slide"><div class="card"><h3>AI买家匹配：1000+潜在买家vs传统的100</h3><div class="card-body">
+            <p><strong>OffDeal的核心竞争力：</strong> 系统根据出售业务的行业、规模、地理位置、财务表现等特征，从全球庞大的买家数据库（包括战略买家、私募股权基金、家族办公室、主权基金等）中，智能匹配最相关的1000+潜在买家。</p>
+            <p><strong>为什么这很关键：</strong> 传统投行顾问依赖有限的人脉（通常只有100-300个买家），而买家数量直接决定了交易的竞争程度。竞争拍卖带来更高的报价——OffDeal客户平均获得30%的报价溢价，这正是来自于10倍的买家覆盖。</p>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">1000+</div>
+                    <div class="metric-label">平均匹配买家</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">71</div>
+                    <div class="metric-label">某客户NDA数</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">30%</div>
+                    <div class="metric-label">报价溢价平均</div>
+                </div>
+            </div>
+        </div></div></div>
+
+        <!-- 4/5 全流程M&A平台 -->
+        <div class="slide"><div class="card"><h3>端到端的M&A交易管理平台</h3><div class="card-body">
+            <p><strong>平台整合的功能：</strong></p>
+            <ul style="font-size:13px;line-height:1.9;color:var(--text-2);padding-left:18px;">
+                <li>AI买家智能匹配与自动化接洽</li>
+                <li>一键交易文档生成（CIM、业务简介、财务预测）</li>
+                <li>交易进度实时仪表板（NDA签署、尽职调查进展、谈判状态）</li>
+                <li>沟通管理与自动化通知</li>
+                <li>资深M&A顾问的24/7支持</li>
+            </ul>
+            <p style="margin-top:12px;"><strong>典型流程：</strong> 企业主启动 → AI匹配1000+买家 → 自动生成CIM和匿名简介 → 潜在买家接洽 → NDA签署与尽职调查 → 谈判与价格优化 → 最终签署。整个过程在30天内完成，而传统投行需要4-6个月。</p>
+            <div class="callout">
+                <strong>成功案例：</strong> HVAC业务在16天内完成交易、收到71份NDA签署、4份报价，最终报价比初期估值高30%。
+            </div>
+        </div></div></div>
+
+        <!-- 5/5 产品对比 -->
+        <div class="slide"><div class="card"><h3>OffDeal vs 传统投行 vs M&A工具</h3><div class="card-body">
+            <table>
+                <thead><tr><th style="width:30%;">功能维度</th><th style="width:23%;">OffDeal (AI原生)</th><th style="width:23%;">传统中小投行</th><th style="width:24%;">M&A估值工具</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>交易周期</strong></td><td>30天(平均)</td><td>4-6个月</td><td>仅提供工具</td></tr>
+                    <tr><td><strong>前期费用</strong></td><td>$0</td><td>$50K-200K</td><td>无</td></tr>
+                    <tr><td><strong>买家范围</strong></td><td>1000+自动匹配</td><td>100-300(人脉限制)</td><td>无买家匹配</td></tr>
+                    <tr><td><strong>估值速度</strong></td><td>60秒AI估值</td><td>2-3周人工估值</td><td>自动计算</td></tr>
+                    <tr><td><strong>报价提升</strong></td><td>平均30%溢价</td><td>5-15%</td><td>无溢价优化</td></tr>
+                    <tr><td><strong>成本透明度</strong></td><td>成功佣金3-5%</td><td>黑箱定价5-10%</td><td>透明但无增值</td></tr>
+                    <tr><td><strong>自动化程度</strong></td><td>高(AI+顾问)</td><td>低(人工为主)</td><td>中(工具自动化)</td></tr>
+                </tbody>
+            </table>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-3"></div>
+</section>
+
+<!-- ====== CHAPTER 4: AI技术驱动 ====== -->
+<section class="chapter" id="ch-4">
+    <div class="chapter-header">
+        <h2>AI代理如何重建投行逻辑</h2>
+        <span class="ch-sub">🤖 AI技术驱动</span>
+        <span class="ch-counter" id="counter-4">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="4">
+
+        <!-- 1/3 核心AI能力 -->
+        <div class="slide"><div class="card"><h3>三大自研AI模型体系</h3><div class="card-body">
+            <h4 style="font-size:14px;font-weight:700;margin-bottom:12px;">1. GPT-4 LLM集成</h4>
+            <p style="font-size:13px;color:var(--text-2);margin-bottom:12px;">用于文本生成、分析、摘要。自动生成投资备忘录（CIM）、估值报告、初步沟通材料。传统投行这个环节需要专业人员花费数周精心编制，OffDeal通过API调用实现自动化，保证了专业水准。</p>
+            <h4 style="font-size:14px;font-weight:700;margin-bottom:12px;">2. 自研买家匹配算法</h4>
+            <p style="font-size:13px;color:var(--text-2);margin-bottom:12px;">基于200000+M&A交易数据，使用机器学习预测最相关的买家。算法考虑行业、规模、地理、财务表现、历史成交模式等多维度，智能推荐1000+潜在买家，是OffDeal最核心的自研组件。</p>
+            <h4 style="font-size:14px;font-weight:700;margin-bottom:12px;">3. AI估值模型</h4>
+            <p style="font-size:13px;color:var(--text-2);">基于历史交易数据、行业倍数、财务指标的快速估值。与黑箱定价不同，用户能看到估值的每个影响因素，提升透明度与信任度。</p>
+        </div></div></div>
+
+        <!-- 2/3 AI优势与局限 -->
+        <div class="slide"><div class="card"><h3>AI的力量与边界</h3><div class="card-body">
+            <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;color:var(--accent);">🟢 四大AI优势</h4>
+            <div style="background:var(--bg-muted);padding:12px;border-radius:8px;margin-bottom:12px;">
+                <div style="font-size:13px;line-height:1.8;color:var(--text-2);">
+                    <p>✓ 买家匹配效率提升15倍（1000+ vs 传统100）</p>
+                    <p>✓ 估值速度从周级降低到分钟级</p>
+                    <p>✓ 自动化文档生成节省3-4周</p>
+                    <p>✓ 数据驱动降低人为偏差</p>
+                </div>
+            </div>
+            <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;color:var(--text-2);">🔴 AI局限与应对</h4>
+            <div class="timeline">
+                <div class="timeline-item"><div class="timeline-dot" style="background:var(--accent-blue);"></div><div class="timeline-year" style="color:var(--accent-blue);">幻觉风险</div><div class="timeline-text">LLM生成的信息需要人工审核，避免错误信息进入交易文档</div></div>
+                <div class="timeline-item"><div class="timeline-dot" style="background:var(--accent-blue);"></div><div class="timeline-year" style="color:var(--accent-blue);">谈判局限</div><div class="timeline-text">复杂商业谈判仍需人类专家，AI代理无法自主处理</div></div>
+                <div class="timeline-item"><div class="timeline-dot" style="background:var(--accent-blue);"></div><div class="timeline-year" style="color:var(--accent-blue);">数据偏差</div><div class="timeline-text">交易数据集可能存在地理或行业偏差，特殊市场需调整</div></div>
+                <div class="timeline-item"><div class="timeline-dot" style="background:var(--accent-blue);"></div><div class="timeline-year" style="color:var(--accent-blue);">法律合规</div><div class="timeline-text">AI不能替代律师的法律与合规判断</div></div>
+            </div>
+        </div></div></div>
+
+        <!-- 3/3 数据护城河 -->
+        <div class="slide"><div class="card sparse"><h3>200K+交易数据的护城河</h3><div class="card-body">
+            <p><strong>OffDeal的最大资产：</strong> 拥有200000+经过清洗、标注、丰富化的中小企业M&A交易数据集。这是一道竞争对手难以复制的数据护城河。</p>
+            <div class="callout">
+                <strong>护城河的力量：</strong> 每笔新交易都会加入数据集，让AI模型越来越精准。随着OffDeal服务的交易增加，这道护城河会越来越深。传统投行即使想复制，也需要数年时间积累等量数据。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-4"></div>
+</section>
+
+<!-- ====== CHAPTER 5: 融资与财务 ====== -->
+<section class="chapter" id="ch-5">
+    <div class="chapter-header">
+        <h2>从初创到独角兽的融资历程</h2>
+        <span class="ch-sub">💼 融资与财务</span>
+        <span class="ch-counter" id="counter-5">1 / 4</span>
+    </div>
+    <div class="card-track" data-ch="5">
+
+        <!-- 1/4 融资历程 -->
+        <div class="slide"><div class="card"><h3>$1700万融资，估值突破$1亿</h3><div class="card-body">
+            <table>
+                <thead><tr><th>轮次</th><th>时间</th><th>金额</th><th>领投方</th><th>里程碑</th></tr></thead>
+                <tbody>
+                    <tr><td>种子轮</td><td>2023</td><td>早期融资</td><td>内部集资</td><td>公司成立，团队组建</td></tr>
+                    <tr><td>Y Combinator</td><td>2023-24</td><td>YC支持</td><td>Y Combinator</td><td>进入冬季班，MVP打磨</td></tr>
+                    <tr><td>融资轮</td><td>2024</td><td>$470万</td><td>Y Combinator, Rebel Fund, Centre</td><td>初期产品验证，获客加速</td></tr>
+                    <tr><td>Series A</td><td>2025.07</td><td>$1200万</td><td>Radical Ventures</td><td>融资总额$1700万，估值$1亿+</td></tr>
+                </tbody>
+            </table>
+            <div class="callout" style="margin-top:12px;">
+                <strong>融资节奏：</strong> OffDeal在Y Combinator的支持下快速完成种子轮，随后获得深度技术投资机构Radical Ventures的Series A支持，表明市场对"AI原生投行"模式的认可。
+            </div>
+        </div></div></div>
+
+        <!-- 2/4 财务指标 -->
+        <div class="slide"><div class="card"><h3>增长与盈利路径</h3><div class="card-body">
+            <h4 style="font-size:14px;font-weight:700;margin-bottom:12px;">收入指标</h4>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">5000+</div>
+                    <div class="metric-label">注册用户</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">30+</div>
+                    <div class="metric-label">完成交易</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">100%+</div>
+                    <div class="metric-label">YoY增长</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">~70%</div>
+                    <div class="metric-label">毛利率</div>
+                </div>
+            </div>
+            <p style="margin-top:12px;"><strong>单位经济：</strong> 平均每笔交易5M-20M美元，按3-5%佣金计算，单笔交易收入150K-1000K美元。交易完成后一次性获利，无需持续成本。早期注重增长而非盈利，但单位经济模式清晰健康。</p>
+            <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;margin-top:12px;">融资建议</h4>
+            <div class="callout">
+                <strong>预期路线：</strong> ARR达到5000万美元后考虑融资或战略合作。当前专注于产品完善与市场拓展，目标是在3年内成为中小企业M&A服务的标准选择。
+            </div>
+        </div></div></div>
+
+        <!-- 3/4 投资者与背书 -->
+        <div class="slide"><div class="card sparse"><h3>顶级机构的信心背书</h3><div class="card-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+                <div style="background:var(--bg-muted);padding:12px;border-radius:8px;">
+                    <div style="font-weight:700;font-size:13px;margin-bottom:6px;">🚀 Y Combinator</div>
+                    <div style="font-size:11px;color:var(--text-2);">全球顶级孵化器，为OffDeal提供融资、指导与全球网络</div>
+                </div>
+                <div style="background:var(--bg-muted);padding:12px;border-radius:8px;">
+                    <div style="font-weight:700;font-size:13px;margin-bottom:6px;">💎 Radical Ventures</div>
+                    <div style="font-size:11px;color:var(--text-2);">专注深度技术的顶级VC，Series A领投方，对AI应用的认可</div>
+                </div>
+                <div style="background:var(--bg-muted);padding:12px;border-radius:8px;">
+                    <div style="font-weight:700;font-size:13px;margin-bottom:6px;">🔥 Rebel Fund</div>
+                    <div style="font-size:11px;color:var(--text-2);">专注金融科技颠覆的早期VC，种子轮投资者</div>
+                </div>
+                <div style="background:var(--bg-muted);padding:12px;border-radius:8px;">
+                    <div style="font-weight:700;font-size:13px;margin-bottom:6px;">🏦 Centre</div>
+                    <div style="font-size:11px;color:var(--text-2);">USDC稳定币背后的组织，支持金融基础设施创新</div>
+                </div>
+            </div>
+            <div class="callout">
+                <strong>融资意义：</strong> 能获得Y Combinator与Radical Ventures的支持，说明OffDeal的商业模式与技术创新获得了全球顶级机构的认可。这些投资者的背书本身就是一种市场信号。
+            </div>
+        </div></div></div>
+
+        <!-- 4/4 商业可行性 -->
+        <div class="slide"><div class="card"><h3>从验证到规模化的关键指标</h3><div class="card-body">
+            <h4 style="font-size:14px;font-weight:700;margin-bottom:12px;">已验证的商业模式</h4>
+            <div class="timeline">
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">✓</div><div class="timeline-text"><strong>用户需求验证：</strong> 5000+用户注册，5000个企业主选择免费估值工具，说明市场需求真实且强劲</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">✓</div><div class="timeline-text"><strong>产品市场匹配：</strong> 30+交易闭环成交，客户获得平均30%报价溢价，重复推荐率高</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">✓</div><div class="timeline-text"><strong>获客成本低：</strong> 16天HVAC案例的病毒式传播，说明产品具有天然的口碑扩散性</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">✓</div><div class="timeline-text"><strong>单位经济健康：</strong> 单笔交易150K-1000K美元，毛利率~70%，规模化潜力巨大</div></div>
+            </div>
+            <div class="callout" style="margin-top:12px;">
+                <strong>下一阶段：</strong> 从产品验证到市场规模化。当前融资将用于：1) 扩大销售与市场团队，2) 优化产品体验，3) 拓展地理市场（欧洲、亚太），4) 完善AI能力。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-5"></div>
+</section>
+
+<!-- ====== CHAPTER 6: 核心启示 ====== -->
+<section class="chapter" id="ch-6">
+    <div class="chapter-header">
+        <h2>从OffDeal看AI时代的商业创新</h2>
+        <span class="ch-sub">💡 核心启示</span>
+        <span class="ch-counter" id="counter-6">1 / 4</span>
+    </div>
+    <div class="card-track" data-ch="6">
+
+        <!-- 1/4 第一启示 -->
+        <div class="slide"><div class="insight-card">
+            <div class="insight-emoji">🏗️</div>
+            <h3>AI重构而非优化是颠覆的关键</h3>
+            <div class="card-body">
+                <p>OffDeal没有选择在传统投行流程的基础上加工具，而是从零开始用AI重建整个M&A逻辑。这种"重构"vs"优化"的差异决定了是否能够实现真正的颠覆。</p>
+                <p>优化（Optimization）改进的是现有流程的10-20%；重构（Reimagining）能够打造全新的体验，甚至改变成本结构——OffDeal通过AI自动化实现的是传统投行成本的1/3。</p>
+                <div class="insight-highlight">
+                    下一轮AI创新的赢家，将是那些选择"重构"而非"优化"的创业者。
+                </div>
+            </div>
+        </div></div>
+
+        <!-- 2/4 第二启示 -->
+        <div class="slide"><div class="insight-card">
+            <div class="insight-emoji">💰</div>
+            <h3>商业模式创新与技术创新同样重要</h3>
+            <div class="card-body">
+                <p>OffDeal的成功50%来自AI技术，另外50%来自"零前期费用"的商业模式。这种风险共担的模式打破了传统投行的高门槛，使得数百万被遗弃的企业主首次能够获得机构级服务。</p>
+                <p>从SaaS到Marketplace再到当下的AI代理时代，每个技术浪潮的真正赢家，往往是那些同时创新技术与商业模式的公司。</p>
+                <div class="insight-highlight">
+                    好的商业模式能够让好的技术真正触达用户；反之亦然。二者缺一，都很难成为改变行业的力量。
+                </div>
+            </div>
+        </div></div>
+
+        <!-- 3/4 第三启示 -->
+        <div class="slide"><div class="insight-card">
+            <div class="insight-emoji">🔐</div>
+            <h3>数据与AI天然配套，构成难以复制的护城河</h3>
+            <div class="card-body">
+                <p>OffDeal的200000+交易数据集不仅是训练AI模型的基础，本身也成为一道竞争护城河。随着每笔新交易的完成，这道护城河会越来越深。</p>
+                <p>与传统软件公司"代码即护城河"不同，AI时代"数据 + 模型"才是护城河。这对创业者的启示是：从一开始就要思考如何积累和保护数据资产。</p>
+                <div class="insight-highlight">
+                    在AI时代，最有价值的创业机会往往隐藏在那些能够持续积累数据的场景中。
+                </div>
+            </div>
+        </div></div>
+
+        <!-- 4/4 第四启示 -->
+        <div class="slide"><div class="insight-card">
+            <div class="insight-emoji">👥</div>
+            <h3>AI + 人类专家是最强组合</h3>
+            <div class="card-body">
+                <p>OffDeal的成功并非完全的自动化，而是AI代理与资深M&A顾问的完美配合。AI负责高效、大规模的工作（估值、匹配、文档）；人类负责复杂判断（谈判、风险评估、策略）。</p>
+                <p>这个模式告诉我们，在可预见的未来，"AI替代人类"的叙事是不准确的。更准确的叙事应该是"AI增强人类能力"。最聪明的做法是利用AI来解放人类的重复性劳动，让人类专注于只有人类能做的事。</p>
+                <div class="insight-highlight">
+                    未来十年，最有竞争力的公司，将是那些能够有效整合AI与人类专业性的公司。纯AI无法胜任，纯人工也会被淘汰。
+                </div>
+            </div>
+        </div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-6"></div>
+</section>
+
+<!-- ====== CHAPTER 7: 近期要闻 ====== -->
+<section class="chapter" id="ch-7">
+    <div class="chapter-header">
+        <h2>OffDeal在媒体与市场的声音</h2>
+        <span class="ch-sub">📰 近期要闻</span>
+        <span class="ch-counter" id="counter-7">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="7">
+
+        <!-- 1/2 融资与成就 -->
+        <div class="slide"><div class="card"><h3>融资与突破性成果</h3><div class="card-body">
+            <div class="news-item">
+                <div class="news-date">2025年7月</div>
+                <div class="news-title">
+                    <a href="https://radical.vc/building-the-first-ai-native-investment-bank/" target="_blank">OffDeal完成1200万美元Series A融资</a>
+                </div>
+                <div class="news-desc">由专注深度技术的Radical Ventures领投。融资总额达1700万美元，估值突破1亿美元。Radical Ventures的投资表明市场对"AI原生投行"模式的认可，预示着M&A市场的AI驱动变革已成现实。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2025年3月</div>
+                <div class="news-title">
+                    <a href="https://offdeal.io" target="_blank">OffDeal发布首批成功M&A案例</a>
+                </div>
+                <div class="news-desc">在16天内为某HVAC业务找到私募股权买家，整个交易周期相比传统投行快20倍。该客户收获71份NDA签署、4份报价，最终报价比初期市场估值高30%。这个案例成为OffDeal品牌建立的关键。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2024年</div>
+                <div class="news-title">
+                    <a href="https://www.ycombinator.com/companies/offdeal" target="_blank">OffDeal进入Y Combinator冬季班</a>
+                </div>
+                <div class="news-desc">全球顶级孵化器的支持为OffDeal提供了融资、指导与国际网络。Y Combinator的背书帮助OffDeal快速获得种子轮470万美元融资，为后续发展奠定基础。</div>
+            </div>
+        </div></div></div>
+
+        <!-- 2/2 用户反馈 -->
+        <div class="slide"><div class="card"><h3>客户评价与市场反馈</h3><div class="card-body">
+            <h4 style="font-size:14px;font-weight:700;margin-bottom:12px;color:var(--accent);">5★ 高度评价</h4>
+            <div class="story-cards">
+                <div class="story-card">
+                    <div class="story-name">Stephen Barnes · HVAC业主</div>
+                    <div class="story-text">"OffDeal在短短16天内为我的HVAC业务找到了一个私募股权买家。这简直是个奇迹。他们的团队工作勤勉、经验丰富，整个过程专业而透明。"</div>
+                </div>
+                <div class="story-card">
+                    <div class="story-name">John C · 企业决策者</div>
+                    <div class="story-text">"他们提供的分析极为详尽和专业。与OffDeal合作非常轻松愉快。强烈推荐咨询他们。"</div>
+                </div>
+            </div>
+            <h4 style="font-size:14px;font-weight:700;margin-bottom:12px;margin-top:14px;color:var(--text-2);">关键反馈主题</h4>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;">
+                <div style="background:var(--bg-muted);padding:12px;border-radius:8px;text-align:center;">
+                    <div style="font-size:16px;margin-bottom:4px;">⚡</div>
+                    <div style="font-size:12px;font-weight:600;color:var(--text);">高效率</div>
+                </div>
+                <div style="background:var(--bg-muted);padding:12px;border-radius:8px;text-align:center;">
+                    <div style="font-size:16px;margin-bottom:4px;">📊</div>
+                    <div style="font-size:12px;font-weight:600;color:var(--text);">专业分析</div>
+                </div>
+                <div style="background:var(--bg-muted);padding:12px;border-radius:8px;text-align:center;">
+                    <div style="font-size:16px;margin-bottom:4px;">✅</div>
+                    <div style="font-size:12px;font-weight:600;color:var(--text);">快速交易</div>
+                </div>
+                <div style="background:var(--bg-muted);padding:12px;border-radius:8px;text-align:center;">
+                    <div style="font-size:16px;margin-bottom:4px;">🤝</div>
+                    <div style="font-size:12px;font-weight:600;color:var(--text);">信任与道德</div>
+                </div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-7"></div>
+</section>
+
+<!-- ====== CHAPTER 8: 结论 ====== -->
+<section class="chapter" id="ch-8">
+    <div class="chapter-header">
+        <h2>OffDeal：AI投行的未来已来</h2>
+        <span class="ch-sub">🎯 关键要点</span>
+        <span class="ch-counter" id="counter-8">1 / 1</span>
+    </div>
+    <div class="card-track" data-ch="8">
+
+        <!-- 结论卡 -->
+        <div class="slide"><div class="card"><h3>五大核心要点</h3><div class="card-body">
+            <div class="timeline">
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">1️⃣</div><div class="timeline-text"><strong>AI原生架构是颠覆的关键：</strong> OffDeal用AI从零重建投行流程，而非在既有流程上贴工具。这种"重构"使其能够实现10倍的效率提升和1/3的成本降低。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2️⃣</div><div class="timeline-text"><strong>零前期费用模式是商业创新典范：</strong> 风险共担的商业模式打破传统投行的高门槛，使数百万被遗弃的中小企业主首次能够获得机构级M&A服务。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">3️⃣</div><div class="timeline-text"><strong>专有数据集构成强大护城河：</strong> 200000+M&A交易数据是AI模型的基础，也是难以复制的竞争优势。随着交易增加而不断扩大。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">4️⃣</div><div class="timeline-text"><strong>团队与融资为成长奠定基础：</strong> 创始人"金融+技术"的组合、Y Combinator与Radical Ventures的支持、初期成功案例的验证，三角形支撑预示长期前景。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">5️⃣</div><div class="timeline-text"><strong>市场时机完美成熟：</strong> AI技术成熟、中小企业M&A需求旺盛、传统投行服务空白、"零前期费用"模式认可度提升——OffDeal恰逢其时。</div></div>
+            </div>
+            <div class="callout" style="margin-top:16px;">
+                <strong>未来展望：</strong> OffDeal有望成为投行行业的"Stripe时刻"——一个用AI与新商业模式彻底颠覆百年传统行业的创新者。预计在3-5年内成为中小企业M&A服务的标准选择，进而IPO并成为估值数十亿美元的金融科技标杆。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-8"></div>
+</section>
+
+</main>
+
+<script>
+    const chapters = document.querySelectorAll('.chapter');
+    const main = document.getElementById('main');
+    const navBtns = document.querySelectorAll('.nav-btn');
+
+    // Initialize dots for each chapter
+    for (let i = 1; i < chapters.length; i++) {
+        const track = chapters[i].querySelector('.card-track');
+        const dots = chapters[i].querySelector('.dots-bar');
+        const slides = track.querySelectorAll('.slide');
+        const counter = chapters[i].querySelector('.ch-counter');
+
+        for (let j = 0; j < slides.length; j++) {
+            const dot = document.createElement('button');
+            dot.className = 'dot' + (j === 0 ? ' active' : '');
+            dot.onclick = () => {
+                track.scrollLeft = slides[j].offsetLeft;
+            };
+            dots.appendChild(dot);
+        }
+
+        // Update counter and dots on scroll
+        track.addEventListener('scroll', () => {
+            const activeIndex = Math.round(track.scrollLeft / track.offsetWidth);
+            const allDots = dots.querySelectorAll('.dot');
+            allDots.forEach((d, idx) => {
+                d.classList.toggle('active', idx === activeIndex);
+            });
+            counter.textContent = `${activeIndex + 1} / ${slides.length}`;
+        });
+    }
+
+    // Navigation function
+    function go(chapterIndex) {
+        const targetChapter = document.getElementById(`ch-${chapterIndex}`);
+        targetChapter.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        navBtns.forEach((btn, idx) => {
+            btn.classList.toggle('active', idx === chapterIndex);
+        });
+    }
+
+    // Update active nav button on scroll
+    main.addEventListener('scroll', () => {
+        let currentChapter = 0;
+        chapters.forEach((ch, idx) => {
+            if (ch.offsetTop <= main.scrollTop + main.offsetHeight / 2) {
+                currentChapter = idx;
+            }
+        });
+        navBtns.forEach((btn, idx) => {
+            btn.classList.toggle('active', idx === currentChapter);
+        });
+    });
+
+    // Stat counter animation
+    document.querySelectorAll('.stat-number').forEach(element => {
+        const target = parseInt(element.dataset.count) || 0;
+        const prefix = element.dataset.prefix || '';
+        const suffix = element.dataset.suffix || '';
+        let current = 0;
+
+        const increment = Math.max(1, Math.floor(target / 30));
+        const interval = setInterval(() => {
+            current += increment;
+            if (current >= target) {
+                current = target;
+                clearInterval(interval);
+            }
+            element.textContent = prefix + current.toLocaleString() + suffix;
+        }, 20);
+    });
+</script>
+
+</body>
+</html>

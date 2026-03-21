@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <!-- Background -->
+  <rect width="256" height="256" fill="#FFFFFF"/>
+
+  <!-- Primary Blue Background Circle -->
+  <circle cx="128" cy="128" r="120" fill="#0F4C75" opacity="0.95"/>
+
+  <!-- Data Points Constellation - representing financial data network -->
+  <g id="data-network">
+    <!-- Central Hub -->
+    <circle cx="128" cy="128" r="8" fill="#3DADFF"/>
+
+    <!-- Data nodes connected by lines -->
+    <!-- Top cluster -->
+    <line x1="128" y1="128" x2="100" y2="75" stroke="#3DADFF" stroke-width="1.5" opacity="0.6"/>
+    <circle cx="100" cy="75" r="4" fill="#3DADFF"/>
+
+    <line x1="128" y1="128" x2="155" y2="70" stroke="#3DADFF" stroke-width="1.5" opacity="0.6"/>
+    <circle cx="155" cy="70" r="4" fill="#3DADFF"/>
+
+    <!-- Left cluster -->
+    <line x1="128" y1="128" x2="70" y2="110" stroke="#3DADFF" stroke-width="1.5" opacity="0.6"/>
+    <circle cx="70" cy="110" r="4" fill="#3DADFF"/>
+
+    <line x1="128" y1="128" x2="60" y2="145" stroke="#3DADFF" stroke-width="1.5" opacity="0.6"/>
+    <circle cx="60" cy="145" r="4" fill="#3DADFF"/>
+
+    <!-- Right cluster -->
+    <line x1="128" y1="128" x2="190" y2="105" stroke="#3DADFF" stroke-width="1.5" opacity="0.6"/>
+    <circle cx="190" cy="105" r="4" fill="#3DADFF"/>
+
+    <line x1="128" y1="128" x2="200" y2="150" stroke="#3DADFF" stroke-width="1.5" opacity="0.6"/>
+    <circle cx="200" cy="150" r="4" fill="#3DADFF"/>
+
+    <!-- Bottom cluster -->
+    <line x1="128" y1="128" x2="105" y2="190" stroke="#3DADFF" stroke-width="1.5" opacity="0.6"/>
+    <circle cx="105" cy="190" r="4" fill="#3DADFF"/>
+
+    <line x1="128" y1="128" x2="155" y2="195" stroke="#3DADFF" stroke-width="1.5" opacity="0.6"/>
+    <circle cx="155" cy="195" r="4" fill="#3DADFF"/>
+  </g>
+
+  <!-- Accent - Check mark / Verification symbol (data integrity) -->
+  <g id="verification-mark" transform="translate(140, 140)">
+    <g fill="none" stroke="#00D964" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="0,8 4,14 12,0"/>
+    </g>
+  </g>
+
+  <!-- Subtle background grid pattern (data/analytics theme) -->
+  <defs>
+    <pattern id="grid-pattern" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#3DADFF" stroke-width="0.5" opacity="0.15"/>
+    </pattern>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" fill="url(#grid-pattern)"/>
+</svg>

@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>财搭子 深度调研报告</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --accent-purple: #7B5EA7;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #1A1514;
+            --cover-bg: #1A2332;
+            --cover-accent: #FF6B35;
+            --cover-highlight: #FFD166;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(217,119,87,0.2); color: var(--accent); font-weight: 600; }
+        .nav-dashboard {
+            display: block; width: calc(100% - 8px); margin: 8px 4px 4px;
+            background: rgba(217,119,87,0.15); border: 1px solid rgba(217,119,87,0.3);
+            color: var(--accent); padding: 10px 12px; border-radius: 8px;
+            text-align: center; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s; text-decoration: none; font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+        .nav-dashboard:hover {
+            background: rgba(217,119,87,0.25); transform: translateY(-1px);
+        }
+
+        /* ===== MAIN ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, var(--cover-bg) 0%, #1F2D44 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(255,107,53,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 20px; background: rgba(255,255,255,0.1); object-fit: contain; }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(255,255,255,0.12); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        /* Fixed chapter header */
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        /* Horizontal card scroller */
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+
+        /* Each slide fills available height */
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Card inside slide — fills slide */
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        /* Insight card */
+        .insight-card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .insight-emoji {
+            font-size: 36px; margin-bottom: 16px;
+        }
+        .insight-card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+        }
+        .insight-highlight {
+            margin-top: 16px; padding: 12px 14px;
+            background: var(--accent-light); border-left: 3px solid var(--accent);
+            border-radius: 6px; font-size: 13px; color: var(--text);
+        }
+
+        /* Dots bar at bottom */
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); border: none;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .dot.active {
+            background: var(--accent); width: 24px; border-radius: 4px;
+        }
+
+        /* Metrics grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px; margin-bottom: 16px;
+        }
+        .metric-card {
+            background: var(--bg-muted); padding: 16px;
+            border-radius: 10px; text-align: center;
+        }
+        .metric-value {
+            font-size: 24px; font-weight: 800; color: var(--accent);
+        }
+        .metric-label {
+            font-size: 12px; color: var(--text-3); margin-top: 6px;
+        }
+
+        /* Callout box */
+        .callout {
+            margin-top: 16px; padding: 14px 16px;
+            background: rgba(255,107,53,0.08);
+            border-left: 3px solid var(--accent);
+            border-radius: 6px; font-size: 13px; line-height: 1.7;
+        }
+    </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <img class="sidebar-logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAXVBMVEVHcEz/////////////////////////+/j///////////////////89Yu3///8xWu0kUuy1wPfa4fzu8v7Fz/n7dRFyi/KKnvShr/VVdfD7bwH+y637agD9omr7ZgBjEPlhAAAADXRSTlMAC29jup0289lDkYti3gJo/wAABiRJREFUeJztW4l24ygQTCaHnUMCSRhJtuP//8yhDy4J7GQSu9/uS2XfrLCOLvookA13dxfw/P72uN1u2i9js90+vr0/X3r+Wby8br9ueInt68u/WX9++r5xj6evO+LhH5x+DpuHL5n/87PWCX8+bf7lh3vvsflcMtw/Xsc84PH+E92/nnnARSf8YOqX8XTe/g/U/SVsz9m/Uvbl2FTN39/CPKCWirey37aC/icUo3CD/IsoZOLV6y/HqhqvrD9rLBTpZgUQkZfCFfW/hkfRAADSINywAiOSWrzK/OMy4gxFxn4UxAcpAg+SGQDgLHiWst+2zxIinOJJNAUBYiLkAWL0Kkng9dbzgCW2wikASSBYhIDnu3dZAu93b7IE3iSmIikeZYsAykCcgNhQSNgIy4ATgl8CvwQ+e+FoTdrsRlO78psEBsbi40Yp3cem1UpHBmaKp7ruewQG7WFTDp1qGhUf3WvXHH1r0oHc4HjabxGARxNUk3w85gSQz+RbOjYmd0J/i4BRTWCQRNlCO/p5SvkMOjbgupT41wl0CYGpNZaBbTvakTBDGxqTA3oHj6YOTsxdDYb+zDkCEyUAGuygp/AXKHn4IMVWekJdgG7KBEa4uaMasBSCMRr/SSTZlBKwkEAcZ3ClO56vYr9GAE7pwUCwWoXHreKSJC+HCiW/uP+v3J4crhEI6KFIAAKv29ldOfNxUCUsu3EYegKWysyNHtxkewPAKuxMBcF+moWRAFRTo9APFo/nJDVzGTAq1aHO6ZDvkjsc2zIGbz5TuIRAT0ZR43qwAIq2OQBIhyLvXIda04VHDlNtiOhY4fRCqiMB9KslVQld/Dgdj6eDz0mPhS4C+24cu76tw5J9NS8HmUiAuoUqb0IXT7vd7rRpF5nDRRrNz5iPWlUHokkXu58RoDhj33vfxcPREdj5/AwAhyTCPIbxozoQzeXuZwSs8n3Xg5f+j/1utz9QfibypVKPmKS+nDgWbPAdSdYUCVC3aDib2cCeItAvioKUGtN94OA2nkbBy/4O0JhptHP6qIQA3k3h9S73EcjLjh2CDCcWJdWM08yHcwzO4OSBbOINLEdqLBJgHfK16GhgBI6HVdlNbMlVqx+WOgoGO6FBChZFE0wuRpQsFoEAxxllwOsQRyDXod73VJkhZN8c/onpUR1IsmIJBFh7UAZ6lIQQgbTsBp/yqHhYLQUTeOnyBA3FgKIUU5yRhjHkcq6BNtUhP2WjXjgX6HzItjBLsD6mKhhtZjtObkrSV4WI4mxwSGaX+wjQ2MjXWR4Kic/oMk6nvezajguh17O1bpJk+pXRIgE0SsMZS3+IQKZDSQkwdAqwvTboBtCuqAJpCLRzGBcB0fA10OZjoyUC6dMTlDsLxVCZLCdS7EYinmEPDSTKyUeAhil/3ZDrotOWbN5ZMrIc3csEWjaljDPqInyAFPwIn0bxSHWx16t5T8EHxo/uFwlgurcf4HdKQTwqTUf4cesaLCn+ogd1AobeuE7geEzBPX5cn470ekWgKfR00YMqAQyVHg77vct9qABMwXOvRfgak087Sz1d9KBGoOf7MfZQArsjnViUnY2PoyfTRNX9LcaMeEeTTagqBFhj2fdgf08O6Hlo8lCRj80L0lRcrfLLigR4XHUPxr4jwAF936WOdTNznDdwEcxpQXJ2rF2N4lmpwkCA54zgpx0zgAzo+S3EO9A3u9i15MmjWrtaNXhLdbroCeC9NGfbnND+6aMNyu8dwDOBYBRpRx1u1q7u/CylYj8QcIoSJlOb/XF/RPss/EFE/PSHm0OhChffDvgZS3U8Ckmo0+x1LyP4FS46IL7sUHd07M2awKIK6Y7aVDUjUAJ+YdSM4W767ij94kTzjMv/t1RiHIXK0+HPEFgRWn17ZkabYcrPD/BOeu6F6b/0ReUvgf8vAfGfbMR/tBInIP7DpfhPt+I/Xov/fC++gEF+CYf4IhbxZTziC5nkl3KJL2YTX84nv6BRfEmn/KJW8WW98gubxZd2yy9uF1/eL7/BQX6Lh/wmF/ltPvIbncS3et0mE89udpPf7ie/4VF+y+ed+KZXgPC2X4DwxmeA8NZvhOzmd++IK2///wt1ZUnNwgqv1AAAAABJRU5ErkJggg==" alt="Logo">
+        <div>
+            <div class="sidebar-brand-text">财搭子</div>
+            <div class="sidebar-brand-sub">AI投资助手</div>
+        </div>
+    </div>
+    <nav class="nav-items">
+        <button class="nav-btn active" onclick="go(0)">封面</button>
+        <button class="nav-btn" onclick="go(1)">公司概览</button>
+        <button class="nav-btn" onclick="go(2)">融资背景</button>
+        <button class="nav-btn" onclick="go(3)">产品体系</button>
+        <button class="nav-btn" onclick="go(4)">AI技术</button>
+        <button class="nav-btn" onclick="go(5)">核心优势</button>
+        <button class="nav-btn" onclick="go(6)">发展里程</button>
+        <button class="nav-btn" onclick="go(7)">核心启示</button>
+    </nav>
+    <a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main id="main">
+
+<!-- ====== COVER ====== -->
+<div class="cover">
+    <div class="cover-content">
+        <img class="cover-logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAXVBMVEVHcEz/////////////////////////+/j///////////////////89Yu3///8xWu0kUuy1wPfa4fzu8v7Fz/n7dRFyi/KKnvShr/VVdfD7bwH+y637agD9omr7ZgBjEPlhAAAADXRSTlMAC29jup0289lDkYti3gJo/wAABiRJREFUeJztW4l24ygQTCaHnUMCSRhJtuP//8yhDy4J7GQSu9/uS2XfrLCOLvookA13dxfw/P72uN1u2i9js90+vr0/X3r+Wby8br9ueInt68u/WX9++r5xj6evO+LhH5x+DpuHL5n/87PWCX8+bf7lh3vvsflcMtw/Xsc84PH+E92/nnnARSf8YOqX8XTe/g/U/SVsz9m/Uvbl2FTN39/CPKCWirey37aC/icUo3CD/IsoZOLV6y/HqhqvrD9rLBTpZgUQkZfCFfW/hkfRAADSINywAiOSWrzK/OMy4gxFxn4UxAcpAg+SGQDgLHiWst+2zxIinOJJNAUBYiLkAWL0Kkng9dbzgCW2wikASSBYhIDnu3dZAu93b7IE3iSmIikeZYsAykCcgNhQSNgIy4ATgl8CvwQ+e+FoTdrsRlO78psEBsbi40Yp3cem1UpHBmaKp7ruewQG7WFTDp1qGhUf3WvXHH1r0oHc4HjabxGARxNUk3w85gSQz+RbOjYmd0J/i4BRTWCQRNlCO/p5SvkMOjbgupT41wl0CYGpNZaBbTvakTBDGxqTA3oHj6YOTsxdDYb+zDkCEyUAGuygp/AXKHn4IMVWekJdgG7KBEa4uaMasBSCMRr/SSTZlBKwkEAcZ3ClO56vYr9GAE7pwUCwWoXHreKSJC+HCiW/uP+v3J4crhEI6KFIAAKv29ldOfNxUCUsu3EYegKWysyNHtxkewPAKuxMBcF+moWRAFRTo9APFo/nJDVzGTAq1aHO6ZDvkjsc2zIGbz5TuIRAT0ZR43qwAIq2OQBIhyLvXIda04VHDlNtiOhY4fRCqiMB9KslVQld/Dgdj6eDz0mPhS4C+24cu76tw5J9NS8HmUiAuoUqb0IXT7vd7rRpF5nDRRrNz5iPWlUHokkXu58RoDhj33vfxcPREdj5/AwAhyTCPIbxozoQzeXuZwSs8n3Xg5f+j/1utz9QfibypVKPmKS+nDgWbPAdSdYUCVC3aDib2cCeItAvioKUGtN94OA2nkbBy/4O0JhptHP6qIQA3k3h9S73EcjLjh2CDCcWJdWM08yHcwzO4OSBbOINLEdqLBJgHfK16GhgBI6HVdlNbMlVqx+WOgoGO6FBChZFE0wuRpQsFoEAxxllwOsQRyDXod73VJkhZN8c/onpUR1IsmIJBFh7UAZ6lIQQgbTsBp/yqHhYLQUTeOnyBA3FgKIUU5yRhjHkcq6BNtUhP2WjXjgX6HzItjBLsD6mKhhtZjtObkrSV4WI4mxwSGaX+wjQ2MjXWR4Kic/oMk6nvezajguh17O1bpJk+pXRIgE0SsMZS3+IQKZDSQkwdAqwvTboBtCuqAJpCLRzGBcB0fA10OZjoyUC6dMTlDsLxVCZLCdS7EYinmEPDSTKyUeAhil/3ZDrotOWbN5ZMrIc3csEWjaljDPqInyAFPwIn0bxSHWx16t5T8EHxo/uFwlgurcf4HdKQTwqTUf4cesaLCn+ogd1AobeuE7geEzBPX5cn470ekWgKfR00YMqAQyVHg77vct9qABMwXOvRfgak087Sz1d9KBGoOf7MfZQArsjnViUnY2PoyfTRNX9LcaMeEeTTagqBFhj2fdgf08O6Hlo8lCRj80L0lRcrfLLigR4XHUPxr4jwAF936WOdTNznDdwEcxpQXJ2rF2N4lmpwkCA54zgpx0zgAzo+S3EO9A3u9i15MmjWrtaNXhLdbroCeC9NGfbnND+6aMNyu8dwDOBYBRpRx1u1q7u/CylYj8QcIoSJlOb/XF/RPss/EFE/PSHm0OhChffDvgZS3U8Ckmo0+x1LyP4FS46IL7sUHd07M2awKIK6Y7aVDUjUAJ+YdSM4W767ij94kTzjMv/t1RiHIXK0+HPEFgRWn17ZkabYcrPD/BOeu6F6b/0ReUvgf8vAfGfbMR/tBInIP7DpfhPt+I/Xov/fC++gEF+CYf4IhbxZTziC5nkl3KJL2YTX84nv6BRfEmn/KJW8WW98gubxZd2yy9uF1/eL7/BQX6Lh/wmF/ltPvIbncS3et0mE89udpPf7ie/4VF+y+ed+KZXgPC2X4DwxmeA8NZvhOzmd++IK2///wt1ZUnNwgqv1AAAAABJRU5ErkJggg==" alt="财搭子">
+        <h1 class="cover-title">财搭子</h1>
+        <p class="cover-subtitle">AI驱动的个人投资决策平台<br>用31个智能体为Z世代投资者提供专业辅助决策</p>
+        <div class="cover-tags">
+            <span class="cover-tag">AI智能体</span>
+            <span class="cover-tag">投资决策</span>
+            <span class="cover-tag">财富管理</span>
+            <span class="cover-tag">Z世代</span>
+        </div>
+        <div class="cover-stats">
+            <div class="stat-box">
+                <div class="stat-number">31</div>
+                <div class="stat-label">AI专家智能体</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">2024</div>
+                <div class="stat-label">成立年份</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">数千万</div>
+                <div class="stat-label">融资额</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">4.5/5</div>
+                <div class="stat-label">团队实力</div>
+            </div>
+        </div>
+    </div>
+    <div class="cover-scroll-hint">向下滚动了解更多</div>
+</div>
+
+<!-- ====== CHAPTER 1: 公司概览 ====== -->
+<section class="chapter" id="ch-1">
+    <div class="chapter-header">
+        <h2>公司概览与使命</h2>
+        <span class="ch-sub">🏢 Company Overview</span>
+        <span class="ch-counter" id="counter-1">1 / 1</span>
+    </div>
+    <div class="card-track" data-ch="1">
+        <div class="slide">
+            <div class="card">
+                <h3>全球首个投资智能体社区</h3>
+                <div class="card-body">
+                    <p>财搭子是由北京智策领航科技有限公司2024年推出的AI原生投资决策平台，致力于用AI技术驱动金融投资的普惠化和智能化。作为"全球首个投资智能体社区"，财搭子通过31个专家智能体的协同决策机制，为18-35岁的Z世代投资者提供个性化的投资辅助决策服务。</p>
+                    <p>产品采用移动优先策略，在微信小程序平台迅速走红，获得了"年度AI技术创新突破奖"。公司由清华大学计算机系本硕、AI方向的许丹青创办，拥有16年炒股经验和多次创业背景。已获得百川智能千万级战略投资和徐汇资本天使+轮融资数千万元。</p>
+                    <p>财搭子不仅提供智能分析，更致力于打造投资学习和互助的社群生态。通过多智能体协同架构、幻觉压制的结构化设计、认知框架生成、闭环执行能力（大发托管）等创新技术，财搭子实现了从"AI助手"到"AI代理"的根本性转变，代表了中国AI金融应用领域的新兴力量。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="dots-bar" id="dots-1" style="visibility:hidden;"></div>
+</section>
+
+<!-- ====== CHAPTER 2: 融资背景 ====== -->
+<section class="chapter" id="ch-2">
+    <div class="chapter-header">
+        <h2>融资与团队背景</h2>
+        <span class="ch-sub">💰 Funding & Team</span>
+        <span class="ch-counter" id="counter-2">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="2">
+        <div class="slide">
+            <div class="card">
+                <h3>融资历程与资本认可</h3>
+                <div class="card-body">
+                    <p>财搭子在短短两年内完成了从创意到融资再到市场验证的完整闭环。2024年，智策领航公司获得百川智能千万级战略投资，确保了模型基础和技术底蕴。2025年9月，公司完成天使+轮融资，融资额达数千万元人民币，由一线投资机构徐汇资本领投。</p>
+                    <p>这些融资的背后，是资本市场对财搭子"创新性多智能体架构"和"清华系技术底蕴"的强烈认可。融资速度之快、金额之大，充分说明财搭子在投资者眼中的潜力。同时，财搭子在2025年10月荣获"年度AI技术创新突破奖"，进一步验证了其在业界的地位和影响力。</p>
+                    <p>资本支持为财搭子的快速发展奠定了基础。公司计划利用这笔资金加强产品研发、扩大用户规模、完善社区生态，有望成为中国AI投资助手领域的新锐力量。融资历程本身也说明了一个重要事实：好的AI创业公司需要的不仅是技术，更需要对用户心理和市场需求的深刻理解。</p>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="card">
+                <h3>创始人与核心团队</h3>
+                <div class="card-body">
+                    <p>财搭子创始人兼CEO许丹青是清华大学计算机系本硕学位，专攻AI方向。他拥有深厚的AI+金融+创业的复合背景：曾任搜狗灵犀助手、小米金融智能投研产品负责人，创办过好分期、萝卜投研等金融科技公司，拥有16年炒股实战经验。这种"学历+实战经验+多次创业"的组合在AI创业圈极为罕见。</p>
+                    <p>许丹青对Z世代投资者的心理和行为有深刻理解，这使得财搭子的产品设计更贴近用户需求。他曾说过一句话："财务健康的第一步不是学会算账，而是敢于面对账单。"这体现了他对金融教育本质的理解——技术只是工具，关键是解决用户的心理障碍。</p>
+                    <p>财搭子团队目前有4人核心成员，平均背景强劲，清华系AI+金融双背景。虽然规模小，但团队实力评分高达4.5/5，体现了精英化、高效率的团队组织特点。这类小而精的团队往往具有更强的执行力和创新能力，更容易做出颠覆性的产品。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="dots-bar" id="dots-2"></div>
+</section>
+
+<!-- ====== CHAPTER 3: 产品体系 ====== -->
+<section class="chapter" id="ch-3">
+    <div class="chapter-header">
+        <h2>产品体系与商业模式</h2>
+        <span class="ch-sub">📱 Product & Pricing</span>
+        <span class="ch-counter" id="counter-3">1 / 1</span>
+    </div>
+    <div class="card-track" data-ch="3">
+        <div class="slide">
+            <div class="card">
+                <h3>多层次Freemium产品矩阵</h3>
+                <div class="card-body">
+                    <p>财搭子采用"1个核心产品+3个定价层级"的Freemium模式。核心产品是财搭子App和微信小程序，提供AI驱动的个人投资决策助手功能。产品支持iOS、Android、微信小程序和Web平台，全方位覆盖Z世代用户的使用习惯。</p>
+                    <p>定价策略分为三层：Free层（¥0）提供基础AI问答、股票行情、资讯浏览，满足用户的基础需求；Plus层（¥9.9/月）解锁深度分析报告和专家智囊团完整服务，为中度用户设计；Pro层（¥19.9/月）提供大发托管智能交易、自选池自动择时、高级数据权限，针对专业投资者。</p>
+                    <p>这个定价体系的核心优势是：Free层具有足够的粘性，让用户无痛入门；Plus层定价亲民（9.9元），降低付费转化的心理门槛；Pro层则为有真实需求的专业用户提供增值服务。通过这种设计，财搭子实现了"让所有人都能用到AI投资助手"的目标，同时保持了健康的商业变现能力。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="dots-bar" id="dots-3" style="visibility:hidden;"></div>
+</section>
+
+<!-- ====== CHAPTER 4: AI技术 ====== -->
+<section class="chapter" id="ch-4">
+    <div class="chapter-header">
+        <h2>AI技术与架构</h2>
+        <span class="ch-sub">🤖 AI Innovation</span>
+        <span class="ch-counter" id="counter-4">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="4">
+        <div class="slide">
+            <div class="card">
+                <h3>31个专家智能体的多维度协同</h3>
+                <div class="card-body">
+                    <p>财搭子最具创新性的技术特征是"31个AI专家智能体的多维度协同决策机制"。这不是简单的单一AI模型，而是31个专门针对不同投资场景、分析维度的AI智能体构成的"智囊团"。每个智能体都有明确的专业分工：有的负责基本面分析，有的负责技术面分析，有的负责风险评估，有的负责情绪识别。</p>
+                    <p>这种多智能体架构的妙处在于"互相制衡"——当某个智能体给出的分析结论有偏差时，其他智能体可以提出不同观点。这种"AI议会"的设计方式能够大幅降低单一AI模型的"幻觉"风险。投资决策本身就充满不确定性，多角度的意见反而能帮助用户做出更均衡的决策。</p>
+                    <p>底层模型依托百川智能，上层构建了金融领域专属的决策引擎。通过数据+规划+推理的路径，实现结构化的投资决策支持。这个架构体现了财搭子对"AI在金融场景应该如何应用"的深刻思考——不是简单地把通用大模型套上去，而是为金融投资场景重新设计整个系统。</p>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="card">
+                <h3>幻觉压制与确定性设计</h3>
+                <div class="card-body">
+                    <p>财搭子面临的最大技术挑战不是"准不准"，而是"能不能被信任"。金融AI的最大风险是"幻觉"——AI可能以很高的自信度给出错误的财务建议。传统的纯LLM应用很容易陷入这个陷阱，因为语言模型本质上是在做"概率预测"，不是"事实推理"。</p>
+                    <p>财搭子的解决方案是"幻觉压制的结构化设计"：所有涉及金钱的计算都使用确定性算法，LLM只负责理解问题、生成解释、提供建议。例如，投资组合的风险评分、收益预测、资金分配建议等，都是通过明确的数学模型计算，而不是AI生成的"可能性"。</p>
+                    <p>同时，财搭子实现了"认知框架生成"——将复杂的投资分析自动转化为用户能理解的决策依据。这不仅提高了AI输出的可理解性，也大幅降低了用户对AI结论的误解风险。这种设计哲学应该是所有金融AI产品学习的标准——在金融领域，安全性永远比智能性更重要。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="dots-bar" id="dots-4"></div>
+</section>
+
+<!-- ====== CHAPTER 5: 核心优势 ====== -->
+<section class="chapter" id="ch-5">
+    <div class="chapter-header">
+        <h2>竞争优势与护城河</h2>
+        <span class="ch-sub">⚔️ Competitive Edge</span>
+        <span class="ch-counter" id="counter-5">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="5">
+        <div class="slide">
+            <div class="card">
+                <h3>五层复合竞争优势</h3>
+                <div class="card-body">
+                    <p>财搭子的竞争力不来自单一维度，而是五层叠加的复合优势。首先，创始人的深厚AI+金融+创业复合背景提供了战略眼光；其次，清华系技术底蕴与百川智能的战略合作保证了模型基础；再次，差异化的31个专家智能体多维度架构是业界罕见的技术创新；第四，对Z世代用户心理的深刻理解体现在产品设计的每一个细节上；第五，早期融资支持和一线资本认可为快速扩张奠定了基础。</p>
+                    <p>这五个优势彼此强化，形成了难以复制的竞争壁垒。一个新进入的竞争对手，即使有强大的技术能力，也很难在短期内同时具备这五个优势。特别是对Z世代用户心理的理解，这是需要时间和实战积累的，不能通过资本快速购买。</p>
+                    <p>最值得关注的是，财搭子的优势不是"财大气粗"，而是"聪明度高"。小团队、精英化、创新意识强，这些特点往往比大公司的資源优势更容易产生颠覆性的产品创新。许多金融AI创业公司最后失败，不是因为技术不行，而是因为对用户心理和市场需求的理解不够深。财搭子显然避免了这个坑。</p>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="card">
+                <h3>用户心理洞察与情感锁定</h3>
+                <div class="card-body">
+                    <p>财搭子最强的护城河，其实不是技术，而是对用户心理的洞察。创始人许丹青曾说过："财务健康的第一个障碍不是知识，而是心理——大多数人的财务问题源于'看不了账单的焦虑'。"这句话道破了传统金融应用的致命缺陷：它们都假设用户是理性的经济人，却忽视了用户首先是有情绪的人。</p>
+                    <p>财搭子的产品设计处处体现了这种洞察。AI问答不是冰冷的数据展示，而是拟人化的关怀和鼓励；产品界面不是复杂的图表堆砌，而是温暖的视觉语言；甚至连定价（¥9.9）都是经过心理学计算的——这个价格低到让用户愿意尝试，但又足够凸显产品的价值。</p>
+                    <p>这种用户心理洞察带来的结果是"情感锁定"——用户不仅仅使用财搭子，而是信任财搭子。这种信任的转换成本远超功能比较。即使一个大银行推出了功能更多的AI助手，用户也很难背弃对财搭子的情感依赖。这是最深层的竞争护城河，也是最难被复制的。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="dots-bar" id="dots-5"></div>
+</section>
+
+<!-- ====== CHAPTER 6: 发展里程 ====== -->
+<section class="chapter" id="ch-6">
+    <div class="chapter-header">
+        <h2>发展里程与市场验证</h2>
+        <span class="ch-sub">📈 Growth Timeline</span>
+        <span class="ch-counter" id="counter-6">1 / 1</span>
+    </div>
+    <div class="card-track" data-ch="6">
+        <div class="slide">
+            <div class="card">
+                <h3>从创意到市场验证的完整闭环</h3>
+                <div class="card-body">
+                    <p>财搭子的发展历程充分说明了一个优秀AI创业公司应该如何运营。2024年，智策领航公司正式成立，同时获得百川智能千万级战略投资，这是产品验证阶段。公司的核心团队在这一阶段专注于打磨核心产品，确保AI智囊团的架构合理、用户体验出色。</p>
+                    <p>2025年5月是重要的市场转折点——财搭子在微信小程序平台上线，迅速走红。这不是因为营销，而是因为产品本身吸引人。用户的自发分享和转发，导致财搭子在微信生态内快速积累用户。这个阶段标志着市场验证的成功——用户用脚投票，证明了财搭子确实解决了他们的真实需求。</p>
+                    <p>2025年8月发布1.0版本，推出AI智囊团核心功能。2025年9月完成天使+轮融资数千万元，徐汇资本领投——这是资本对产品-市场匹配度的认可。2025年10月荣获"年度AI技术创新突破奖"，进一步确立了业界地位。2026年3月发布增强版智能体体系，完善社区生态——这表明财搭子在不断迭代创新，而不是守着已有成绩。</p>
+                    <p>这个发展轨迹很健康：从融资→产品打磨→市场验证→融资→功能迭代。每一步都有明确的业务目标，每一步都有用户反馈和市场数据支撑。这种"快速迭代、数据驱动"的运营方式，正是现代AI创业成功的关键。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="dots-bar" id="dots-6" style="visibility:hidden;"></div>
+</section>
+
+<!-- ====== CHAPTER 7: 核心启示 ====== -->
+<section class="chapter" id="ch-7">
+    <div class="chapter-header">
+        <h2>从财搭子看AI金融的未来</h2>
+        <span class="ch-sub">💡 Key Insights</span>
+        <span class="ch-counter" id="counter-7">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="7">
+        <div class="slide">
+            <div class="insight-card">
+                <div class="insight-emoji">🎯</div>
+                <h3>启示一：洞察心理比优化功能更重要</h3>
+                <div class="card-body">
+                    <p>财搭子最深刻的洞察不是技术层面的，而是心理层面的：大多数人的财务问题不是因为不会算账，而是因为不敢面对账单。传统金融应用假设用户是理性的经济人，财搭子意识到用户首先是有情绪的人。</p>
+                    <p>这个认知决定了整个产品的设计思路：不是堆砌功能，而是解决心理障碍。用温暖的界面设计驱散焦虑，用AI的拟人化关怀化解恐惧，用游戏化的激励机制激发用户的参与热情。</p>
+                    <div class="insight-highlight">启示：任何涉及"行为改变"的AI产品，都应该先解决"情绪阻力"，再解决"能力不足"。心理设计往往比技术创新更能改变用户行为。</div>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="insight-card">
+                <div class="insight-emoji">🔄</div>
+                <h3>启示二：多智能体架构是金融AI的未来</h3>
+                <div class="card-body">
+                    <p>财搭子的31个专家智能体架构代表了一个重要的技术趋势：从"单一超强AI"向"多个专业智能体的协同"进化。传统的思路是让一个大模型尽可能聪明，财搭子的思路是让多个小型专家协同决策。</p>
+                    <p>这个转变的核心逻辑是：没有一个AI能完全理解金融投资的复杂性。31个不同角度的分析，远比单一AI的"深思熟虑"更能降低风险。这种"集体智慧"的设计方式，也更符合人类的决策习惯——我们在做重大决策时，往往会听听不同专家的意见。</p>
+                    <div class="insight-highlight">启示：AI金融产品的设计方向应该是"多角度的智慧聚合"，而不是"单一模型的超级优化"。集体智慧比个人天才更可靠。</div>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="insight-card">
+                <div class="insight-emoji">🛡️</div>
+                <h3>启示三：用户数据飞轮才是真正的护城河</h3>
+                <div class="card-body">
+                    <p>财搭子面临的竞争对手很多：大型银行有资本优势，OpenAI有技术优势，但财搭子有一个对手难以复制的资产：真实的用户行为数据。财搭子的AI通过与数百万投资者的交互积累，学到了"人类在什么情况下做什么投资决策"的深层规律。</p>
+                    <p>这些数据的价值不在于"数量大"，而在于"独特性"。通用的模型可以被任何人调用，但财搭子在其上微调的"投资决策数据"是只有财搭子有的。随着时间推移，用户数据越积累越多，财搭子的AI就越来越聪明，这形成了越来越强的竞争壁垒。</p>
+                    <div class="insight-highlight">启示：AI创业公司的终极竞争力不在炫耀技术，而在积累用户数据。数据飞轮一旦形成，将是对手最难跨越的护城河。尽早抓住真实用户反馈，比追逐最新技术更重要。</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="dots-bar" id="dots-7"></div>
+</section>
+
+</main>
+
+<script>
+const main = document.getElementById('main');
+const navBtns = document.querySelectorAll('.nav-btn');
+const sections = document.querySelectorAll('.cover, .chapter');
+
+function go(i) { sections[i].scrollIntoView({ behavior: 'smooth' }); }
+
+// Active nav tracking
+const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+        if (e.isIntersecting) {
+            const idx = [...sections].indexOf(e.target);
+            navBtns.forEach((b, i) => b.classList.toggle('active', i === idx));
+        }
+    });
+}, { root: main, threshold: 0.5 });
+sections.forEach(s => obs.observe(s));
+
+// Horizontal dots + counter
+document.querySelectorAll('.card-track').forEach(track => {
+    const ch = track.dataset.ch;
+    const slides = track.querySelectorAll('.slide');
+    const dotsBar = document.getElementById('dots-' + ch);
+    const counter = document.getElementById('counter-' + ch);
+    if (!dotsBar || slides.length < 2) return;
+
+    slides.forEach((_, i) => {
+        const d = document.createElement('button');
+        d.className = 'dot' + (i === 0 ? ' active' : '');
+        d.onclick = () => slides[i].scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
+        dotsBar.appendChild(d);
+    });
+
+    track.addEventListener('scroll', () => {
+        const idx = Math.round(track.scrollLeft / track.clientWidth);
+        dotsBar.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === idx));
+        if (counter) counter.textContent = (idx + 1) + ' / ' + slides.length;
+    });
+});
+</script>
+
+</body>
+</html>

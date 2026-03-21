@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trade Ideas 深度调研报告</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #1A1514;
+            --cover-bg: #2E5F7E;
+            --cover-accent: #1B4965;
+            --cover-highlight: #6BA3C5;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(217,119,87,0.2); color: var(--accent); font-weight: 600; }
+
+        .nav-dashboard {
+            display: block; width: calc(100% - 8px); margin: 8px 4px 4px;
+            background: rgba(217,119,87,0.15); border: 1px solid rgba(217,119,87,0.3);
+            color: var(--accent); padding: 10px 12px; border-radius: 8px;
+            text-align: center; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+        }
+        .nav-dashboard:hover { background: rgba(217,119,87,0.3); color: white; }
+
+        /* ===== MAIN ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, var(--cover-bg) 0%, var(--cover-accent) 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(107,163,197,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 20px; background: rgba(255,255,255,0.1); object-fit: contain; }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(255,255,255,0.12); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        /* Fixed chapter header */
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        /* Horizontal card scroller */
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+
+        /* Each slide fills available height */
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Card inside slide — fills slide */
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        /* Dots bar at bottom */
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); cursor: pointer; transition: all 0.3s;
+            border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+        /* ===== REUSABLE COMPONENTS ===== */
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px; border-radius: 6px;
+            font-size: 13px; line-height: 1.7; color: var(--text-2);
+            margin: 14px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+
+        .quote-block {
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px; margin: 14px 0;
+            font-style: italic; font-size: 14px;
+            color: var(--text-2); line-height: 1.8;
+            background: var(--bg-muted); border-radius: 0 8px 8px 0;
+        }
+        .quote-attr { font-style: normal; font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 16px; border-radius: 10px; text-align: center;
+        }
+        .metric-value { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+        .flex-row { display: flex; gap: 24px; margin: 14px 0; }
+        .flex-col { flex: 1; min-width: 0; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th { background: var(--bg-muted); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+
+        .mode-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 14px 0; }
+        .mode-box { background: var(--bg-muted); padding: 14px; border-radius: 10px; border-left: 4px solid var(--accent); }
+        .mode-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+        .mode-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .insight-card {
+            flex: 1; display: flex; flex-direction: column;
+            background: var(--bg-card); border-radius: 14px; padding: 28px 32px;
+            border: 1px solid var(--border);
+        }
+        .insight-emoji { font-size: 28px; margin-bottom: 10px; }
+        .insight-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+        .insight-card p { font-size: 15px; line-height: 1.9; color: var(--text-2); margin-bottom: 14px; }
+        .insight-highlight {
+            margin-top: auto;
+            background: var(--accent-light); border-left: 4px solid var(--accent);
+            padding: 12px 16px; border-radius: 6px;
+            font-size: 14px; font-weight: 600; color: var(--accent-2);
+        }
+
+        .news-item {
+            padding: 14px; background: var(--bg-card);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px; border: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+        .news-date { font-size: 11px; color: var(--text-3); font-weight: 600; margin-bottom: 4px; }
+        .news-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .news-title a { color: var(--accent-blue); text-decoration: none; }
+        .news-title a:hover { color: var(--accent); text-decoration: underline; }
+        .news-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .timeline { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+        .timeline-item { display: flex; gap: 12px; align-items: flex-start; }
+        .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
+        .timeline-year { font-weight: 700; font-size: 13px; color: var(--accent); min-width: 48px; }
+        .timeline-text { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+
+        .position-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+        .position-card { padding: 12px; border-radius: 10px; }
+        .position-title { font-weight: 700; font-size: 13px; margin-bottom: 3px; }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            main { margin-left: 0; }
+            .chapter-header { padding: 12px 20px 0 20px; }
+            .slide { padding: 16px 20px; }
+            .cover-title { font-size: 28px; }
+            .flex-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <img class="sidebar-logo" alt="Trade Ideas" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABWklEQVQ4jbXRwUtUURgF8N97vTeZmLiR3LooWhkErdrrNnCjtIiCgVkFtWsZhAlCixYy4DIt+xMUBMF/QQqM1jExSlkMjvneazH34WNEZjaezf2+c88999zvRgbgZCktyzm8xwRW8A55AurNUlTDFH7h2Fqj5K/hKe6E/hk28CMOh2/hBT5jGw/6guQ4qvS/cQpJIO7hLa6jW+FLFFhGG+P4iMPSYCYYxEEcB66j3myPHEx+Le7OR908HcVO0Jwhxb8kDOZh5dYUbxBhk+JJqF9hMaTZxywOkxC7P3Ktby3r8ktGgqkEqzjAY71pZ1jHN3zRnS6KIopcggQf0MJCMDjDJ2xZazhZSp0W/QHPEV+6MySuxCB2cagDDXK976E36fu4qd680c7GhjJo4bjCv8Qunj9qNaRRNtDgO/Yq/ERIMR0rxPKBBh28DrdW1dnt9KeKpoO/+CM8+T8PcFZCTRFz6AAAAABJRU5ErkJggg==" />
+        <div>
+            <div class="sidebar-brand-text">Trade Ideas</div>
+            <div class="sidebar-brand-sub">深度调研报告</div>
+        </div>
+    </div>
+    <div class="nav-items">
+        <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+        <button class="nav-btn" onclick="go(1)">📖 公司概况</button>
+        <button class="nav-btn" onclick="go(2)">💰 融资与财务</button>
+        <button class="nav-btn" onclick="go(3)">🛠️ 产品功能</button>
+        <button class="nav-btn" onclick="go(4)">🤖 AI技术</button>
+        <button class="nav-btn" onclick="go(5)">👥 用户反馈</button>
+        <button class="nav-btn" onclick="go(6)">💡 核心启示</button>
+        <button class="nav-btn" onclick="go(7)">📰 近期要闻</button>
+    </div>
+    <a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+<main id="main">
+
+<!-- ====== COVER ====== -->
+<section class="cover" id="ch-0">
+    <div class="cover-content">
+        <img class="cover-logo" alt="Trade Ideas Logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABWklEQVQ4jbXRwUtUURgF8N97vTeZmLiR3LooWhkErdrrNnCjtIiCgVkFtWsZhAlCixYy4DIt+xMUBMF/QQqM1jExSlkMjvneazH34WNEZjaezf2+c88999zvRgbgZCktyzm8xwRW8A55AurNUlTDFH7h2Fqj5K/hKe6E/hk28CMOh2/hBT5jGw/6guQ4qvS/cQpJIO7hLa6jW+FLFFhGG+P4iMPSYCYYxEEcB66j3myPHEx+Le7OR908HcVO0Jwhxb8kDOZh5dYUbxBhk+JJqF9hMaTZxywOkxC7P3Ktby3r8ktGgqkEqzjAY71pZ1jHN3zRnS6KIopcggQf0MJCMDjDJ2xZazhZSp0W/QHPEV+6MySuxCB2cagDDXK976E36fu4qd680c7GhjJo4bjCv8Qunj9qNaRRNtDgO/Yq/ERIMR0rxPKBBh28DrdW1dnt9KeKpoO/+CM8+T8PcFZCTRFz6AAAAABJRU5ErkJggg==" />
+        <h1 class="cover-title">Trade Ideas</h1>
+        <p class="cover-subtitle">AI赋能的股票筛选与交易信号平台——23年数据积累下的交易工具领导者</p>
+        <div class="cover-tags">
+            <span class="cover-tag">AI股票筛选</span>
+            <span class="cover-tag">交易信号</span>
+            <span class="cover-tag">Holly AI引擎</span>
+            <span class="cover-tag">实时数据</span>
+            <span class="cover-tag">自研技术</span>
+        </div>
+        <div class="cover-stats">
+            <div class="stat-box">
+                <div class="stat-number">22+</div>
+                <div class="stat-label">年技术积累</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">259K+</div>
+                <div class="stat-label">月访问量</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">50+</div>
+                <div class="stat-label">AI策略库</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">8000+</div>
+                <div class="stat-label">监控股票</div>
+            </div>
+        </div>
+        <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+    </div>
+</section>
+
+<!-- ====== CHAPTER 1: 公司概况 ====== -->
+<section class="chapter" id="ch-1">
+    <div class="chapter-header">
+        <h2>从对冲基金到个人投资者的AI交易工具</h2>
+        <span class="ch-sub">📖 公司概况</span>
+        <span class="ch-counter" id="counter-1">1 / 4</span>
+    </div>
+    <div class="card-track" data-ch="1">
+
+        <!-- 1/4 公司背景与定位 -->
+        <div class="slide"><div class="card"><h3>23年专注于赋能个人投资者</h3><div class="card-body">
+            <p>Trade Ideas成立于2003年，是一家美国金融科技公司，专注于为个人投资者和日内交易者提供AI驱动的股票筛选和交易信号服务。公司拥有22年的实时交易数据积累和完全自研的AI引擎Holly，能够实时监控8000+只美国股票和ETF，生成精准的买卖信号。</p>
+            <p>截至2026年3月，公司月访问量超过259K，活跃用户稳定增长。Trade Ideas采用订阅制商业模式，通过提供TI Basic（基础版）和TI Premium（高级版）两种套餐，以及模拟交易、回溯测试等核心功能，让普通个人投资者能够像职业交易员一样做决策。</p>
+            <div class="callout">
+                <strong>行业定位：</strong> 自研AI引擎Holly驱动的股票筛选与交易信号平台，为个人投资者和日内交易者提供实时买卖信号、回溯测试和无风险模拟交易。拥有业界最快的实时扫描速度（<1秒）和22年数据护城河。
+            </div>
+        </div></div></div>
+
+        <!-- 2/4 创始人与团队 -->
+        <div class="slide"><div class="card"><h3>来自对冲基金的创业灵感</h3><div class="card-body">
+            <p>Trade Ideas的创始人团队包括Dan Mirkin（CEO）、David Aferiat（Co-Founder & Managing Partner）和Philip Smolen（CTO）。这三位金融科技先驱在2000年为对冲基金经理提供直接交易技术的项目中，深刻认识到个人投资者在获取实时市场数据和有效交易策略方面的巨大鸿沟。</p>
+            <p>他们发现，与其为少数机构服务，不如将先进的技术普惠给更广大的自营投资者。这个洞察驱动他们在2003年正式成立Trade Ideas，开始开发专有的实时数据处理和交易信号技术。经过二十余年的发展，Trade Ideas已成为金融科技领域专业工具提供商，以强大的美国本土服务器基础设施和低延迟的交易数据为业界闻名。</p>
+            <div class="callout">
+                <strong>核心团队理念：</strong> 将复杂的市场分析民主化——通过自研AI引擎和实时数据处理，将机构级的交易分析工具提供给普通投资者，让他们获得与专业交易员相似的信息优势。
+            </div>
+        </div></div></div>
+
+        <!-- 3/4 核心用户画像 -->
+        <div class="slide"><div class="card"><h3>18-65岁的活跃个人交易者</h3><div class="card-body">
+            <p>Trade Ideas的核心用户是18-65岁的个人投资者，特别是日内交易者和活跃交易者。这些用户通常拥有一定的交易经验，对市场波动敏感，追求短期交易机会。他们渴望通过AI技术提升交易效率，减少情绪波动。收入中等以上，对高效的分析工具愿意付费。</p>
+            <p>这些用户的核心痛点包括：市场信息过载，难以发现高潜力交易机会；手动分析时间耗费巨大；缺乏系统的交易策略验证方法；情绪驱动导致非理性决策；需要实时买卖信号但工具复杂。他们的行为特征是高度关注市场实时数据，对AI和新技术接受度高，追求效率和精准性，愿意持续学习和优化策略。</p>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">85%</div>
+                    <div class="metric-label">北美用户</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">10%</div>
+                    <div class="metric-label">欧洲用户</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">数万+</div>
+                    <div class="metric-label">付费订阅者</div>
+                </div>
+            </div>
+        </div></div></div>
+
+        <!-- 4/4 发展里程碑 -->
+        <div class="slide"><div class="card"><h3>23年发展历程中的关键突破</h3><div class="card-body">
+            <div class="timeline">
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2003</div><div class="timeline-text">公司成立，总部位于美国佛罗里达州。开发专有的实时数据处理和交易信号技术，建立美国本土服务器基础设施。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2010</div><div class="timeline-text">推出第一代AI交易信号系统，标志着公司从数据工具向AI平台的转变。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2015</div><div class="timeline-text">Holly AI引擎正式上线，提供无需设置的自动交易信号。这是Trade Ideas最重要的产品突破。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2020</div><div class="timeline-text">增强AI能力，推出Money Machine Advanced AI和TI Wave。用户突破新的增长阶段。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2026.03</div><div class="timeline-text">月访问量超过259K，被确认为全球Top 50金融AI应用。Holly AI继续优化，处理速度加快，信号精度提升。</div></div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" data-ch="1"><button class="dot active" onclick="scroll_ch(1, 0)"></button><button class="dot" onclick="scroll_ch(1, 1)"></button><button class="dot" onclick="scroll_ch(1, 2)"></button><button class="dot" onclick="scroll_ch(1, 3)"></button></div>
+</section>
+
+<!-- ====== CHAPTER 2: 融资与财务 ====== -->
+<section class="chapter" id="ch-2">
+    <div class="chapter-header">
+        <h2>自营模式下的长期可持续增长</h2>
+        <span class="ch-sub">💰 融资与财务</span>
+        <span class="ch-counter" id="counter-2">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="2">
+
+        <!-- 1/3 商业模式与收入 -->
+        <div class="slide"><div class="card"><h3>订阅制SaaS模式下的自营盈利</h3><div class="card-body">
+            <p>Trade Ideas采用订阅制SaaS商业模式，提供三个不同层级的产品：免费版The Tester（入门体验，提供延迟数据）、TI Basic（基础版，$89-127/月）和TI Premium（高级版，$178-254/月）。高级版包含Holly AI信号、回溯测试、智能风险管理等核心功能，是大多数活跃用户的标配。</p>
+            <p>与多数金融科技企业不同，Trade Ideas未进行融资，而是通过自身营收实现持续增长，多次被Inc. 5000评为美国增长最快的私营公司。公司预计总营收数千万美元以上，毛利率预计70%+（典型SaaS水平）。用户生命周期价值（LTV）预计$2000-5000，这来自多年的订阅续约和产品升级。</p>
+            <div class="callout">
+                <strong>关键指标：</strong> 月访问量259K+，年增长5.34%；付费订阅者数万+；ARPU约$200-400/年；客户获取成本低（主要依靠口碑和SEO），确保了健康的单位经济学。
+            </div>
+        </div></div></div>
+
+        <!-- 2/3 用户指标与增长 -->
+        <div class="slide"><div class="card"><h3>从数十万用户到稳定增长的活跃社群</h3><div class="card-body">
+            <p>Trade Ideas拥有全球数十万活跃用户，其中付费订阅者数万+。地理分布方面，北美用户占85%（主要是美国），欧洲占10%，亚太占5%。这反映了美国股市在全球的主导地位，以及美国散户投资文化的活跃程度。</p>
+            <p>用户增长呈现稳定态势，月访问量从去年同期到本年3月增长5.34%。这个增速虽然看起来温和，但对于一个成立23年的公司来说，意味着市场依然有增长空间。用户的多数来自SEO和口碑推荐，因为Trade Ideas的毒舌AI截图曾在social media病毒传播，吸引了大量年轻投资者关注。</p>
+            <div class="mode-boxes">
+                <div class="mode-box">
+                    <div class="mode-title">全球用户</div>
+                    <div class="mode-desc">数十万+ 活跃用户遍布全球</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">付费转化</div>
+                    <div class="mode-desc">免费版用户逐步升级付费</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">口碑增长</div>
+                    <div class="mode-desc">极低CAC，依靠社区和推荐</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">地域集中</div>
+                    <div class="mode-desc">北美市场绝对主导（85%）</div>
+                </div>
+            </div>
+        </div></div></div>
+
+        <!-- 3/3 竞争优势与财务可持续性 -->
+        <div class="slide"><div class="card"><h3>自营模式的长期竞争优势</h3><div class="card-body">
+            <p>Trade Ideas的自营模式（无外部融资）带来了独特的竞争优势。公司不需要为了满足投资者的增长预期而进行激进的烧钱营销，可以专注于产品质量和用户价值。这样的模式培养了深度的用户忠诚度——许多用户使用Trade Ideas超过3年，成为了产品的铁粉。</p>
+            <p>从财务角度，自营盈利意味着Trade Ideas拥有完全的经营自主权，可以根据市场反馈持续调整产品，而不是受到融资方的压力。公司的利润全部用于研发和基础设施升级，支撑Holly AI的持续迭代。这种模式也降低了退出压力——公司不需要在特定时间内实现IPO或被收购，可以长期深耕市场。</p>
+            <div class="callout">
+                <strong>财务韧性：</strong> 虽然未公开具体数据，但从用户规模和订阅价格推算，Trade Ideas的年营收预计在数千万美元，且自2003年成立以来持续盈利。这为持续的产品创新和基础设施投资提供了强有力的资金保障。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" data-ch="2"><button class="dot active" onclick="scroll_ch(2, 0)"></button><button class="dot" onclick="scroll_ch(2, 1)"></button><button class="dot" onclick="scroll_ch(2, 2)"></button></div>
+</section>
+
+<!-- ====== CHAPTER 3: 产品功能 ====== -->
+<section class="chapter" id="ch-3">
+    <div class="chapter-header">
+        <h2>多层次功能矩阵：从扫描到决策</h2>
+        <span class="ch-sub">🛠️ 产品功能</span>
+        <span class="ch-counter" id="counter-3">1 / 4</span>
+    </div>
+    <div class="card-track" data-ch="3">
+
+        <!-- 1/4 Holly AI虚拟交易助手 -->
+        <div class="slide"><div class="card"><h3>Holly AI：无需设置的AI交易信号</h3><div class="card-body">
+            <p>Holly AI是Trade Ideas最标志性的功能，也是其竞争优势最核心之处。这个自研AI引擎能够实时提供精准的买入/卖出信号，包括明确的入场和出场点。Holly最大的特点是无需设置——用户无需配置复杂参数即可获得AI信号，这对新手用户友好。</p>
+            <p>Holly支持50+预构建策略，通过持续分析、测试和再测试的方式不断优化。每个信号的生成基于300+指标的组合分析，包括技术面、资金面、情绪面等多维度。Holly能在1秒内生成交易信号，速度业界领先。用户可以选择跟随Holly的信号进行模拟或实盘交易，也可以自定义策略参数。</p>
+            <div class="callout">
+                <strong>技术亮点：</strong> 基于22年实时交易数据积累，完全自主研发算法，无依赖第三方API。Holly每晚运行数百万次回溯测试，验证70+种策略性能，确保信号准确率。
+            </div>
+        </div></div></div>
+
+        <!-- 2/4 实时股票扫描与筛选 -->
+        <div class="slide"><div class="card"><h3><1秒速度监控8000+只股票</h3><div class="card-body">
+            <p>Trade Ideas拥有直接连接交易所的美国本土服务器基础设施，能够实时监控8000+只美国股票和ETF交易。这个基础设施的关键优势在于低延迟——在高频交易中，延迟就是金钱。Trade Ideas能在<1秒内分析8000+只股票，识别符合用户策略的交易机会。</p>
+            <p>平台支持40+创新的市场扫描类型，包括动量扫描、突破扫描、技术形态识别、资金流向分析等。用户可以根据自己的交易风格定制扫描参数，也可以使用预设的扫描器。每个扫描结果都包含详细的理由说明，帮助交易者理解为什么这个股票被选中。</p>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">&lt;1秒</div>
+                    <div class="metric-label">扫描时间</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">8000+</div>
+                    <div class="metric-label">监控股票</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">40+</div>
+                    <div class="metric-label">扫描类型</div>
+                </div>
+            </div>
+        </div></div></div>
+
+        <!-- 3/4 回溯测试与模拟交易 -->
+        <div class="slide"><div class="card"><h3>从策略验证到零风险实练</h3><div class="card-body">
+            <p>回溯测试是Trade Ideas的核心决策支持工具。它允许交易者使用历史市场数据验证和优化交易策略，评估策略在不同市场条件下的表现。用户可以测试自定义策略和预设策略，查看胜率、平均收益、最大回撤等关键指标。Holly每晚运行数百万次回溯测试，验证70+种策略，确保向用户推荐的信号是经过充分验证的。</p>
+            <p>模拟交易环境允许交易者使用真实市场数据进行策略优化和验证，但无需承担真实资金风险。用户可以在模拟账户中测试复杂策略，建立信心后再进行实盘交易。平台还提供交易锦标赛，让用户在友好竞争环境中学习和改进。</p>
+            <div class="callout">
+                <strong>数字验证：</strong> 每晚数百万次回溯测试，70+种策略验证，完整的性能指标（胜率、收益、回撤、Sharpe比率等）。这种级别的验证工作是散户交易者无法自己完成的。
+            </div>
+        </div></div></div>
+
+        <!-- 4/4 高级功能：Money Machine与TI Wave -->
+        <div class="slide"><div class="card"><h3>Money Machine Advanced AI与TI Wave</h3><div class="card-body">
+            <p>Money Machine Advanced AI是Trade Ideas的动量识别核心功能。它能够识别市场中前3个最强的动量交易，并以高精度执行。该系统理解并预测市场中的短期趋势和资金流向，为日内交易者提供强大支持。这个功能特别适合追求短期收益的高频交易者。</p>
+            <p>TI Wave是一个自适应AI系统，能够分析市场动态，通过直观的视觉提示提供及时、优化的交易信号。它能够识别复杂的市场模式和实时决策支持。这两个高级功能都包含在TI Premium（高级套餐）中，是面向专业交易者的标配。</p>
+            <div class="mode-boxes">
+                <div class="mode-box">
+                    <div class="mode-title">Money Machine</div>
+                    <div class="mode-desc">识别Top 3动量，高精度执行，实时资金流分析</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">TI Wave</div>
+                    <div class="mode-desc">自适应AI，市场模式识别，实时视觉信号</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">实时数据</div>
+                    <div class="mode-desc">直连交易所，<1秒延迟，8000+股票</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">风险管理</div>
+                    <div class="mode-desc">智能止损建议，头寸管理，波动率指标</div>
+                </div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" data-ch="3"><button class="dot active" onclick="scroll_ch(3, 0)"></button><button class="dot" onclick="scroll_ch(3, 1)"></button><button class="dot" onclick="scroll_ch(3, 2)"></button><button class="dot" onclick="scroll_ch(3, 3)"></button></div>
+</section>
+
+<!-- ====== CHAPTER 4: AI技术 ====== -->
+<section class="chapter" id="ch-4">
+    <div class="chapter-header">
+        <h2>22年数据积累下的AI技术护城河</h2>
+        <span class="ch-sub">🤖 AI技术</span>
+        <span class="ch-counter" id="counter-4">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="4">
+
+        <!-- 1/3 AI引擎架构 -->
+        <div class="slide"><div class="card"><h3>Holly AI：完全自研的多层次AI系统</h3><div class="card-body">
+            <p>Holly AI是Trade Ideas的核心技术资产。与依赖第三方API（如OpenAI）的竞争对手不同，Trade Ideas采用完全自主研发的技术路线。Holly的核心架构包括：实时交易数据处理引擎、市场模式识别系统、买卖信号生成模块、策略验证系统、风险管理建议。</p>
+            <p>Holly的算法基础包括机器学习、模式识别、实时数据流处理、技术指标组合分析。系统能处理300+指标的组合，生成精准的交易信号。更重要的是，Holly的决策过程可以追溯和解释，用户能够理解为什么系统给出这个信号，这对金融应用至关重要（对比黑箱AI）。</p>
+            <div class="callout">
+                <strong>技术独特性：</strong> 完全自主研发，不依赖外部API；基于22年实时交易数据；支持50+预构建策略；每晚运行数百万次回溯测试；信号生成<1秒。
+            </div>
+        </div></div></div>
+
+        <!-- 2/3 四重护城河 -->
+        <div class="slide"><div class="card"><h3>数据、技术、基础设施、品牌的四重防护</h3><div class="card-body">
+            <p>Trade Ideas的竞争优势来自四重护城河。首先是数据护城河：22年实时交易数据积累，拥有无与伦比的历史市场数据库和交易信号库。新进入者难以在短时间内复制如此规模和质量的数据集。这些数据被用于训练Holly AI，形成了算法的优势。</p>
+            <p>其次是技术护城河：完全自研的AI引擎Holly、Money Machine Advanced AI和TI Wave等专有技术。这种深度定制的算法系统是难以被模仿的知识资产。第三是基础设施护城河：美国本土的服务器基础设施，直接连接交易所，确保低延迟和高安全性。在金融交易中，数据延迟就是金钱。第四是品牌护城河：成立23年，在个人交易者群体中建立了较高的知名度和市场认可度。长期积累的品牌信任和用户忠诚度是难以复制的。</p>
+            <div class="position-cards">
+                <div class="position-card" style="background:#E8F5FF;">
+                    <div style="font-size:14px;font-weight:700;">数据护城河</div>
+                    <div style="font-size:12px;color:var(--text-2);margin-top:4px;">22年数据，行业最深</div>
+                </div>
+                <div class="position-card" style="background:#FFE6E6;">
+                    <div style="font-size:14px;font-weight:700;">技术护城河</div>
+                    <div style="font-size:12px;color:var(--text-2);margin-top:4px;">完全自研AI算法</div>
+                </div>
+                <div class="position-card" style="background:#E8FFE8;">
+                    <div style="font-size:14px;font-weight:700;">基础设施</div>
+                    <div style="font-size:12px;color:var(--text-2);margin-top:4px;">低延迟交易所连接</div>
+                </div>
+                <div class="position-card" style="background:#F5F0FF;">
+                    <div style="font-size:14px;font-weight:700;">品牌护城河</div>
+                    <div style="font-size:12px;color:var(--text-2);margin-top:4px;">23年市场认可</div>
+                </div>
+            </div>
+        </div></div></div>
+
+        <!-- 3/3 技术局限与未来发展 -->
+        <div class="slide"><div class="card"><h3>AI技术的局限与进化方向</h3><div class="card-body">
+            <p>尽管Holly AI表现强劲，但仍存在一些固有的技术局限。市场黑天鹅事件（如2008年金融危机、2020年疫情冲击）可能超出AI预测范围，导致信号失效。AI也可能在某些极端市场条件下生成不准确的信号（所谓"幻觉"）。此外，金融监管日益严格，AI透明性和合规性面临挑战。</p>
+            <p>从用户教育角度，使用Trade Ideas需要一定的交易知识才能最大化平台价值。对于完全的初学者，复杂的功能和界面可能造成学习曲线陡峭。未来，Trade Ideas需要在保持技术领先的同时，加强对新手用户的教育和界面简化。集成更多外部数据源（新闻、社交媒体情绪）、增强解释性AI、提升移动端体验等都是潜在的进化方向。</p>
+            <div class="callout">
+                <strong>持续优化方向：</strong> 提升新手友好度，增强AI可解释性，集成多源数据，改进移动端体验，加强监管合规性。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" data-ch="4"><button class="dot active" onclick="scroll_ch(4, 0)"></button><button class="dot" onclick="scroll_ch(4, 1)"></button><button class="dot" onclick="scroll_ch(4, 2)"></button></div>
+</section>
+
+<!-- ====== CHAPTER 5: 用户反馈 ====== -->
+<section class="chapter" id="ch-5">
+    <div class="chapter-header">
+        <h2>两极分化：功能强，易用性需改进</h2>
+        <span class="ch-sub">👥 用户反馈</span>
+        <span class="ch-counter" id="counter-5">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="5">
+
+        <!-- 1/3 正面用户反馈 -->
+        <div class="slide"><div class="card"><h3>功能强大与卓越的客户服务</h3><div class="card-body">
+            <p>在Capterra、Trustpilot等平台上，Trade Ideas获得了大量正面评价。用户普遍认为"Trade Ideas是迄今为止最优秀的交易软件AI"，Holly AI信号精准，帮助他们发现了许多优质交易机会。一位用户表示"我使用Trade Ideas超过3年，对产品非常满意，它是我的交易工具集中的基石"。</p>
+            <p>客户服务也获得了一致好评。用户称"客户服务令人难以置信，快速高效地解决问题"。这种长期的用户满意度和高粘性反映了Trade Ideas在产品品质和服务上的投入。许多资深用户成为了平台的倡导者，通过口碑推荐新用户。</p>
+            <div class="news-item">
+                <div class="news-title">Capterra评分：4.5/5星</div>
+                <div class="news-desc">用户赞赏功能完整性、信号准确性和客户支持。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-title">StockBrokers.com评分：4/5星</div>
+                <div class="news-desc">认可Trade Ideas作为专业交易工具的地位。</div>
+            </div>
+        </div></div></div>
+
+        <!-- 2/3 负面用户反馈与改进空间 -->
+        <div class="slide"><div class="card"><h3>界面复杂是最大的用户痛点</h3><div class="card-body">
+            <p>负面反馈主要集中在用户体验方面。一些用户批评"界面难以导航，用户指南过时且复杂"，更直接的评价是"垃圾软件，界面难用"。这反映了Trade Ideas在UI/UX设计上的薄弱之处。功能强大的产品往往陷入功能堆积的陷阱，导致界面复杂、新手难用。</p>
+            <p>另一个常见的反馈是"学习曲线陡峭，需要足够的交易知识才能充分利用"。对于没有交易基础的新手，Trade Ideas的功能和参数设置可能造成困惑。这个问题特别重要，因为它限制了Trade Ideas向更广泛用户群体的扩展。改进新手入门体验，简化核心功能的呈现，提供更好的教程和文档，是Trade Ideas需要优先解决的问题。</p>
+            <div class="callout">
+                <strong>市场差距分析：</strong> 用户界面和易用性仍需改进，特别是对新手不够友好；教育和文档需要升级，帮助用户快速上手；需要加强对年轻投资者的产品策略。
+            </div>
+        </div></div></div>
+
+        <!-- 3/3 竞争对标与市场定位 -->
+        <div class="slide"><div class="card"><h3>与Vantagepoint AI、Option Alpha的竞争优势</h3><div class="card-body">
+            <p>Trade Ideas的主要竞争对手包括Vantagepoint AI、Option Alpha和Ematrend。相比这些竞争对手，Trade Ideas的独特优势包括：业界最快的实时股票扫描（<1秒）；完全自研AI引擎Holly，无需设置即可使用；22年数据积累构建的深厚护城河；直接连接交易所的低延迟基础设施。</p>
+            <p>然而，竞争对手在用户体验上往往更友好，文档更完整。这给了Trade Ideas改进的空间。未来，Trade Ideas的机会在于保持技术领先的同时，着力提升产品易用性和新手友好度。如果能在这方面取得突破，将进一步巩固市场领导地位。</p>
+            <div class="mode-boxes">
+                <div class="mode-box">
+                    <div class="mode-title">Trade Ideas优势</div>
+                    <div class="mode-desc">最快扫描速度、最深数据、自研AI</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">易用性差距</div>
+                    <div class="mode-desc">界面复杂，学习曲线陡峭</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">改进机会</div>
+                    <div class="mode-desc">简化UI、增强教育、友好新手</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">市场地位</div>
+                    <div class="mode-desc">AI股票筛选领域的技术领导者</div>
+                </div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" data-ch="5"><button class="dot active" onclick="scroll_ch(5, 0)"></button><button class="dot" onclick="scroll_ch(5, 1)"></button><button class="dot" onclick="scroll_ch(5, 2)"></button></div>
+</section>
+
+<!-- ====== CHAPTER 6: 核心启示 ====== -->
+<section class="chapter" id="ch-6">
+    <div class="chapter-header">
+        <h2>商业模式与技术深度的完美结合</h2>
+        <span class="ch-sub">💡 核心启示</span>
+        <span class="ch-counter" id="counter-6">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="6">
+
+        <!-- 1/3 自营盈利的长期优势 -->
+        <div class="slide"><div class="card"><h3>自营模式的战略优势</h3><div class="card-body">
+            <p>Trade Ideas最值得学习的地方是其自营盈利模式。与多数金融科技创业公司不同，Trade Ideas从未融资，而是通过提供有价值的产品，赚取用户订阅费用，实现长期可持续的增长。这个模式给了公司完全的经营自主权——不需要追求高速增长来满足投资者期待，可以专注于产品质量和用户体验。</p>
+            <p>这种模式的好处是显而易见的：第一，用户获取成本低，主要依靠口碑和SEO。Trade Ideas的毒舌AI截图曾在social media病毒传播，带来了大量免费用户。第二，用户忠诚度高，许多用户3年以上续费。第三，财务压力小，公司可以在产品创新上进行长期投资。第四，经营灵活，不受融资方的约束。</p>
+            <div class="insight-card">
+                <div class="insight-emoji">💰</div>
+                <div style="flex: 1;">
+                    <h4 style="font-weight:700;margin-bottom:8px;">自营盈利的启示</h4>
+                    <p style="font-size:13px;line-height:1.7;color:var(--text-2);">不是所有创业公司都需要融资。如果产品能直接创造用户价值，通过订阅获利，自营模式可以实现比融资更长期、更健康的增长。</p>
+                </div>
+            </div>
+        </div></div></div>
+
+        <!-- 2/3 技术深度的护城河 -->
+        <div class="slide"><div class="card"><h3>自研技术建立的不可替代性</h3><div class="card-body">
+            <p>Trade Ideas的第二个关键启示是技术深度的价值。Holly AI的完全自研，而非依赖第三方API，建立了持久的竞争护城河。自研意味着Trade Ideas可以持续优化算法，而不受第三方的限制。22年的数据积累更是竞争对手难以追赶的资产。</p>
+            <p>这启示我们，在AI时代，那些拥有深度数据和自研技术的公司有着强大的优势。相比通用大模型的调用方式，垂直领域的深度优化往往能带来更好的结果。Trade Ideas正是这一原理的完美体现：Holly AI虽然不如GPT-4那样通用，但在股票交易信号的精准性上远超通用模型。</p>
+            <div class="callout">
+                <strong>技术启示：</strong> 在AI时代，垂直领域的深度数据和自研算法比通用模型的调用更有价值。建立数据护城河需要长期投资和积累。
+            </div>
+        </div></div></div>
+
+        <!-- 3/3 用户体验与市场扩展 -->
+        <div class="slide"><div class="card"><h3>用户体验是增长的关键限制</h3><div class="card-body">
+            <p>Trade Ideas面临的最大挑战——界面复杂、易用性差——也是最重要的增长瓶颈。功能强大的产品往往陷入"功能堆积"的陷阱，导致产品越来越难用。一个启示是，产品成熟后，简化和优化用户体验往往比添加新功能更重要。</p>
+            <p>对于有志于扩大用户基数的公司，简化新手入门体验至关重要。Trade Ideas目前主要吸引有交易经验的活跃用户，但如果能改进新手体验，将有机会进入更广阔的市场。这既包括完全的初学者投资者，也包括大学生、年轻白领等新兴用户群体。改进UI/UX、提供更好的教程、创建初学者友好的"简化版"，都是潜在的增长机会。</p>
+            <div class="callout">
+                <strong>用户体验启示：</strong> 当产品功能已经足够强大，下一个增长杠杆往往是简化和优化用户体验。这能将现有的技术优势转化为更广泛的市场机会。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" data-ch="6"><button class="dot active" onclick="scroll_ch(6, 0)"></button><button class="dot" onclick="scroll_ch(6, 1)"></button><button class="dot" onclick="scroll_ch(6, 2)"></button></div>
+</section>
+
+<!-- ====== CHAPTER 7: 近期要闻 ====== -->
+<section class="chapter" id="ch-7">
+    <div class="chapter-header">
+        <h2>市场认可与未来发展</h2>
+        <span class="ch-sub">📰 近期要闻</span>
+        <span class="ch-counter" id="counter-7">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="7">
+
+        <!-- 1/2 市场认可 -->
+        <div class="slide"><div class="card"><h3>被确认为全球Top 50金融AI应用</h3><div class="card-body">
+            <p>2026年3月，Trade Ideas因其在AI驱动股票筛选领域的领先地位，被确认为全球Top 50金融AI原生应用。这个认可反映了业界和用户对其技术成就的肯定。与此同时，Trade Ideas的月访问量超过259K，年增长5.34%，表明平台在稳定增长的市场中持续获得新用户。</p>
+            <p>在各大评测平台上，Trade Ideas保持了稳定的高分评价。Capterra给出4.5/5星评分，StockBrokers.com给出4/5星评分。用户在Trustpilot等平台上的评价呈现两极分化，但总体呈现正面。这些数据表明Trade Ideas已经建立了稳固的市场地位，成为活跃交易者必不可少的工具。</p>
+            <div class="news-item">
+                <div class="news-date">2026年3月</div>
+                <div class="news-title">Trade Ideas入选全球Top 50金融AI</div>
+                <div class="news-desc">认可其在AI股票筛选领域的技术领先地位和市场影响力。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2026年1-3月</div>
+                <div class="news-title">月访问量259K+，同比增长5.34%</div>
+                <div class="news-desc">在成熟产品阶段保持稳定增长，市场需求旺盛。</div>
+            </div>
+        </div></div></div>
+
+        <!-- 2/2 未来发展展望 -->
+        <div class="slide"><div class="card"><h3>AI引擎优化与市场扩展方向</h3><div class="card-body">
+            <p>展望未来，Trade Ideas面临两个关键的发展方向。第一，继续优化Holly AI引擎。虽然Holly已经表现优异，但机器学习算法的优化永无止境。集成更多数据源（宏观经济指标、新闻情绪、社交媒体讨论）、提升信号的可解释性、支持更多复杂交易策略，都是可能的优化方向。</p>
+            <p>第二，拓展用户基数。目前Trade Ideas的核心用户是有交易经验的活跃交易者，未来有机会向新手投资者和机构客户扩展。针对新手的"简化版"界面、专门的教育内容、与主流券商的集成，都能帮助拓展市场。此外，国际市场（特别是欧洲和亚太）的本地化也是增长机会。Trade Ideas已经在这些方向上有所探索，未来的关键是持续投入和有序扩展。</p>
+            <div class="callout">
+                <strong>未来前景：</strong> 在保持技术领先的同时，通过改进用户体验和拓展市场触达，Trade Ideas有机会在AI金融工具领域继续扩大影响力。自营模式为这种长期投资提供了充足的资源和灵活度。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" data-ch="7"><button class="dot active" onclick="scroll_ch(7, 0)"></button><button class="dot" onclick="scroll_ch(7, 1)"></button></div>
+</section>
+
+</main>
+
+<script>
+    const chapters = document.querySelectorAll('.chapter, .cover');
+    const navBtns = document.querySelectorAll('.nav-btn');
+
+    function go(idx) {
+        document.getElementById(`ch-${idx}`)?.scrollIntoView({ behavior: 'smooth' });
+        navBtns.forEach((btn, i) => btn.classList.toggle('active', i === idx));
+    }
+
+    function scroll_ch(ch, slide) {
+        const track = document.querySelector(`.card-track[data-ch="${ch}"]`);
+        if (track) {
+            const slides = track.querySelectorAll('.slide');
+            slides[slide]?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+            update_dots(ch);
+        }
+    }
+
+    function update_dots(ch) {
+        const track = document.querySelector(`.card-track[data-ch="${ch}"]`);
+        const dots = document.querySelectorAll(`.dots-bar[data-ch="${ch}"] .dot`);
+        if (!track) return;
+        const scrollLeft = track.scrollLeft;
+        const slideWidth = track.querySelector('.slide').offsetWidth;
+        const activeIdx = Math.round(scrollLeft / slideWidth);
+        dots.forEach((dot, i) => dot.classList.toggle('active', i === activeIdx));
+        const counter = document.querySelector(`#counter-${ch}`);
+        if (counter) counter.textContent = `${activeIdx + 1} / ${dots.length}`;
+    }
+
+    document.querySelectorAll('.card-track').forEach(track => {
+        track.addEventListener('scroll', () => {
+            const ch = track.dataset.ch;
+            update_dots(ch);
+        });
+    });
+
+    document.getElementById('main').addEventListener('scroll', () => {
+        let current = 0;
+        chapters.forEach((ch, idx) => {
+            if (ch.getBoundingClientRect().top < window.innerHeight / 2) current = idx;
+        });
+        navBtns.forEach((btn, i) => btn.classList.toggle('active', i === current));
+    });
+
+    window.go = go;
+    window.scroll_ch = scroll_ch;
+</script>
+
+</body>
+</html>

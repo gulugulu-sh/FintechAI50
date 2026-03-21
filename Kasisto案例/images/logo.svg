@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <!-- Background circle with Kasisto brand colors -->
+  <defs>
+    <linearGradient id="kasistoBrand" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0D3B66;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#EF476F;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Main background -->
+  <rect width="120" height="120" fill="url(#kasistoBrand)" rx="16"/>
+
+  <!-- Letter K in white - represents Kasisto -->
+  <g transform="translate(60, 65)">
+    <!-- Vertical stroke of K -->
+    <rect x="-8" y="-28" width="6" height="56" fill="white" rx="3"/>
+
+    <!-- Top diagonal of K -->
+    <line x1="0" y1="-28" x2="18" y2="-8" stroke="white" stroke-width="6" stroke-linecap="round"/>
+
+    <!-- Bottom diagonal of K -->
+    <line x1="0" y1="4" x2="18" y2="28" stroke="white" stroke-width="6" stroke-linecap="round"/>
+  </g>
+
+  <!-- Accent line representing "AI" or conversational element -->
+  <path d="M 20 105 Q 60 110 100 105" stroke="#FFD166" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+</svg>

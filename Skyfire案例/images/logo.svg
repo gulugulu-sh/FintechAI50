@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- Define gradients -->
+  <defs>
+    <linearGradient id="skyfire-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1E40AF;stop-opacity:1" />
+    </linearGradient>
+    <radialGradient id="glow-gradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#60A5FA;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#1E40AF;stop-opacity:0" />
+    </radialGradient>
+  </defs>
+
+  <!-- Background circle with glow effect -->
+  <circle cx="100" cy="100" r="95" fill="white" stroke="#3B82F6" stroke-width="2" opacity="0.1"/>
+  <circle cx="100" cy="100" r="95" fill="url(#glow-gradient)"/>
+
+  <!-- Main icon: Stylized agent payment system -->
+  <!-- Left agent node -->
+  <circle cx="60" cy="100" r="20" fill="url(#skyfire-gradient)"/>
+  <circle cx="60" cy="100" r="18" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+  <text x="60" y="105" font-family="Inter, sans-serif" font-size="12" font-weight="700" fill="white" text-anchor="middle">AI</text>
+
+  <!-- Right service/payment node -->
+  <circle cx="140" cy="100" r="20" fill="url(#skyfire-gradient)"/>
+  <circle cx="140" cy="100" r="18" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+  <text x="140" y="108" font-family="Inter, sans-serif" font-size="16" font-weight="700" fill="white" text-anchor="middle">💳</text>
+
+  <!-- Connection line with payment symbol -->
+  <line x1="82" y1="100" x2="118" y2="100" stroke="#3B82F6" stroke-width="2"/>
+
+  <!-- Payment pulse circles -->
+  <circle cx="100" cy="100" r="4" fill="#3B82F6"/>
+  <circle cx="100" cy="100" r="8" fill="none" stroke="#60A5FA" stroke-width="1.5" opacity="0.6"/>
+
+  <!-- Top accent: KYA verification badge -->
+  <circle cx="100" cy="50" r="12" fill="url(#skyfire-gradient)"/>
+  <text x="100" y="56" font-family="Inter, sans-serif" font-size="10" font-weight="700" fill="white" text-anchor="middle">✓</text>
+
+  <!-- Bottom accent: Global reach indicator -->
+  <circle cx="100" cy="150" r="8" fill="none" stroke="#3B82F6" stroke-width="2"/>
+  <circle cx="100" cy="150" r="12" fill="none" stroke="#60A5FA" stroke-width="1" opacity="0.5"/>
+
+  <!-- Orbit lines suggesting network -->
+  <path d="M 70 70 Q 100 60 130 70" fill="none" stroke="#60A5FA" stroke-width="1.5" opacity="0.4"/>
+  <path d="M 70 130 Q 100 140 130 130" fill="none" stroke="#60A5FA" stroke-width="1.5" opacity="0.4"/>
+
+  <!-- Brand text below -->
+  <text x="100" y="185" font-family="Inter, sans-serif" font-size="16" font-weight="800" fill="#1E40AF" text-anchor="middle">Skyfire</text>
+</svg>

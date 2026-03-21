@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fiscal.ai 深度调研报告</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #1A1514;
+            --cover-bg: #2E5090;
+            --cover-accent: #4A8FD9;
+            --cover-highlight: #F39C12;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(217,119,87,0.2); color: var(--accent); font-weight: 600; }
+
+        .nav-dashboard {
+            display: block; width: 100%;
+            padding: 10px 12px; margin-top: auto;
+            background: rgba(217,119,87,0.15);
+            color: var(--accent);
+            border: 1px solid rgba(217,119,87,0.3);
+            border-radius: 8px;
+            font-size: 11px; font-weight: 600;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .nav-dashboard:hover {
+            background: rgba(217,119,87,0.25);
+            border-color: rgba(217,119,87,0.5);
+        }
+
+        /* ===== MAIN ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, var(--cover-bg) 0%, var(--cover-accent) 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(74,143,217,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 20px; background: rgba(255,255,255,0.1); object-fit: contain; }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(255,255,255,0.12); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        /* Fixed chapter header */
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        /* Horizontal card scroller */
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+
+        /* Each slide fills available height */
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Card inside slide — fills slide */
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        /* Dots bar at bottom */
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); cursor: pointer; transition: all 0.3s;
+            border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+        /* ===== CONTENT-SPARSE: bigger text for cards with less content ===== */
+        .card.sparse p { font-size: 16px; line-height: 2; }
+        .card.sparse h3 { font-size: 22px; margin-bottom: 20px; }
+        .card.sparse .callout { font-size: 15px; padding: 18px 22px; }
+        .card.sparse .quote-block { font-size: 16px; padding: 20px 24px; }
+
+        /* ===== REUSABLE COMPONENTS ===== */
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px; border-radius: 6px;
+            font-size: 13px; line-height: 1.7; color: var(--text-2);
+            margin: 14px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+
+        .quote-block {
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px; margin: 14px 0;
+            font-style: italic; font-size: 14px;
+            color: var(--text-2); line-height: 1.8;
+            background: var(--bg-muted); border-radius: 0 8px 8px 0;
+        }
+        .quote-attr { font-style: normal; font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 16px; border-radius: 10px; text-align: center;
+        }
+        .metric-value { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+        .flex-row { display: flex; gap: 24px; margin: 14px 0; }
+        .flex-col { flex: 1; min-width: 0; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th { background: var(--bg-muted); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+
+        .mode-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 14px 0; }
+        .mode-box { background: var(--bg-muted); padding: 14px; border-radius: 10px; border-left: 4px solid var(--accent); }
+        .mode-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+        .mode-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .insight-card {
+            flex: 1; display: flex; flex-direction: column;
+            background: var(--bg-card); border-radius: 14px; padding: 28px 32px;
+            border: 1px solid var(--border);
+        }
+        .insight-emoji { font-size: 28px; margin-bottom: 10px; }
+        .insight-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+        .insight-card p { font-size: 15px; line-height: 1.9; color: var(--text-2); margin-bottom: 14px; }
+        .insight-highlight {
+            margin-top: auto;
+            background: var(--accent-light); border-left: 4px solid var(--accent);
+            padding: 12px 16px; border-radius: 6px;
+            font-size: 14px; font-weight: 600; color: var(--accent-2);
+        }
+
+        .news-item {
+            padding: 14px; background: var(--bg-card);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px; border: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+        .news-date { font-size: 11px; color: var(--text-3); font-weight: 600; margin-bottom: 4px; }
+        .news-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .news-title a { color: var(--accent-blue); text-decoration: none; }
+        .news-title a:hover { color: var(--accent); text-decoration: underline; }
+        .news-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .references { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--border); }
+        .references h4 { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+        .references ul { list-style: none; columns: 2; column-gap: 20px; }
+        .references li { font-size: 11px; margin-bottom: 5px; break-inside: avoid; }
+        .references a { color: var(--accent-blue); text-decoration: none; }
+
+        .avatar {
+            width: 56px; height: 56px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 700; font-size: 20px;
+        }
+
+        .timeline { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+        .timeline-item { display: flex; gap: 12px; align-items: flex-start; }
+        .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
+        .timeline-year { font-weight: 700; font-size: 13px; color: var(--accent); min-width: 48px; }
+        .timeline-text { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            main { margin-left: 0; }
+            .chapter-header { padding: 12px 20px 0 20px; }
+            .slide { padding: 16px 20px; }
+            .cover-title { font-size: 28px; }
+            .flex-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <img class="sidebar-logo" alt="Fiscal.ai" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAANlBMVEX5+PYcHCEAAACsrKxVVVcFBQ+Mi4y6ublwcHHd3Nrq6ejV1NNgYGIvLzOamppAQEMiIid8fH3ySkvsAAADpklEQVR4nO1aaw+kMAhUu/X9/P9/9rKg7lpwr4C55BLmo1GZZShMuxaFw+FwOBwOh8PhcDj+D8zjWhlQTqG3hB+2NZY2xKUxxF+s4d8MSjWDbnog/huDksB2xI86nDnYdPGHdX/Bq6012F4Hg6pTEZjhJ0R9Hff1noQ4q55v4fHJUMT7K8rYah7uIYOVJX4xVLuI+ocXS/yiQAJRRQBKQKleQkCXgREImBQoegsBePZl6uTFvgxUEnRvAnE0xT9bmYYAlkBtit8frUhDAMgrW9iBptQT2LuAKX7RHJ1QQaBZ1dX7wTnNFO8JwDyY4verQQJYQJV2kO8EqlItAZJfbF1gjvoMDLAIRxuB0UAgQPamORgwnyWgkGAnHy2W/MtQign0S/koxASG6dH4cgnCQ378gJgAejkTi8vDUgL7FAtNDgLKtSR3z18MxBLAjiB7O7Hx3m0yZGCu2FfeAPUig9sigcgOol7EPZ+DQEMAspdrB8F10K1HbagBmR2EaqvI4N6iPgMyOwiR1rQETjuoISCygzi4iV7Nd3yhBP0LCGTeDb6PLtnG0IgaEWlsOGTFtAYCQbQphHRNqXf72EGFBJvEDvawZIl3u3QBaQawqjJrEOw77QJz1BNAO9hmtiHsAqQExgsBmQRBMgh6KLZI9EoclYgAvHLNLIEOIq3p5WbVE0A7uGZOogEyTJpm4qhEEux28JVnvTHVZBDUiZmSEAgHa4HzTvXqUlMtIdCKnSDdQHXpLQICih0BMwiq5A4BgUEcn1my5EcICOCmMC2A46SDvRxJ01wNBLCFhe6K/dy6TS6j6yF2sEsUEEnA28GePzTMsIPSDHR4LpBebvj2nGMHhQRuDog33nXk2EGhBDdeAMr6xnX8toPCDNzYQYjECJNjB2UEsAuQssYzOxLpRi/aS/MlCPyOoOaLbWTtYMEcbmQT4EugH1lhuiw7KCMAVTWlZY0TmncdtDJmWgLZEtycDmIXIMLc2EFunOYSQDtI/OjG+j60gzdLVkmg5Q0xvpJ3HTF9B3vAJiJQLmkNYF5IpJIVhjtgy64B7KFVsrKHXyXwVzuoyEAqd833G3TPpDLIIGDTd4NzBc3f793P7NJIuGTTRcAMAsFO9+MklrE9MKK/WdorXpG9zJ7xVtnH/p9JTr9DuPs6gb98SUD+BwzdEx+NkPhkWf3A8NRnI1/xc/eZO4OtepRCjK30n69hmyz/k1wxicM7HA6Hw+FwOBwOh+Pf4Q81Jye51B2wdwAAAABJRU5ErkJggg==" />
+        <div>
+            <div class="sidebar-brand-text">Fiscal.ai</div>
+            <div class="sidebar-brand-sub">深度调研报告</div>
+        </div>
+    </div>
+    <div class="nav-items">
+        <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+        <button class="nav-btn" onclick="go(1)">📋 公司概况</button>
+        <button class="nav-btn" onclick="go(2)">💰 融资与财务</button>
+        <button class="nav-btn" onclick="go(3)">🛠️ 产品功能</button>
+        <button class="nav-btn" onclick="go(4)">🤖 AI技术体系</button>
+        <button class="nav-btn" onclick="go(5)">🌍 市场定位与竞争</button>
+        <button class="nav-btn" onclick="go(6)">💡 核心启示</button>
+        <button class="nav-btn" onclick="go(7)">📰 近期要闻</button>
+    </div>
+    <a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+<main id="main">
+
+<!-- ====== COVER ====== -->
+<section class="cover" id="ch-0">
+    <div class="cover-content">
+        <img class="cover-logo" alt="Fiscal.ai Logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAANlBMVEX5+PYcHCEAAACsrKxVVVcFBQ+Mi4y6ublwcHHd3Nrq6ejV1NNgYGIvLzOamppAQEMiIid8fH3ySkvsAAADpklEQVR4nO1aaw+kMAhUu/X9/P9/9rKg7lpwr4C55BLmo1GZZShMuxaFw+FwOBwOh8PhcDj+D8zjWhlQTqG3hB+2NZY2xKUxxF+s4d8MSjWDbnog/huDksB2xI86nDnYdPGHdX/Bq6012F4Hg6pTEZjhJ0R9Hff1noQ4q55v4fHJUMT7K8rYah7uIYOVJX4xVLuI+ocXS/yiQAJRRQBKQKleQkCXgREImBQoegsBePZl6uTFvgxUEnRvAnE0xT9bmYYAlkBtit8frUhDAMgrW9iBptQT2LuAKX7RHJ1QQaBZ1dX7wTnNFO8JwDyY4verQQJYQJV2kO8EqlItAZJfbF1gjvoMDLAIRxuB0UAgQPamORgwnyWgkGAnHy2W/MtQign0S/koxASG6dH4cgnCQ378gJgAejkTi8vDUgL7FAtNDgLKtSR3z18MxBLAjiB7O7Hx3m0yZGCu2FfeAPUig9sigcgOol7EPZ+DQEMAspdrB8F10K1HbagBmR2EaqvI4N6iPgMyOwiR1rQETjuoISCygzi4iV7Nd3yhBP0LCGTeDb6PLtnG0IgaEWlsOGTFtAYCQbQphHRNqXf72EGFBJvEDvawZIl3u3QBaQawqjJrEOw77QJz1BNAO9hmtiHsAqQExgsBmQRBMgh6KLZI9EoclYgAvHLNLIEOIq3p5WbVE0A7uGZOogEyTJpm4qhEEux28JVnvTHVZBDUiZmSEAgHa4HzTvXqUlMtIdCKnSDdQHXpLQICih0BMwiq5A4BgUEcn1my5EcICOCmMC2A46SDvRxJ01wNBLCFhe6K/dy6TS6j6yF2sEsUEEnA28GePzTMsIPSDHR4LpBebvj2nGMHhQRuDog33nXk2EGhBDdeAMr6xnX8toPCDNzYQYjECJNjB2UEsAuQssYzOxLpRi/aS/MlCPyOoOaLbWTtYMEcbmQT4EugH1lhuiw7KCMAVTWlZY0TmncdtDJmWgLZEtycDmIXIMLc2EFunOYSQDtI/OjG+j60gzdLVkmg5Q0xvpJ3HTF9B3vAJiJQLmkNYF5IpJIVhjtgy64B7KFVsrKHXyXwVzuoyEAqd833G3TPpDLIIGDTd4NzBc3f793P7NJIuGTTRcAMAsFO9+MklrE9MKK/WdorXpG9zJ7xVtnH/p9JTr9DuPs6gb98SUD+BwzdEx+NkPhkWf3A8NRnI1/xc/eZO4OtepRCjK30n69hmyz/k1wxicM7HA6Hw+FwOBwOh+Pf4Q81Jye51B2wdwAAAABJRU5ErkJggg==" />
+        <h1 class="cover-title">Fiscal.ai</h1>
+        <p class="cover-subtitle">AI驱动的财务分析自动化，让专业投资者专注价值创造</p>
+        <div class="cover-tags">
+            <span class="cover-tag">金融数据基础设施</span>
+            <span class="cover-tag">AI Copilot</span>
+            <span class="cover-tag">投资研究</span>
+            <span class="cover-tag">加拿大</span>
+            <span class="cover-tag">ToB SaaS</span>
+        </div>
+        <div class="cover-stats">
+            <div class="stat-box">
+                <div class="stat-number" data-count="35" data-suffix="万+">0</div>
+                <div class="stat-label">全球投资者</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="700" data-suffix="">0</div>
+                <div class="stat-label">API客户机构</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="1150" data-suffix="万">0</div>
+                <div class="stat-label">融资总额(美元)</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">2021</div>
+                <div class="stat-label">成立年份</div>
+            </div>
+        </div>
+        <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+    </div>
+</section>
+
+<!-- ====== CHAPTER 1: 公司概况 ====== -->
+<section class="chapter" id="ch-1">
+    <div class="chapter-header">
+        <h2>公司概况</h2>
+        <span class="ch-sub">📋 Company Overview</span>
+        <span class="ch-counter" id="counter-1">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="1">
+        <div class="slide">
+            <div class="card">
+                <h3>从FinChat到Fiscal.ai的战略升级</h3>
+                <div class="card-body">
+                    <p>Fiscal.ai成立于2021年，最初名为FinChat。公司由四位创始人联合创立，核心目标是通过AI技术自动化繁琐的金融分析流程，将金融专业人士从数据泥沼中解放出来。2025年6月完成1000万美元A轮融资后，公司正式更名为Fiscal.ai，标志着从工具型产品向基础设施型服务的战略转变。</p>
+                    <p>截至2026年3月，Fiscal.ai已获得超过35万全球投资者的信任，其API被700多家机构采用，覆盖全球100000+股票、ETF与基金数据，以及2500+公司的细分业务数据与关键业绩指标。</p>
+                    <div class="callout">
+                        <strong>核心使命：</strong> 通过AI与数据基础设施的深度融合，自动化繁琐的财务分析流程，赋能金融专业人士做出更优的投资决策。
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="card">
+                <h3>创始团队与管理层</h3>
+                <div class="card-body">
+                    <p><strong>Braden Dennis (CEO & 创始人)</strong> - 工程师、创始人兼投资者，金融科技领域资深从业者，曾为TCI Podcast Network Inc联合创始人兼CEO。</p>
+                    <p><strong>Ryan White (CTO & 联合创始人)</strong> - 媒体信息与交互媒体设计专家，负责技术愿景与产品架构。</p>
+                    <p><strong>Kevin Bojan (CPO & 联合创始人)</strong> - 鹿特丹管理学院背景，产品开发经验丰富，负责产品战略。</p>
+                    <p><strong>Adrian Iwanicki (COO & 联合创始人)</strong> - 运营管理专家，负责公司日常运营与战略执行。</p>
+                    <p>这个多学科背景的团队结合了工程、设计、产品与运营的深厚专业积累，共同推动金融科技创新。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="dots-bar" id="dots-1"></div>
+</section>
+
+<!-- ====== CHAPTER 2: 融资与财务 ====== -->
+<section class="chapter" id="ch-2">
+    <div class="chapter-header">
+        <h2>融资与财务</h2>
+        <span class="ch-sub">💰 Funding & Business Model</span>
+        <span class="ch-counter" id="counter-2">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="2">
+        <div class="slide">
+            <div class="card">
+                <h3>融资历程与投资者阵容</h3>
+                <div class="card-body">
+                    <p>Fiscal.ai已累计融资1150万美元，展现出强劲的市场吸引力。2022年，公司完成种子轮融资（约300万美元），获得Social Leverage Capital支持。</p>
+                    <p>2025年6月，公司宣布完成1000万美元A轮融资，由Portage Ventures领投，Social Leverage Capital与VanEck跟投。这轮融资不仅提供了强有力的资金支持，更体现了顶级投资者对Fiscal.ai创新能力的认可。VanEck的参与更象征着传统金融巨头对AI驱动金融创新的拥抱。</p>
+                    <div class="callout">
+                        <strong>投资者信心：</strong> 关键投资者包括Portage Ventures、Social Leverage Capital、VanEck与TinySeed，他们都看好AI在金融数据基础设施领域的巨大潜力。
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="card">
+                <h3>商业模式与市场机会</h3>
+                <div class="card-body">
+                    <p>Fiscal.ai采用双轨商业模式：SaaS订阅（个人与小型机构）与API服务（大型机构）。SaaS端提供Free、Pro ($39/月)与Max ($79/月)三档定价；API端提供定制化的企业级方案。</p>
+                    <p>目标市场规模庞大：全球财务分析与投资研究工具市场规模50亿美元+，年增速15-20%。Fiscal.ai通过结合Bloomberg的数据全面性、新兴工具的易用性与独创的"可信赖自动化"框架，在中高端市场开辟新的竞争空间。</p>
+                    <div class="callout">
+                        <strong>核心优势：</strong> 业界首创的点击追溯审计、AI-Native数据基础设施、可信赖的自动化框架，为机构与专业投资者提供差异化价值。
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="dots-bar" id="dots-2"></div>
+</section>
+
+<!-- ====== CHAPTER 3: 产品功能 ====== -->
+<section class="chapter" id="ch-3">
+    <div class="chapter-header">
+        <h2>产品功能</h2>
+        <span class="ch-sub">🛠️ Core Products & Features</span>
+        <span class="ch-counter" id="counter-3">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="3">
+        <div class="slide">
+            <div class="card">
+                <h3>Fiscal.ai Terminal - 一体化投资研究平台</h3>
+                <div class="card-body">
+                    <p>Fiscal.ai Terminal是公司的核心产品，集数据、AI与分析工具于一身。它为投资专业人士提供全球100000+股票、ETF与基金的20年+历史财务数据。用户可通过自然语言查询与AI Copilot交互，快速获得深度财务分析。</p>
+                    <p>产品的革命性特性包括：业界首创的点击追溯审计功能（Click-thru Auditability），任何财务数据都可直接追溯至SEC原始文件；AI摘要功能快速总结财报电话会议与新闻稿；细分数据与自定义KPI分析支持行业特定需求；高级可视化与多公司对比工具。</p>
+                    <div class="callout">
+                        <strong>数据广度：</strong> 覆盖2500+公司的细分数据与自定义KPI，加上分析师预测与投资者关系内容集成。
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="card">
+                <h3>Fiscal.ai APIs - 机构级数据接口</h3>
+                <div class="card-body">
+                    <p>面向大型机构的API服务提供完整的基本面财务数据与比率，支持数据可追溯至原始文件（PDF/图片）的溯源机制。接口包括细分数据与KPI专业化、实时股票价格（日终与15分钟延迟）、调整后财务指标与原始文件访问等功能。</p>
+                    <p>API架构设计支持灵活的定制化部署方案，满足投资银行、对冲基金、资产管理公司等机构级客户的复杂需求。目前已有700+API客户机构，包括顶级金融机构与资产管理公司。</p>
+                    <div class="callout">
+                        <strong>机构服务：</strong> 提供白标解决方案、定制化部署与专业的API文档支持，确保机构客户的顺利集成与运维。
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="dots-bar" id="dots-3"></div>
+</section>
+
+<!-- ====== CHAPTER 4: AI技术体系 ====== -->
+<section class="chapter" id="ch-4">
+    <div class="chapter-header">
+        <h2>AI技术体系</h2>
+        <span class="ch-sub">🤖 Technology Architecture</span>
+        <span class="ch-counter" id="counter-4">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="4">
+        <div class="slide">
+            <div class="card">
+                <h3>多阶段多模型的可信赖自动化框架</h3>
+                <div class="card-body">
+                    <p>Fiscal.ai的技术核心是一套多阶段、多模型架构设计，旨在确保AI分析的准确性、可解释性与可追溯性。与其他简单集成大模型的产品不同，Fiscal.ai将AI深度融入数据处理、标准化与分析的全流程。</p>
+                    <p>技术栈包括五大核心组件：验证外部数据（Verified External Data）跨源数据验证确保准确性；顺序专业化分析通过8个专业化分析阶段递进深入；多阶段推理采用两阶段深度分析框架；双模型评估中第二模型审查逻辑一致性；两模型批判系统通过对抗性批判循环不断提升质量。</p>
+                    <div class="callout">
+                        <strong>创新亮点：</strong> 不是简单的AI嵌入，而是AI-Native的数据基础设施，形成强大的网络效应与竞争护城河。
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="card">
+                <h3>数据基础设施与点击追溯审计</h3>
+                <div class="card-body">
+                    <p>Fiscal.ai的数据基础设施涵盖FinQual、Alpha Vantage、SEC官方数据与公司投资者关系内容等多源数据，覆盖100000+全球股票与2500+公司的细分KPI数据。市场文件发布后数分钟内完成数据更新，确保实时性与准确性。</p>
+                    <p>点击追溯审计是Fiscal.ai的革命性创新。它允许任何财务数据点都可通过用户界面直接追溯至SEC原始文件（如10-K、10-Q），解决了AI在金融领域的核心信任挑战。这种透明度不仅满足监管要求，更为投资决策提供了前所未有的数据溯源能力。</p>
+                    <div class="callout">
+                        <strong>数据质量：</strong> 通过自然语言处理、数据标准化与分类，加上实时数据管道与可视化，确保金融级的数据准确性与可靠性。
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="dots-bar" id="dots-4"></div>
+</section>
+
+<!-- ====== CHAPTER 5: 市场定位与竞争 ====== -->
+<section class="chapter" id="ch-5">
+    <div class="chapter-header">
+        <h2>市场定位与竞争</h2>
+        <span class="ch-sub">🌍 Market Position & Competitive Landscape</span>
+        <span class="ch-counter" id="counter-5">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="5">
+        <div class="slide">
+            <div class="card">
+                <h3>竞争格局与差异化战略</h3>
+                <div class="card-body">
+                    <p>金融数据与分析工具市场由Bloomberg Terminal、FactSet、S&P Capital IQ等传统巨头主导。Bloomberg虽然是行业标杆，但界面复杂、学习曲线陡峭、成本高昂。FactSet与S&P虽数据深度足够，但创新速度慢、AI整合深度有限。Seeking Alpha等新兴工具虽用户友好，但数据深度与可靠性不足。</p>
+                    <p>Fiscal.ai通过独特的定位占据中高端市场。它结合了Bloomberg的数据全面性、新兴工具的易用性，更加入了业界首创的可信赖自动化框架。点击追溯审计、AI Copilot与定制KPI分析为机构与专业投资者提供了Bloomberg难以复制的创新价值。</p>
+                    <div class="callout">
+                        <strong>市场机会：</strong> 全球财务分析工具市场规模50亿美元+，年增速15-20%，AI应用与机构自动化需求持续推动高速增长。
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="card">
+                <h3>增长战略与未来展望</h3>
+                <div class="card-body">
+                    <p>近期战略聚焦于扩展数据覆盖（国际市场与新兴市场）、深化AI能力、扩大机构级客户基数，同时优化API与SDK提升开发者体验。中期目标是建立金融分析的"数据基础设施"地位，拓展至固定收益与衍生品等领域，建立活跃的开发者社区，并探索国际市场（EMEA、APAC）。</p>
+                    <p>长期愿景是成为全球金融专业人士的首选AI分析平台，使AI能力成为金融行业标配工具，建立牢固的数据护城河与网络效应，最终实现战略融资或退出机会。目前的35万全球用户、700+API客户与强劲融资势头，已明确证明了这个愿景的可行性。</p>
+                    <div class="callout">
+                        <strong>关键里程碑：</strong> 2025年A轮融资与品牌升级标志着从工具型产品向基础设施型服务的战略转变。
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="dots-bar" id="dots-5"></div>
+</section>
+
+<!-- ====== CHAPTER 6: 核心启示 ====== -->
+<section class="chapter" id="ch-6">
+    <div class="chapter-header">
+        <h2>核心启示</h2>
+        <span class="ch-sub">💡 Key Insights</span>
+        <span class="ch-counter" id="counter-6">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="6">
+        <div class="slide">
+            <div class="insight-card">
+                <div class="insight-emoji">🔍</div>
+                <h3>可信赖性是AI在金融领域的核心竞争力</h3>
+                <div class="card-body">
+                    <p>Fiscal.ai的成功在于它深刻理解了AI在金融领域面临的最大挑战：信任缺失。黑箱算法、数据来源不明、分析过程不可解释——这些问题阻止了许多机构采用AI工具。</p>
+                    <p>通过点击追溯审计等创新，Fiscal.ai将AI分析从"神秘的预测"转变为"可验证的推理"。这种透明度不仅满足监管需求，更在心理上消除了专业投资者的顾虑，使他们可以放心地依赖AI决策支持。</p>
+                    <div class="insight-highlight">在金融领域，可解释性与可追溯性的价值往往超过纯粹的算法准确性。</div>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="insight-card">
+                <div class="insight-emoji">🏗️</div>
+                <h3>垂直整合的数据基础设施胜于通用AI工具</h3>
+                <div class="card-body">
+                    <p>许多公司试图将通用大模型直接应用到金融领域，但Fiscal.ai采取了截然不同的路径：深度垂直整合。将AI融入数据处理、标准化、多阶段验证与专业化分析的全流程，而不是在最后阶段简单套用通用模型。</p>
+                    <p>这种AI-Native的设计不仅提升了分析准确性与深度，更创造了强大的网络效应：数据越多、模型越精；用户越多、反馈越丰富；反馈越丰富、产品越好。这形成了难以被竞争对手复制的护城河。</p>
+                    <div class="insight-highlight">在金融数据领域，垂直整合的AI基础设施能够创造比通用工具高10倍的价值。</div>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="insight-card">
+                <div class="insight-emoji">💼</div>
+                <h3>B2B与B2C的双轨模式解锁市场全景</h3>
+                <div class="card-body">
+                    <p>Fiscal.ai同时服务个人投资者（SaaS订阅）与机构客户（API服务），这种双轨模式提供了多重优势。B2C端建立品牌与用户反馈，B2B端实现高利润与规模变现。两条线道的用户与数据相互反馈，共同推动产品迭代。</p>
+                    <p>这种模式对初创公司尤其宝贵。B2C端提供了可持续的现金流与市场验证，降低了获取首批B2B客户的风险；B2B端则提供了高价值的企业级客户与数据积累。两者结合，形成了指数级的增长杠杆。</p>
+                    <div class="insight-highlight">双轨商业模式不仅分散了风险，更通过用户互动与数据积累创造了显著的网络效应。</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="dots-bar" id="dots-6"></div>
+</section>
+
+<!-- ====== CHAPTER 7: 近期要闻 ====== -->
+<section class="chapter" id="ch-7">
+    <div class="chapter-header">
+        <h2>近期要闻</h2>
+        <span class="ch-sub">📰 Recent Updates & Milestones</span>
+        <span class="ch-counter" id="counter-7">1 / 1</span>
+    </div>
+    <div class="card-track" data-ch="7">
+        <div class="slide">
+            <div class="card">
+                <h3>重要里程碑与发展动态</h3>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-year">2021</div>
+                            <div class="timeline-text"><strong>成立：</strong> FinChat创立，推出AI驱动的金融研究聊天界面。</div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-year">2022</div>
+                            <div class="timeline-text"><strong>融资：</strong> 加入TinySeed Fall 2022投资组合，完成种子轮融资（约300万美元）。</div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-year">2024</div>
+                            <div class="timeline-text"><strong>增长：</strong> 用户基数突破10万，API客户累计100+家，验证市场牵引力。</div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-year">2025.06</div>
+                            <div class="timeline-text"><strong>融资与升级：</strong> 完成1000万美元A轮融资，正式从FinChat更名为Fiscal.ai，象征战略升级。</div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-year">2025.09</div>
+                            <div class="timeline-text"><strong>机构拓展：</strong> 推出VanEck整合版本，机构级API客户突破700+。</div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-year">2026.01</div>
+                            <div class="timeline-text"><strong>功能迭代：</strong> 推出AI摘要与多层级分析功能，不断强化AI能力。</div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-year">2026.03</div>
+                            <div class="timeline-text"><strong>规模里程碑：</strong> 全球用户突破35万，覆盖100000+股票与2500+公司KPI数据。</div>
+                        </div>
+                    </div>
+
+                    <div class="references">
+                        <h4>📚 参考文献</h4>
+                        <ul>
+                            <li><a href="https://fiscal.ai/" target="_blank">Fiscal.ai 官方网站</a></li>
+                            <li><a href="https://tinyseed.com/latest/fiscal-ai-10m-future-ai-finance" target="_blank">TinySeed - Fiscal.ai A轮融资公告</a></li>
+                            <li><a href="https://tracxn.com/d/companies/fiscal.ai/" target="_blank">Tracxn - Fiscal.ai企业数据库</a></li>
+                            <li><a href="https://www.findmymoat.com/tools/fiscal-ai" target="_blank">Find My Moat - Fiscal.ai特性对比</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="dots-bar" id="dots-7"></div>
+</section>
+
+</main>
+
+<script>
+    // Scroll to chapter
+    function go(chapterIndex) {
+        const section = document.getElementById(`ch-${chapterIndex}`);
+        if (section) {
+            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        updateNav(chapterIndex);
+    }
+
+    // Update active nav button
+    function updateNav(index) {
+        document.querySelectorAll('.nav-btn').forEach((btn, i) => {
+            btn.classList.toggle('active', i === index);
+        });
+    }
+
+    // Counter updater for each chapter
+    function setupCounters() {
+        for (let ch = 1; ch <= 7; ch++) {
+            const track = document.querySelector(`[data-ch="${ch}"]`);
+            if (!track) continue;
+
+            const slideCount = track.querySelectorAll('.slide').length;
+            const counter = document.getElementById(`counter-${ch}`);
+            if (counter) counter.textContent = `1 / ${slideCount}`;
+
+            track.addEventListener('scroll', () => {
+                const scrollPos = track.scrollLeft;
+                const slideWidth = track.offsetWidth;
+                const currentSlide = Math.round(scrollPos / slideWidth) + 1;
+                if (counter) counter.textContent = `${currentSlide} / ${slideCount}`;
+                updateDots(ch, currentSlide - 1);
+            });
+        }
+    }
+
+    // Dots bar generator and handler
+    function setupDots() {
+        for (let ch = 1; ch <= 7; ch++) {
+            const dotsBar = document.getElementById(`dots-${ch}`);
+            const track = document.querySelector(`[data-ch="${ch}"]`);
+            if (!dotsBar || !track) continue;
+
+            const slideCount = track.querySelectorAll('.slide').length;
+            dotsBar.innerHTML = '';
+
+            for (let i = 0; i < slideCount; i++) {
+                const dot = document.createElement('button');
+                dot.className = 'dot' + (i === 0 ? ' active' : '');
+                dot.onclick = () => {
+                    track.scrollLeft = i * track.offsetWidth;
+                };
+                dotsBar.appendChild(dot);
+            }
+        }
+    }
+
+    function updateDots(ch, activeIndex) {
+        const dotsBar = document.getElementById(`dots-${ch}`);
+        if (!dotsBar) return;
+
+        dotsBar.querySelectorAll('.dot').forEach((dot, i) => {
+            dot.classList.toggle('active', i === activeIndex);
+        });
+    }
+
+    // Stat counter animation
+    function animateStats() {
+        const statNumbers = document.querySelectorAll('.stat-number[data-count]');
+        statNumbers.forEach(el => {
+            const target = parseInt(el.dataset.count);
+            const prefix = el.dataset.prefix || '';
+            const suffix = el.dataset.suffix || '';
+            const duration = 2000;
+            const steps = 30;
+            const stepValue = target / steps;
+            let current = 0;
+
+            const interval = setInterval(() => {
+                current += stepValue;
+                if (current >= target) {
+                    el.textContent = prefix + target + suffix;
+                    clearInterval(interval);
+                } else {
+                    el.textContent = prefix + Math.floor(current) + suffix;
+                }
+            }, duration / steps);
+        });
+    }
+
+    // Scroll listener for nav update
+    const main = document.getElementById('main');
+    main.addEventListener('scroll', () => {
+        const mainHeight = main.clientHeight;
+        const scrollPos = main.scrollTop + mainHeight / 2;
+
+        for (let i = 0; i <= 7; i++) {
+            const section = document.getElementById(`ch-${i}`);
+            if (section) {
+                const rect = section.getBoundingClientRect();
+                const sectionCenter = rect.top + rect.height / 2;
+                if (sectionCenter > 0 && sectionCenter < mainHeight) {
+                    updateNav(i);
+                    break;
+                }
+            }
+        }
+    });
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', () => {
+        setupDots();
+        setupCounters();
+        animateStats();
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ramp 企业财务自动化 - 深度调研报告</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #1a3731;
+            --accent-blue: #2D5F7B;
+            --accent-purple: #6B4C9A;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #1A1514;
+            --cover-bg: #1a3731;
+            --cover-accent: #2D9B7E;
+            --cover-highlight: #FFE36D;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+            font-weight: 800; font-size: 16px; display: flex;
+            align-items: center; justify-content: center; color: white;
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(217,119,87,0.2); color: var(--accent); font-weight: 600; }
+
+        /* ===== MAIN ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, var(--cover-bg) 0%, #0f6b5a 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(45,155,126,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 20px; background: rgba(255,255,255,0.1); object-fit: contain; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 28px; color: white; }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(255,255,255,0.12); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        /* Fixed chapter header */
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        /* Horizontal card scroller */
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+
+        /* Each slide fills available height */
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Card inside slide */
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        /* Dots bar at bottom */
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); cursor: pointer; transition: all 0.3s;
+            border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+        /* ===== CONTENT-SPARSE: bigger text ===== */
+        .card.sparse p { font-size: 16px; line-height: 2; }
+        .card.sparse h3 { font-size: 22px; margin-bottom: 20px; }
+        .card.sparse .callout { font-size: 15px; padding: 18px 22px; }
+
+        /* ===== REUSABLE COMPONENTS ===== */
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px; border-radius: 6px;
+            font-size: 13px; line-height: 1.7; color: var(--text-2);
+            margin: 14px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+
+        .quote-block {
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px; margin: 14px 0;
+            font-style: italic; font-size: 14px;
+            color: var(--text-2); line-height: 1.8;
+            background: var(--bg-muted); border-radius: 0 8px 8px 0;
+        }
+        .quote-attr { font-style: normal; font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 16px; border-radius: 10px; text-align: center;
+        }
+        .metric-value { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+        .flex-row { display: flex; gap: 24px; margin: 14px 0; }
+        .flex-col { flex: 1; min-width: 0; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th { background: var(--bg-muted); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+
+        .mode-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 14px 0; }
+        .mode-box { background: var(--bg-muted); padding: 14px; border-radius: 10px; border-left: 4px solid var(--accent); }
+        .mode-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+        .mode-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .insight-card {
+            flex: 1; display: flex; flex-direction: column;
+            background: var(--bg-card); border-radius: 14px; padding: 28px 32px;
+            border: 1px solid var(--border);
+        }
+        .insight-emoji { font-size: 28px; margin-bottom: 10px; }
+        .insight-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+        .insight-card p { font-size: 15px; line-height: 1.9; color: var(--text-2); margin-bottom: 14px; }
+        .insight-highlight {
+            margin-top: auto;
+            background: var(--accent-light); border-left: 4px solid var(--accent);
+            padding: 12px 16px; border-radius: 6px;
+            font-size: 14px; font-weight: 600; color: var(--accent-2);
+        }
+
+        .news-item {
+            padding: 14px; background: var(--bg-card);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px; border: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+        .news-date { font-size: 11px; color: var(--text-3); font-weight: 600; margin-bottom: 4px; }
+        .news-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .news-title a { color: var(--accent-blue); text-decoration: none; }
+        .news-title a:hover { color: var(--accent); text-decoration: underline; }
+        .news-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .position-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px; margin: 14px 0;
+        }
+        .position-card {
+            padding: 12px; border-radius: 10px; border: 1px solid var(--border);
+        }
+        .position-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+
+        .avatar {
+            width: 56px; height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 700; font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .timeline { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+        .timeline-item { display: flex; gap: 12px; align-items: flex-start; }
+        .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
+        .timeline-year { font-weight: 700; font-size: 13px; color: var(--accent); min-width: 48px; }
+        .timeline-text { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+
+        .references {
+            margin-top: 20px; padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+        .references h4 { font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+        .references ul {
+            list-style: none; padding: 0;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 8px;
+        }
+        .references li { font-size: 12px; }
+        .references a { color: var(--accent-blue); text-decoration: none; }
+        .references a:hover { text-decoration: underline; }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            main { margin-left: 0; }
+            .chapter-header { padding: 12px 20px 0 20px; }
+            .slide { padding: 16px 20px; }
+            .cover-title { font-size: 28px; }
+            .flex-row { flex-direction: column; }
+        }
+    
+        .nav-dashboard {
+            display: block; width: calc(100% - 8px); margin: 8px 4px 4px;
+            background: rgba(217,119,87,0.15); border: 1px solid rgba(217,119,87,0.3);
+            color: var(--accent, #D97757); padding: 10px 12px; border-radius: 8px;
+            text-align: center; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+            font-weight: 600; letter-spacing: 0.3px;
+        }
+        .nav-dashboard:hover {
+            background: rgba(217,119,87,0.3); color: white;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <img class="sidebar-logo" src="data:image/png;base64,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" alt="Logo" />
+        <div>
+            <div class="sidebar-brand-text">Ramp</div>
+            <div class="sidebar-brand-sub">深度调研报告</div>
+        </div>
+    </div>
+    <div class="nav-items">
+        <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+        <button class="nav-btn" onclick="go(1)">📋 公司概况</button>
+        <button class="nav-btn" onclick="go(2)">💰 融资与财务</button>
+        <button class="nav-btn" onclick="go(3)">🛠️ 产品功能</button>
+        <button class="nav-btn" onclick="go(4)">🤖 AI技术</button>
+        <button class="nav-btn" onclick="go(5)">👥 用户反馈</button>
+        <button class="nav-btn" onclick="go(6)">💡 核心启示</button>
+        <button class="nav-btn" onclick="go(7)">📰 近期要闻</button>
+    </div>
+
+    <a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+<main id="main">
+
+<!-- ====== COVER ====== -->
+<section class="cover" id="ch-0">
+    <div class="cover-content">
+        <img class="cover-logo" src="data:image/png;base64,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" alt="Logo" />
+        <h1 class="cover-title">Ramp</h1>
+        <p class="cover-subtitle">AI如何重塑企业财务运营的未来——从企业卡到AI财务自动化平台的进化</p>
+        <div class="cover-tags">
+            <span class="cover-tag">企业财务</span>
+            <span class="cover-tag">AI-Native</span>
+            <span class="cover-tag">费控管理</span>
+            <span class="cover-tag">美国</span>
+            <span class="cover-tag">ToB</span>
+        </div>
+        <div class="cover-stats">
+            <div class="stat-box">
+                <div class="stat-number" data-count="100" data-suffix="亿">0</div>
+                <div class="stat-label">年化收入ARR</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="45000" data-prefix="">0</div>
+                <div class="stat-label">企业客户</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="320" data-suffix="亿">0</div>
+                <div class="stat-label">公司估值</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">2019</div>
+                <div class="stat-label">成立时间</div>
+            </div>
+        </div>
+        <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+    </div>
+</section>
+
+<!-- ====== CHAPTER 1: 公司概况 ====== -->
+<section class="chapter" id="ch-1">
+    <div class="chapter-header">
+        <h2>从企业卡到AI财务自动化平台</h2>
+        <span class="ch-sub">📋 公司概况</span>
+        <span class="ch-counter" id="counter-1">1 / 5</span>
+    </div>
+    <div class="card-track" data-ch="1">
+
+        <div class="slide"><div class="card"><h3>AI正在彻底改变企业财务管理</h3><div class="card-body">
+            <p>想象这样的场景：财务总监每月都要花15天时间处理发票、审批报销、对账账簿。业务部门的员工为了报销一笔小额费用要等待一周。CFO无法实时了解企业的支出趋势，只能在月末被堆积如山的数据淹没。这种"事后诸葛亮"式的财务管理，已经成为中大型企业的顽疾。</p>
+            <p>但Ramp的出现改变了这一切。它不仅是一个企业卡或费用管理工具，更是一个将AI深度融入财务运营全流程的"智能管家"。通过自主AI代理，Ramp实现了财务管理从被动审核到主动控制的跨越——错误率低于3%，让财务流程自动化不再是奢望。Ramp在2025年的爆发式增长，标志着一个新时代的到来：AI驱动的企业财务自动化。</p>
+            <div class="callout">
+                <strong>核心定位：</strong> Ramp是AI-Native的企业财务一体化平台，覆盖企业卡、费用报销、应付账款、采购、差旅等全财务流程。核心能力是通过AI代理实现财务流程自动化，帮助企业省钱、增效、提高合规性。
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card sparse"><h3>三位创始人的金融科技之旅</h3><div class="card-body">
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+                <div class="avatar">EG</div>
+                <div>
+                    <p style="margin:0;font-weight:700;font-size:16px;">Eric Glyman</p>
+                    <p style="margin:0;font-size:13px;color:var(--text-3);">CEO & Co-Founder</p>
+                </div>
+            </div>
+            <p>Eric和Karim都是哈佛校友，曾共同创立Paribus（价格追踪和退款服务），后被Capital One收购。在Capital One的经历让他们深刻体会到企业财务管理的痛点——传统企业卡提供商往往侧重于交易激励，而非帮助企业省钱和提高效率。</p>
+            <div class="quote-block">
+                我们发现了一个巨大的市场空白：没有真正以"省钱、增效"为核心的企业财务管理平台。我们决定从底层架构开始，构建一个AI-Native的金融运营平台。
+                <div class="quote-attr">— Eric Glyman, CEO of Ramp</div>
+            </div>
+            <div class="callout">
+                <strong>关键选择：</strong> Ramp从创立之初就采用了AI-Native战略——不是将AI作为事后的功能补充，而是从产品底层设计上就将AI和自动化作为核心能力。这一战略性选择为Ramp的长期竞争力奠定了坚实基础。
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>核心用户与痛点分析</h3><div class="card-body">
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;">🎯 目标客户</h4>
+                    <p style="font-size:14px;"><strong>500-50,000员工的中大型企业</strong></p>
+                    <p style="font-size:13px;color:var(--text-2);line-height:1.8;">典型客户包括Stripe、CBRE、Notion、Discord、Shopify等知名企业，这些公司都面临复杂的全球费用管理和财务合规挑战。</p>
+                </div>
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;">⚡ 五大核心痛点</h4>
+                    <div style="font-size:13px;color:var(--text-2);line-height:1.9;">
+                        <p>• 发票处理繁琐，占用大量人力</p>
+                        <p>• 无法实时掌握支出，无法及时发现异常</p>
+                        <p>• 员工报销流程复杂，审批周期长</p>
+                        <p>• 难以执行支出政策，违规支出频繁</p>
+                        <p>• 财务流程与ERP系统集成复杂</p>
+                    </div>
+                </div>
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>六年内从初创到独角兽的发展路径</h3><div class="card-body">
+            <div class="timeline">
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2019.03</div><div class="timeline-text">Ramp成立，推出首版企业卡和费用管理产品。创始人Eric、Karim和Gene完成产品市场验证。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2020-21</div><div class="timeline-text">完成A、B轮融资。推出应付账款(AP)自动化功能和第三方集成生态。用户数快速增长。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2022</div><div class="timeline-text">完成C轮融资，估值达120亿美元，正式成为独角兽。推出采购管理功能。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2023-24</div><div class="timeline-text">扩展产品生态，集成200+应用。推出AI代理概念，实现财务自动化的新境界。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2025.07</div><div class="timeline-text">推出首批自主AI代理(Agents for Controllers)，能自动执行财务决策。单月AI代理执行数百万次决策。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2025.11</div><div class="timeline-text">估值达320亿美元，年化收入(ARR)突破100亿。成为增长最快的金融科技独角兽。</div></div>
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>融资历程：资本市场的认可</h3><div class="card-body">
+            <table>
+                <thead><tr><th>融资阶段</th><th>时间</th><th>金额</th><th>估值</th><th>关键意义</th></tr></thead>
+                <tbody>
+                    <tr><td>种子轮</td><td>2019</td><td>-</td><td>-</td><td>产品验证</td></tr>
+                    <tr><td>A轮</td><td>2020</td><td>-</td><td>-</td><td>扩张起步</td></tr>
+                    <tr><td>B轮</td><td>2021</td><td>-</td><td>-</td><td>产品横向扩展</td></tr>
+                    <tr><td>C轮</td><td>2022</td><td>$3.5亿</td><td>$120亿</td><td>独角兽确立</td></tr>
+                    <tr><td>D+轮</td><td>2025</td><td>$7亿(含$5亿主融)</td><td>$320亿</td><td>AI战略加速</td></tr>
+                </tbody>
+            </table>
+            <div class="callout">
+                <strong>融资特点：</strong> 短短6年内融资超27亿美元，资本市场给予了罕见的高估值和快速加注。2025年估值在数月内从130亿飙升至320亿，说明投资者对Ramp的AI战略和市场机会高度认可。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-1"></div>
+</section>
+
+<!-- ====== CHAPTER 2: 融资与财务 ====== -->
+<section class="chapter" id="ch-2">
+    <div class="chapter-header">
+        <h2>数据驱动的爆发式增长</h2>
+        <span class="ch-sub">💰 融资与财务</span>
+        <span class="ch-counter" id="counter-2">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="2">
+
+        <div class="slide"><div class="card"><h3>核心财务指标与增长势能</h3><div class="card-body">
+            <div class="metrics-grid">
+                <div class="metric-card"><div class="metric-value">100亿</div><div class="metric-label">年化收入ARR</div></div>
+                <div class="metric-card"><div class="metric-value">45000+</div><div class="metric-label">企业客户</div></div>
+                <div class="metric-card"><div class="metric-value">320亿</div><div class="metric-label">公司估值</div></div>
+                <div class="metric-card"><div class="metric-value">27亿</div><div class="metric-label">累计融资</div></div>
+                <div class="metric-card"><div class="metric-value">2810</div><div class="metric-label">全球员工</div></div>
+                <div class="metric-card"><div class="metric-value">100%+</div><div class="metric-label">YoY增速</div></div>
+            </div>
+            <p>Ramp在2025年实现了里程碑式的增长：年化收入(ARR)突破100亿美元，企业客户数突破4.5万家，公司估值达到320亿美元。更为关键的是，Ramp的基础盈利能力同比增长153%，比公开交易的SaaS公司中位数快10倍，说明这不仅仅是收入增长，更是可持续的商业模式验证。</p>
+            <div class="callout">
+                <strong>增长质量评估：</strong> Ramp的ARR/融资比约2.0倍（融资27亿，ARR100亿），远超行业平均。这说明Ramp的增长主要驱动力是产品本身和客户口碑，而非烧钱获客。
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>多元化变现模型</h3><div class="card-body">
+            <p>Ramp采用"订阅+交易费+增值服务"的多层变现模型，每一层都有明确的价值主张和客户群体。</p>
+            <div class="mode-boxes">
+                <div class="mode-box">
+                    <div class="mode-title">💳 企业卡交易费</div>
+                    <div class="mode-desc">从企业卡交易中获得Interchange费和处理费。这是与竞品最大的差异化收入来源，占总收入30-40%。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-blue);">
+                    <div class="mode-title">📊 SaaS订阅费</div>
+                    <div class="mode-desc">按企业规模和月度消费额的订阅制，从$1000-50000/月。占总收入50-60%，是核心营收来源。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-green);">
+                    <div class="mode-title">⚙️ 增值服务</div>
+                    <div class="mode-desc">定制集成、API访问、专业咨询等高端服务。占比10%，但贡献度不断增长。</div>
+                </div>
+            </div>
+            <p>这种多层变现模型的优势是：1)降低单个收入源的风险；2)客户黏性强，迁移成本高；3)扩展空间大，可根据客户需求持续延伸。</p>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>增长引擎与可持续性分析</h3><div class="card-body">
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:8px;">🚀 获客驱动</h4>
+                    <p style="font-size:13px;line-height:1.8;">Ramp的获客模式是"产品驱动+口碑传播"。客户通过看到Ramp的"省钱"效果（如节省4亿美元、5.8百万小时），进而自发推荐给同行业企业。这形成了一个强有力的word-of-mouth飞轮。CAC预估在$3000-5000之间，回本周期6-12个月。</p>
+                </div>
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:8px;">🔒 留存与扩展</h4>
+                    <p style="font-size:13px;line-height:1.8;">Ramp的产品粘性极高。一旦客户上线企业卡和费用管理模块，就会沉淀大量数据和工作流。迁移成本高，留存率在95%+。同时，Ramp持续扩展产品功能（AP、采购、差旅等），提升ARPU和LTV。</p>
+                </div>
+            </div>
+            <div class="callout">
+                <strong>可持续性判断：</strong> Ramp的增长来自于真实的业务价值创造（帮企业省钱、省时）、产品创新（AI代理）和市场扩展（新地域、新客户群）。这是"良性增长"，而非"烧钱增长"。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-2"></div>
+</section>
+
+<!-- ====== CHAPTER 3: 产品功能 ====== -->
+<section class="chapter" id="ch-3">
+    <div class="chapter-header">
+        <h2>一体化财务运营平台的功能图景</h2>
+        <span class="ch-sub">🛠️ 产品功能</span>
+        <span class="ch-counter" id="counter-3">1 / 5</span>
+    </div>
+    <div class="card-track" data-ch="3">
+
+        <div class="slide"><div class="card"><h3>七大核心模块</h3><div class="card-body">
+            <p>Ramp不是单点工具，而是覆盖企业财务全流程的一体化平台。七大模块相互连接、数据流转，形成一个完整的"金融运营闭环"。</p>
+            <div class="mode-boxes">
+                <div class="mode-box">
+                    <div class="mode-title">💳 企业卡管理</div>
+                    <div class="mode-desc">提供虚拟卡和实体卡，支持灵活的支出限额和政策控制。与费用系统无缝集成，交易数据自动流入审批流程。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-blue);">
+                    <div class="mode-title">📋 费用报销</div>
+                    <div class="mode-desc">员工通过App上传发票，AI自动识别、分类和匹配。支持多级审批、实时追踪和智能提醒。错误率<3%。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-green);">
+                    <div class="mode-title">📄 应付账款(AP)</div>
+                    <div class="mode-desc">AI自动提取发票信息，与PO和收货单匹配。简化3-Way匹配流程，加速支付周期，提升财务效率。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-purple);">
+                    <div class="mode-title">🛒 采购管理</div>
+                    <div class="mode-desc">集中管理采购流程，支持供应商、预算和合同管理。与AP系统集成，实现端到端的采购-付款流程自动化。</div>
+                </div>
+            </div>
+            <div class="mode-boxes">
+                <div class="mode-box">
+                    <div class="mode-title">✈️ 差旅管理</div>
+                    <div class="mode-desc">一体化差旅平台，支持航班、酒店、用车预订。集成政策控制和成本分析，帮助企业管理差旅支出。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-blue);">
+                    <div class="mode-title">📊 财务分析</div>
+                    <div class="mode-desc">实时支出分析、成本洞察、预算vs实际追踪。提供CFO级的决策数据和可视化仪表板。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-green);">
+                    <div class="mode-title">🔗 生态集成</div>
+                    <div class="mode-desc">与200+应用无缝集成，包括ERP(NetSuite、Sage)、会计系统、HRIS等。确保数据流转顺畅。</div>
+                </div>
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>核心功能亮点：三重检查机制</h3><div class="card-body">
+            <p>Ramp的最大差异化优势是"三重检查"机制——通过规则、机器学习和自主代理的三层验证，确保支出合规性和准确性。</p>
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:8px;">🎯 第一层：规则引擎</h4>
+                    <p style="font-size:13px;line-height:1.8;">财务团队在平台上定义灵活的支出政策规则：如"每笔出差餐费不超$100""每个员工月度支出上限$5000"。系统实时执行，自动拦截违规交易。</p>
+                </div>
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:8px;">🧠 第二层：异常检测</h4>
+                    <p style="font-size:13px;line-height:1.8;">利用机器学习算法，全天候监控交易数据，识别异常模式（如高额单笔、频繁同供应商等）。标记可疑项目，但不直接拦截，留给财务团队审视。</p>
+                </div>
+            </div>
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:8px;">🤖 第三层：AI代理决策</h4>
+                    <p style="font-size:13px;line-height:1.8;">AI代理综合第一二层的信息，自动做出决策：批准合规支出、拦截违规支出、标记欺诈。单月执行2600万次决策，准确率>97%。</p>
+                </div>
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:8px;">📊 结果</h4>
+                    <p style="font-size:13px;line-height:1.8;">这套机制帮助Ramp客户识别并阻止了数十亿美元的违规支出和欺诈，同时让财务团队从繁琐的审批中解放出来，将精力投入到更有价值的工作。</p>
+                </div>
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>与竞品的核心区别</h3><div class="card-body">
+            <table>
+                <thead><tr><th>能力维度</th><th>Ramp</th><th>传统竞品</th><th>优势说明</th></tr></thead>
+                <tbody>
+                    <tr><td>产品范围</td><td>企业卡+费用+AP+采购+差旅</td><td>通常单点或两个功能</td><td>一体化体验，减少系统集成</td></tr>
+                    <tr><td>AI能力</td><td>自主代理，从底层架构设计</td><td>传统规则或简单ML</td><td>AI-Native带来的决策准确率和自动化深度</td></tr>
+                    <tr><td>交易数据</td><td>企业卡交易深度绑定</td><td>依赖第三方数据</td><td>一手交易数据优势，AI训练样本更丰富</td></tr>
+                    <tr><td>错误率</td><td><3%</td><td>5-10%</td><td>由于AI和多重检查机制</td></tr>
+                    <tr><td>生态开放性</td><td>200+集成，API开放</td><td>通常30-50个集成</td><td>更好的集成体验和扩展性</td></tr>
+                </tbody>
+            </table>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>典型客户案例与ROI</h3><div class="card-body">
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:8px;">某财富500强企业</h4>
+                    <p style="font-size:13px;line-height:1.8;"><strong>背景：</strong>年度支出100+亿，发票处理团队50人，月度账簿结账需15天。</p>
+                    <p style="font-size:13px;line-height:1.8;"><strong>应用Ramp后：</strong>发票处理时间从3天降至4小时，账簿结账周期缩短至4天，处理成本减少60%。</p>
+                </div>
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:8px;">快速增长的SaaS创业公司</h4>
+                    <p style="font-size:13px;line-height:1.8;"><strong>背景：</strong>全球50个国家员工，费用管理混乱，违规支出频繁。</p>
+                    <p style="font-size:13px;line-height:1.8;"><strong>应用Ramp后：</strong>报销周期从14天减至1天，违规率从15%降至<1%，财务团队工作量减少80%。</p>
+                </div>
+            </div>
+            <div class="callout">
+                <strong>ROI估算：</strong> 典型中型企业采用Ramp，年度投资$5-10万，可获得$50-100万的成本节省（通过减少人力、防止欺诈、优化支出）。回本周期3-6个月。
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>产品路线图与未来方向</h3><div class="card-body">
+            <div class="timeline">
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2024-Q4</div><div class="timeline-text">Agents for Controllers成熟化，接近100%自主执行财务审批决策，准确率>98%。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2025-Q1</div><div class="timeline-text">Agents for AP扩展，自动化应付账款流程的3-Way匹配和支付决策。单月2600万决策。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2025-Q2</div><div class="timeline-text">引入Agents for Procurement，自动化采购决策、合同管理和供应商评估。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2026-2027</div><div class="timeline-text">目标实现30倍生产力提升。通过多个AI代理并行工作，让财务流程接近全自动化。</div></div>
+            </div>
+            <div class="callout">
+                <strong>长期愿景：</strong> Ramp的终极目标是成为企业财务运营的"大脑"——AI代理能够自主完成99%的日常财务任务，财务团队从重复劳动中完全解放，专注于战略决策和价值创造。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-3"></div>
+</section>
+
+<!-- ====== CHAPTER 4: AI技术 ====== -->
+<section class="chapter" id="ch-4">
+    <div class="chapter-header">
+        <h2>AI-Native架构与自主代理系统</h2>
+        <span class="ch-sub">🤖 AI技术</span>
+        <span class="ch-counter" id="counter-4">1 / 4</span>
+    </div>
+    <div class="card-track" data-ch="4">
+
+        <div class="slide"><div class="card"><h3>AI-Native战略：从底层重新思考财务</h3><div class="card-body">
+            <p>Ramp的AI战略与大多数企业不同。传统做法是：先构建核心产品，再在事后叠加AI功能。但Ramp从成立之初就采用了"AI-Native"策略——从产品底层设计上，就将AI和自动化作为核心能力，而非后期补丁。</p>
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:8px;">❌ 传统方式</h4>
+                    <p style="font-size:13px;line-height:1.8;">1. 构建基础数字化工具<br/>2. 积累用户和数据<br/>3. 后期加上AI模块<br/>4. 问题：AI往往水土不服，与产品核心逻辑脱节</p>
+                </div>
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:8px;">✅ Ramp方式</h4>
+                    <p style="font-size:13px;line-height:1.8;">1. 从架构上设计AI决策流程<br/>2. 所有功能都围绕AI能力构建<br/>3. 从第一天就是AI驱动<br/>4. 优势：AI是产品的核心，而非装饰品</p>
+                </div>
+            </div>
+            <div class="callout">
+                <strong>战略价值：</strong> AI-Native战略让Ramp在AI代理时代具有天然的领先优势。当其他企业还在试图改造现有产品以支持代理时，Ramp的整个平台都已经为代理做好了准备。
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>自主AI代理：2025年的大杀器</h3><div class="card-body">
+            <p>2025年7月，Ramp推出了首批自主AI代理，这是公司AI战略的里程碑。这些代理能做什么？</p>
+            <div class="mode-boxes">
+                <div class="mode-box">
+                    <div class="mode-title">📋 Agents for Controllers</div>
+                    <div class="mode-desc">自动执行财务审批决策。能识别政策外支出，自动批准合规交易，标记和拦截违规/欺诈项目。单月执行数百万次决策，准确率>97%。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-blue);">
+                    <div class="mode-title">📄 Agents for AP</div>
+                    <div class="mode-desc">自动化应付账款流程。自动匹配发票、采购订单和收货单，进行3-Way匹配，决定何时付款。10月推出，单月2600万决策，处理金额>$10亿。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-green);">
+                    <div class="mode-title">🛒 Agents for Procurement</div>
+                    <div class="mode-desc">（计划中）自动化采购决策。根据采购历史、供应商评分、预算约束，自动决定采购方案。</div>
+                </div>
+            </div>
+            <div class="callout">
+                <strong>技术亮点：</strong> Ramp的AI代理不是简单的规则自动化，而是真正的"代理"——能理解上下文、跨越多步骤流程、在必要时寻求人工审批。这需要强大的NLP、推理能力和工作流编排能力。
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>AI技术栈详解</h3><div class="card-body">
+            <table>
+                <thead><tr><th>技术层面</th><th>具体应用</th><th>商业价值</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>OCR/图像识别</strong></td><td>发票自动识别、数据提取</td><td>处理速度10倍提升，错误率<3%</td></tr>
+                    <tr><td><strong>NLP/分类</strong></td><td>费用自动分类至成本中心、科目</td><td>减少50%的手工分类工作</td></tr>
+                    <tr><td><strong>异常检测</strong></td><td>识别政策外支出、欺诈迹象</td><td>帮客户防止数十亿美元损失</td></tr>
+                    <tr><td><strong>LLM/代理</strong></td><td>自主决策、上下文理解</td><td>财务流程自动化程度90%+</td></tr>
+                    <tr><td><strong>工作流编排</strong></td><td>多步骤流程自动化</td><td>从手工50步简化为AI 5步</td></tr>
+                    <tr><td><strong>数据融合</strong></td><td>企业卡、发票、ERP数据整合</td><td>完整财务视图，决策基础更丰富</td></tr>
+                </tbody>
+            </table>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>数据优势与护城河</h3><div class="card-body">
+            <p>Ramp的真正护城河在于"数据+AI"的双重优势。与纯软件公司不同，Ramp因为深度参与企业交易流程（企业卡），所以积累了<strong>数百亿美元的一手交易数据</strong>。</p>
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:8px;">📊 数据优势</h4>
+                    <ul style="font-size:13px;line-height:1.8;color:var(--text-2);">
+                        <li>企业卡交易数据（一手）</li>
+                        <li>发票数据（高质量）</li>
+                        <li>员工报销数据</li>
+                        <li>供应商交易历史</li>
+                        <li>预算执行数据</li>
+                        <li>合规监管数据</li>
+                    </ul>
+                </div>
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:8px;">🧠 AI创新</h4>
+                    <ul style="font-size:13px;line-height:1.8;color:var(--text-2);">
+                        <li>更准确的支出分类</li>
+                        <li>更灵敏的欺诈检测</li>
+                        <li>更聪慧的政策执行</li>
+                        <li>更智能的供应商评分</li>
+                        <li>更预测性的成本优化</li>
+                        <li>更好的自主代理决策</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="callout">
+                <strong>护城河评估：</strong> Ramp的数据和AI优势形成了难以复制的反馈循环：更多企业→更多数据→更好的AI→更好的产品→更多企业。竞品即使想追赶，也需要5年以上的数据积累。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-4"></div>
+</section>
+
+<!-- ====== CHAPTER 5: 用户反馈与市场认可 ====== -->
+<section class="chapter" id="ch-5">
+    <div class="chapter-header">
+        <h2>来自市场的真实认可</h2>
+        <span class="ch-sub">👥 用户反馈</span>
+        <span class="ch-counter" id="counter-5">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="5">
+
+        <div class="slide"><div class="card"><h3>客户名单与行业地位</h3><div class="card-body">
+            <p>Ramp已为超过4.5万家企业服务，客户质量远超行业平均，包括众多独角兽和财富500强企业。</p>
+            <div class="metrics-grid">
+                <div class="metric-card"><div class="metric-value">4.5万+</div><div class="metric-label">企业客户</div></div>
+                <div class="metric-card"><div class="metric-value">45+</div><div class="metric-label">独角兽客户</div></div>
+                <div class="metric-card"><div class="metric-value">500+</div><div class="metric-label">财富500企业</div></div>
+                <div class="metric-card"><div class="metric-value">4.9★</div><div class="metric-label">市场评分</div></div>
+            </div>
+            <p style="font-weight:700;margin:12px 0;color:var(--text);">典型客户包括：</p>
+            <p style="font-size:13px;line-height:1.8;color:var(--text-2);">Stripe（支付独角兽）• CBRE（全球最大地产服务商）• Notion（协作工具独角兽）• Discord（社交语音平台）• Shopify（电商平台）• Anduril（防务科技独角兽）• Cursor（AI代码编辑器）• Vercel（Web开发平台）• University of Tennessee Athletics（教育机构）</p>
+            <div class="callout">
+                <strong>客户构成特点：</strong> Ramp的客户覆盖了从初创（Cursor、Anduril）到全球企业（CBRE）的全谱，说明Ramp的解决方案具有广泛的适用性。这也意味着Ramp在财务运营自动化领域已经成为行业标准。
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>行业认可与奖项</h3><div class="card-body">
+            <div class="timeline">
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2024</div><div class="timeline-text">被G2评为支出管理领域的"Leader"（领导者象限），用户评分4.7/5</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2025.03</div><div class="timeline-text">被Capterra评为应付账款自动化领域的"best value"，性价比排名第一</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2025.11</div><div class="timeline-text">TrustRadius"支出管理"类别"顶级评级赢家" - 基于客户真实评价和满意度</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2025</div><div class="timeline-text">被Forbes评为"最有可能成为下一个$100B独角兽"之一</div></div>
+            </div>
+            <div class="callout">
+                <strong>评选含义：</strong> TrustRadius的"顶级评级赢家"完全基于用户反馈，不受供应商影响，是行业最有公信力的评选。Ramp获得这个奖项，证明了其产品质量和用户满意度的真实性。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-5"></div>
+</section>
+
+<!-- ====== CHAPTER 6: 核心启示 ====== -->
+<section class="chapter" id="ch-6">
+    <div class="chapter-header">
+        <h2>Ramp给中国企业的启示</h2>
+        <span class="ch-sub">💡 核心启示</span>
+        <span class="ch-counter" id="counter-6">1 / 5</span>
+    </div>
+    <div class="card-track" data-ch="6">
+
+        <div class="slide"><div class="insight-card">
+            <div class="insight-emoji">🎯</div>
+            <h3>启示1：从"成本中心"到"价值中心"的转变</h3>
+            <div class="card-body">
+                <p>传统企业常把财务部门视为"成本中心"——要求节省预算、控制成本。但Ramp的理念是：财务应该是"价值中心"。通过数据和AI，财务部门可以帮助业务团队做出更聪慧的决策、发现隐藏的成本节约机会、提升资金效率。</p>
+                <p>对中国企业的启示：不要只想着"裁减财务人员"或"降低财务成本"，而是应该投资在"智能财务"上，让财务团队从重复劳动中解放，专注于战略价值创造。Ramp在中国市场的对标品应该向这个方向发展。</p>
+                <div class="insight-highlight">
+                    财务自动化的终极目标是"创造价值"，而非仅仅"节省成本"。
+                </div>
+            </div>
+        </div></div>
+
+        <div class="slide"><div class="insight-card">
+            <div class="insight-emoji">🏗️</div>
+            <h3>启示2：AI-Native架构的重要性</h3>
+            <div class="card-body">
+                <p>Ramp的成功关键是从底层采用AI-Native架构。这不仅让产品在准确性和速度上领先，更重要的是让AI成为产品的核心DNA，而非事后补丁。</p>
+                <p>对中国企业的启示：如果你想在AI时代建立竞争优势，不要试图在现有的传统系统上叠加AI。而是应该重新思考产品的底层逻辑，从第一天就围绕AI能力设计。这在财务软件、RPA、ERP等领域都适用。Ramp的成功证明了这一点。</p>
+                <div class="insight-highlight">
+                    AI-Native不是"加个聊天机器人"，而是从架构上重新设计产品。
+                </div>
+            </div>
+        </div></div>
+
+        <div class="slide"><div class="insight-card">
+            <div class="insight-emoji">💼</div>
+            <h3>启示3："省钱"的强大吸引力</h3>
+            <div class="card-body">
+                <p>Ramp的核心价值主张是帮企业"省钱、省时"。这在所有企业购买决策中都是最强的驱动力。Ramp帮客户识别并防止了数十亿美元的过度支出，这个数字在营销中反复出现，极具说服力。</p>
+                <p>对中国企业的启示：B2B销售中，最强的说服力永远来自"直接的ROI"。与其强调产品有多"先进""科技范"，不如给客户一个清晰的成本节约计算。Ramp的成功验证了这一点——很多客户选择Ramp不是因为AI有多酷，而是因为"用了Ramp真的能省钱"。</p>
+                <div class="insight-highlight">
+                    在B2B销售中，最强的说服力永远是"能帮客户省多少钱"。
+                </div>
+            </div>
+        </div></div>
+
+        <div class="slide"><div class="insight-card">
+            <div class="insight-emoji">🔗</div>
+            <h3>启示4：从单点工具到一体化平台的进化路径</h3>
+            <div class="card-body">
+                <p>Ramp从企业卡开始，逐步扩展到费用管理、应付账款、采购、差旅，最终形成了一个完整的财务运营平台。这个过程不是一蹴而就的，而是有序的纵向和横向扩展。</p>
+                <p>对中国企业的启示：不要试图一次性构建一个"大而全"的平台。而是应该从一个核心功能开始，做到业界最好，然后再逐步扩展。这样可以：1)聚焦产品质量；2)更快获得市场验证；3)根据客户需求调整方向。Ramp的成功路径值得学习。</p>
+                <div class="insight-highlight">
+                    从"点"到"线"到"面"，逐步构建一体化平台，而非一开始就大而全。
+                </div>
+            </div>
+        </div></div>
+
+        <div class="slide"><div class="insight-card">
+            <div class="insight-emoji">📈</div>
+            <h3>启示5：金融科技的新赛道——企业财务自动化</h3>
+            <div class="card-body">
+                <p>Ramp的成功表明，企业财务自动化是一个新兴的高增长赛道。与消费金融科技竞争激烈、增速放缓不同，企业财务科技领域仍然存在巨大的市场空白和创新机会。</p>
+                <p>对中国企业的启示：国内财务软件市场仍以传统ERP(SAP、用友)为主，AI驱动的财务自动化平台几乎没有。这既是挑战，也是机会。一家中国企业如果能复制Ramp的成功（根据中国企业财务流程和税务合规特殊性进行本地化），有望在5-10年内成为新一代财务科技独角兽。</p>
+                <div class="insight-highlight">
+                    企业财务自动化是下一代金融科技的新蓝海，中国市场机会巨大。
+                </div>
+            </div>
+        </div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-6"></div>
+</section>
+
+<!-- ====== CHAPTER 7: 近期要闻 ====== -->
+<section class="chapter" id="ch-7">
+    <div class="chapter-header">
+        <h2>2025-2026年最新动态</h2>
+        <span class="ch-sub">📰 近期要闻</span>
+        <span class="ch-counter" id="counter-7">1 / 1</span>
+    </div>
+    <div class="card-track" data-ch="7">
+
+        <div class="slide"><div class="card"><h3>Ramp 2025-2026年重要进展</h3><div class="card-body">
+            <div class="news-item">
+                <div class="news-date">2025年7月</div>
+                <div class="news-title"><a href="https://ramp.com/blog/ramp-raised-500m-to-build-the-future-of-finance" target="_blank">Ramp推出首批自主AI代理(Agents for Controllers)</a></div>
+                <div class="news-desc">Ramp发布其首批自主AI代理，能够自动执行财务决策。这些代理识别政策外支出、自动批准合规交易、标记欺诈，单月执行数百万次决策，准确率>97%。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2025年7月</div>
+                <div class="news-title"><a href="https://www.paymentsdive.com/news/ramp-raises-500m-to-rush-ai/756360/" target="_blank">Ramp融资$5亿，估值达$225亿</a></div>
+                <div class="news-desc">Ramp完成$500M融资轮，领投方为ICONIQ Capital。此轮融资距上轮仅6周，说明投资者对Ramp的AI战略极为看好。融资主要用于加速AI研发和产品创新。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2025年10月</div>
+                <div class="news-title"><a href="https://news.crunchbase.com/fintech/ramp-jolt-ai-acquisition-fintech-ai-ma/" target="_blank">Ramp收购Jolt AI，强化AI能力</a></div>
+                <div class="news-desc">Ramp收购AI创业公司Jolt AI，用于加强其AI研发能力，特别是在自然语言理解和工程自动化方面。这是Ramp通过并购强化技术的策略体现。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2025年10月</div>
+                <div class="news-title"><a href="https://fintech.global/2025/11/18/ramp-unveils-ai-finance-tools-as-valuation-hits-32bn/" target="_blank">Ramp扩展AI代理至应付账款(Agents for AP)</a></div>
+                <div class="news-desc">Ramp推出Agents for AP，自动化应付账款流程。10月单月执行2600万次决策，处理金额超$10亿。准确率达99%+，超越了AP自动化行业的现有标准。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2025年11月</div>
+                <div class="news-title"><a href="https://www.prnewswire.com/news-releases/ramp-reaches-32-billion-valuation-doubling-revenue-and-customers-in-past-year-302616510.html" target="_blank">Ramp估值达$320亿，年化收入突破$100亿</a></div>
+                <div class="news-desc">Ramp完成最新融资轮，估值达到$320亿（由$13亿飙升）。同时披露年化收入(ARR)已突破$100亿，客户数超45000家。这个数字表明Ramp已成为增长最快的独角兽之一。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2025年11月</div>
+                <div class="news-title"><a href="https://www.prnewswire.com/news-releases/ramp-raises-500-million-at-22-5-billion-valuation-to-accelerate-ai-and-build-the-future-of-finance-302516953.html" target="_blank">Ramp再融$3亿，2025年总融资超$7亿</a></div>
+                <div class="news-desc">Ramp在2025年完成多轮融资，总额超$7亿，创下金融科技融资记录。这标志着资本市场对AI驱动财务自动化赛道的空前看好。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2026年展望</div>
+                <div class="news-title">IPO路线图与国际扩张</div>
+                <div class="news-desc">根据业界分析，Ramp管理层暗示将在ARR突破$5亿后启动IPO进程。预计2026-2027年间，Ramp可能在纽约证交所或伦敦证交所上市。同时，Ramp将加速国际扩张，特别是欧洲和APAC市场。</div>
+            </div>
+            <div class="callout">
+                <strong>关键信号：</strong> 2025年的融资和估值跳升说明：1)投资者对AI驱动财务自动化的前景空前看好；2)Ramp的AI代理技术已获得市场验证；3)IPO在2-3年内是高概率事件。
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>竞争格局与市场展望</h3><div class="card-body">
+            <div class="mode-boxes">
+                <div class="mode-box">
+                    <div class="mode-title">🔥 现状</div>
+                    <div class="mode-desc">Ramp已成为企业费用管理和财务自动化领域的市场领导者，竞品包括Brex、Expensify、Bill.com等，但在AI代理和一体化平台上，Ramp保持明显领先。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-blue);">
+                    <div class="mode-title">🌍 机会</div>
+                    <div class="mode-desc">企业财务自动化市场还处于早期阶段，全球AI金融科技市场预计在2025-2030年间年复合增长率超40%。Ramp在中国、日本、欧洲等地还有巨大的市场空白。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-green);">
+                    <div class="mode-title">⚠️ 风险</div>
+                    <div class="mode-desc">1)大型ERP厂商(SAP、Oracle)可能推出竞品；2)银行可能自建财务平台；3)经济衰退可能影响企业支出管理需求。但这些都是中长期风险，短期内Ramp的领先地位不会动摇。</div>
+                </div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-7"></div>
+</section>
+
+</main>
+
+<script>
+    // Number animation
+    document.addEventListener('DOMContentLoaded', function() {
+        let animated = false;
+
+        function animateNumbers() {
+            document.querySelectorAll('.stat-number').forEach(el => {
+                if (el.dataset.count === undefined) return;
+
+                let count = parseInt(el.dataset.count);
+                let current = 0;
+                let prefix = el.dataset.prefix || '';
+                let suffix = el.dataset.suffix || '';
+                let duration = 1500; // ms
+                let steps = 50;
+                let increment = count / steps;
+                let stepDuration = duration / steps;
+
+                let interval = setInterval(() => {
+                    current += increment;
+                    if (current >= count) {
+                        current = count;
+                        clearInterval(interval);
+                    }
+                    el.textContent = prefix + Math.round(current) + suffix;
+                }, stepDuration);
+            });
+            animated = true;
+        }
+
+        // Trigger animation when cover comes into view
+        setTimeout(animateNumbers, 300);
+    });
+
+    // Navigation and scroll handling
+    function go(chapterIndex) {
+        const main = document.getElementById('main');
+        const sections = main.querySelectorAll('section.cover, section.chapter');
+        if (sections[chapterIndex]) {
+            sections[chapterIndex].scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+
+    // Update navigation active state and counters on scroll
+    const main = document.getElementById('main');
+    main.addEventListener('scroll', function() {
+        const sections = document.querySelectorAll('section.cover, section.chapter');
+        let activeIndex = 0;
+
+        sections.forEach((section, i) => {
+            const rect = section.getBoundingClientRect();
+            if (rect.top <= window.innerHeight / 2) {
+                activeIndex = i;
+            }
+        });
+
+        document.querySelectorAll('.nav-btn').forEach((btn, i) => {
+            btn.classList.toggle('active', i === activeIndex);
+        });
+
+        // Update dots and counters for each chapter
+        document.querySelectorAll('[data-ch]').forEach(track => {
+            const chapterIndex = parseInt(track.dataset.ch);
+            const slides = track.querySelectorAll('.slide');
+            const dotsContainer = document.getElementById(`dots-${chapterIndex}`);
+            const counterEl = document.getElementById(`counter-${chapterIndex}`);
+
+            // Create dots
+            if (dotsContainer && dotsContainer.children.length === 0) {
+                slides.forEach((_, i) => {
+                    const dot = document.createElement('button');
+                    dot.className = 'dot';
+                    dot.onclick = () => {
+                        slides[i].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                    };
+                    dotsContainer.appendChild(dot);
+                });
+            }
+
+            // Update active dot
+            const scrollPos = track.scrollLeft;
+            const slideWidth = track.offsetWidth;
+            const activeSlide = Math.round(scrollPos / slideWidth);
+            const dots = dotsContainer.querySelectorAll('.dot');
+            dots.forEach((dot, i) => {
+                dot.classList.toggle('active', i === activeSlide);
+            });
+
+            // Update counter
+            if (counterEl) {
+                counterEl.textContent = (activeSlide + 1) + ' / ' + slides.length;
+            }
+        });
+
+        // Handle horizontal scroll for card-track
+        document.querySelectorAll('.card-track').forEach(track => {
+            track.addEventListener('scroll', function() {
+                const chapterIndex = parseInt(this.dataset.ch);
+                const slides = this.querySelectorAll('.slide');
+                const dotsContainer = document.getElementById(`dots-${chapterIndex}`);
+                const counterEl = document.getElementById(`counter-${chapterIndex}`);
+
+                const scrollPos = this.scrollLeft;
+                const slideWidth = this.offsetWidth;
+                const activeSlide = Math.round(scrollPos / slideWidth);
+                const dots = dotsContainer.querySelectorAll('.dot');
+                dots.forEach((dot, i) => {
+                    dot.classList.toggle('active', i === activeSlide);
+                });
+
+                if (counterEl) {
+                    counterEl.textContent = (activeSlide + 1) + ' / ' + slides.length;
+                }
+            });
+        });
+    });
+
+    // Initial trigger
+    main.dispatchEvent(new Event('scroll'));
+</script>
+
+</body>
+</html>

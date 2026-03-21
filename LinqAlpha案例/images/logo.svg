@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Background Circle -->
+  <circle cx="100" cy="100" r="95" fill="#1E3A5F" opacity="0.1"/>
+
+  <!-- Main Brand Mark - Abstract AI Network -->
+  <!-- Left Node -->
+  <circle cx="60" cy="85" r="12" fill="#1E3A5F"/>
+  <!-- Right Node -->
+  <circle cx="140" cy="85" r="12" fill="#1E3A5F"/>
+  <!-- Top Center Node -->
+  <circle cx="100" cy="50" r="12" fill="#2B5A99"/>
+  <!-- Bottom Center Node -->
+  <circle cx="100" cy="130" r="12" fill="#D97757"/>
+
+  <!-- Connection Lines - representing data flow -->
+  <!-- Left to Top -->
+  <line x1="70" y1="75" x2="95" y2="60" stroke="#2B5A99" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Right to Top -->
+  <line x1="130" y1="75" x2="105" y2="60" stroke="#2B5A99" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Left to Bottom -->
+  <line x1="70" y1="95" x2="95" y2="120" stroke="#D97757" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Right to Bottom -->
+  <line x1="130" y1="95" x2="105" y2="120" stroke="#D97757" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Left to Right -->
+  <line x1="72" y1="85" x2="128" y2="85" stroke="#1E3A5F" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+
+  <!-- Central Data Core - small circle in center -->
+  <circle cx="100" cy="85" r="5" fill="#D97757"/>
+
+  <!-- Company Name Below -->
+  <text x="100" y="165" font-family="Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="middle" fill="#1E3A5F">
+    LinqAlpha
+  </text>
+
+  <!-- Accent Elements - small dots for tech feel -->
+  <circle cx="50" cy="40" r="2" fill="#2B5A99" opacity="0.5"/>
+  <circle cx="150" cy="40" r="2" fill="#2B5A99" opacity="0.5"/>
+  <circle cx="50" cy="150" r="2" fill="#D97757" opacity="0.5"/>
+  <circle cx="150" cy="150" r="2" fill="#D97757" opacity="0.5"/>
+</svg>

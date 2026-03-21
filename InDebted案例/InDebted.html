@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InDebted 深度调研报告</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #1A1514;
+            --cover-bg: #21248D;
+            --cover-accent: #341CFF;
+            --cover-highlight: #FFE36D;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(217,119,87,0.2); color: var(--accent); font-weight: 600; }
+
+        .nav-dashboard {
+            display: block; width: 100%;
+            padding: 10px 12px; border-radius: 8px;
+            margin-top: auto; background: rgba(217,119,87,0.1); color: var(--accent);
+            font-size: 11px; font-weight: 600; text-align: center; text-decoration: none;
+            cursor: pointer; transition: all 0.2s; border: none; font-family: inherit;
+        }
+        .nav-dashboard:hover {
+            background: rgba(217,119,87,0.2);
+        }
+
+        /* ===== MAIN ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, #1B2E7F 0%, #2F3BA0 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(52,28,255,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 64px; height: 64px; border-radius: 14px; margin-bottom: 20px; background: rgba(255,255,255,0.1); object-fit: contain; }
+        .cover-title { font-size: 48px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 18px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(255,255,255,0.12); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 28px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        /* Fixed chapter header */
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        /* Horizontal card scroller */
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+
+        /* Each slide fills available height */
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Card inside slide — fills slide */
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        /* Dots bar at bottom */
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); cursor: pointer; transition: all 0.3s;
+            border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+        /* ===== CONTENT-SPARSE: bigger text for cards with less content ===== */
+        .card.sparse p { font-size: 16px; line-height: 2; }
+        .card.sparse h3 { font-size: 22px; margin-bottom: 20px; }
+        .card.sparse .callout { font-size: 15px; padding: 18px 22px; }
+        .card.sparse .quote-block { font-size: 16px; padding: 20px 24px; }
+
+        /* ===== REUSABLE COMPONENTS ===== */
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px; border-radius: 6px;
+            font-size: 13px; line-height: 1.7; color: var(--text-2);
+            margin: 14px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+
+        .quote-block {
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px; margin: 14px 0;
+            font-style: italic; font-size: 14px;
+            color: var(--text-2); line-height: 1.8;
+            background: var(--bg-muted); border-radius: 0 8px 8px 0;
+        }
+        .quote-attr { font-style: normal; font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 16px; border-radius: 10px; text-align: center;
+        }
+        .metric-value { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+        .flex-row { display: flex; gap: 24px; margin: 14px 0; }
+        .flex-col { flex: 1; min-width: 0; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th { background: var(--bg-muted); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+
+        .timeline {
+            position: relative; padding: 12px 0;
+        }
+        .timeline-item {
+            display: flex; gap: 16px; margin-bottom: 16px; position: relative;
+        }
+        .timeline-dot {
+            width: 12px; height: 12px; border-radius: 50%;
+            background: var(--accent); margin-top: 4px; flex-shrink: 0;
+        }
+        .timeline-year { font-weight: 700; font-size: 13px; color: var(--accent); min-width: 50px; }
+        .timeline-text { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+
+        .insight-card {
+            flex: 1; display: flex; flex-direction: column;
+            background: var(--bg-card); border-radius: 14px; padding: 28px 32px;
+            border: 1px solid var(--border);
+        }
+        .insight-emoji { font-size: 28px; margin-bottom: 10px; }
+        .insight-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+        .insight-card p { font-size: 15px; line-height: 1.9; color: var(--text-2); margin-bottom: 14px; }
+        .insight-highlight {
+            margin-top: auto;
+            background: var(--accent-light); border-left: 4px solid var(--accent);
+            padding: 12px 16px; border-radius: 6px;
+            font-size: 14px; font-weight: 600; color: var(--accent-2);
+        }
+
+        .news-item {
+            padding: 14px; background: var(--bg-card);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px; border: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+        .news-date { font-size: 11px; color: var(--text-3); font-weight: 600; margin-bottom: 4px; }
+        .news-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .news-title a { color: var(--accent-blue); text-decoration: none; }
+        .news-title a:hover { color: var(--accent); text-decoration: underline; }
+        .news-desc { font-size: 12px; color: var(--text-3); line-height: 1.6; }
+
+        .mode-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 14px 0; }
+        .mode-box { background: var(--bg-muted); padding: 14px; border-radius: 10px; border-left: 4px solid var(--accent); }
+        .mode-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+        .mode-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .references {
+            margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border);
+        }
+        .references h4 {
+            font-size: 13px; font-weight: 700; margin-bottom: 12px; color: var(--text);
+        }
+        .references ul {
+            list-style: none; columns: 2; gap: 16px;
+        }
+        .references li { font-size: 12px; margin-bottom: 8px; break-inside: avoid; }
+        .references a { color: var(--accent-blue); text-decoration: none; }
+        .references a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body id="main">
+
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <img class="sidebar-logo" alt="InDebted Logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAkFBMVEWg6eMCBFKp6+al8OgAAE8AAEyi7OUAAFEAAEpSd5gAAEeY3dyBvMKOztNCYISLy84pPG0EB1pXfps9WH1bhaFJao8RGluc49+Gw8sAAFh+uMMAAEQjM2mR1NYYI18dK2RnlqoHC1ZkkalvorYwRnpchpsMEldzqLgYJGU0THc+WoVGZ4cqPXMuRHNSd5FMb42imIm0AAAEbElEQVR4nO2a21bqMBCG604yCS1ShULKobSAUIsc3v/tdt3aA9idTkjBm3ze6Fqa+Ukmc4rOn1/GsVgsFovFYrFYLBYVQPSAju0Tbz3UYL0J5aeKzmTIQAimgxDu9G3tR11JWM/5kx6ccyr4cTtzOpAA4UTX/rcKynaLVBprgJTdZP9Lg3hfe8RQQCJuFpBDeZaY3QqTHfjahfk+NFEA4fttPlDBlqnJhYBAUEMFlA+lkYJ3VysO0B9bxtkoMjmGaDPsoRln7zQPXPxShcgig9sAuskgXH8s6OVGsKVveB+1FBPw04O4kMCORqegrwGc2ZHX3ZeNvIcqyLOoTGNR2wRxfuAhfEuIzqxSwMVGVwGA9NpRRBkgm1V1DHw30zsECE+DUTunUPHBIJ1UClimJyDgeVRph9GeYhEyq+2BG2gcAkkFMgtwtlF8MpIuSwV8+YzfA3lE5wCaqW4YpFVYZFu0fZjhSyE+9VUfjKwZ8jfvJMCRo1KBGGK9AJ5jtAAaqwVAWK7FOToewhhdjIlz21pBuRbborfA2+VJlX5/ld/8/JGyRXueKf2QjjykgFzBaccRYSA+t+8qSQov4Ks++iYChH0EPqL2B78sLUWiEQ4BBWqlbbEF9A1vv0NgtuPFPZC/osBZFIF1rpkTO4KMizMQOhmpxNgTYOMWkWCgLwAg8ttouYsQFQKoZlXw+cdesti9KplORjP1Il7hhfQFHYrKv93n7U4bjKvzjHf49kIe63arpOdi8hJ3lQvL/bcX8qWuAG+By4vsrBTwUQiYaNemS5yAvDBSrXO6XQCyNLmXgFoQ+50jyGs6nBMKZckr98Ut0HZCR44Foi4Qa+U1lOU1XGjU5l8ApNlLC8cPVYP0GcymRTp8uaFNJt5zC1FLWQJRURbS7KYu2TQZkbRMRuOHt+n/BOzN0rExsgyn7q8UJJCuCh+kpkvdVJvUitLMzLyMWuv0hgtRL8tVvXy7fX/M566a+Wr4o1MiZW/GJyaza/Bi1h6VObu+6SBfq9bMpConuIaVX0dl6FXNqTpgtyCRiZl9XNqvKgqztgSed8jK4GIuC/JQDiiYURSCCFuaXPbg2yIK5y6IHtE0Qt5wDzjsVDNDNuVwgNPAxHy+Bf0pZgtYfRpH0l01pouNR+Yb2v6M6k5m1UGTsLL/NE+N8xB4vUELo3Wt4IDNa21Uuzc17+Ce0kv74CS1Vwu6MPNAfa0QDWr21RPde9j3kmn9uYD1HlmI5CeVZhdPZwI/nzM2DsTzg+nlo5UYdPGYf2Wo2QWdME1Gq6tZv1AO1G8zL5NxA/vjy3LFrpI2F4PuH+36cfOL7uco4yoyctr9/oO/RL/rUxGYPF43Qw5Y+5QtZve4fytcYuZ03rvLm63346CbzdOsk/+laeAJUZxSliV3Mp+3ei3laW7dPfTv914NUfx/L8yNs3gUeB3+P1eDgvBtLhpx59PDNg3lPa3/UyD7SdBA0pdSOve2/iWhMRk8xLTFYrFYLBaLxWLpnr9YbWVQwQn2jAAAAABJRU5ErkJggg==" />
+        <div>
+            <div class="sidebar-brand-text">InDebted</div>
+            <div class="sidebar-brand-sub">深度调研报告</div>
+        </div>
+    </div>
+    <div class="nav-items">
+        <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+        <button class="nav-btn" onclick="go(1)">📋 公司概况</button>
+        <button class="nav-btn" onclick="go(2)">🛠️ 核心产品</button>
+        <button class="nav-btn" onclick="go(3)">🧠 AI技术能力</button>
+        <button class="nav-btn" onclick="go(4)">💰 商业模式</button>
+        <button class="nav-btn" onclick="go(5)">📊 市场竞争</button>
+        <button class="nav-btn" onclick="go(6)">🌟 核心启示</button>
+        <button class="nav-btn" onclick="go(7)">📰 近期要闻</button>
+    </div>
+    <a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+<main>
+
+<!-- ====== CHAPTER 0: COVER ====== -->
+<section class="cover" id="ch-0">
+    <div class="cover-content">
+        <img class="cover-logo" alt="InDebted Logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAkFBMVEWg6eMCBFKp6+al8OgAAE8AAEyi7OUAAFEAAEpSd5gAAEeY3dyBvMKOztNCYISLy84pPG0EB1pXfps9WH1bhaFJao8RGluc49+Gw8sAAFh+uMMAAEQjM2mR1NYYI18dK2RnlqoHC1ZkkalvorYwRnpchpsMEldzqLgYJGU0THc+WoVGZ4cqPXMuRHNSd5FMb42imIm0AAAEbElEQVR4nO2a21bqMBCG604yCS1ShULKobSAUIsc3v/tdt3aA9idTkjBm3ze6Fqa+Ukmc4rOn1/GsVgsFovFYrFYLBYVQPSAju0Tbz3UYL0J5aeKzmTIQAimgxDu9G3tR11JWM/5kx6ccyr4cTtzOpAA4UTX/rcKynaLVBprgJTdZP9Lg3hfe8RQQCJuFpBDeZaY3QqTHfjahfk+NFEA4fttPlDBlqnJhYBAUEMFlA+lkYJ3VysO0B9bxtkoMjmGaDPsoRln7zQPXPxShcgig9sAuskgXH8s6OVGsKVveB+1FBPw04O4kMCORqegrwGc2ZHX3ZeNvIcqyLOoTGNR2wRxfuAhfEuIzqxSwMVGVwGA9NpRRBkgm1V1DHw30zsECE+DUTunUPHBIJ1UClimJyDgeVRph9GeYhEyq+2BG2gcAkkFMgtwtlF8MpIuSwV8+YzfA3lE5wCaqW4YpFVYZFu0fZjhSyE+9VUfjKwZ8jfvJMCRo1KBGGK9AJ5jtAAaqwVAWK7FOToewhhdjIlz21pBuRbborfA2+VJlX5/ld/8/JGyRXueKf2QjjykgFzBaccRYSA+t+8qSQov4Ks++iYChH0EPqL2B78sLUWiEQ4BBWqlbbEF9A1vv0NgtuPFPZC/osBZFIF1rpkTO4KMizMQOhmpxNgTYOMWkWCgLwAg8ttouYsQFQKoZlXw+cdesti9KplORjP1Il7hhfQFHYrKv93n7U4bjKvzjHf49kIe63arpOdi8hJ3lQvL/bcX8qWuAG+By4vsrBTwUQiYaNemS5yAvDBSrXO6XQCyNLmXgFoQ+50jyGs6nBMKZckr98Ut0HZCR44Foi4Qa+U1lOU1XGjU5l8ApNlLC8cPVYP0GcymRTp8uaFNJt5zC1FLWQJRURbS7KYu2TQZkbRMRuOHt+n/BOzN0rExsgyn7q8UJJCuCh+kpkvdVJvUitLMzLyMWuv0hgtRL8tVvXy7fX/M566a+Wr4o1MiZW/GJyaza/Bi1h6VObu+6SBfq9bMpConuIaVX0dl6FXNqTpgtyCRiZl9XNqvKgqztgSed8jK4GIuC/JQDiiYURSCCFuaXPbg2yIK5y6IHtE0Qt5wDzjsVDNDNuVwgNPAxHy+Bf0pZgtYfRpH0l01pouNR+Yb2v6M6k5m1UGTsLL/NE+N8xB4vUELo3Wt4IDNa21Uuzc17+Ce0kv74CS1Vwu6MPNAfa0QDWr21RPde9j3kmn9uYD1HlmI5CeVZhdPZwI/nzM2DsTzg+nlo5UYdPGYf2Wo2QWdME1Gq6tZv1AO1G8zL5NxA/vjy3LFrpI2F4PuH+36cfOL7uco4yoyctr9/oO/RL/rUxGYPF43Qw5Y+5QtZve4fytcYuZ03rvLm63346CbzdOsk/+laeAJUZxSliV3Mp+3ei3laW7dPfTv914NUfx/L8yNs3gUeB3+P1eDgvBtLhpx59PDNg3lPa3/UyD7SdBA0pdSOve2/iWhMRk8xLTFYrFYLBaLxWLpnr9YbWVQwQn2jAAAAABJRU5ErkJggg==" />
+        <h1 class="cover-title">InDebted</h1>
+        <p class="cover-subtitle">AI如何将冰冷的债务催收转变为人性化的财务支持</p>
+        <div class="cover-tags">
+            <span class="cover-tag">AI驱动催收</span>
+            <span class="cover-tag">行为心理学</span>
+            <span class="cover-tag">全球化SaaS</span>
+            <span class="cover-tag">C轮融资</span>
+        </div>
+        <div class="cover-stats">
+            <div class="stat-box">
+                <div class="stat-number" data-count="25" data-suffix="亿美元">0</div>
+                <div class="stat-label">全球估值 (2024)</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="130" data-suffix="+">0</div>
+                <div class="stat-label">企业客户</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="430" data-suffix="万+">0</div>
+                <div class="stat-label">全球活跃账户</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="163" data-suffix="百万美元">0</div>
+                <div class="stat-label">总融资额</div>
+            </div>
+        </div>
+        <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+    </div>
+</section>
+
+<!-- ====== CHAPTER 1: 公司概况 (2 slides) ====== -->
+<section class="chapter" id="ch-1">
+    <div class="chapter-header">
+        <h2>公司概况</h2>
+        <span class="ch-sub">📋 Company Overview</span>
+        <span class="ch-counter" id="counter-1">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="1">
+
+        <!-- 1/2 -->
+        <div class="slide"><div class="card"><h3>谁是InDebted？</h3><div class="card-body">
+            <p><strong>InDebted是一家澳大利亚金融科技公司，成立于2016年，致力于通过AI和行为心理学重塑全球债务催收行业。</strong>公司已获得超过1.63亿美元融资，2024年C轮融资后估值达到25亿美元。</p>
+            <p>InDebted的核心使命是：通过AI和同理心，帮助企业更高效地回收债务，同时为债务人提供更尊严、更有支持的财务体验。这个使命来自创始人Josh Foreman的深刻观察：<strong>传统债务催收行业冷漠、效率低下、对债务人伤害大</strong>，是一个"双输"的行业。</p>
+            <p>创始人Josh Foreman是一位连续创业者，拥有深厚的金融科技和催收行业经验。他意识到，如果能将AI与行为心理学结合，就有可能将这个行业转变为更人性化、更有效的模式。这个洞察，成为了InDebted的起点。</p>
+            <div class="callout">
+                <strong>核心定位：</strong> 全球智能催收领域的领导者，以AI-Native架构、海量独特数据、卓越用户体验而闻名
+            </div>
+        </div></div></div>
+
+        <!-- 2/2 发展里程碑 -->
+        <div class="slide"><div class="card"><h3>发展里程碑</h3><div class="card-body">
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">2016</div>
+                    <div class="timeline-text"><strong>InDebted成立：</strong> 推出Collect产品，开创数字债务催收先河</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">2018-19</div>
+                    <div class="timeline-text"><strong>A轮融资1400万美元：</strong> 进入加拿大市场，国际化起步</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">2021</div>
+                    <div class="timeline-text"><strong>B轮融资2500万美元：</strong> 进入美国市场，团队扩至250人，北美市场破局</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">2022</div>
+                    <div class="timeline-text"><strong>澳大利亚最佳工作场所：</strong> 获得企业文化和人才认可</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">2024.09</div>
+                    <div class="timeline-text"><strong>C轮融资A$6000万，收购Receeve：</strong> 技术升级与市场扩张，估值达25亿美元</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">2025</div>
+                    <div class="timeline-text"><strong>全球六大地区布局：</strong> 进军拉丁美洲，建立中东战略伙伴关系</div>
+                </div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-1"></div>
+</section>
+
+<!-- ====== CHAPTER 2: 核心产品 (2 slides) ====== -->
+<section class="chapter" id="ch-2">
+    <div class="chapter-header">
+        <h2>核心产品</h2>
+        <span class="ch-sub">🛠️ Products & Services</span>
+        <span class="ch-counter" id="counter-2">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="2">
+
+        <!-- 1/2 Collect -->
+        <div class="slide"><div class="card"><h3>Collect：完全外包催收</h3><div class="card-body">
+            <p><strong>Collect是InDebted的旗舰产品，提供完全外包的第三方催收服务。</strong>InDebted代表企业客户进行催收，客户只需支付基于成功回收金额的佣金（通常为15-25%）。</p>
+            <p><strong>核心能力：</strong></p>
+            <ul style="margin-left: 20px; margin-bottom: 12px;">
+                <li style="font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 6px;">多渠道数字沟通（SMS、邮件、在线聊天、电话）</li>
+                <li style="font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 6px;">AI驱动的个性化还款方案建议</li>
+                <li style="font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 6px;">24/7自助服务门户——86%客户自助解决</li>
+                <li style="font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 6px;">专业催收代理团队提供人工支持</li>
+                <li style="font-size: 14px; line-height: 1.8; color: var(--text-2);">企业级合规保障（ISO 27001、SOC 2、PCI、GDPR）</li>
+            </ul>
+            <p><strong>客户群：</strong> 寻求完全外包催收、无需维护内部团队的企业（包括Klarna、Affirm等头部BNPL平台）</p>
+            <div class="callout">
+                <strong>关键指标：</strong> 支付转化率提升32%，催收绩效提升30%，4.9/5的Google评分（2700+评论）
+            </div>
+        </div></div></div>
+
+        <!-- 2/2 Receeve -->
+        <div class="slide"><div class="card"><h3>Receeve：AI原生平台</h3><div class="card-body">
+            <p><strong>Receeve是InDebted于2024年收购的AI原生第一方催收软件平台，赋能企业内部催收团队。</strong>采用SaaS订阅模式，按客户规模和使用量分级定价，ACV范围$50k-$500k+。</p>
+            <p><strong>核心能力：</strong></p>
+            <ul style="margin-left: 20px; margin-bottom: 12px;">
+                <li style="font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 6px;">AI决策引擎与行为建模——预测债务人行为、优化策略</li>
+                <li style="font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 6px;">自动化工作流与智能任务分配</li>
+                <li style="font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 6px;">实时数据洞察与可视化仪表板</li>
+                <li style="font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 6px;">完全的工作流、策略和AI治理控制</li>
+                <li style="font-size: 14px; line-height: 1.8; color: var(--text-2);">云原生架构、无缝集成现有系统</li>
+            </ul>
+            <p><strong>客户群：</strong> 拥有内部催收团队、需要技术赋能的大型金融机构和银行</p>
+            <div class="callout">
+                <strong>战略意义：</strong> Collect+Receeve形成"外包+自建"双轨道，覆盖不同企业的催收需求，强化市场地位
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-2"></div>
+</section>
+
+<!-- ====== CHAPTER 3: AI技术能力 (3 slides) ====== -->
+<section class="chapter" id="ch-3">
+    <div class="chapter-header">
+        <h2>AI技术能力</h2>
+        <span class="ch-sub">🧠 AI & Technology</span>
+        <span class="ch-counter" id="counter-3">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="3">
+
+        <!-- 1/3 核心能力 -->
+        <div class="slide"><div class="card"><h3>五大核心AI能力</h3><div class="card-body">
+            <p><strong>1. 意图识别与情绪分析</strong></p>
+            <p style="margin-bottom: 14px; margin-left: 12px; font-size: 13px; color: var(--text-3);">精准识别债务人沟通中的意图和情绪，采取相应沟通策略。提升沟通效果，避免冲突升级。</p>
+
+            <p><strong>2. 个性化策略生成</strong></p>
+            <p style="margin-bottom: 14px; margin-left: 12px; font-size: 13px; color: var(--text-3);">基于18亿+独特客户事件数据，预测债务人行为并优化沟通策略。结果：支付转化率提升32%，催收绩效提升30%。</p>
+
+            <p><strong>3. AI文案生成</strong></p>
+            <p style="margin-bottom: 14px; margin-left: 12px; font-size: 13px; color: var(--text-3);">使用定制AI工具生成合规的个性化催收信息。邮件支付转化率提升32%。</p>
+
+            <p><strong>4. AI Collector（对话机器人）</strong></p>
+            <p style="margin-bottom: 14px; margin-left: 12px; font-size: 13px; color: var(--text-3);">2024年推出，处理入站客户查询，可解决80%的电子邮件咨询。响应速度比人工快100倍。</p>
+
+            <p><strong>5. 行为心理学建模</strong></p>
+            <p style="margin-left: 12px; font-size: 13px; color: var(--text-3);">融合心理学洞察，预测最有效的沟通时间、渠道和内容。显著提升还款意愿和客户满意度。</p>
+        </div></div></div>
+
+        <!-- 2/3 数据与架构 -->
+        <div class="slide"><div class="card"><h3>数据与技术架构</h3><div class="card-body">
+            <p><strong>数据基础：18亿+独特客户事件</strong></p>
+            <p style="margin-bottom: 12px; font-size: 13px; color: var(--text-3);">InDebted拥有超过18亿条独特的客户事件数据，为专有机器学习模型提供坚实基础。这些数据不仅包含交易记录，更包含"用户在什么情绪下、面对什么财务状况时、做出了什么决策"的完整行为链。</p>
+
+            <p><strong>技术架构：AI-Native云原生设计</strong></p>
+            <p style="margin-bottom: 12px; font-size: 13px; color: var(--text-3);">通过收购Receeve，InDebted获得了业界领先的可扩展基础设施。AI决策逻辑嵌入每个业务流程中，而非后期加装。</p>
+
+            <p><strong>模型特殊化：专为债务催收场景设计</strong></p>
+            <p style="margin-bottom: 12px; font-size: 13px; color: var(--text-3);">不同于通用大语言模型，InDebted的AI深度融合行为心理学，能够理解债务人的特殊心理和财务困境。</p>
+
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">97%</div>
+                    <div class="metric-label">AI分类准确率</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">80%</div>
+                    <div class="metric-label">AI自动解决率</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">86%</div>
+                    <div class="metric-label">自助门户解决率</div>
+                </div>
+            </div>
+        </div></div></div>
+
+        <!-- 3/3 安全与合规 -->
+        <div class="slide"><div class="card"><h3>企业级安全与合规</h3><div class="card-body">
+            <p><strong>InDebted的所有产品均通过严格的国际认证和法律合规审查。</strong></p>
+            <p style="margin-bottom: 12px;">安全认证：</p>
+            <ul style="margin-left: 20px; margin-bottom: 12px;">
+                <li style="font-size: 13px; line-height: 1.7; color: var(--text-2); margin-bottom: 4px;">ISO 27001（信息安全管理）</li>
+                <li style="font-size: 13px; line-height: 1.7; color: var(--text-2); margin-bottom: 4px;">SOC 2（系统与组织控制）</li>
+                <li style="font-size: 13px; line-height: 1.7; color: var(--text-2); margin-bottom: 4px;">PCI DSS（支付卡行业数据安全）</li>
+            </ul>
+            <p style="margin-bottom: 12px;">法律合规：</p>
+            <ul style="margin-left: 20px;">
+                <li style="font-size: 13px; line-height: 1.7; color: var(--text-2); margin-bottom: 4px;">GDPR（欧盟通用数据保护条例）</li>
+                <li style="font-size: 13px; line-height: 1.7; color: var(--text-2); margin-bottom: 4px;">FDCPA（美国公平债务催收行为法）</li>
+            </ul>
+            <div class="callout" style="margin-top: 14px;">
+                <strong>用户信任：</strong> 通过透明的隐私政策、用户数据控制和合规催收流程，赢得了全球用户的4.9/5评分（基于2700+Google评论）
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-3"></div>
+</section>
+
+<!-- ====== CHAPTER 4: 商业模式 (2 slides) ====== -->
+<section class="chapter" id="ch-4">
+    <div class="chapter-header">
+        <h2>商业模式</h2>
+        <span class="ch-sub">💰 Business Model</span>
+        <span class="ch-counter" id="counter-4">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="4">
+
+        <!-- 1/2 收入结构 -->
+        <div class="slide"><div class="card"><h3>双轨收入模式</h3><div class="card-body">
+            <p><strong>InDebted采用"Collect佣金 + Receeve订阅"的双轨收入模式，覆盖不同企业的催收需求。</strong></p>
+
+            <p style="margin-top: 14px; margin-bottom: 8px;"><strong>1. Collect佣金收入（高度可扩展）</strong></p>
+            <p style="margin-bottom: 12px; font-size: 13px; color: var(--text-3);">基于成功回收金额的变量佣金，通常为回收金额的15-25%。随着催收规模和成功率提升，收入快速增长。这个模式激励InDebted持续优化催收效果。</p>
+
+            <p style="margin-bottom: 8px;"><strong>2. Receeve订阅收入（稳定SaaS）</strong></p>
+            <p style="margin-bottom: 12px; font-size: 13px; color: var(--text-3);">SaaS月度/年度订阅，按客户规模和使用量分级，ACV范围$50k-$500k+。为大型金融机构提供稳定、可预测的收入。</p>
+
+            <div class="callout">
+                <strong>商业优势：</strong> 两种收入模式的结合创造了独特的风险分散和增长机制——Collect的高杠杆和Receeve的稳定性互补
+            </div>
+
+            <p style="margin-top: 14px;"><strong>融资与估值：</strong></p>
+            <ul style="margin-left: 20px;">
+                <li style="font-size: 13px; line-height: 1.8; color: var(--text-2); margin-bottom: 4px;">总融资：$1.63亿美元</li>
+                <li style="font-size: 13px; line-height: 1.8; color: var(--text-2);">C轮后估值：$25亿（2024年9月）</li>
+            </ul>
+        </div></div></div>
+
+        <!-- 2/2 市场扩张 -->
+        <div class="slide"><div class="card"><h3>增长与扩张策略</h3><div class="card-body">
+            <p><strong>客户获取与保留：</strong></p>
+            <ul style="margin-left: 20px; margin-bottom: 12px;">
+                <li style="font-size: 13px; line-height: 1.8; color: var(--text-2); margin-bottom: 4px;">直销：与大型金融机构建立深层合作</li>
+                <li style="font-size: 13px; line-height: 1.8; color: var(--text-2); margin-bottom: 4px;">行业伙伴推荐：通过Klarna、Affirm等头部客户的背书获得新客户</li>
+                <li style="font-size: 13px; line-height: 1.8; color: var(--text-2);">案例驱动增长：4.9星Google评分成为强有力的市场证明</li>
+            </ul>
+
+            <p><strong>留存与扩张：</strong></p>
+            <ul style="margin-left: 20px; margin-bottom: 14px;">
+                <li style="font-size: 13px; line-height: 1.8; color: var(--text-2); margin-bottom: 4px;">极高客户留存率，通过持续的AI能力升级、合规支持和客户成功管理维系关系</li>
+                <li style="font-size: 13px; line-height: 1.8; color: var(--text-2);">Collect+Receeve协同销售：同一客户可从外包升级到自建，提升ACV</li>
+            </ul>
+
+            <p><strong>地理扩张（6大地区）：</strong></p>
+            <ul style="margin-left: 20px;">
+                <li style="font-size: 13px; line-height: 1.8; color: var(--text-2); margin-bottom: 4px;">澳洲、加拿大、美国、欧洲、拉丁美洲、中东</li>
+                <li style="font-size: 13px; line-height: 1.8; color: var(--text-2);">2025年与Meedaf建立中东战略伙伴，进军墨西哥</li>
+            </ul>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-4"></div>
+</section>
+
+<!-- ====== CHAPTER 5: 市场与竞争 (2 slides) ====== -->
+<section class="chapter" id="ch-5">
+    <div class="chapter-header">
+        <h2>市场与竞争</h2>
+        <span class="ch-sub">📊 Market & Competition</span>
+        <span class="ch-counter" id="counter-5">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="5">
+
+        <!-- 1/2 市场规模与地位 -->
+        <div class="slide"><div class="card"><h3>巨大的市场机遇</h3><div class="card-body">
+            <p><strong>市场规模与增长：</strong></p>
+            <p style="margin-bottom: 12px;">全球AI催收市场在2024年的规模约为33.4亿美元，预计2034年达到159亿美元，复合年增长率（CAGR）高达17.8%。</p>
+
+            <p><strong>目标市场：</strong></p>
+            <p style="margin-bottom: 12px;">全球范围内拥有不良债务问题的企业，包括：</p>
+            <ul style="margin-left: 20px; margin-bottom: 12px;">
+                <li style="font-size: 13px; line-height: 1.8; color: var(--text-2); margin-bottom: 4px;">大型银行和金融机构</li>
+                <li style="font-size: 13px; line-height: 1.8; color: var(--text-2); margin-bottom: 4px;">BNPL（先买后付）平台（Klarna、Affirm等）</li>
+                <li style="font-size: 13px; line-height: 1.8; color: var(--text-2); margin-bottom: 4px;">电信运营商和公用事业公司</li>
+                <li style="font-size: 13px; line-height: 1.8; color: var(--text-2);">消费金融和保险公司</li>
+            </ul>
+
+            <div class="callout">
+                <strong>InDebted的市场地位：</strong> 全球智能催收领域的领导者，拥有130+头部客户，管理430万+活跃账户
+            </div>
+        </div></div></div>
+
+        <!-- 2/2 竞争优势 -->
+        <div class="slide"><div class="card"><h3>深层竞争壁垒</h3><div class="card-body">
+            <p><strong>InDebted的六大竞争优势：</strong></p>
+
+            <p style="margin-top: 12px; margin-bottom: 6px;"><strong>1. 行为心理学与AI的深度融合</strong></p>
+            <p style="margin-bottom: 12px; font-size: 13px; color: var(--text-3);">大多数催收AI企业只关注技术效率，InDebted融合心理学洞察，理解债务人的情绪和行为动机，这是无法快速复制的。</p>
+
+            <p style="margin-bottom: 6px;"><strong>2. 18亿+数据的竞争壁垒</strong></p>
+            <p style="margin-bottom: 12px; font-size: 13px; color: var(--text-3);">8年积累的海量数据是最深的护城河。任何竞争对手都无法在短时间内复制这种数据资产。</p>
+
+            <p style="margin-bottom: 6px;"><strong>3. AI-Native云原生架构</strong></p>
+            <p style="margin-bottom: 12px; font-size: 13px; color: var(--text-3);">通过收购Receeve获得的技术领先，使InDebted拥有业界最灵活、最可扩展的系统。</p>
+
+            <p style="margin-bottom: 6px;"><strong>4. 全球化覆盖与本地化能力</strong></p>
+            <p style="margin-bottom: 12px; font-size: 13px; color: var(--text-3);">已在6大地区运营，理解不同市场的监管、文化和业务需求。</p>
+
+            <p style="margin-bottom: 6px;"><strong>5. 消费者认可度</strong></p>
+            <p style="margin-bottom: 12px; font-size: 13px; color: var(--text-3);">4.9星Google评分和86%自助解决率证明用户体验卓越，成为市场信任的象征。</p>
+
+            <p style="margin-bottom: 6px;"><strong>6. 企业级合规完整性</strong></p>
+            <p style="font-size: 13px; color: var(--text-3);">ISO 27001、SOC 2、PCI、GDPR、FDCPA等全认证，降低企业客户的法律风险。</p>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-5"></div>
+</section>
+
+<!-- ====== CHAPTER 6: 核心启示 (3 slides) ====== -->
+<section class="chapter" id="ch-6">
+    <div class="chapter-header">
+        <h2>从InDebted看AI的未来</h2>
+        <span class="ch-sub">🌟 Core Insights</span>
+        <span class="ch-counter" id="counter-6">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="6">
+
+        <!-- 1/3 启示一 -->
+        <div class="slide"><div class="insight-card"><div class="insight-emoji">🎭</div>
+            <h3>启示一：同理心是AI的杀手锏</h3>
+            <div class="card-body">
+                <p>传统的催收AI企业假设：更高的催收转化率 = 更好的产品。InDebted的深刻洞察是：<strong>如果债务人感受到冷漠，再高的转化率也建立不了长期信任。</strong></p>
+                <p>InDebted将催收从"坏人角色"重塑为"财务顾问"。通过AI文案生成、个性化还款方案、24/7自助门户等设计，让债务人感受到支持而非施压。这种同理心带来的结果令人瞩目：</p>
+                <ul style="margin-left: 20px; margin-bottom: 8px;">
+                    <li style="font-size: 13px; line-height: 1.8; color: var(--text-2); margin-bottom: 4px;">支付转化率提升32%</li>
+                    <li style="font-size: 13px; line-height: 1.8; color: var(--text-2);">4.9/5用户评分（行业罕见）</li>
+                </ul>
+                <div class="insight-highlight">
+                    对AI行业的启示：最好的AI不是最聪明的AI，而是最体谅人的AI。技术应该服务于人性，而非压制人性。
+                </div>
+            </div>
+        </div></div>
+
+        <!-- 2/3 启示二 -->
+        <div class="slide"><div class="insight-card"><div class="insight-emoji">🤖</div>
+            <h3>启示二：行为数据是新的石油</h3>
+            <div class="card-body">
+                <p>在大模型普遍可得的时代，<strong>数据成为了AI竞争的最后壁垒。</strong>InDebted的18亿+客户事件数据不仅是"大"，更重要的是"特"。</p>
+                <p>这些数据捕捉的是真实的人在真实的财务困境中的行为——什么时间容易接受催收、什么渠道最有效、什么话术容易激发还款意愿。这种深度的行为洞察是任何通用AI模型都无法提供的。</p>
+                <p><strong>数据的护城河来自两个维度：</strong></p>
+                <ul style="margin-left: 20px; margin-bottom: 8px;">
+                    <li style="font-size: 13px; line-height: 1.8; color: var(--text-2); margin-bottom: 4px;">量：18亿条事件，持续增长</li>
+                    <li style="font-size: 13px; line-height: 1.8; color: var(--text-2);">质：特定领域、高信号比、持续标注</li>
+                </ul>
+                <div class="insight-highlight">
+                    对AI创业的启示：如果你依赖通用模型，你没有护城河。但如果你拥有特定领域的高质量数据和fine-tuning能力，你是难以替代的。
+                </div>
+            </div>
+        </div></div>
+
+        <!-- 3/3 启示三 -->
+        <div class="slide"><div class="insight-card"><div class="insight-emoji">🌍</div>
+            <h3>启示三：全球化的AI差异化竞争</h3>
+            <div class="card-body">
+                <p><strong>InDebted的全球化不是简单的地理扩张，而是AI在不同监管、文化、商业环境下的差异化应用。</strong></p>
+                <p>在美国，AI必须完全遵守FDCPA（公平债务催收法）；在欧洲，GDPR对数据使用施加严格限制；在中东，文化期待与Western models完全不同。InDebted通过与Meedaf合作、在墨西哥设立区域中心，体现了对本地化的重视。</p>
+                <p>这意味着：<strong>全球化不是一个AI模型打天下，而是在保持核心AI能力的同时，深度融合本地知识。</strong>这种"全球思维、本地执行"的方式，是未来AI企业必然的生存方式。</p>
+                <div class="insight-highlight">
+                    对全球AI企业的启示：单一的全球模型会在本地化要求面前失效。成功的全球化需要既有强大的技术中枢，又有深厚的本地合作网络。
+                </div>
+            </div>
+        </div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-6"></div>
+</section>
+
+<!-- ====== CHAPTER 7: 近期要闻 (1 card) ====== -->
+<section class="chapter" id="ch-7">
+    <div class="chapter-header">
+        <h2>近期要闻</h2>
+        <span class="ch-sub">📰 Latest Updates</span>
+        <span class="ch-counter" id="counter-7">1 / 1</span>
+    </div>
+    <div class="card-track" data-ch="7">
+        <div class="slide"><div class="card"><h3>最近动态追踪</h3><div class="card-body">
+            <div class="news-item">
+                <div class="news-date">2024年9月</div>
+                <div class="news-title">InDebted完成C轮融资A$6000万，收购Receeve</div>
+                <div class="news-desc">InDebted获得Airtree和Australian Retirement Trust等投资方支持，成功收购德国AI催收软件Receeve，估值达到25亿美元，强化企业级催收市场地位。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2025年1月</div>
+                <div class="news-title">InDebted进军中东市场，与Meedaf建立战略伙伴关系</div>
+                <div class="news-desc">InDebted宣布与阿联酋金融科技公司Meedaf建立战略合作，将AI催收服务扩展到阿联酋和海湾地区，结合本地知识与全球AI专业能力。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2025年Q1</div>
+                <div class="news-title">InDebted在墨西哥启动业务，进一步推进全球扩张</div>
+                <div class="news-desc">InDebted在墨西哥设立区域中心，启动拉丁美洲业务，进一步完善全球六大地区（澳洲、加拿大、美国、欧洲、拉美、中东）的布局。</div>
+            </div>
+            <div class="references">
+                <h4>📚 参考文献</h4>
+                <ul>
+                    <li><a href="https://www.indebted.co" target="_blank">InDebted官方网站</a></li>
+                    <li><a href="https://fintech.global/2024/09/27/indebted-bags-60m-to-enhance-debt-collection-with-ai-and-machine-learning/" target="_blank">InDebted C轮融资 - Fintech Magazine</a></li>
+                    <li><a href="https://www.indebted.co/en-us/blog/" target="_blank">InDebted博客与资源中心</a></li>
+                </ul>
+            </div>
+        </div></div></div>
+    </div>
+    <div class="dots-bar" id="dots-7" style="visibility:hidden;"></div>
+</section>
+
+</main>
+
+<script>
+const main = document.getElementById('main');
+const navBtns = document.querySelectorAll('.nav-btn');
+const sections = document.querySelectorAll('.cover, .chapter');
+
+function go(i) { sections[i].scrollIntoView({ behavior: 'smooth' }); }
+
+// Active nav tracking
+const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+        if (e.isIntersecting) {
+            const idx = [...sections].indexOf(e.target);
+            navBtns.forEach((b, i) => b.classList.toggle('active', i === idx));
+        }
+    });
+}, { root: main, threshold: 0.5 });
+sections.forEach(s => obs.observe(s));
+
+// Horizontal dots + counter
+document.querySelectorAll('.card-track').forEach(track => {
+    const ch = track.dataset.ch;
+    const slides = track.querySelectorAll('.slide');
+    const dotsBar = document.getElementById('dots-' + ch);
+    const counter = document.getElementById('counter-' + ch);
+    if (!dotsBar || slides.length < 2) return;
+
+    slides.forEach((_, i) => {
+        const d = document.createElement('button');
+        d.className = 'dot' + (i === 0 ? ' active' : '');
+        d.onclick = () => slides[i].scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
+        dotsBar.appendChild(d);
+    });
+
+    track.addEventListener('scroll', () => {
+        const idx = Math.round(track.scrollLeft / track.clientWidth);
+        dotsBar.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === idx));
+        if (counter) counter.textContent = (idx + 1) + ' / ' + slides.length;
+    });
+});
+
+// Cover count-up
+document.querySelectorAll('[data-count]').forEach(el => {
+    const target = parseInt(el.dataset.count);
+    const prefix = el.dataset.prefix || '';
+    const suffix = el.dataset.suffix || '';
+    let cur = 0;
+    const inc = target / 125;
+    const timer = setInterval(() => {
+        cur += inc;
+        if (cur >= target) { el.textContent = prefix + target.toLocaleString() + suffix; clearInterval(timer); }
+        else { el.textContent = prefix + Math.floor(cur).toLocaleString() + suffix; }
+    }, 16);
+});
+</script>
+
+</body>
+</html>

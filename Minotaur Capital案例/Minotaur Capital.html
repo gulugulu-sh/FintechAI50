@@ -1,0 +1,1546 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minotaur Capital - AI Global Equities Fund | Case Study</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --header-h: 72px;
+            --dots-h: 40px;
+            /* Base warm palette */
+            --bg-light: #FAF7F2;
+            --accent-primary: #D97757;
+            --dark: #2A2A2A;
+
+            /* Cover brand colors (Minotaur specific) */
+            --cover-bg: #1a1a1a;
+            --cover-accent: #D97757;
+            --cover-highlight: #4A90E2;
+
+            /* Extended palette */
+            --teal: #20B2AA;
+            --blue: #4A90E2;
+            --purple: #9B59B6;
+            --orange: #FF9F43;
+            --border: #E8E0D8;
+            --text-dark: #333;
+            --text-light: #666;
+            --text-2: #999;
+            --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            --card-shadow-hover: 0 8px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-light);
+            color: var(--text-dark);
+            overflow-x: hidden;
+        }
+
+        .container {
+            display: flex;
+            width: 100%;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 220px;
+            height: 100vh;
+            background: linear-gradient(135deg, var(--dark) 0%, #3a3a3a 100%);
+            color: #fff;
+            padding: 24px 0;
+            overflow-y: auto;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-brand {
+            padding: 0 16px 24px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sidebar-logo {
+            width: 60px;
+            height: 60px;
+            background: rgba(217, 119, 87, 0.15);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--cover-accent);
+        }
+
+        .sidebar-brand-text {
+            font-size: 14px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: -0.5px;
+        }
+
+        .sidebar-brand-sub {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.6);
+            letter-spacing: 0.5px;
+        }
+
+        .nav-items {
+            flex: 1;
+            padding: 0 12px;
+            overflow-y: auto;
+        }
+
+        .nav-btn {
+            width: 100%;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.6);
+            border: none;
+            border-left: 3px solid transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            text-align: left;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+
+        .nav-btn.active {
+            background: rgba(217, 119, 87, 0.2);
+            color: #fff;
+            border-left-color: var(--cover-accent);
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        .main-content {
+            margin-left: 220px;
+            width: calc(100% - 220px);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        /* ===== COVER SECTION ===== */
+        .cover {
+            background: linear-gradient(135deg, var(--cover-bg) 0%, #2a2a2a 100%);
+            color: #fff;
+            padding: 60px 80px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cover::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: -10%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(217, 119, 87, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .cover-content {
+            position: relative;
+            z-index: 2;
+            max-width: 900px;
+        }
+
+        .cover-logo {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 24px;
+            background: rgba(217, 119, 87, 0.15);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: 800;
+            color: var(--cover-accent);
+        }
+
+        .cover-title {
+            font-size: 64px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            letter-spacing: -2px;
+        }
+
+        .cover-subtitle {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 28px;
+            line-height: 1.5;
+            max-width: 700px;
+        }
+
+        .cover-tags {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .cover-tag {
+            background: rgba(217, 119, 87, 0.2);
+            color: var(--cover-accent);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            border: 1px solid rgba(217, 119, 87, 0.3);
+        }
+
+        .cover-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 24px;
+            margin-bottom: 48px;
+        }
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--cover-accent);
+            margin-bottom: 6px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            letter-spacing: 0.5px;
+        }
+
+        .cover-scroll-hint {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+            text-align: center;
+            margin-top: 40px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { opacity: 0.5; transform: translateY(0); }
+            50% { opacity: 1; transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER STRUCTURE ===== */
+        .chapter {
+            padding: 60px 80px;
+            min-height: 100vh;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .chapter-header {
+            margin-bottom: 48px;
+            position: relative;
+        }
+
+        .chapter-header h2 {
+            font-size: 42px;
+            font-weight: 800;
+            color: var(--text-dark);
+            margin-bottom: 12px;
+            letter-spacing: -1px;
+        }
+
+        .ch-sub {
+            font-size: 13px;
+            color: var(--text-light);
+            margin-right: 20px;
+        }
+
+        .ch-counter {
+            font-size: 12px;
+            color: var(--text-2);
+            letter-spacing: 0.5px;
+        }
+
+        /* ===== CARDS & SLIDES ===== */
+        .card-track {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 28px;
+            margin-bottom: 32px;
+        }
+
+        .slide {
+            margin-bottom: 16px;
+        }
+
+        .card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s ease;
+            border-left: 4px solid var(--accent-primary);
+        }
+
+        .card:hover {
+            box-shadow: var(--card-shadow-hover);
+            transform: translateY(-2px);
+        }
+
+        .card.sparse {
+            padding: 40px;
+        }
+
+        .card.sparse p {
+            font-size: 16px;
+        }
+
+        .card.sparse h3 {
+            font-size: 22px;
+        }
+
+        .card h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text-dark);
+        }
+
+        .card-body {
+            font-size: 14px;
+            line-height: 1.8;
+            color: var(--text-light);
+        }
+
+        .card-body p {
+            margin-bottom: 14px;
+        }
+
+        .card-body p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* ===== DATA DISPLAY ===== */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, rgba(217, 119, 87, 0.05) 0%, rgba(74, 144, 226, 0.05) 100%);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--cover-accent);
+            margin-bottom: 6px;
+        }
+
+        .metric-label {
+            font-size: 11px;
+            color: var(--text-2);
+            letter-spacing: 0.5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        thead {
+            background: #f5f5f5;
+        }
+
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+
+        th {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        /* ===== TIMELINE ===== */
+        .timeline {
+            position: relative;
+            padding-left: 24px;
+        }
+
+        .timeline-item {
+            margin-bottom: 28px;
+            position: relative;
+            padding-left: 24px;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: -24px;
+            top: 0;
+            width: 12px;
+            height: 12px;
+            background: var(--accent-primary);
+            border-radius: 50%;
+            border: 3px solid #fff;
+            box-shadow: 0 0 0 3px var(--accent-primary);
+        }
+
+        .timeline-year {
+            font-weight: 700;
+            color: var(--cover-accent);
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .timeline-text {
+            font-size: 13px;
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+
+        /* ===== CALLOUT & BLOCKS ===== */
+        .callout {
+            background: rgba(217, 119, 87, 0.08);
+            border-left: 4px solid var(--accent-primary);
+            padding: 16px 20px;
+            border-radius: 6px;
+            margin: 16px 0;
+            font-size: 13px;
+            line-height: 1.7;
+            color: var(--text-dark);
+        }
+
+        .quote-block {
+            background: #fff;
+            border-left: 4px solid var(--cover-accent);
+            padding: 24px;
+            border-radius: 6px;
+            font-style: italic;
+            color: var(--text-light);
+            font-size: 14px;
+            line-height: 1.8;
+            margin: 20px 0;
+        }
+
+        .quote-attr {
+            margin-top: 12px;
+            font-style: normal;
+            font-size: 12px;
+            color: var(--text-2);
+        }
+
+        /* ===== MODE BOXES ===== */
+        .mode-boxes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .mode-box {
+            background: #fff;
+            border-left: 4px solid var(--accent-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .mode-title {
+            font-weight: 700;
+            font-size: 13px;
+            margin-bottom: 8px;
+            color: var(--text-dark);
+        }
+
+        .mode-desc {
+            font-size: 12px;
+            color: var(--text-light);
+            line-height: 1.5;
+        }
+
+        /* ===== FLEX ROW ===== */
+        .flex-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 28px;
+            margin: 24px 0;
+        }
+
+        .flex-col {
+            background: #fff;
+            border: 1px solid var(--border);
+            padding: 24px;
+            border-radius: 8px;
+        }
+
+        /* ===== INSIGHTS ===== */
+        .insight-card {
+            background: linear-gradient(135deg, rgba(217, 119, 87, 0.05) 0%, rgba(255, 255, 255, 0.8) 100%);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+            border-left: 4px solid var(--cover-accent);
+            position: relative;
+        }
+
+        .insight-emoji {
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+
+        .insight-card h3 {
+            font-size: 18px;
+            margin-bottom: 14px;
+            color: var(--text-dark);
+        }
+
+        .insight-highlight {
+            background: rgba(217, 119, 87, 0.15);
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-top: 16px;
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--cover-accent);
+        }
+
+        /* ===== NEWS ===== */
+        .news-item {
+            border-bottom: 1px solid var(--border);
+            padding: 20px 0;
+        }
+
+        .news-item:last-child {
+            border-bottom: none;
+        }
+
+        .news-date {
+            font-size: 11px;
+            color: var(--text-2);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .news-title {
+            margin-bottom: 8px;
+        }
+
+        .news-title a {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--cover-accent);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .news-title a:hover {
+            color: var(--text-dark);
+        }
+
+        .news-desc {
+            font-size: 13px;
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+
+        /* ===== REFERENCES ===== */
+        .references {
+            background: #fff;
+            border: 1px solid var(--border);
+            padding: 24px;
+            border-radius: 8px;
+            margin-top: 32px;
+        }
+
+        .references h4 {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text-dark);
+        }
+
+        .references ul {
+            list-style: none;
+            column-count: 2;
+            column-gap: 24px;
+        }
+
+        .references li {
+            margin-bottom: 10px;
+            break-inside: avoid;
+            font-size: 12px;
+        }
+
+        .references a {
+            color: var(--cover-accent);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .references a:hover {
+            text-decoration: underline;
+        }
+
+        /* ===== DOTS BAR ===== */
+        .dots-bar {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 32px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .dot.active {
+            width: 24px;
+            background: var(--cover-accent);
+            border-radius: 4px;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 0;
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .cover, .chapter {
+                padding: 40px 24px;
+            }
+
+            .cover-title {
+                font-size: 40px;
+            }
+
+            .chapter-header h2 {
+                font-size: 28px;
+            }
+
+            .flex-row {
+                grid-template-columns: 1fr;
+            }
+
+            .references ul {
+                column-count: 1;
+            }
+        }
+    
+        .nav-dashboard {
+            display: block; width: calc(100% - 8px); margin: 8px 4px 4px;
+            background: rgba(217,119,87,0.15); border: 1px solid rgba(217,119,87,0.3);
+            color: var(--accent, #D97757); padding: 10px 12px; border-radius: 8px;
+            text-align: center; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+            font-weight: 600; letter-spacing: 0.3px;
+        }
+        .nav-dashboard:hover {
+            background: rgba(217,119,87,0.3); color: white;
+        }
+    main { scroll-snap-type: y mandatory; overflow-y: scroll; height: 100vh; }
+.chapter { scroll-snap-align: start; height: 100vh; }
+</style>
+</head>
+<body>
+    <div class="container">
+        <!-- SIDEBAR -->
+        <nav class="sidebar">
+            <div class="sidebar-brand">
+                <img class="sidebar-logo" src="data:image/png;base64,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" alt="Logo" />
+                <div class="sidebar-brand-text">Minotaur Capital</div>
+                <div class="sidebar-brand-sub">深度调研报告</div>
+            </div>
+            <div class="nav-items">
+                <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+                <button class="nav-btn" onclick="go(1)">📋 公司概况</button>
+                <button class="nav-btn" onclick="go(2)">💰 融资与财务</button>
+                <button class="nav-btn" onclick="go(3)">🎯 产品与基金</button>
+                <button class="nav-btn" onclick="go(4)">🤖 AI技术</button>
+                <button class="nav-btn" onclick="go(5)">⭐ 核心启示</button>
+                <button class="nav-btn" onclick="go(6)">📰 近期要闻</button>
+            </div>
+        
+    <a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <!-- CHAPTER 0: COVER -->
+            <section class="cover" id="ch-0">
+                <div class="cover-content">
+                    <img class="cover-logo" src="data:image/png;base64,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" alt="Logo" />
+                    <h1 class="cover-title">Minotaur Capital</h1>
+                    <p class="cover-subtitle">AI驱动的全球股票基金管理者，用专有Taurient平台替代传统分析师，为机构投资者创造可持续的超额回报</p>
+                    <div class="cover-tags">
+                        <span class="cover-tag">AI投资管理</span>
+                        <span class="cover-tag">全球股票</span>
+                        <span class="cover-tag">LLM应用</span>
+                        <span class="cover-tag">澳大利亚</span>
+                        <span class="cover-tag">机构资产管理</span>
+                    </div>
+                    <div class="cover-stats">
+                        <div class="stat-box">
+                            <div class="stat-number">39.6%</div>
+                            <div class="stat-label">2024年净回报率</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-number">AUD50M+</div>
+                            <div class="stat-label">预期2025年底AUM</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-number">2023</div>
+                            <div class="stat-label">成立年份</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-number">2</div>
+                            <div class="stat-label">核心创始人</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-number">6.8%</div>
+                            <div class="stat-label">超越基准幅度</div>
+                        </div>
+                    </div>
+                    <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+                </div>
+            </section>
+
+            <!-- CHAPTER 1: COMPANY OVERVIEW -->
+            <section class="chapter" id="ch-1">
+                <div class="chapter-header">
+                    <h2>公司概况</h2>
+                    <span class="ch-sub">📋 Minotaur Capital的起源与战略</span>
+                </div>
+
+                <div class="card-track" data-ch="1">
+                    <div class="slide">
+                        <div class="card">
+                            <h3>创始故事：AI重塑资产管理</h3>
+                            <div class="card-body">
+                                <p>Minotaur Capital成立于2023年，由Thomas Rice和Armina Rosenberg联合创立。两位创始人看到了传统资产管理的核心痛点：优秀分析师稀缺且昂贵，团队扩张困难，分析存在人为偏差。他们决定用AI替代分析师团队，创建一个完全由AI驱动的全球股票投资管理公司。</p>
+                                <p>这不是简单的成本削减——而是一种新的投资范式。Taurient平台用Python和多个LLM模型扫描全球数千家公司，翻译国际财报，发掘被市场忽视的机会。2024年基金回报率达39.6%，超越MSCI全市场指数(32.8%)，成为AI驱动投资的有力证明。</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="slide">
+                        <div class="card">
+                            <h3>核心使命与发展阶段</h3>
+                            <div class="card-body">
+                                <p><strong>使命：</strong>用人工智能替代传统分析师，为全球投资者创造可持续的、超越市场的投资回报，同时大幅降低管理成本。</p>
+                                <p>Minotaur处于高速增长阶段。2024年5月基金上线，一年内吸引了数十家澳大利亚机构投资者。管理资产规模预期在2025年底达到AUD50M(约31M美元)。公司计划于2026年推出ETF产品，向零售投资者开放，进一步扩大市场规模。这是一条标准的资管公司成长路径——从机构向零售扩展。</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="slide">
+                        <div class="card">
+                            <h3>核心团队与运营结构</h3>
+                            <div class="card-body">
+                                <p><strong>Thomas Rice</strong>是技术驱动者，拥有深厚的软件开发与编程背景。他是Taurient平台的主要建筑师，负责AI系统的设计与优化。</p>
+                                <p><strong>Armina Rosenberg</strong>是商业战略家，在科技创业生态中积累了丰富的人脉与商业智慧。她负责基金营销、投资者关系与市场拓展。</p>
+                                <p>虽然团队规模小，但这反而体现了Minotaur的核心理念：用AI替代分析师的规模化团队。两位创始人合力，可以管理AUD50M+的资产，这在传统资管公司中需要10-15人的分析师团队。</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="slide">
+                        <div class="card">
+                            <h3>关键里程碑与增长路径</h3>
+                            <div class="card-body">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>年份</th>
+                                            <th>关键事件</th>
+                                            <th>意义</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>2023</td>
+                                            <td>公司成立 & Taurient开发</td>
+                                            <td>AI资管的新实验</td>
+                                        </tr>
+                                        <tr>
+                                            <td>2024.05</td>
+                                            <td>全球机会基金上线</td>
+                                            <td>面向澳大利亚机构投资者</td>
+                                        </tr>
+                                        <tr>
+                                            <td>2024年底</td>
+                                            <td>基金回报39.6%，超越基准</td>
+                                            <td>AI驱动投资的性能验证</td>
+                                        </tr>
+                                        <tr>
+                                            <td>2025年底</td>
+                                            <td>AUM预期达AUD50M</td>
+                                            <td>5倍增长</td>
+                                        </tr>
+                                        <tr>
+                                            <td>2026年上半年</td>
+                                            <td>ETF产品上线</td>
+                                            <td>向零售投资者开放</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dots-bar" id="dots-1"></div>
+            </section>
+
+            <!-- CHAPTER 2: FUNDING & FINANCIALS -->
+            <section class="chapter" id="ch-2">
+                <div class="chapter-header">
+                    <h2>融资与财务</h2>
+                    <span class="ch-sub">💰 资金与商业模式</span>
+                </div>
+
+                <div class="card-track" data-ch="2">
+                    <div class="slide">
+                        <div class="card">
+                            <h3>融资与估值</h3>
+                            <div class="card-body">
+                                <p>Minotaur Capital的融资信息相对保密，这在初创资管公司中很常见。公司在2023年成立时主要依靠创始人自有资金及早期天使投资。具体的融资轮次与估值信息未公开披露，这反映了公司早期的私密性与专业投资者的谨慎态度。</p>
+                                <p>与传统科技创业不同，资产管理公司往往不急于追求高额融资。Minotaur的增长动力主要来自基金的投资回报——强劲的性能本身就是最好的融资故事。一旦AUM持续增长，公司可能吸引私募股权投资或被大型资管巨头收购。</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="slide">
+                        <div class="card">
+                            <h3>商业模式：资产管理费</h3>
+                            <div class="card-body">
+                                <p>Minotaur采用行业标准的资产管理费模式(Assets Under Management, AUM)。基金向投资者收取一定比例的管理费(通常0.5%-1.5%)，与AUM总额相关。这意味着基金规模越大，公司收入越高。</p>
+                                <p>这种模式的优势是直接与投资者利益对齐——当投资者赚钱时，基金规模增长，公司也获益。当投资者亏损时，基金规模缩小，公司收入也下降。这创造了强大的激励机制，使得投资管理者会竭尽全力为投资者创造超额回报。</p>
+                                <div class="callout">
+                                    <strong>关键指标：</strong> 预期2025年底AUM达到AUD50M(约31M美元)，相比2024年5月上线时的初始规模，增长5倍以上。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="slide">
+                        <div class="card">
+                            <h3>财务指标与盈利能力</h3>
+                            <div class="card-body">
+                                <p><strong>基金规模增长：</strong> 2024年5月到12月，基金吸引了数十家澳大利亚机构投资者。虽然具体的AUM数字未公开，但从最低投资额AUD250,000推断，初期规模可能在AUD10M-20M范围。</p>
+                                <p><strong>预期2025年底：</strong>管理层表示预期AUM达到AUD50M。如果实现，意味着不到2年内增长了5倍。这种增长速度在资管行业中属于高速。</p>
+                                <p><strong>盈利能力：</strong>虽然公司成立不足两年，盈利能力还未充分显现，但基金的强劲性能(39.6%的2024年回报)是吸引投资者的最有力证明。一旦AUM达到50M+，公司的收入与利润空间将大幅扩大。</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="slide">
+                        <div class="card">
+                            <h3>投资者结构与地理分布</h3>
+                            <div class="card-body">
+                                <p><strong>目前投资者：</strong>主要是澳大利亚的养老基金、家族办公室、高净值个人、私人财富管理机构。这些机构投资者的最低投资额为AUD250,000，反映了基金的高端定位。</p>
+                                <p><strong>地理分布：</strong>目前约80%的投资者来自澳大利亚本地，但国际投资者的比例在逐步上升。这反映了Minotaur正在进行国际市场拓展。</p>
+                                <p><strong>未来计划：</strong>2026年推出ETF后，基金将对零售投资者开放，这将大幅扩大投资者基数。预期投资者数量可能从目前的数十家增长到数千家。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dots-bar" id="dots-2"></div>
+            </section>
+
+            <!-- CHAPTER 3: PRODUCT & FUND -->
+            <section class="chapter" id="ch-3">
+                <div class="chapter-header">
+                    <h2>产品与基金</h2>
+                    <span class="ch-sub">🎯 Minotaur Global Opportunities Fund 详解</span>
+                </div>
+
+                <div class="card-track" data-ch="3">
+                    <div class="slide">
+                        <div class="card">
+                            <h3>基金概览与投资策略</h3>
+                            <div class="card-body">
+                                <p><strong>基金名称：</strong>Minotaur Global Opportunities Fund(全球机会基金)</p>
+                                <p><strong>投资策略：</strong>全球股票长期价值投资。基金不限制地域，可投资全球主要股票市场。策略的核心是用AI识别被市场低估的全球公司，买入并持有，等待市场重新定价。</p>
+                                <p><strong>投资特点：</strong>不同于传统对冲基金的频繁交易，Minotaur采取长期价值投资的哲学。这意味着基金持仓相对稳定，更关注公司的基本面而非短期价格波动。</p>
+                                <p><strong>上线时间：</strong>2024年5月10日。虽然上线不足一年，但其性能已经令人瞩目。</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="slide">
+                        <div class="card">
+                            <h3>基金规格与投资条件</h3>
+                            <div class="card-body">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>条款</th>
+                                            <th>详情</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>基金类型</td>
+                                            <td>开放式基金</td>
+                                        </tr>
+                                        <tr>
+                                            <td>最低投资额</td>
+                                            <td>AUD 250,000</td>
+                                        </tr>
+                                        <tr>
+                                            <td>定价频率</td>
+                                            <td>日内定价</td>
+                                        </tr>
+                                        <tr>
+                                            <td>赎回频率</td>
+                                            <td>日赎回(每个工作日)</td>
+                                        </tr>
+                                        <tr>
+                                            <td>基准指数</td>
+                                            <td>MSCI AC World Index (AUD)</td>
+                                        </tr>
+                                        <tr>
+                                            <td>净多头敞口上限</td>
+                                            <td>110%</td>
+                                        </tr>
+                                        <tr>
+                                            <td>总敞口上限</td>
+                                            <td>150%</td>
+                                        </tr>
+                                        <tr>
+                                            <td>投资范围</td>
+                                            <td>全球股票市场，无地域限制</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="slide">
+                        <div class="card">
+                            <h3>Taurient平台：AI选股引擎</h3>
+                            <div class="card-body">
+                                <p><strong>什么是Taurient？</strong>这是Minotaur的专有AI平台，由Python编写，集成多个大型语言模型。它是整个投资流程的核心。</p>
+                                <p><strong>核心功能：</strong></p>
+                                <ul style="margin-left: 20px; margin-top: 12px;">
+                                    <li>全球公司扫描：每日自动扫描全球数千家上市公司的财务数据、新闻、公告</li>
+                                    <li>多语言翻译：自动翻译并分析日文、中文、欧洲语言等非英文的财务文件</li>
+                                    <li>关键信息提取：从财报、电话会议记录中提取收入、利润、管理层评论等关键数据</li>
+                                    <li>趋势分析：识别行业趋势、竞争力变化、市场情绪等</li>
+                                    <li>Idea生成：自动生成投资想法，供投资组合经理评审</li>
+                                    <li>风险监测：实时监测投资组合风险指标，发出预警</li>
+                                </ul>
+                                <p style="margin-top: 14px;">Taurient的关键优势是规模性与一致性——它可以同时处理数千家公司的信息，而传统分析师团队最多覆盖数百家。</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="slide">
+                        <div class="card">
+                            <h3>投资决策流程：AI+人的混合</h3>
+                            <div class="card-body">
+                                <p>Minotaur的投资决策不是完全自动化的，而是AI与人的智慧结合：</p>
+                                <div style="margin-top: 16px; border-left: 4px solid var(--cover-accent); padding-left: 16px;">
+                                    <p style="margin-bottom: 12px;"><strong>第一步：Taurient扫描。</strong>AI平台每日扫描全球市场，识别符合投资标准的公司，生成投资idea。</p>
+                                    <p style="margin-bottom: 12px;"><strong>第二步：人工评审。</strong>Thomas和Armina作为投资组合经理，评审AI生成的idea。他们运用投资直觉与经验，做最终的买卖决定。</p>
+                                    <p style="margin-bottom: 12px;"><strong>第三步：持仓管理。</strong>AI系统实时监测持仓，计算风险指标。当持仓接近风险上限时，系统给出预警，经理做出调整决定。</p>
+                                    <p><strong>第四步：业绩复盘。</strong>定期分析投资决策的结果，优化AI模型，持续改进。</p>
+                                </div>
+                                <p style="margin-top: 16px;">这种混合模式的优势是：AI提供规模性与一致性，人提供判断力与直觉。两者结合，比纯AI或纯人都更可靠。</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="slide">
+                        <div class="card">
+                            <h3>2024年性能与超额回报</h3>
+                            <div class="card-body">
+                                <p><strong>关键成绩：</strong></p>
+                                <div class="metrics-grid">
+                                    <div class="metric-card">
+                                        <div class="metric-value">39.6%</div>
+                                        <div class="metric-label">基金净回报率</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-value">32.8%</div>
+                                        <div class="metric-label">基准回报率</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-value">+6.8%</div>
+                                        <div class="metric-label">超额回报</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-value">2024</div>
+                                        <div class="metric-label">业绩年份</div>
+                                    </div>
+                                </div>
+                                <p style="margin-top: 20px;">基金在第一个完整年度就超越MSCI全市场指数(AUD计价)6.8个百分点，这是一个令人印象深刻的成绩。这个超额回报充分证明了AI驱动投资策略的实际有效性。</p>
+                                <div class="callout">
+                                    <strong>注意：</strong>虽然2024年的性能令人瞩目，但这可能部分受益于有利的市场环境与初创基金的灵活性。长期能否持续超额回报，仍需时间验证。这也是为什么机构投资者普遍采取"观察"态度的原因。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="slide">
+                        <div class="card">
+                            <h3>2026年ETF上线计划</h3>
+                            <div class="card-body">
+                                <p>Minotaur计划于2026年上线交易所交易基金(ETF)，这是资产管理公司的标准成长路径。ETF相比机构基金有以下优势：</p>
+                                <div class="mode-boxes" style="margin-top: 16px;">
+                                    <div class="mode-box">
+                                        <div class="mode-title">📊 更低入场门槛</div>
+                                        <div class="mode-desc">零售投资者可用几百美元购买ETF份额，无需AUD250K的最低投资额</div>
+                                    </div>
+                                    <div class="mode-box">
+                                        <div class="mode-title">💧 更高流动性</div>
+                                        <div class="mode-desc">ETF在交易所交易，可随时买卖，流动性远超机构基金</div>
+                                    </div>
+                                    <div class="mode-box">
+                                        <div class="mode-title">📈 更大市场</div>
+                                        <div class="mode-desc">零售投资者基数远大于机构，潜在AUM增长空间巨大</div>
+                                    </div>
+                                    <div class="mode-box">
+                                        <div class="mode-title">🎯 品牌建设</div>
+                                        <div class="mode-desc">ETF产品提升公司在零售市场的知名度与品牌力</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dots-bar" id="dots-3"></div>
+            </section>
+
+            <!-- CHAPTER 4: AI TECHNOLOGY -->
+            <section class="chapter" id="ch-4">
+                <div class="chapter-header">
+                    <h2>AI技术</h2>
+                    <span class="ch-sub">🤖 Taurient平台的AI架构与能力</span>
+                </div>
+
+                <div class="card-track" data-ch="4">
+                    <div class="slide">
+                        <div class="card">
+                            <h3>技术栈：LLM + 自定义模型</h3>
+                            <div class="card-body">
+                                <p><strong>基础模型：</strong>Minotaur集成OpenAI的GPT系列模型及其他商业LLM。这些基础模型提供强大的自然语言理解与生成能力。</p>
+                                <p><strong>自定义模型：</strong>在LLM基础上，Minotaur开发了多个特定于金融的自定义模型：</p>
+                                <ul style="margin-left: 20px; margin-top: 12px;">
+                                    <li><strong>财务指标提取：</strong>从财务报告中自动识别收入、利润、现金流等关键数字，准确率高</li>
+                                    <li><strong>情感分析：</strong>分析管理层讲话与市场新闻的情绪倾向，预判市场反应</li>
+                                    <li><strong>风险评估：</strong>评估单只股票与投资组合的风险特征，动态调整敞口建议</li>
+                                    <li><strong>行业分类：</strong>将公司正确分类到相关行业，便于基准对比</li>
+                                </ul>
+                                <p style="margin-top: 14px;">这些自定义模型是Minotaur的竞争壁垒。虽然基础LLM是公开的，但在金融领域特定问题上的优化与调校需要时间与数据积累。</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="slide">
+                        <div class="card">
+                            <h3>多语言全球数据接入</h3>
+                            <div class="card-body">
+                                <p><strong>核心能力：</strong>Taurient可以理解并分析英文、日文、中文、欧洲语言等多种语言的财务文件。这是Minotaur相比许多竞争对手的独特优势。</p>
+                                <p><strong>为什么重要？</strong>西方机构投资者往往只关注英文市场。能讲英文的分析师容易，能分析日本与中国财报的分析师稀缺。Minotaur的多语言能力让它可以发掘这些被西方机构忽视的机会——这就是信息套利。</p>
+                                <p><strong>实际应用：</strong></p>
+                                <div style="margin-left: 20px; margin-top: 12px;">
+                                    <p>• 日本东京证交所上市公司的日文年报 → Taurient自动翻译与分析</p>
+                                    <p>• 韩国KOSPI上市公司的韩文公告 → 自动提取投资idea</p>
+                                    <p>• 欧洲上市公司的多语言财报 → 一致的分析流程</p>
+                                </div>
+                                <p style="margin-top: 14px;">这种多语言能力大幅扩大了可覆盖的投资范围，同时降低了成本。传统资管公司需要聘请多语言分析师；Minotaur用AI一次搞定。</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="slide">
+                        <div class="card">
+                            <h3>自动化Idea生成与风险监测</h3>
+                            <div class="card-body">
+                                <p><strong>Idea生成流程：</strong></p>
+                                <ol style="margin-left: 20px; margin-top: 12px;">
+                                    <li>每日Taurient扫描全球市场上千家公司</li>
+                                    <li>根据预设的选股标准过滤，识别符合条件的公司</li>
+                                    <li>为每个候选公司生成投资thesis(论点)，包括估值分析、增长故事、风险因素等</li>
+                                    <li>投资组合经理评审这些idea，做最终决定</li>
+                                </ol>
+                                <p style="margin-top: 16px;"><strong>风险监测系统：</strong>除了选股，AI还在持仓管理上发挥关键作用。系统实时计算：</p>
+                                <ul style="margin-left: 20px; margin-top: 12px;">
+                                    <li>单只股票的波动率与基金的风险贡献</li>
+                                    <li>行业敞口(有没有过度集中在某一行业？)</li>
+                                    <li>地域敞口(有没有过度集中在某个国家？)</li>
+                                    <li>宏观敞口(利率、汇率敏感性)</li>
+                                </ul>
+                                <p style="margin-top: 14px;">当某项指标接近上限时，系统自动预警，经理做出调整决定。这种风险监测的实时性与准确性远超人工。</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="slide">
+                        <div class="card">
+                            <h3>AI的优势与局限</h3>
+                            <div class="card-body">
+                                <p><strong>AI的优势：</strong></p>
+                                <div style="background: rgba(217, 119, 87, 0.08); padding: 16px; border-radius: 6px; margin: 12px 0;">
+                                    <p style="margin-bottom: 10px;">✓ <strong>规模性：</strong> 可同时覆盖全球数千家公司，人工分析师最多数百家</p>
+                                    <p style="margin-bottom: 10px;">✓ <strong>一致性：</strong> 分析标准一致，消除人为主观偏差</p>
+                                    <p style="margin-bottom: 10px;">✓ <strong>速度：</strong> 实时处理新信息，反应速度远快于人工</p>
+                                    <p style="margin-bottom: 10px;">✓ <strong>成本：</strong> 一个优秀的分析师年薪50万美元+，AI的成本远低</p>
+                                    <p>✓ <strong>多语言：</strong> 可处理多种语言的财务数据</p>
+                                </div>
+                                <p style="margin-top: 16px;"><strong>AI的局限(风险点)：</strong></p>
+                                <div style="background: rgba(255, 159, 67, 0.08); padding: 16px; border-radius: 6px; margin: 12px 0;">
+                                    <p style="margin-bottom: 10px;">⚠ <strong>幻觉风险：</strong> LLM可能生成听起来合理但实际错误的分析</p>
+                                    <p style="margin-bottom: 10px;">⚠ <strong>数据质量依赖：</strong> 输入数据的质量直接决定输出质量</p>
+                                    <p style="margin-bottom: 10px;">⚠ <strong>黑天鹅风险：</strong> AI训练数据基于历史，难以预测前所未有的事件</p>
+                                    <p>⚠ <strong>监管不确定性：</strong> AI在金融领域的应用监管仍在演变</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="slide">
+                        <div class="card">
+                            <h3>AI如何重塑资产管理</h3>
+                            <div class="card-body">
+                                <p>Minotaur的技术创新有几个深层含义：</p>
+                                <p style="margin-top: 16px;"><strong>1. 经济学重构</strong></p>
+                                <p style="margin-left: 20px;">传统资管公司依赖少数超级明星分析师。这创造了"明星溢价"——最好的分析师年薪百万+，且难以复制。AI的规模经济特性打破这种模式。一个AI系统可以执行数百个分析师的工作。</p>
+
+                                <p style="margin-top: 16px;"><strong>2. 信息套利消亡</strong></p>
+                                <p style="margin-left: 20px;">传统上，了解非英文市场的分析师通过信息优势获利。但当AI可以实时处理多语言财报时，这种优势消亡。新的竞争优势转向"AI质量"——谁的模型更准，谁就赢。</p>
+
+                                <p style="margin-top: 16px;"><strong>3. 基金民主化</strong></p>
+                                <p style="margin-left: 20px;">AI降低了启动与运营资管公司的门槛。两个人 + Taurient平台，就可以管理AUD50M+的资产。传统上这需要10-15人的分析师团队。这让新的创业基金涌现。</p>
+
+                                <p style="margin-top: 16px;"><strong>4. 投资范式变革</strong></p>
+                                <p style="margin-left: 20px;">从"聪明人挑选"向"系统化筛选"转变。机器比人类更能遵循系统，更难被感情左右。这种转变对市场有深远影响。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dots-bar" id="dots-4"></div>
+            </section>
+
+            <!-- CHAPTER 5: KEY INSIGHTS -->
+            <section class="chapter" id="ch-5">
+                <div class="chapter-header">
+                    <h2>核心启示</h2>
+                    <span class="ch-sub">⭐ Minotaur的战略洞察与行业启示</span>
+                </div>
+
+                <div class="card-track" data-ch="5">
+                    <div class="slide">
+                        <div class="insight-card">
+                            <div class="insight-emoji">💡</div>
+                            <h3>AI不仅是成本中心，更是收益中心</h3>
+                            <div class="card-body">
+                                <p>传统资管公司将AI视为成本优化工具——用AI替代部分分析师，降低薪酬支出。但Minotaur证明了AI可以是增收益工具。通过更广泛的公司扫描(全球数千家vs.人工数百家)、更快的信息反应(实时vs.定期分析)、更准确的趋势识别(统计模型vs.主观判断)，AI直接贡献超额回报。</p>
+                                <p>2024年39.6%的回报不仅覆盖了AI系统的成本，还产生了显著的超额回报(+6.8%超基准)。这说明AI驱动的投资决策，在实际业绩上是可行的。</p>
+                                <div class="insight-highlight">
+                                    启示：下一代资管公司的竞争优势，来自AI能力的深度整合，而非单纯的成本削减。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="slide">
+                        <div class="insight-card">
+                            <div class="insight-emoji">🌍</div>
+                            <h3>多语言与地域套利成为新的竞争优势</h3>
+                            <div class="card-body">
+                                <p>在信息爆炸的时代，信息优势往往不在于"有多少信息"，而在于"能处理多少信息"。Taurient的多语言能力让Minotaur可以覆盖西方机构投资者容易忽视的非英文市场(日本、韩国、东南亚、欧洲)。</p>
+                                <p>这种"地域套利"的源头是语言壁垒。虽然全球化，但大部分西方分析师仍主要看英文市场。能分析日文或中文财报的分析师稀缺且昂贵。Minotaur通过AI消除了这种语言成本。</p>
+                                <p>结果是：相同的投资标准，应用到全球市场，而非只是英文市场。这大幅扩大了可投资范围，也提高了发现被忽视公司的概率。</p>
+                                <div class="insight-highlight">
+                                    启示：全球化时代的竞争优势，属于那些能"看遍全球"的投资者。AI的多语言能力正在重新定义"全球覆盖"的含义。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="slide">
+                        <div class="insight-card">
+                            <div class="insight-emoji">🤝</div>
+                            <h3>AI+人的混合模式是关键，纯AI风险大</h3>
+                            <div class="card-body">
+                                <p>Minotaur的成功不仅因为有Taurient，更因为有Thomas和Armina在做最终决策。这种混合模式平衡了AI与人的优缺点：</p>
+                                <div style="margin-top: 12px; margin-left: 20px;">
+                                    <p style="margin-bottom: 8px;"><strong>AI的优势：</strong>规模性、一致性、速度、成本低</p>
+                                    <p style="margin-bottom: 8px;"><strong>AI的劣势：</strong>缺乏直觉、易陷入统计陷阱、难以处理新颖情况</p>
+                                    <p style="margin-bottom: 8px;"><strong>人的优势：</strong>直觉、灵活性、对非线性事件的理解</p>
+                                    <p style="margin-bottom: 8px;"><strong>人的劣势：</strong>容易疲劳、易被情感左右、覆盖面有限</p>
+                                </div>
+                                <p style="margin-top: 12px;">AI提供广泛的候选，人做最终甄别。这比纯AI(容易过拟合)或纯人(覆盖面有限)都更可靠。</p>
+                                <div class="insight-highlight">
+                                    启示：最优的AI应用模式，不是完全自动化，而是AI赋能人的决策。未来的"AI基金经理"应该是人+AI的融合体。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="slide">
+                        <div class="insight-card">
+                            <div class="insight-emoji">⏰</div>
+                            <h3>基金早期超额回报容易，持久超额困难</h3>
+                            <div class="card-body">
+                                <p>Minotaur 2024年39.6%的回报令人瞩目，但需要冷静看待其可持续性。初创基金往往有几个优势容易产生短期超额回报：</p>
+                                <ul style="margin-left: 20px; margin-top: 12px;">
+                                    <li><strong>小船易掉头：</strong>AUM小，持仓灵活，可以迅速把握机会</li>
+                                    <li><strong>有利的市场环境：</strong>2024年科技股强势，AI概念炙手可热，Minotaur作为AI基金受益</li>
+                                    <li><strong>信息优势：</strong>早期，Minotaur的多语言能力是稀缺的</li>
+                                    <li><strong>规模效应：</strong>小规模基金在战术上更灵活</li>
+                                </ul>
+                                <p style="margin-top: 14px;">但随着基金规模增长到10亿美元+，这些优势会逐步消亡。大基金难以迅速调整，市场也会逐步认识到AI的价值。真正的考验是：Minotaur能否在高竞争的环境中持续超额回报？</p>
+                                <div class="insight-highlight">
+                                    启示：投资者应该对初创基金的超额回报采取保留态度。3-5年的track record才能真正验证策略的可持续性。Minotaur仍在这个关键观察期。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="slide">
+                        <div class="insight-card">
+                            <div class="insight-emoji">🎯</div>
+                            <h3>ETF是必经之路，也是风险与机遇并存</h3>
+                            <div class="card-body">
+                                <p>从AUD250K最低投资额的机构基金，拓展到几百美元即可投资的零售ETF，这是资管公司的经典成长路径。但伴随而来的挑战不容小觑。</p>
+                                <p><strong>机遇：</strong></p>
+                                <ul style="margin-left: 20px; margin-top: 12px;">
+                                    <li>投资者基数从数十家扩大到数千家，AUM增长潜力巨大</li>
+                                    <li>零售投资者对AI的好奇心高，传播潜力强</li>
+                                    <li>ETF成为品牌建设的有力工具</li>
+                                </ul>
+                                <p style="margin-top: 14px;"><strong>风险：</strong></p>
+                                <ul style="margin-left: 20px; margin-top: 12px;">
+                                    <li>成本控制压力增加——零售ETF的管理费往往更低(0.2%-0.5%)</li>
+                                    <li>市场波动时的赎回压力——零售投资者在市场下跌时容易赎回</li>
+                                    <li>流动性管理复杂性提升</li>
+                                    <li>更严格的监管要求与合规成本</li>
+                                </ul>
+                                <p style="margin-top: 14px;">成功的资管公司(如BlackRock)已经证明了ETF的巨大潜力。但失败者也比比皆是。关键在于Minotaur能否保持其投资性能，同时应对运营复杂性的增加。</p>
+                                <div class="insight-highlight">
+                                    启示：ETF上线对Minotaur来说是成长的必经之路，但也是战略执行的关键考验。管理层的运营能力将被充分考验。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="slide">
+                        <div class="insight-card">
+                            <div class="insight-emoji">🚀</div>
+                            <h3>LLM在金融的应用远未到天花板</h3>
+                            <div class="card-body">
+                                <p>Minotaur虽然是AI资管领域的先驱，但LLM在金融的应用才刚刚开始。可探索的领域包括：</p>
+                                <ul style="margin-left: 20px; margin-top: 12px;">
+                                    <li><strong>交易执行：</strong>AI驱动的算法交易，优化买卖价格</li>
+                                    <li><strong>风险管理：</strong>更精细的风险预测与压力测试</li>
+                                    <li><strong>合规监测：</strong>实时监测监管变化与合规风险</li>
+                                    <li><strong>投资者服务：</strong>AI客服与个性化投资建议</li>
+                                    <li><strong>另类投资：</strong>房产、私募股权等领域的AI分析</li>
+                                </ul>
+                                <p style="margin-top: 14px;">Minotaur当前的优势是早期mover advantage与已验证的性能。但长期竞争力取决于两点：(1)技术持续创新，(2)竞争对手的追赶速度。</p>
+                                <p style="margin-top: 14px;">BlackRock、Vanguard、JP Morgan等巨头也在积极探索AI。他们的资源与人才储备远超初创公司。Minotaur需要在被巨头追上之前，建立足够的规模与品牌护城河。</p>
+                                <div class="insight-highlight">
+                                    启示：LLM在金融的应用是一场长期的军备竞赛。第一个吃螃蟹的人(Minotaur)已经获得了先发优势，但这个优势能持续多久，取决于持续创新与市场拓展的速度。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dots-bar" id="dots-5"></div>
+            </section>
+
+            <!-- CHAPTER 6: LATEST NEWS -->
+            <section class="chapter" id="ch-6">
+                <div class="chapter-header">
+                    <h2>近期要闻</h2>
+                    <span class="ch-sub">📰 2024-2026 Minotaur Capital 最新动态</span>
+                </div>
+
+                <div class="card-track" data-ch="6">
+                    <div class="slide">
+                        <div class="card">
+                            <h3>近期重要新闻与更新</h3>
+                            <div class="card-body">
+                                <div class="news-item">
+                                    <div class="news-date">2026年2月</div>
+                                    <div class="news-title">
+                                        <a href="https://www.hedgeweek.com/ai-powered-hedge-fund-outperforms-market/" target="_blank">AI驱动对冲基金超越市场基准</a>
+                                    </div>
+                                    <div class="news-desc">Minotaur Capital的2024年回报率达39.6%(净回报)，超越MSCI全市场指数32.8%。基金规模稳步增长，预期2025年底达AUD50M。国际金融媒体开始关注这家初创AI基金的杰出表现。</div>
+                                </div>
+
+                                <div class="news-item">
+                                    <div class="news-date">2025年底</div>
+                                    <div class="news-title">
+                                        <a href="https://www.minotaurcapital.com/" target="_blank">ETF产品即将上线</a>
+                                    </div>
+                                    <div class="news-desc">Minotaur Capital官方宣布，计划于2026年上线交易所交易基金(ETF)，向零售投资者开放其AI驱动的全球股票投资策略。这将大幅扩大客户基数并增加管理资产。ETF的推出标志着公司从机构市场向零售市场的战略扩展。</div>
+                                </div>
+
+                                <div class="news-item">
+                                    <div class="news-date">2025年5月</div>
+                                    <div class="news-title">
+                                        <a href="https://www.moneymanagement.com.au/how-hedge-fund-start-reinventing-stockpicking-through-ai" target="_blank">AI驱动股票选择的市场吸引力</a>
+                                    </div>
+                                    <div class="news-desc">Money Management Australia 等媒体深入报道Minotaur的技术架构(Taurient平台)与投资方法论。创始人Armina Rosenberg成为澳大利亚投资媒体的常见嘉宾，讨论AI在资产管理中的应用与未来前景。媒体聚焦于"用AI替代分析师"这一激进策略的可行性。</div>
+                                </div>
+
+                                <div class="news-item">
+                                    <div class="news-date">2025年上半年</div>
+                                    <div class="news-title">
+                                        <a href="https://www.minotaurcapital.com/news" target="_blank">基金规模与机构投资者认可度上升</a>
+                                    </div>
+                                    <div class="news-desc">越来越多的澳大利亚养老基金和家族办公室开始关注Minotaur。2024年超额回报的验证效应显现，机构投资者从"怀疑观察"转向"积极配置"。基金规模在2025年上半年继续增长，投资者对AI驱动投资策略的接受度提升。</div>
+                                </div>
+
+                                <div class="news-item">
+                                    <div class="news-date">2025年初</div>
+                                    <div class="news-title">
+                                        <a href="https://medium.com/@finomicsedge/minotaur-capital-a-paradigm-shift-in-hedge-fund-management-through-artificial-intelligence-bb9d0c9ef483" target="_blank">AI资产管理的范式转变分析</a>
+                                    </div>
+                                    <div class="news-desc">金融科技分析平台发布深度文章，将Minotaur Capital列为"资产管理范式转变的典型代表"。文章强调AI不仅降低了成本，更重要的是提升了决策质量与覆盖范围，这是资管行业的根本性创新。</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="slide">
+                        <div class="card">
+                            <h3>未来里程碑与发展展望</h3>
+                            <div class="card-body">
+                                <div class="timeline">
+                                    <div class="timeline-item">
+                                        <div class="timeline-dot"></div>
+                                        <div class="timeline-year">2025年12月</div>
+                                        <div class="timeline-text"><strong>AUM达AUD50M目标：</strong>如果实现，将标志着自2024年5月上线以来，不到2年内增长5倍。这将验证机构投资者对AI驱动投资策略的信心。</div>
+                                    </div>
+
+                                    <div class="timeline-item">
+                                        <div class="timeline-dot"></div>
+                                        <div class="timeline-year">2026年上半年</div>
+                                        <div class="timeline-text"><strong>ETF产品正式上线：</strong>向零售投资者开放，扩大市场影响力。这将大幅增加基金的知名度与可投资范围。同时也带来运营复杂性的挑战。</div>
+                                    </div>
+
+                                    <div class="timeline-item">
+                                        <div class="timeline-dot"></div>
+                                        <div class="timeline-year">2026-2027年</div>
+                                        <div class="timeline-text"><strong>国际市场拓展：</strong>进入新西兰、新加坡、香港等亚太市场，以及欧洲市场。这将扩大基金的投资者基数与AUM规模。</div>
+                                    </div>
+
+                                    <div class="timeline-item">
+                                        <div class="timeline-dot"></div>
+                                        <div class="timeline-year">2027年+</div>
+                                        <div class="timeline-text"><strong>可能的融资轮或并购：</strong>如果AUM持续增长超过500M美元，可能吸引私募股权投资或被大型资管巨头(BlackRock、Vanguard等)收购。这是初创资管公司的常见出口路径。</div>
+                                    </div>
+                                </div>
+
+                                <div style="margin-top: 32px;">
+                                    <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 12px; color: var(--text-dark);">战略展望：</h4>
+                                    <p style="font-size: 13px; line-height: 1.8; color: var(--text-light); margin-bottom: 12px;">Minotaur处于战略分水岭。接下来的3-5年，公司需要：(1)持续验证AI驱动投资的长期超额回报，(2)成功推出ETF并管理零售投资者期望，(3)应对大型资管公司的竞争追赶，(4)可能面临的监管挑战。成功的Minotaur会成为资管行业的新范式；失败的Minotaur会被历史遗忘。当前的优异表现是起点而非终点。</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dots-bar" id="dots-6"></div>
+            </section>
+
+            <!-- REFERENCES -->
+            <section style="padding: 60px 80px; background: #fff; border-top: 1px solid var(--border);">
+                <div class="references">
+                    <h4>📚 参考文献与数据来源</h4>
+                    <ul>
+                        <li><a href="https://www.minotaurcapital.com/" target="_blank">Minotaur Capital 官方网站</a></li>
+                        <li><a href="https://www.minotaurcapital.com/news" target="_blank">Minotaur Capital News Center</a></li>
+                        <li><a href="https://www.minotaurcapital.com/presentation" target="_blank">Minotaur Global Opportunities Fund 说明书</a></li>
+                        <li><a href="https://www.hedgeweek.com/ai-powered-hedge-fund-outperforms-market/" target="_blank">Hedgeweek: AI-powered hedge fund outperforms market</a></li>
+                        <li><a href="https://www.moneymanagement.com.au/how-hedge-fund-start-reinventing-stockpicking-through-ai" target="_blank">Money Management: How hedge fund start-up is reinventing stockpicking</a></li>
+                        <li><a href="https://slashdot.org/story/25/02/14/187221/hedge-fund-startup-that-replaced-analysts-with-ai-beats-the-market" target="_blank">Slashdot: Hedge Fund Startup That Replaced Analysts With AI Beats the Market</a></li>
+                        <li><a href="https://medium.com/@finomicsedge/minotaur-capital-a-paradigm-shift-in-hedge-fund-management-through-artificial-intelligence-bb9d0c9ef483" target="_blank">Medium: Minotaur Capital - A Paradigm Shift in Hedge Fund Management</a></li>
+                        <li><a href="https://www.preqin.com/data/profile/fund-manager/minotaur-capital-management/611966" target="_blank">Preqin: Minotaur Capital Management Profile</a></li>
+                        <li><a href="https://www.crunchbase.com/organization/minotaur-capital-management" target="_blank">Crunchbase: Minotaur Capital Management</a></li>
+                    </ul>
+                </div>
+                <div style="text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border); color: var(--text-2); font-size: 12px;">
+                    <p>📊 Global Top 50 Financial AI Case Studies Project</p>
+                    <p>最后更新：2026年3月 | 数据截至2026年2月</p>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        // Initialize slide counters and dots
+        function initializeChapter(chNum) {
+            const chapter = document.querySelector(`[data-ch="${chNum}"]`);
+            if (!chapter) return;
+
+            const slides = chapter.querySelectorAll('.slide');
+            const dotsContainer = document.getElementById(`dots-${chNum}`);
+
+            if (dotsContainer) {
+                dotsContainer.innerHTML = '';
+                slides.forEach((_, i) => {
+                    const dot = document.createElement('div');
+                    dot.className = i === 0 ? 'dot active' : 'dot';
+                    dot.onclick = () => scrollToSlide(chNum, i);
+                    dotsContainer.appendChild(dot);
+                });
+            }
+
+            updateCounter(chNum);
+        }
+
+        function updateCounter(chNum) {
+            const counter = document.getElementById(`counter-${chNum}`);
+            if (!counter) return;
+
+            const track = document.querySelector(`[data-ch="${chNum}"]`);
+            const slides = track.querySelectorAll('.slide');
+            const active = track.querySelector('.slide:nth-child(1)'); // Simplified
+            counter.textContent = `1 / ${slides.length}`;
+        }
+
+        function scrollToSlide(chNum, idx) {
+            const track = document.querySelector(`[data-ch="${chNum}"]`);
+            const slides = track.querySelectorAll('.slide');
+            if (idx < slides.length) {
+                slides[idx].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+                updateDots(chNum, idx);
+            }
+        }
+
+        function updateDots(chNum, idx) {
+            const dotsContainer = document.getElementById(`dots-${chNum}`);
+            if (!dotsContainer) return;
+            const dots = dotsContainer.querySelectorAll('.dot');
+            dots.forEach((dot, i) => {
+                dot.classList.toggle('active', i === idx);
+            });
+        }
+
+        function go(chNum) {
+            const section = document.getElementById(`ch-${chNum}`);
+            if (section) {
+                section.scrollIntoView({ behavior: 'smooth' });
+                updateActiveNav(chNum);
+            }
+        }
+
+        function updateActiveNav(chNum) {
+            document.querySelectorAll('.nav-btn').forEach((btn, i) => {
+                btn.classList.toggle('active', i === chNum);
+            });
+        }
+
+        // Initialize all chapters
+        for (let i = 0; i <= 6; i++) {
+            initializeChapter(i);
+        }
+
+        // Scroll listener for nav active state
+        document.querySelector('.main-content').addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('.chapter, .cover');
+            let current = 0;
+            sections.forEach((section, i) => {
+                if (section.getBoundingClientRect().top <= window.innerHeight / 2) {
+                    current = i;
+                }
+            });
+            updateActiveNav(current);
+        });
+
+        // Animate stat numbers on cover
+        window.addEventListener('load', () => {
+            animateNumbers();
+        });
+
+        function animateNumbers() {
+            const statNumbers = document.querySelectorAll('.stat-number');
+            statNumbers.forEach(el => {
+                const target = parseInt(el.textContent.replace(/[^0-9]/g, ''));
+                if (isNaN(target)) return;
+
+                let current = 0;
+                const increment = target / 60;
+                const interval = setInterval(() => {
+                    current += increment;
+                    if (current >= target) {
+                        el.textContent = el.textContent.replace(/\d+/, target);
+                        clearInterval(interval);
+                    } else {
+                        el.textContent = el.textContent.replace(/\d+/, Math.floor(current));
+                    }
+                }, 30);
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="95" fill="#0D3B66" stroke="#EF476F" stroke-width="2"/>
+
+  <!-- Main shield shape for protection/security -->
+  <g transform="translate(100, 100)">
+    <!-- Shield outline -->
+    <path d="M 0,-45 L 35,-20 L 35,15 Q 0,45 0,45 Q 0,45 -35,15 L -35,-20 Z"
+          fill="none" stroke="#FFD166" stroke-width="2.5" stroke-linejoin="round"/>
+
+    <!-- Inner security layers -->
+    <!-- Outer ring - represents data flow -->
+    <circle cx="0" cy="-5" r="20" fill="none" stroke="#EF476F" stroke-width="1.5" opacity="0.8"/>
+
+    <!-- Middle ring - represents AI processing -->
+    <circle cx="0" cy="-5" r="13" fill="none" stroke="#FFD166" stroke-width="1.5" opacity="0.8"/>
+
+    <!-- Center dot - represents core -->
+    <circle cx="0" cy="-5" r="4" fill="#FFD166"/>
+
+    <!-- Checkmark inside shield for validation -->
+    <g transform="translate(-8, 5)">
+      <polyline points="0,8 6,14 14,2"
+                stroke="#FFD166" stroke-width="2" fill="none"
+                stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+
+  <!-- Company name below -->
+  <text x="100" y="175" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700"
+        fill="#0D3B66" text-anchor="middle" letter-spacing="2">
+    FEEDZAI
+  </text>
+</svg>

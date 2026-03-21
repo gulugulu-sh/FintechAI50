@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sagehood AI驱动的智能投资平台</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #1A1514;
+            --cover-bg: #1B2A4A;
+            --cover-accent: #C5A55A;
+            --cover-highlight: #F5E6C8;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(217,119,87,0.2); color: var(--accent); font-weight: 600; }
+        .nav-dashboard{display:block;width:calc(100% - 8px);margin:8px 4px 4px;background:rgba(217,119,87,0.15);border:1px solid rgba(217,119,87,0.3);color:var(--accent,#D97757);padding:10px 12px;border-radius:8px;text-align:center;font-size:12px;font-family:inherit;cursor:pointer;transition:all .2s;text-decoration:none;font-weight:600;letter-spacing:.3px}.nav-dashboard:hover{background:rgba(217,119,87,0.25);transform:translateY(-1px)}
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, var(--cover-bg) 0%, #243D5A 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(197,165,90,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 20px; background: rgba(255,255,255,0.1); object-fit: contain; }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(255,255,255,0.12); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card h4 { font-size: 13px; font-weight: 700; margin: 12px 0 8px 0; }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); cursor: pointer; transition: all 0.3s;
+            border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px; border-radius: 6px;
+            font-size: 13px; line-height: 1.7; color: var(--text-2);
+            margin: 14px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 16px; border-radius: 10px; text-align: center;
+        }
+        .metric-value { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+        .flex-row { display: flex; gap: 24px; margin: 14px 0; }
+        .flex-col { flex: 1; min-width: 0; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th { background: var(--bg-muted); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+        .mode-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 14px 0; }
+        .mode-box { background: var(--bg-muted); padding: 14px; border-radius: 10px; border-left: 4px solid var(--accent); }
+        .mode-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+        .mode-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+        .insight-card {
+            flex: 1; display: flex; flex-direction: column;
+            background: var(--bg-card); border-radius: 14px; padding: 28px 32px;
+            border: 1px solid var(--border);
+        }
+        .insight-emoji { font-size: 28px; margin-bottom: 10px; }
+        .insight-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+        .insight-card p { font-size: 15px; line-height: 1.9; color: var(--text-2); margin-bottom: 14px; }
+        .insight-highlight {
+            margin-top: auto;
+            background: var(--accent-light); border-left: 4px solid var(--accent);
+            padding: 12px 16px; border-radius: 6px;
+            font-size: 14px; font-weight: 600; color: var(--accent-2);
+        }
+        .news-item {
+            padding: 14px; background: var(--bg-card);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px; border: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+        .news-date { font-size: 11px; color: var(--text-3); font-weight: 600; margin-bottom: 4px; }
+        .news-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .news-title a { color: var(--accent-blue); text-decoration: none; }
+        .news-title a:hover { color: var(--accent); text-decoration: underline; }
+        .news-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+        .timeline { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+        .timeline-item { display: flex; gap: 12px; align-items: flex-start; }
+        .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
+        .timeline-year { font-weight: 700; font-size: 13px; color: var(--accent); min-width: 48px; }
+        .timeline-text { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+        .avatar {
+            width: 56px; height: 56px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 700; font-size: 20px;
+        }
+        .card.sparse p { font-size: 16px; line-height: 2; }
+        .card.sparse h3 { font-size: 22px; margin-bottom: 20px; }
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            main { margin-left: 0; }
+            .chapter-header { padding: 12px 20px 0 20px; }
+            .slide { padding: 16px 20px; }
+            .cover-title { font-size: 28px; }
+            .flex-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <img class="sidebar-logo" alt="Sagehood" src="data:image/png;base64,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" />
+        <div>
+            <div class="sidebar-brand-text">Sagehood</div>
+            <div class="sidebar-brand-sub">深度调研报告</div>
+        </div>
+    </div>
+    <div class="nav-items">
+        <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+        <button class="nav-btn" onclick="go(1)">📋 公司概况</button>
+        <button class="nav-btn" onclick="go(2)">💰 融资与财务</button>
+        <button class="nav-btn" onclick="go(3)">🛠️ 产品功能</button>
+        <button class="nav-btn" onclick="go(4)">🤖 AI技术</button>
+        <button class="nav-btn" onclick="go(5)">👥 用户反馈</button>
+        <button class="nav-btn" onclick="go(6)">💡 核心启示</button>
+        <button class="nav-btn" onclick="go(7)">📰 近期要闻</button>
+        <a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+    </div>
+</nav>
+
+<main id="main">
+
+<section class="cover" id="ch-0">
+    <div class="cover-content">
+        <img class="cover-logo" alt="Sagehood Logo" src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5OjcBCgoKDQwNGg8PGjclHyU3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3N//AABEIAIAAgAMBEQACEQEDEQH/xAAbAAEAAgMBAQAAAAAAAAAAAAAABgcBAwUEAv/EAEQQAAEDAwEEBQcIBwkBAAAAAAEAAgMEBREGBxIhMSJBYZHBEzJRcZKx0URFc3SBosLSFSViY6GysyMkJjNDUlNV4RT/xAAZAQEAAwEBAAAAAAAAAAAAAAAAAgMEAQX/xAArEQACAgECBAYCAwEBAAAAAAAAAQIDEQRREhMxMhQhIjNBQiNxYcHwoVL/2gAMAwEAAhEDEQH/AKrVp5wQBAEAQBAEAQBAEAQBAEAQBAEAQBAEAQBAEAQBAEAQBAEAQBAEAQBAEB29KaartUXL/wCSi3WMYN6aZw6MbfE9ii3gshW5vCLNi2OWhrAJ7rcHvxxdGI2g+oFp96r42aVp4pB2x+yD5yuftR/kTmMi6YGs7I7IPnK5+1F+Rc5rIOuJHNVbM57ZSPq7PUyVkcfF8MjAJAPSCOB7lKNufJlUo46Ff+tWkAgJzpzZ5NcKVtVdah9Ix4yyJjQXkekk8B3FZ538LwiDmkdl2zO0D5dX+0z8qq8TL/ZIO7HwfB2bWkfLq/2mflXPFSIPUNfBpm2cW4NPkq+sa7qL9wjuwE8XLYj4p7EIv1lqrHWmnqcOa7jHK3k8LVXZGayi+uxWLKOYrCwIAgCAufYZGxtguUwA33Vm4TjmAxpA+8e9Uz6m3T44Tg7Qtc3ym1NVUFtrHUlPSkMAjAy84BJJPrUoxTRXbbLiwiLnXGqD89VPc34LvBEq5k9z6j1zqZkjX/peZ2DndcGkH18E5cdjnMkXRp65yXWxUVfK1rZJ4Q5wbyB61kmsPAbIDtB0SHGW72aLDvOnp2jn1lzR7wra7fhkMnxoPRe55O63iPp+dBTuHL0Od4Bcuu+Ilc5Ew1Lcn2yy1dZC0OfFGSwO5Z6srPBcUkmVR9UsFRP1fqB7i43SUZOcNa0AergtvJhsX8Edj4Oq7+fnSf7vwTk17HOXDY7ekNUXSe8RUlbUGoimyOmBlpxnOQqb6YKHEkZ9RVFQckjobTmtdbKR+OkKndB7C0k+4KvRv1NFOifra/grtbz0TCAIAgLn2IOxpu4fXz/TjVNnU11PESudoPHWt3+n/C1WQ7UUWdzI8pFZkc0Be+hzjSFr+gCw2dzIyZ2HuVZU5Gp71BsqkyOa5d/ha4fRj3qyl/kRyt+tFLr0TaEB2NIcNR0J/bPuKpv9tlGp9pkq2kOzaqX61+ByzaPvf++UZND3v9f2V8t56RhAEAQFx7FHAacuHH5cf6caot6miD9JX20Fj2azum+0t3pQ5uRzG6OKsr7UUz6keUyICAuTZzdIqvTcNM148tSf2b29eOorDcsSyU2eRJXPVDKGzS56i2VSZwNaB0mma8MBcfJ5wOwqylrmIVS/Iiml6Z6RlAdjSTXHUFHugndJJ7Bgqm/22Uaj2mSTaE7etlN9Z/C5Z9J3sy6Lvf6IGtx6JhAEAQFgbKNR09snqLXWPEcdW8PieeQkxjB9YA7lTbHPmicXhFk3WyWq6yiS40EFRI0YDnt4gehZlNroRbOadH6cHK003srvMluVubOZdtB2SsgcKWAUc2OjJFyz2jrXI3SXUhzGitv1ro++dccsfsSs8QVr9NsSzymi07Dfqa+0QnpzuyNwJYieLD4jtWCyDg8MxWxcGe9z1S2Z5SNMhDmlrgHNIwQeRXCpyOJLp2zOeXG3wZJycNVius3JrUW/+jQ/T1mHK3w9y7zrNyS1Fu590tvoaEuNJTRxOcMEtHFJTlLqyMrJz6shus7rHWTR0kDt5sLi57hy3ls09biss3aWpxXE/kjK0msIAgCAygLL0FrcuEdpvEvS4Np6hx5+hrj6e1Zra/mJGWSwnvWRlEpGl7lwqlI4uo7LS32iMFQN2RvGKUDiw/BShY4PKIxtcHlFU/rPSl5IB8nOz7Wyt8Qt3ougbPTbAsyyXymvVGJ6fLXt4SRHmw/BedbW65YZ5d1cq5YZ7HvVRQaHvUsEkjQ96kkSSIbqfUfnUVA/jnEko6uwLZTT9pG3T6f7yIgtZuMIAgCAIDKAsbQmjd0Mut3j6XnQQPHL0OcPBZbrvrEpsn8IsBzuHNZMmaUjS93aoZKpSNTndq5kqcjj6gtFNeqPyFQN17eMUo5sPw7FKu2UJZR2u+VcsorH9YaZu/8AsmZwyPNkb4hej6L4Hp/jvr/gsK0Xmnu9J5aE7rx/mRk8WlYLKnB4Z5ltMq3hnoe9RwQND3qSRJIiGpLGHF1XRN485Ix7wtdNv1Ztou+siKrUbAgCAIAgJxszsNPX1M1yq2B7KZwbEw8i/GSfsGO9Zr7HH0oqtlhYJ9dL/bLZII66sjhkcMhhPHHpwssYTn5pGfhlLoc52sLD/wBjH3Fd5NmxB1WbHw3VdkkeGNuMWXHAzkKLps2K3TZsdIyBzQ5pBBGQR1qh5+TK35mp70wcOPfbZT3alMU3Re3Jjk62lXVzcHlF9VrrllFd/wB+09c+tj2+zI34L0PTbE9P0XQJVS6poKiIGZ5gkx0muHDPYVllRNPyMUtLNPyPp9/tp5VTP4pyZ7BUj2Mw3KlrCRTzNeRzA5pwSj1OSrlHqiNalomQytqYQA2QkOA5ZWmqXlhmvTzclws4quNBhAEAQFobK3YsVZ9bP8jFh1Xd/tzNqXhohWtXufqm4lxJxIAM9Q3QtNPtouq7EcRWkwh0tnTUrnafoS9xJ8kOJXk3L1s8W9fkke171HBA873qSR1Ij2r6eOotbpXNG/CQ5rsccdYV9Emp4NWmk1PBAlvPSCA91kcW3OEg88g9yhZ2ldvYzramdmliH70e4qqrqU6fuZG1oNQQBAEBZmy44slX9bP8jVg1fcv1/Zi1b9S/X9kM1gc6nuJ/e+AWqn20aafbRxlaWBAWjpp+NP0P0QXmWr1s8i/3Gex71BFaRoe9SwTSOPqN2bPUj9nxVtS9aLqPcRAVvPSCA91kcW3OEg88g9yhZ2ldvYzramdmliH70e4qqrqU6fuZG1oNQQBAEBZmy44slX9bP8jVg1fcv1/Zi1b9S/X9kM1gc6nuJ/e+AWqn20aafbRxlaWBAWjpp+NP0P0QXmWr1s8i/3Gex71BFaRoe9SwTSOPqN2bPUj9nxVtS9aLqPcRAVvPSCA91kcW3OEg88g9yhZ2ldvYzramdmliH70e4qqrqU6fuZG1oNQQBAEBZmy44slX9bP8jVg1fcv1/Zi1b9S/X9kM1gc6nuJ/e+AWqn20aafbRxlaWBAWjpp+NP0P0QXmWr1s8i/3Gex71BFaRoe9SwTSOPqN2bPUj9nxVtS9aLqPcRAVvPSCA91kcW3OEg88g9yhZ2ldvYzramdmliH70e4qqrqU6fuZG1oNQQBAEB//2Q==" />
+        <h1 class="cover-title">Sagehood</h1>
+        <p class="cover-subtitle">Agentic AI驱动的智能投资平台，用8个协作AI代理为零售和机构投资者提供机构级股票洞察与投资组合管理</p>
+        <div class="cover-tags">
+            <span class="cover-tag">Agentic AI</span>
+            <span class="cover-tag">股票投资</span>
+            <span class="cover-tag">智能投顾</span>
+            <span class="cover-tag">美国</span>
+            <span class="cover-tag">ToC + ToB</span>
+        </div>
+        <div class="cover-stats">
+            <div class="stat-box">
+                <div class="stat-number">38%</div>
+                <div class="stat-label">2025年YTD回报率</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">1万+</div>
+                <div class="stat-label">活跃用户</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">8个</div>
+                <div class="stat-label">协作AI代理</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">2023</div>
+                <div class="stat-label">成立年份</div>
+            </div>
+        </div>
+        <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+    </div>
+</section>
+
+<section class="chapter" id="ch-1">
+    <div class="chapter-header">
+        <h2>AI普惠财富管理的破局者</h2>
+        <span class="ch-sub">📋 公司概况</span>
+        <span class="ch-counter" id="counter-1">1 / 5</span>
+    </div>
+    <div class="card-track" data-ch="1">
+        <div class="slide"><div class="card"><h3>破局财富管理的知识壁垒</h3><div class="card-body">
+            <p>Sagehood成立于2023年，总部位于美国旧金山，是一家用Agentic AI架构重新定义财富管理的金融科技公司。与传统智能投顾不同，Sagehood不是简单的算法匹配，而是部署了8个专业化的AI代理系统——技术面分析、财报监控、财务分析、宏观经济、行业分析、舆情监控、新闻监控和风险管理。这些AI代理协作工作，模仿真实的投资团队如何进行决策，但速度更快、规模更大、成本更低。</p>
+            <p>其核心使命是让每个人都能获得机构级的投资洞察和财务管理建议，打破财富管理的知识壁垒和成本门槛。目前已积累10000+活跃用户，2025年YTD回报率达38%，显著超越全球大多数对冲基金，成为当前金融科技领域最值得关注的案例之一。</p>
+            <div class="callout">
+                <strong>行业定位：</strong> AI驱动的智能投资平台（AI-Native Investment Platform），服务于18-65岁对AI投资感兴趣的零售投资者与寻求数据驱动洞察的机构客户。采用Freemium商业模式，兼具ToC和ToB特征。
+            </div>
+        </div></div></div>
+        <div class="slide"><div class="card sparse"><h3>学术派与创业家的配置</h3><div class="card-body">
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+                <div class="avatar">AS</div>
+                <div>
+                    <p style="margin:0;font-weight:700;font-size:16px;">Amir Seyedi</p>
+                    <p style="margin:0;font-size:13px;color:var(--text-3);">联合创始人 & CEO · 计算机科学博士</p>
+                </div>
+            </div>
+            <p>Amir拥有计算机科学博士学位，曾在巴黎第六大学和巴黎萨克雷大学从事AI研究，在AI和金融科技领域拥有深厚的学术和实践背景。他的技术视野和对AI应用的深刻理解，为Sagehood奠定了坚实的技术基础。</p>
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;margin-top:20px;">
+                <div class="avatar">AJ</div>
+                <div>
+                    <p style="margin:0;font-weight:700;font-size:16px;">Ali Jafari</p>
+                    <p style="margin:0;font-size:13px;color:var(--text-3);">联合创始人 · 连续创业者</p>
+                </div>
+            </div>
+            <p>Ali是连续创业者，曾成功创立并退出Adro Ad Exchange，在商业拓展和市场运营方面经验丰富。这个配置——学术派的技术深度+创业家的商业嗅觉——成为Sagehood快速成长的重要驱动力。</p>
+        </div></div></div>
+        <div class="slide"><div class="card"><h3>投资小白到机构的全覆盖</h3><div class="card-body">
+            <h4>核心用户画像</h4>
+            <div class="metrics-grid">
+                <div class="metric-card"><div style="font-size:16px;margin-bottom:4px;">👤</div><div class="metric-label">零售投资者 (ToC)</div></div>
+                <div class="metric-card"><div style="font-size:16px;margin-bottom:4px;">🏢</div><div class="metric-label">机构客户 (ToB)</div></div>
+                <div class="metric-card"><div style="font-size:16px;margin-bottom:4px;">📊</div><div class="metric-label">数据驱动决策者</div></div>
+                <div class="metric-card"><div style="font-size:16px;margin-bottom:4px;">🔍</div><div class="metric-label">寻求透明洞察</div></div>
+            </div>
+            <p>零售用户主要是18-65岁、对AI投资感兴趣、但缺乏专业知识的投资者。他们需要的不仅是回报率，更是理解AI如何做决策的透明过程。机构客户则希望获得可解释的AI洞察来增强自身决策能力，而非完全依赖黑盒算法。</p>
+            <p>核心痛点在于：信息不对称、决策复杂性、成本高昂、信任困局。Sagehood通过解释性AI和多代理架构，逐一解决这些问题。</p>
+        </div></div></div>
+        <div class="slide"><div class="card"><h3>从萌芽到超越对冲基金的进化</h3><div class="card-body">
+            <div class="timeline">
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2023</div><div class="timeline-text">Sagehood正式成立于旧金山，初创公司成立。核心团队9人，专注于Agentic AI架构的设计与实现。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2024</div><div class="timeline-text">完成Pre-Seed轮融资25万美元，获得早期投资认可。用户开始规模化增长，逐步验证市场需求。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2025.01</div><div class="timeline-text">Agentic AI Index正式发布并开始追踪，核心产品上线。这是一个重大里程碑，标志着AI投资策略的正式问世。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2025.05</div><div class="timeline-text">实现38%YTD回报率，超越对冲基金业绩。这个数字在金融科技圈引发广泛关注，成为Sagehood的核心竞争力证明。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2025.10</div><div class="timeline-text">公布超越全球大多数对冲基金的成绩，获得市场广泛关注。用户数破10000+，活跃度持续上升。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2026.03</div><div class="timeline-text">规划AI托管基金产品上市，机构级市场切入。预计将推出正式的托管基金，进一步扩大影响力。</div></div>
+            </div>
+        </div></div></div>
+        <div class="slide"><div class="card"><h3>差异化竞争的关键点</h3><div class="card-body">
+            <h4>四大差异化优势</h4>
+            <div class="mode-boxes">
+                <div class="mode-box"><div class="mode-title">🎯 真实业绩</div><div class="mode-desc">38%的实际投资回报率，不是模拟测试，而是真金白银的成绩，超越对冲基金基准。</div></div>
+                <div class="mode-box"><div class="mode-title">🔓 完全可解释</div><div class="mode-desc">AI决策过程完全可解释，用户能看到每一个AI代理的分析逻辑，而非黑盒决策。</div></div>
+                <div class="mode-box"><div class="mode-title">🤖 Agentic架构</div><div class="mode-desc">独有的8代理协作框架，模仿真实投资团队工作方式，而非简单的单一算法。</div></div>
+                <div class="mode-box"><div class="mode-title">📈 清晰模式</div><div class="mode-desc">Freemium模式清晰，免费产品获客，付费产品变现，易于理解和复制。</div></div>
+            </div>
+        </div></div></div>
+    </div>
+    <div class="dots-bar">
+        <button class="dot active" onclick="scrollSlide(1, 0)"></button>
+        <button class="dot" onclick="scrollSlide(1, 1)"></button>
+        <button class="dot" onclick="scrollSlide(1, 2)"></button>
+        <button class="dot" onclick="scrollSlide(1, 3)"></button>
+        <button class="dot" onclick="scrollSlide(1, 4)"></button>
+    </div>
+</section>
+
+<section class="chapter" id="ch-2">
+    <div class="chapter-header">
+        <h2>资本加速增长的路线图</h2>
+        <span class="ch-sub">💰 融资与财务</span>
+        <span class="ch-counter" id="counter-2">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="2">
+        <div class="slide"><div class="card"><h3>从种子到独角兽的融资进程</h3><div class="card-body">
+            <p>Sagehood的融资历程虽然时间短但速度快。2024年完成Pre-Seed轮融资25万美元，虽然金额相对较小，但代表了投资方对其技术方向和市场前景的初步认可。这笔融资用于核心团队扩张和产品开发。</p>
+            <p>融资的加速关键在于2025年Agentic AI Index的上线和38%回报率的实现。这个真实的业绩数据成为后续融资的强有力背书，预期将在2025年下半年启动A轮融资，目标融资规模在5000万-1亿美元之间。</p>
+            <div class="callout">
+                <strong>融资策略：</strong> Sagehood采取稳健但快速的融资策略。通过产品驱动融资，而非单纯的故事讲述。每一笔融资都对应实际的产品进展和用户增长数据，这使得后续融资变得相对容易。
+            </div>
+        </div></div></div>
+        <div class="slide"><div class="card"><h3>三层递进的变现体系</h3><div class="card-body">
+            <h4>三大收入流</h4>
+            <table>
+                <thead><tr><th>产品</th><th>定价</th><th>用户规模</th><th>定位</th></tr></thead>
+                <tbody>
+                    <tr><td>Self-Managed Portfolio</td><td>免费</td><td>20000+日活</td><td>用户获取/教育</td></tr>
+                    <tr><td>AI-Managed Portfolio</td><td>月费$29.99</td><td>付费用户基础</td><td>核心收入</td></tr>
+                    <tr><td>Expert + AI Portfolio</td><td>基于AUM百分比</td><td>机构客户</td><td>高端变现</td></tr>
+                </tbody>
+            </table>
+            <p>Freemium模式的精妙之处在于三层递进：免费产品获取大量用户，中端付费产品形成稳定现金流，高端服务打开机构市场。这个体系既能服务散户也能覆盖机构，形成完整的商业闭环。</p>
+        </div></div></div>
+        <div class="slide"><div class="card"><h3>增长驱动的关键指标</h3><div class="card-body">
+            <p>虽然Sagehood尚未公开披露完整的财务数据，但从公开的用户和回报率数据可以推断其增长轨迹。10000+活跃用户中，按照典型SaaS转化率（5-10%）估算，付费用户可能在500-1000左右。按月费$29.99计算，这部分就可产生15-36万美元的MRR。</p>
+            <p>更重要的是，38%的YTD回报率证明了产品的核心价值。在金融科技领域，真实业绩是最强的获客和留存驱动力。这个数字直接转化为用户信任和口碑传播，使得CAC（客户获取成本）相对较低，LTV（生命周期价值）较高。</p>
+            <div class="callout">
+                <strong>增长预期：</strong> 保守估计，假设未来12个月用户增长50%，付费转化率提升至8%，ARR可能达到50-100万美元。这个增速足以支撑A轮融资后的快速扩张。
+            </div>
+        </div></div></div>
+    </div>
+    <div class="dots-bar">
+        <button class="dot active" onclick="scrollSlide(2, 0)"></button>
+        <button class="dot" onclick="scrollSlide(2, 1)"></button>
+        <button class="dot" onclick="scrollSlide(2, 2)"></button>
+    </div>
+</section>
+
+<section class="chapter" id="ch-3">
+    <div class="chapter-header">
+        <h2>智能投资平台的产品矩阵</h2>
+        <span class="ch-sub">🛠️ 产品功能</span>
+        <span class="ch-counter" id="counter-3">1 / 4</span>
+    </div>
+    <div class="card-track" data-ch="3">
+        <div class="slide"><div class="card"><h3>Self-Managed Portfolio：免费的知识武器</h3><div class="card-body">
+            <p>Self-Managed Portfolio是Sagehood的流量担当。免费模式让用户无压力地体验AI驱动的投资分析。产品提供5000+美国股票的AI洞察，涵盖技术面分析、财务健康评估、行业对标等维度。用户可以自主选择股票，AI代理系统则提供实时的分析建议。</p>
+            <p>这个产品的设计目标是教育和获客。通过让用户亲身体验AI分析的准确性和可靠性，建立对平台的信任。20000+的日活用户表明，这个免费产品已经成为一个强有力的获客漏斗。付费用户很大比例来自这个免费产品的自然转化。</p>
+            <div class="callout">
+                <strong>核心价值：</strong> 5000+股票覆盖，不仅仅是推荐，而是帮助用户理解"为什么选这支股票"。这是传统股票筛选工具和机构级分析的桥梁。
+            </div>
+        </div></div></div>
+        <div class="slide"><div class="card"><h3>Agentic Index：AI代理的投资组合</h3><div class="card-body">
+            <p>这是Sagehood的核心产品，也是其赖以成名的产品。Agentic Index是一个由8个AI代理系统协作管理的30只精选股票组合，月费$29.99。这8个AI代理分别负责技术面分析、SEC财报监控、财务分析、宏观经济研究、行业分析、社交媒体舆情监控、新闻解读和风险管理。</p>
+            <p>关键创新在于这不是单一的黑盒算法，而是模仿真实投资团队的协作过程。每个代理生成自己的分析，这些分析再被整合成最终的投资决策。用户不仅能看到最终推荐，还能看到每个代理的分析逻辑，完全可解释性是核心卖点。38%的YTD回报率证明了这个模式的有效性。</p>
+            <div class="callout">
+                <strong>竞争优势：</strong> 38%的实际回报率vs传统对冲基金的10-15%平均水平，这是压倒性的数字优势。而且完全可解释，用户能理解决策过程。
+            </div>
+        </div></div></div>
+        <div class="slide"><div class="card"><h3>Expert + AI Portfolio：人机共创的高端服务</h3><div class="card-body">
+            <p>这是Sagehood的高端产品，也是进入机构市场的重要工具。该服务结合了人类专家顾问的主观判断和AI系统的数据驱动分析，为机构客户提供定制化的投资管理。定价基于AUM（资产管理规模）的百分比或固定咨询费，模仿传统财富管理的计费方式。</p>
+            <p>这个产品的战略意义在于它打开了ToB市场。机构客户对AI仍有疑虑，但结合人类专家会让他们更放心。同时，这个产品也产生了最高的LTV（生命周期价值），因为机构客户的单笔合同价值可能达到数十万到数百万美元。</p>
+            <div class="callout">
+                <strong>市场潜力：</strong> 美国资产管理市场规模超100万亿美元，即使只获得0.1%的市场份额，也代表10亿美元的可管理资产。这个产品线的增长空间巨大。
+            </div>
+        </div></div></div>
+        <div class="slide"><div class="card"><h3>产品设计的底层逻辑</h3><div class="card-body">
+            <p>Sagehood的产品哲学可以归纳为"可解释性优先"。这与许多黑盒AI产品的设计逻辑截然不同。在金融领域，用户需要理解为什么AI这样决策，只有这样才能建立信任和认同。</p>
+            <p>未来规划方面，Sagehood已明确表示将推出正式的AI托管基金产品，并在2026年进行SEC登记。这意味着Sagehood不再仅仅是提供投资建议的平台，而是成为真正意义上的资产管理人。这是一个重大的战略升级，将开放机构市场中最高价值的部分。</p>
+            <div class="mode-boxes">
+                <div class="mode-box"><div class="mode-title">📊 已有产品</div><div class="mode-desc">Self-Managed、AI-Managed、Expert+AI三层递进模式已全部上线，覆盖散户到机构全谱。</div></div>
+                <div class="mode-box"><div class="mode-title">🚀 近期规划</div><div class="mode-desc">AI托管基金正式上市，国际市场扩展，与主流经纪商的API集成。</div></div>
+            </div>
+        </div></div></div>
+    </div>
+    <div class="dots-bar">
+        <button class="dot active" onclick="scrollSlide(3, 0)"></button>
+        <button class="dot" onclick="scrollSlide(3, 1)"></button>
+        <button class="dot" onclick="scrollSlide(3, 2)"></button>
+        <button class="dot" onclick="scrollSlide(3, 3)"></button>
+    </div>
+</section>
+
+<section class="chapter" id="ch-4">
+    <div class="chapter-header">
+        <h2>Agentic AI的技术底座</h2>
+        <span class="ch-sub">🤖 AI技术</span>
+        <span class="ch-counter" id="counter-4">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="4">
+        <div class="slide"><div class="card"><h3>八代理协作：重塑投资决策过程</h3><div class="card-body">
+            <p>Agentic AI是Sagehood的核心技术创新。与传统的单一算法或机器学习模型不同，Sagehood部署了8个专业化的AI代理，每个都是一个独立的智能系统，负责金融分析的特定领域。这8个代理分别是：</p>
+            <div class="metrics-grid">
+                <div class="metric-card"><div style="font-size:18px;margin-bottom:4px;">📈</div><div class="metric-label">技术面分析</div></div>
+                <div class="metric-card"><div style="font-size:18px;margin-bottom:4px;">📋</div><div class="metric-label">财报监控</div></div>
+                <div class="metric-card"><div style="font-size:18px;margin-bottom:4px;">💹</div><div class="metric-label">财务分析</div></div>
+                <div class="metric-card"><div style="font-size:18px;margin-bottom:4px;">🌍</div><div class="metric-label">宏观经济</div></div>
+                <div class="metric-card"><div style="font-size:18px;margin-bottom:4px;">🏭</div><div class="metric-label">行业分析</div></div>
+                <div class="metric-card"><div style="font-size:18px;margin-bottom:4px;">💬</div><div class="metric-label">舆情监控</div></div>
+                <div class="metric-card"><div style="font-size:18px;margin-bottom:4px;">📰</div><div class="metric-label">新闻监控</div></div>
+                <div class="metric-card"><div style="font-size:18px;margin-bottom:4px;">⚠️</div><div class="metric-label">风险管理</div></div>
+            </div>
+            <p>这个架构的关键在于信息整合而非信息过载。每个代理专业化地处理自己领域的分析，然后这些分析被汇总、权重分配、冲突解决，最终生成一个综合投资决策。这模仿了真实投资公司的工作方式。</p>
+        </div></div></div>
+        <div class="slide"><div class="card"><h3>处理海量数据的技术竞争力</h3><div class="card-body">
+            <p>Sagehood声称每日分析数十亿数据点。这不仅仅是一个数字，而是技术竞争力的体现。这意味着系统可以实时监控美股市场的各个维度：股票价格、成交量、技术指标、财报数据、新闻流、社交媒体舆情等。</p>
+            <p>核心技术能力包括：</p>
+            <div class="mode-boxes">
+                <div class="mode-box"><div class="mode-title">🔄 实时监控</div><div class="mode-desc">不是静态分析，而是7x24小时的实时市场监控与信号生成。每有重大信息变化，系统立即响应。</div></div>
+                <div class="mode-box"><div class="mode-title">🔓 完全可解释性</div><div class="mode-desc">每个决策都能溯源，用户能看到具体的分析过程。这在金融领域是罕见的竞争优势。</div></div>
+                <div class="mode-box"><div class="mode-title">⚙️ 自动再平衡</div><div class="mode-desc">根据市场变化自动调整投资组合权重，无需人工干预，但所有操作都可追踪。</div></div>
+                <div class="mode-box"><div class="mode-title">🛡️ 风险情景分析</div><div class="mode-desc">不仅提供投资建议，还提供风险场景模拟和对冲建议。</div></div>
+            </div>
+        </div></div></div>
+        <div class="slide"><div class="card"><h3>技术护城河与可持续竞争力</h3><div class="card-body">
+            <p>Sagehood的技术护城河主要来自三个方面：第一，独有的Agentic AI架构设计，这不仅仅是一个想法，而是经过市场验证的系统，38%的回报率证明了其有效性。第二，积累的训练数据和历史交易数据，越多的历史数据意味着模型更准确。第三，团队的AI和金融复合背景，这种稀缺的人才组合很难被竞争对手快速复制。</p>
+            <p>未来技术方向上，Sagehood正在探索：更复杂的多代理交互模式，与外部数据源的深度集成，强化学习在交易策略优化中的应用。长期来看，AI在金融决策中的应用远未天花板，Sagehood的技术积累将持续产生价值。</p>
+            <div class="callout">
+                <strong>技术优势总结：</strong> 不是单纯的AI引入，而是"专业化AI代理"与"可解释性"的结合，这在金融科技领域是独有的。这个优势在未来2-3年内难以被复制。
+            </div>
+        </div></div></div>
+    </div>
+    <div class="dots-bar">
+        <button class="dot active" onclick="scrollSlide(4, 0)"></button>
+        <button class="dot" onclick="scrollSlide(4, 1)"></button>
+        <button class="dot" onclick="scrollSlide(4, 2)"></button>
+    </div>
+</section>
+
+<section class="chapter" id="ch-5">
+    <div class="chapter-header">
+        <h2>市场反响与用户认可</h2>
+        <span class="ch-sub">👥 用户反馈</span>
+        <span class="ch-counter" id="counter-5">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="5">
+        <div class="slide"><div class="card"><h3>数字会说话：性能与认可度</h3><div class="card-body">
+            <p>Sagehood的最强背书来自其实际的投资回报率。38%的2025年YTD回报率远超过全球对冲基金的平均10-15%水平。这不是回测数据或模拟结果，而是真金白银的用户投资成果。</p>
+            <p>用户规模上，Sagehood已积累10000+活跃用户，其中20000+的日活在Self-Managed产品上体现了平台的流量活跃度。虽然尚未见到明确的App评分数据披露，但从用户增长速度和保留率推断，产品体验应该在较高水平。</p>
+            <div class="metrics-grid">
+                <div class="metric-card"><div class="metric-value">38%</div><div class="metric-label">YTD回报率</div></div>
+                <div class="metric-card"><div class="metric-value">1万+</div><div class="metric-label">活跃用户</div></div>
+                <div class="metric-card"><div class="metric-value">2万+</div><div class="metric-label">日活用户</div></div>
+                <div class="metric-card"><div class="metric-value">9人</div><div class="metric-label">核心团队</div></div>
+            </div>
+        </div></div></div>
+        <div class="slide"><div class="card"><h3>来自市场的验证</h3><div class="card-body">
+            <p>虽然Sagehood作为2023年成立的新公司，其用户故事集中在较小规模的投资者。但这些早期用户的特点是：他们乐于尝试新技术，对AI驱动的投资模式最有接受度，也最愿意分享使用经验。这个群体的口碑效应在社交媒体和投资论坛上很强。</p>
+            <p>市场认可度的关键指标体现在融资上。25万美元的Pre-Seed融资虽然金额不大，但其背后代表了投资方对Agentic AI在金融应用中潜力的看好。更重要的是，38%的回报率数据的公布必然会吸引更多机构投资方的关注，预期A轮融资会迎来更多大型VC的参与。</p>
+            <div class="callout">
+                <strong>市场位置：</strong> Sagehood在AI驱动的投资平台中处于"有产品、有数据、有用户"的中等发展阶段。不是早期概念阶段，也不是成熟商业化阶段，正好处于融资和扩张的黄金窗口。
+            </div>
+        </div></div></div>
+        <div class="slide"><div class="card"><h3>竞争对手与差异化位置</h3><div class="card-body">
+            <p>金融科技的竞争格局中，Sagehood面临来自多个方向的竞争：传统智能投顾、新兴AI投资平台、以及大型科技公司进入金融。但Sagehood的差异化很清晰：不是单一的资产配置算法，而是多代理协作的投资系统；不是黑盒决策，而是完全可解释的过程；不是追求综合回报率，而是追求超额收益（Alpha）。</p>
+            <p>这让Sagehood在市场上处于"独特"的位置——既不是传统财顾，也不是纯AI平台，而是"AI投资团队"。</p>
+            <div class="mode-boxes">
+                <div class="mode-box"><div class="mode-title">vs 传统投顾</div><div class="mode-desc">更低成本、更快反应、更强数据处理能力。</div></div>
+                <div class="mode-box"><div class="mode-title">vs AI平台</div><div class="mode-desc">真实业绩验证、可解释性、机构级可靠性。</div></div>
+                <div class="mode-box"><div class="mode-title">vs 科技巨头</div><div class="mode-desc">专业深度、社区信任、人机互动更好。</div></div>
+            </div>
+        </div></div></div>
+    </div>
+    <div class="dots-bar">
+        <button class="dot active" onclick="scrollSlide(5, 0)"></button>
+        <button class="dot" onclick="scrollSlide(5, 1)"></button>
+        <button class="dot" onclick="scrollSlide(5, 2)"></button>
+    </div>
+</section>
+
+<section class="chapter" id="ch-6">
+    <div class="chapter-header">
+        <h2>Sagehood带来的深层思考</h2>
+        <span class="ch-sub">💡 核心启示</span>
+        <span class="ch-counter" id="counter-6">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="6">
+        <div class="slide" style="display:flex;flex-direction:column;gap:16px;">
+            <div class="insight-card">
+                <div class="insight-emoji">🎯</div>
+                <h3>数据驱动的金融未来已来</h3>
+                <p>38%的实际回报率证明了AI在投资决策中的巨大潜力。这不是一个学术假设，而是市场已经验证的现实。过去10年，量化投资从边缘走向主流，AI投资则正处于这个转变的早期阶段。Sagehood的成功案例表明，以AI为核心的资产管理模式不再是未来式，而是现在进行时。</p>
+                <div class="insight-highlight">启示：投资者和资管机构必须重新评估AI在投资组合中的角色，不是辅助工具，而是核心决策引擎。</div>
+            </div>
+        </div>
+        <div class="slide" style="display:flex;flex-direction:column;gap:16px;">
+            <div class="insight-card">
+                <div class="insight-emoji">🔓</div>
+                <h3>可解释性是AI金融的密钥</h3>
+                <p>金融领域对AI的核心顾虑是"黑盒决策"。Sagehood通过8代理的可解释架构彻底打破了这个障碍。每个投资决策都能追溯到具体的分析过程，这不仅增强了用户信任，也满足了监管要求。这个模式有助于AI从"炫技工具"转变为"可信赖的顾问"。</p>
+                <div class="insight-highlight">启示：未来金融科技竞争的关键不仅是算法精度，更是过程透明度。可解释的AI将成为竞争优势。</div>
+            </div>
+        </div>
+        <div class="slide" style="display:flex;flex-direction:column;gap:16px;">
+            <div class="insight-card">
+                <div class="insight-emoji">🚀</div>
+                <h3>产品驱动融资的示范效应</h3>
+                <p>Sagehood的融资成功并非源于宏大的愿景或光鲜的管理团队名单，而是来自一个数字：38%。这体现了一个重要的创业趋势——从"故事融资"到"数据融资"的转变。在AI时代，最有说服力的不是PPT上的假设，而是真实的产品数据和用户反馈。</p>
+                <div class="insight-highlight">启示：新创公司应该更多地投入产品打磨和真实数据积累，而非过度的市场宣传。市场会自动发现好产品。</div>
+            </div>
+        </div>
+    </div>
+    <div class="dots-bar">
+        <button class="dot active" onclick="scrollSlide(6, 0)"></button>
+        <button class="dot" onclick="scrollSlide(6, 1)"></button>
+        <button class="dot" onclick="scrollSlide(6, 2)"></button>
+    </div>
+</section>
+
+<section class="chapter" id="ch-7">
+    <div class="chapter-header">
+        <h2>最新进展与未来展望</h2>
+        <span class="ch-sub">📰 近期要闻</span>
+        <span class="ch-counter" id="counter-7">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="7">
+        <div class="slide"><div class="card"><h3>2025-2026年的关键事件</h3><div class="card-body">
+            <div class="news-item">
+                <div class="news-date">2025年10月</div>
+                <div class="news-title">Agentic AI Index 38%YTD回报率成绩公布</div>
+                <div class="news-desc">Sagehood正式对外公布其核心产品的投资成绩，超越全球大多数对冲基金。这个数据成为其融资和市场推广的核心背书，预期会吸引更多机构投资者关注。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2025年下半年（预计）</div>
+                <div class="news-title">A轮融资预期启动</div>
+                <div class="news-desc">基于38%回报率和用户增长数据，Sagehood预计会在2025年下半年启动A轮融资，目标融资规模可能在5000万-1亿美元之间。这将显著加速其产品开发和市场拓展。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2026年（规划）</div>
+                <div class="news-title">AI托管基金SEC登记与上市</div>
+                <div class="news-desc">Sagehood计划推出正式的AI托管基金产品，并完成SEC登记。这是公司发展的重大里程碑，标志着从投资建议平台升级为资产管理人。这也将打开机构投资市场的最高价值部分。</div>
+            </div>
+        </div></div></div>
+        <div class="slide"><div class="card"><h3>长期发展轨迹与潜在价值</h3><div class="card-body">
+            <p>从3年发展周期来看，Sagehood正处于从"创新公司"向"主流玩家"的转变阶段。短期（12个月内），关键目标是用户规模突破50000+，付费转化率提升至8-10%，实现年化ARR破百万美元。这些数据对于后续融资和市场认可至关重要。</p>
+            <p>中期（24-36个月），目标应该是成为美国散户投资中"AI投顾"的第一选择，同时在机构市场建立足够的信誉度以支撑托管基金业务。假设管理资产规模（AUM）达到5-10亿美元，这个体量的收益已足以支撑IPO前的融资。</p>
+            <div class="callout">
+                <strong>潜在估值：</strong> 基于SaaS倍数（10-15x ARR）和金融科技的高估值倍数（15-25x ARR），Sagehood在A轮融资后估值可能达到2-5亿美元。若托管基金成功上市，估值可能进一步跳升至10-20亿美元量级，为IPO做准备。
+            </div>
+            <p>风险方面，主要来自市场风险、竞争加剧和监管变化。但总体来看，Sagehood处于一个有利的行业发展阶段，成功概率相对较高。</p>
+        </div></div></div>
+    </div>
+    <div class="dots-bar">
+        <button class="dot active" onclick="scrollSlide(7, 0)"></button>
+        <button class="dot" onclick="scrollSlide(7, 1)"></button>
+    </div>
+</section>
+
+</main>
+
+<script>
+function go(chNum) {
+    const chEl = document.getElementById('ch-' + chNum);
+    if (chEl) {
+        chEl.scrollIntoView();
+        updateNav(chNum);
+    }
+}
+
+function updateNav(chNum) {
+    const navBtns = document.querySelectorAll('.nav-btn');
+    navBtns.forEach((btn, i) => {
+        btn.classList.toggle('active', i === chNum);
+    });
+}
+
+function scrollSlide(chNum, slideIdx) {
+    const track = document.querySelector(`[data-ch="${chNum}"]`);
+    if (track) {
+        const slides = track.querySelectorAll('.slide');
+        if (slides[slideIdx]) {
+            slides[slideIdx].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+            updateDots(chNum, slideIdx);
+        }
+    }
+}
+
+function updateDots(chNum, activeIdx) {
+    const dots = document.querySelectorAll(`#ch-${chNum} .dots-bar .dot`);
+    dots.forEach((dot, i) => {
+        dot.classList.toggle('active', i === activeIdx);
+    });
+    document.getElementById('counter-' + chNum).textContent = (activeIdx + 1) + ' / ' + dots.length;
+}
+
+const main = document.getElementById('main');
+main.addEventListener('scroll', () => {
+    const sections = document.querySelectorAll('.cover, .chapter');
+    let activeIdx = 0;
+    sections.forEach((section, i) => {
+        const rect = section.getBoundingClientRect();
+        if (rect.top < window.innerHeight / 2) activeIdx = i;
+    });
+    updateNav(activeIdx);
+});
+
+const tracks = document.querySelectorAll('.card-track');
+tracks.forEach(track => {
+    track.addEventListener('scroll', () => {
+        const chNum = parseInt(track.dataset.ch);
+        const slides = track.querySelectorAll('.slide');
+        const scrollLeft = track.scrollLeft;
+        let activeIdx = 0;
+        slides.forEach((slide, i) => {
+            if (slide.offsetLeft <= scrollLeft) activeIdx = i;
+        });
+        updateDots(chNum, activeIdx);
+    }, { passive: true });
+});
+</script>
+
+</body>
+</html>

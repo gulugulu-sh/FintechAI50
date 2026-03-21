@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streetbeat 深度调研报告</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --accent-purple: #7B5EA7;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #1A1514;
+            --cover-bg: #0A0E27;
+            --cover-accent: #6C5CE7;
+            --cover-highlight: #A29BFE;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(217,119,87,0.2); color: var(--accent); font-weight: 600; }
+
+        /* ===== DASHBOARD RETURN BUTTON ===== */
+        .nav-dashboard {
+            display: block; width: calc(100% - 8px);
+            margin: 8px 4px 4px;
+            background: rgba(217,119,87,0.15);
+            border: 1px solid rgba(217,119,87,0.3);
+            color: var(--accent);
+            padding: 10px 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 12px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all .2s;
+            text-decoration: none;
+            font-weight: 600;
+            letter-spacing: .3px;
+        }
+        .nav-dashboard:hover {
+            background: rgba(217,119,87,0.25);
+            transform: translateY(-1px);
+        }
+
+        /* ===== MAIN ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, var(--cover-bg) 0%, #1a1a3f 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(108,92,231,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 20px; background: rgba(255,255,255,0.1); object-fit: contain; }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(255,255,255,0.12); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        /* Fixed chapter header */
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        /* Horizontal card scroller */
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+
+        /* Each slide fills available height */
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Card inside slide — fills slide */
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        /* Dots bar at bottom */
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); cursor: pointer; transition: all 0.3s;
+            border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+        /* ===== CONTENT-SPARSE ===== */
+        .card.sparse p { font-size: 16px; line-height: 2; }
+        .card.sparse h3 { font-size: 22px; margin-bottom: 20px; }
+
+        /* ===== REUSABLE COMPONENTS ===== */
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px; border-radius: 6px;
+            font-size: 13px; line-height: 1.7; color: var(--text-2);
+            margin: 14px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+
+        .quote-block {
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px; margin: 14px 0;
+            font-style: italic; font-size: 14px;
+            color: var(--text-2); line-height: 1.8;
+            background: var(--bg-muted); border-radius: 0 8px 8px 0;
+        }
+        .quote-attr { font-style: normal; font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 16px; border-radius: 10px; text-align: center;
+        }
+        .metric-value { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+        .flex-row { display: flex; gap: 24px; margin: 14px 0; }
+        .flex-col { flex: 1; min-width: 0; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th { background: var(--bg-muted); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+
+        .mode-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 14px 0; }
+        .mode-box { background: var(--bg-muted); padding: 14px; border-radius: 10px; border-left: 4px solid var(--accent); }
+        .mode-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+        .mode-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .insight-card {
+            flex: 1; display: flex; flex-direction: column;
+            background: var(--bg-card); border-radius: 14px; padding: 28px 32px;
+            border: 1px solid var(--border);
+        }
+        .insight-emoji { font-size: 28px; margin-bottom: 10px; }
+        .insight-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+        .insight-card p { font-size: 15px; line-height: 1.9; color: var(--text-2); margin-bottom: 14px; }
+        .insight-highlight {
+            margin-top: auto;
+            background: var(--accent-light); border-left: 4px solid var(--accent);
+            padding: 12px 16px; border-radius: 6px;
+            font-size: 14px; font-weight: 600; color: var(--accent-2);
+        }
+
+        .news-item {
+            padding: 14px; background: var(--bg-card);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px; border: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+        .news-date { font-size: 11px; color: var(--text-3); font-weight: 600; margin-bottom: 4px; }
+        .news-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .news-title a { color: var(--accent-blue); text-decoration: none; }
+        .news-title a:hover { color: var(--accent); text-decoration: underline; }
+        .news-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .avatar {
+            width: 56px; height: 56px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 700; font-size: 20px;
+        }
+
+        .position-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+        .position-card { padding: 12px; border-radius: 10px; }
+        .position-title { font-weight: 700; font-size: 13px; margin-bottom: 3px; }
+
+        .story-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin: 14px 0; }
+        .story-card { background: var(--bg-muted); border-radius: 10px; padding: 18px; }
+        .story-name { font-weight: 700; font-size: 14px; margin-bottom: 2px; }
+        .story-tag { font-size: 11px; color: var(--text-3); margin-bottom: 8px; }
+        .story-text { font-size: 13px; color: var(--text-2); line-height: 1.7; font-style: italic; }
+
+        .timeline { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+        .timeline-item { display: flex; gap: 12px; align-items: flex-start; }
+        .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
+        .timeline-year { font-weight: 700; font-size: 13px; color: var(--accent); min-width: 48px; }
+        .timeline-text { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            main { margin-left: 0; }
+            .chapter-header { padding: 12px 20px 0 20px; }
+            .slide { padding: 16px 20px; }
+            .cover-title { font-size: 28px; }
+            .flex-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <img class="sidebar-logo" alt="Streetbeat" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAIt0lEQVR4nO1ZW4hcWRVde5/7rMqrO0kTTWaYdMYZZugYGEYi0Uhgon6pP6My3R+Cj/nQD1H0T3E+/AgIig/ECBNwIFPxgdiFKGJgdBwYYdCPMAbRiZhAyIPOJOl0VXXVvedsP859VnV1utNVt4XpRV/O7VO3us9ae+29z70X2MIWtvBOBm3WP55++/TOTs18i9mdNHdbP7y298t/24x18Gb8UwDo0vIvHb/2Fbj8GQrdP08t/ODkZqxjUxxw4O73Z2lH7axeWIJogGoBtKGOLJuP39z3xfNVrqVyBzwpv/B0rF+Qbg8QAESQpS4YCClw5qeu/7hSJ1QuwGLr2rPOZP09ZqmbTxIgrS7ISA2uak5d/tGHq1pP5QJIpL8ErQc/IIK0lsFCodT8+anL1Tih0hrw0L3vzAjUBdEgiQEYggjZMT3XAoQhDFHb9Mwnbu1/fqw1oVIHkMMf4201gpHSfPE3IbbpoFEjpubkf34y1nSoVACj8QwkBjDEeoK8MLa6IOGQfHd+96Wfji0dKhPgcXlxOyCHpRujHHOLkgv6RBDPae6+dGYsIlQmQKt39xGG7EWsQcXwS2EsqCACAIkIhkPD3Nx9cfQiVCaAw/xuqvskYuwEFdmmAwGSHwJCJgI41L47v/Piz0YqQmUCaBNNEKic+/2/SBL59DBFJyyDBDUobo5ShOqKoJEgO1+pAvYZInND2h7FdgcGhSDV3HlhNCJUJgAz2b0v9SU70FcH0hSw0Zc0HRInmFYPAIdQTrN+4eyGRahMAOXxHcDk0V/B/kBCVKgshLFzYmxdkKUuRFTIipv1v29MhOpqAPg6dARiKnSB3AlSIC8JaRHKHVDcNcKmAzSHpJz5+hsPLkJlAvjQV0zP3CWXBmpAXvjyvE9Jl7bJpjAn1gnQVIPym/XXXn6gHWNlAvyLvrZApP9NjgIgIMp6XzImpNLImxUibwrXGIIIQ9pdwCCUwJ8PXv/5up1Q9b3AawynvAcA8iJXIF+MfkbeFLtCIoYwTMuKQOw2/T+tzwmVCsAO/RaIQApWBErbHQbuDGEYRtvzdMwcYbgsUNIiYRCSX5sPXvnVmp1QqQABOn8xUfu/HDh5IZS82IkmiGaITskzxDBginPJdf3uKKaDq9YsQqUCXKQXeqTcM4o8gCWrhWLKkc2FoPxIXCGaSylRrhWJCMI1w17TP//r+6ZD5U+EuM2n46h1lwNl0yC1vWZIzDCxHVMn2MhzLkghRaS/NqRFst0FgFAcd945v7oTKhfg0vav3yTCKeX4tgYYwGiGiRgmVjCRsuOAGJQIkThFl12Q1o+0haLdhYBCYvc33qu/e3LYejblvUDNmf6ujltvqgnfkuspmJ4D3UsESI+4GP0C+VLUuSRCSZDWMrBtR1060ReGrcWpkniKi/Sp3nvlG88uxvxXCad2RfdCaHFgiCFsb4HBabuz38m6RYrsnAan0hNmQHkgyJVha1n9oehLL9XdAwceRdR2EK2BmQus6TpEiJYm21PH3vr8cnf7seXL7IpR1rrAig+NLdZhWC1MNa9NWv8hntx3Ck8/veLKhgrg/PH3J0Txi9SLp5Pbsvwrq8lG+Z/NLkt7HhGIGFAMdlw4D023axP7vnpzl3d67cxGi6GSUhSd4qA2Da0z8snzGZAkR/bMJjnIPvLIzplBrEBKgR0H7Lpg34MKQjjbd8DzuAZff+9dIk9UQXYlDPcUUQvGlAgWPkyimtAlsoTTgxlMbAVQCqwUSDlgxwW7HpTnQ3kupNsFeV6oW63/PwdIGH4bUSTwfTuR2NdGNT8Hp6PKCJNSgKOyc1JJ9JODPBekHJBi6IUFqHr9+L5u95NVkS5iqADxiZOvkMYsua5QEIDIVmaQJQ2mjDyVRCgcygE5yVE6V4BiAAQYAxPHgDHfhEj1G7PVPuydPHkOEs/BdYEgsLYvRJ+oTwiVOEJZJ+TzCuQoQBXEIU7SSCCLi6AgOLxP649WxDvDfRXvnfhIA1rPkuti0AlUEIIBWjkdcpfYyBMRii8HxBjbunu9z42R64pYk+V6J55piDGzcBwhP8grPHGWElSMNnMSbc7OM1EysawAkjz/knYLYszJ/SK7x8q4D2vOud7xEw0G5sh1BH5gG0Ep/5ORynMZ8ULdQJ8DANiOUK/vlG732MhZroJ1FZ3OseMNIC+MaU2wqZDWgpxk2jGQ5DtRv/1zF4ixb4ziOP7gKAneD+uuup33f+AcxMyR6wFBYHcCSSrY+pCTRzrPad0o7BlAaQ20EEDEAESHR0txdTxQ2+kcPdaQ2MxSoTsMkqcS8YHoD7wgFaAXQaLokSrb4QP/o87Roy0RU06HEvmCK6gv7wdeD4v9iSMIZHIS2LYxWmvHhpTuPPW+BiBz5Dj5Zil1QzZytkUeKkLqAG3ArHwHCDeyrvVgw1ZrHXmqAbKF0dYElCPedzPRd5+YQJJSIIAImyrfWY7ijyzNHDlnjJ7LagKQ3CTZu8JMgaIo/UgffJCJvDU+VRgFRqZ0a+ZIg6J8x2g52/0+rUY8gwDMEI2lGnBvVOu6H0ZqtcWZmQbiaDbdLBGkb9OT1IaVviwAHBcQuf4WUXelS8aBkefa4hMzDYHYHWNaE4AycRqSA64DVuqfo17TahhLsVk89FhDILPkWBEylIj3dwEAxBDgjXGsaRjGVm0XDz56zhhTKowl9JuAGXLnjrDWr45rTSthrO1m8eChBkw8S46ymyWRofansAYj8uaNiYl/jHNN/Rh7v7398MEGdDxHjrLpIDJwjQhAYQhmnAORGfeailj9vcAIMXH1ynOk3LMwhtDt5Q9GmEGeByFuA3js1p49V6taE1Dhjuv2/ocbApMXxtQJRkC7doGNOVM1eaBCB6SYuHr1Ofb9lyEG6HRA27YBIvcQhI8v1OvXql7PpmDy+vVPT9x+e3Fvryt72m3Ze+vmZzd7TZVj6saNQ3taref33r79oc1eyxa2sIV3Lv4H9oghBoIXK6QAAAAASUVORK5CYII=" />
+        <div>
+            <div class="sidebar-brand-text">Streetbeat</div>
+            <div class="sidebar-brand-sub">深度调研报告</div>
+        </div>
+    </div>
+    <div class="nav-items">
+        <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+        <button class="nav-btn" onclick="go(1)">📋 公司概况</button>
+        <button class="nav-btn" onclick="go(2)">💰 融资与财务</button>
+        <button class="nav-btn" onclick="go(3)">🛠️ 产品功能</button>
+        <button class="nav-btn" onclick="go(4)">🤖 AI技术</button>
+        <button class="nav-btn" onclick="go(5)">👥 用户反馈</button>
+        <button class="nav-btn" onclick="go(6)">💡 核心启示</button>
+        <button class="nav-btn" onclick="go(7)">📰 近期要闻</button>
+    </div>
+    <a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+<main id="main">
+
+<!-- ====== COVER ====== -->
+<section class="cover" id="ch-0">
+    <div class="cover-content">
+        <img class="cover-logo" alt="Streetbeat Logo" src="data:image/png;base64,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" />
+        <h1 class="cover-title">Streetbeat</h1>
+        <p class="cover-subtitle">AI多智能体驱动的财富管理平台，让投资更智能、更高效</p>
+        <div class="cover-tags">
+            <span class="cover-tag">财富管理</span>
+            <span class="cover-tag">Multi-Agent AI</span>
+            <span class="cover-tag">投资自动化</span>
+            <span class="cover-tag">美国</span>
+            <span class="cover-tag">ToC + ToB</span>
+        </div>
+        <div class="cover-stats">
+            <div class="stat-box">
+                <div class="stat-number">2500万</div>
+                <div class="stat-label">总融资额</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">4000+</div>
+                <div class="stat-label">全球顾问用户</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">25+</div>
+                <div class="stat-label">AI智能体</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">4.2★</div>
+                <div class="stat-label">市场评分</div>
+            </div>
+        </div>
+        <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+    </div>
+</section>
+
+<!-- ====== CHAPTER 1: 公司概况 (5 cards) ====== -->
+<section class="chapter" id="ch-1">
+    <div class="chapter-header">
+        <h2>多智能体AI财富管理的践行者</h2>
+        <span class="ch-sub">📋 公司概况</span>
+        <span class="ch-counter" id="counter-1">1 / 5</span>
+    </div>
+    <div class="card-track" data-ch="1">
+
+        <!-- 1/5 -->
+        <div class="slide"><div class="card"><h3>民主化金融工具和洞察的获取</h3><div class="card-body">
+            <p>在AI大浪潮中，大多数金融科技公司专注于单一场景的AI应用。但Streetbeat选择了一条更野心勃勃的路——通过垂直多智能体AI架构，为普通个人投资者和财富管理机构打造自动化投资、风险管理和个性化金融建议的完整解决方案。</p>
+            <p>成立于2021年的Streetbeat，仅用四年时间就完成两轮融资总额2500万美元，获得了包括CDP Venture Capital在内的一众顶级AI基金的青睐。公司已服务全球4000+顾问用户，跨越15个国家。整合170+金融数据集，部署25+开箱即用的AI智能体，成为了金融科技行业中多智能体AI应用的典范。</p>
+            <div class="callout">
+                <strong>核心定位：</strong> AI驱动的财富管理平台先行者，垂直多智能体AI架构的创新实践者。同时运营面向个人的Streetbeat App和面向机构的Agent Factory，形成双边市场生态。
+            </div>
+        </div></div></div>
+
+        <!-- 2/5 -->
+        <div class="slide"><div class="card sparse"><h3>算法交易高手的AI野心</h3><div class="card-body">
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+                <div class="avatar">DS</div>
+                <div>
+                    <p style="margin:0;font-weight:700;font-size:16px;">Damián Scavo</p>
+                    <p style="margin:0;font-size:13px;color:var(--text-3);">创始人 & CEO & CIO</p>
+                </div>
+            </div>
+            <div class="quote-block">
+                我在算法交易领域耕耘了20多年，深刻认识到现代财富管理面临的痛点：普通投资者缺乏专业知识和高效工具，而财富管理机构则被低效的人工流程所困。2021年，我与CTO Maciej共同创立Streetbeat，致力于通过垂直多智能体AI，让AI赋能普通投资者和专业机构。
+                <div class="quote-attr">— Damián Scavo</div>
+            </div>
+            <div class="callout">
+                <strong>团队组成：</strong> CTO Maciej Donajski是技术领军人物，专注于垂直多智能体AI架构和企业级金融系统构建。两位创始人的金融+AI深厚背景奠定坚实基础。
+            </div>
+        </div></div></div>
+
+        <!-- 3/5 -->
+        <div class="slide"><div class="card"><h3>市场痛点：个人与机构的两重困境</h3><div class="card-body">
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;">个人投资者的痛点</h4>
+                    <div class="position-cards">
+                        <div class="position-card" style="background:#FFE6E6;">
+                            <div style="font-size:18px;margin-bottom:4px;">📚</div>
+                            <div class="position-title">知识门槛高</div>
+                            <div style="font-size:11px;color:var(--text-2);line-height:1.5;">复杂的投资概念需要多年学习</div>
+                        </div>
+                        <div class="position-card" style="background:#F5F0FF;">
+                            <div style="font-size:18px;margin-bottom:4px;">⏰</div>
+                            <div class="position-title">时间不足</div>
+                            <div style="font-size:11px;color:var(--text-2);line-height:1.5;">监控市场耗费大量精力</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;">机构用户的痛点</h4>
+                    <div class="position-cards">
+                        <div class="position-card" style="background:#E8F5FF;">
+                            <div style="font-size:18px;margin-bottom:4px;">🤖</div>
+                            <div class="position-title">AI应用困难</div>
+                            <div style="font-size:11px;color:var(--text-2);line-height:1.5;">需要深厚AI能力和高成本开发</div>
+                        </div>
+                        <div class="position-card" style="background:#E8FFE8;">
+                            <div style="font-size:18px;margin-bottom:4px;">💰</div>
+                            <div class="position-title">规模化成本高</div>
+                            <div style="font-size:11px;color:var(--text-2);line-height:1.5;">难以规模化提供个性化服务</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div></div></div>
+
+        <!-- 4/5 -->
+        <div class="slide"><div class="card"><h3>四年远航：从初创到融资领先者</h3><div class="card-body">
+            <div class="timeline">
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2021</div><div class="timeline-text">公司成立，奠定AI驱动财富管理平台的产品方向和技术架构。投入深厚的多智能体AI研发。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2022.02</div><div class="timeline-text">完成种子轮融资。Beta期间获得35,000+用户注册，首周交易订单突破125,000笔，产品市场契合度验证。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2023.06</div><div class="timeline-text">推出SmartPilot功能，将ChatGPT引入投资组合管理。AI能力进一步深化，用户体验大幅优化。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2023.10-2024.02</div><div class="timeline-text">完成SEC尽职调查，获得SEC注册和SOC 2 Type II认证，成为金融服务合规性的标杆。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2025.10</div><div class="timeline-text">完成1500万美元A轮融资，由CDP Venture Capital领投。融资总额达2500万美元，加速B端市场扩张。</div></div>
+            </div>
+        </div></div></div>
+
+        <!-- 5/5 -->
+        <div class="slide"><div class="card"><h3>资本的信心：AI财富管理的新贵</h3><div class="card-body">
+            <table>
+                <thead><tr><th>轮次</th><th>时间</th><th>金额</th><th>领投方</th><th>意义</th></tr></thead>
+                <tbody>
+                    <tr><td>种子轮</td><td>2022.02</td><td>1000万</td><td>TTV Capital等</td><td>产品市场契合度验证</td></tr>
+                    <tr><td>A轮</td><td>2025.10</td><td>1500万</td><td>CDP Venture Capital</td><td>加速规模化和国际扩张</td></tr>
+                </tbody>
+            </table>
+            <p style="margin-top:16px;font-size:13px;color:var(--text-2);">投资方包括：CDP Venture Capital、TTV Capital、P101、Monte Carlo Capital、3Lines VC、Azimut、Evolution VC等。顶级AI和金融科技基金的齐聚支持，彰显了Streetbeat在多智能体AI应用领域的战略价值。</p>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-1"></div>
+</section>
+
+<!-- ====== CHAPTER 2: 融资与财务 (3 cards) ====== -->
+<section class="chapter" id="ch-2">
+    <div class="chapter-header">
+        <h2>融资加速与市场认可</h2>
+        <span class="ch-sub">💰 融资与财务</span>
+        <span class="ch-counter" id="counter-2">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="2">
+
+        <!-- 1/3 -->
+        <div class="slide"><div class="card"><h3>从2500万到未来的独角兽之路</h3><div class="card-body">
+            <p>Streetbeat的融资故事是一部关于AI财富管理市场的认可之书。2022年的种子轮融资1000万美元，验证了产品市场契合度：Beta期间35,000+用户涌入，首周交易订单突破125,000笔，这组数据足以让任何投资者动心。</p>
+            <p>2025年10月的A轮融资1500万美元更是关键转折。由CDP Venture Capital领投的这一轮融资，标志着顶级AI基金对Streetbeat的模式和技术的深度认可。在一个充斥着生成式AI泡沫的时代，一家财富管理初创能获得这样的融资规模和估值，说明了什么是真正的AI价值创造。</p>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">4000+</div>
+                    <div class="metric-label">全球顾问用户</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">15</div>
+                    <div class="metric-label">国家覆盖</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">170+</div>
+                    <div class="metric-label">数据集整合</div>
+                </div>
+            </div>
+        </div></div></div>
+
+        <!-- 2/3 -->
+        <div class="slide"><div class="card"><h3>双边市场模式：ToC + ToB的平衡之道</h3><div class="card-body">
+            <p>Streetbeat采用了精妙的双边市场设计。一方面，Streetbeat App面向个人投资者，提供AI投资助手、个性化投资组合策划和实时监控等服务。App分为免费层和Premium付费层，通过转化优化和功能差异化实现收入。</p>
+            <p>另一方面，Agent Factory面向财富管理机构和财务顾问，提供无代码AI代理构建平台。机构可以快速部署AI解决方案，自动化投资分析、风险管理、客户服务等任务。这一B端产品具有更高的客户生命周期价值和更强的黏性。</p>
+            <div class="mode-boxes">
+                <div class="mode-box">
+                    <div class="mode-title">Streetbeat App（ToC）</div>
+                    <div class="mode-desc">免费 + Premium订阅，目标：规模增长和付费转化率提升</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">Agent Factory（ToB）</div>
+                    <div class="mode-desc">定制化SaaS，目标：机构用户的深度合作和长期续约</div>
+                </div>
+            </div>
+        </div></div></div>
+
+        <!-- 3/3 -->
+        <div class="slide"><div class="card"><h3>未来前景：从2500万到IPO的路线图</h3><div class="card-body">
+            <p>基于A轮融资后的加速扩张战略，Streetbeat在未来3-5年的增长路线已经明确。首先，Agent Factory在B端市场的规模化复制将成为主要驱动力。财富管理机构对AI自动化的需求迫切，而Streetbeat的无代码平台大幅降低了实施难度和成本。</p>
+            <p>其次，Streetbeat App在年轻投资者中的口碑传播和转化优化将继续推动ToC端增长。随着AI在金融中的市场教育进度加快，用户对AI金融服务的接受度和信任度将不断提升。</p>
+            <div class="callout">
+                <strong>IPO前景：</strong> 保守估计年复合增长率（CAGR）30-50%。融资路线预计为：B轮（2026-2027年，3000万-5000万美元）→ 上市准备（2027-2028年）。随着ARR突破关键阈值，IPO时间表将更加清晰。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-2"></div>
+</section>
+
+<!-- ====== CHAPTER 3: 产品功能 (5 cards) ====== -->
+<section class="chapter" id="ch-3">
+    <div class="chapter-header">
+        <h2>从对话到代理：AI赋能投资的完整体系</h2>
+        <span class="ch-sub">🛠️ 产品功能</span>
+        <span class="ch-counter" id="counter-3">1 / 5</span>
+    </div>
+    <div class="card-track" data-ch="3">
+
+        <!-- 1/5 -->
+        <div class="slide"><div class="card"><h3>一个理念：让AI成为每个人的投资顾问</h3><div class="card-body">
+            <p>Streetbeat的产品哲学非常清晰：不是用AI替代人，而是用AI赋能人。每个个人投资者都应该拥有一个属于自己的AI投资顾问，每个财富管理机构都应该能够轻松构建和部署AI代理自动化工作流程。这一理念贯穿了Streetbeat从ToC到ToB的所有产品设计。</p>
+            <p>垂直多智能体AI架构是这一理念的技术承载。与其他横向平台不同，Streetbeat针对金融场景进行了深度优化，部署了25+开箱即用的AI智能体，覆盖从数据分析、投资决策、风险管理到客户服务的完整链路。每个智能体都经过金融实践的验证和微调。</p>
+            <div class="callout">
+                <strong>产品双轨制：</strong> Streetbeat App负责ToC端的用户获取和体验创新；Agent Factory负责ToB端的规模化和商业化。两条线并行推进，相互促进。
+            </div>
+        </div></div></div>
+
+        <!-- 2/5 -->
+        <div class="slide"><div class="card"><h3>Talk to Warren：会说人话的投资顾问</h3><div class="card-body">
+            <p>Talk to Warren是Streetbeat App的核心交互界面。这个AI投资助手可以理解用户的自然语言输入，识别投资目标、风险偏好、感兴趣的主题等关键信息。与传统的表单填写不同，Warren通过对话方式让用户更轻松地表达意图。</p>
+            <p>一旦理解了用户需求，Warren可以实时生成个性化的投资组合建议。用户可以说"给我一个专注于AI和清洁能源的投资组合"，Warren即刻分析市场数据和历史表现，生成多元化的组合并展示回测数据。整个过程响应时间小于2秒，让用户感受到AI的实时性和智能性。</p>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value"><2秒</div>
+                    <div class="metric-label">平均响应时间</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">多主题</div>
+                    <div class="metric-label">个性化策略</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">实时</div>
+                    <div class="metric-label">市场数据</div>
+                </div>
+            </div>
+        </div></div></div>
+
+        <!-- 3/5 -->
+        <div class="slide"><div class="card"><h3>Portfolio Pulse 与 Agent Factory：监控与自动化</h3><div class="card-body">
+            <p>投资管理不仅要选好组合，更要持续监控和优化。Portfolio Pulse通过实时分析新闻、市场事件和社交媒体数据，不断评估其对投资组合的影响。当发现风险预警信号时，Pulse会发送可操作的洞察提示，帮助用户及时调整策略。这将被动投资转变为主动风险管理。</p>
+            <p>对于财富管理机构，Agent Factory提供了无代码AI代理构建器。机构用户可以通过可视化界面定义AI代理的行为逻辑、决策规则和合规约束，无需编程即可部署企业级自动化解决方案。支持自动化测试、沙盒模拟和集中管理。</p>
+            <div class="mode-boxes">
+                <div class="mode-box">
+                    <div class="mode-title">Portfolio Pulse（ToC）</div>
+                    <div class="mode-desc">实时新闻分析、自动风险预警、可操作洞察提示</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">Agent Factory（ToB）</div>
+                    <div class="mode-desc">完全无代码、内置合规控制、可视化构建界面</div>
+                </div>
+            </div>
+        </div></div></div>
+
+        <!-- 4/5 -->
+        <div class="slide"><div class="card"><h3>自学习引擎与170+数据集：持续优化的AI</h3><div class="card-body">
+            <p>Streetbeat的AI不是一成不变的。自学习引擎使AI代理能够从每一次执行、用户反馈和市场表现中学习和优化。根据过往决策的收益率、用户满意度评分等数据，AI会自动调整其策略和决策逻辑，实现持续改进。这意味着随着时间推移，Streetbeat的AI顾问会变得越来越聪明。</p>
+            <p>强大的数据基础设施支撑了AI的智能化。Streetbeat整合了170+金融数据集，包括实时行情、财务数据、新闻、社交情绪等多维度信息。这些数据通过API接口供第三方集成，为AI模型和分析应用提供高质量的数据支撑。数据多维度和实时性是Streetbeat相比其他竞品的关键护城河。</p>
+            <div class="callout">
+                <strong>核心竞争力：</strong> 数据×算法×执行的完整闭环。每次执行都反馈回算法训练，每次训练都优化下一次的执行效果，形成正向的价值累积。
+            </div>
+        </div></div></div>
+
+        <!-- 5/5 -->
+        <div class="slide"><div class="card"><h3>完整的产品矩阵与用户增长漏斗</h3><div class="card-body">
+            <table>
+                <thead><tr><th>产品</th><th>定位</th><th>核心功能</th><th>商业化</th></tr></thead>
+                <tbody>
+                    <tr><td>Streetbeat App Free</td><td>获客与体验</td><td>AI对话、基础投资组合、市场洞察</td><td>免费（转化驱动）</td></tr>
+                    <tr><td>Streetbeat App Premium</td><td>货币化</td><td>高级AI洞察、自动再平衡、风险监控、优先服务</td><td>订阅制</td></tr>
+                    <tr><td>Agent Factory Standard</td><td>B端入门</td><td>5个AI代理、基础集成、自动化工作流</td><td>定制化SaaS</td></tr>
+                    <tr><td>Agent Factory Enterprise</td><td>B端深化</td><td>无限代理、高级集成、定制开发、专业支持</td><td>定制化</td></tr>
+                </tbody>
+            </table>
+            <p style="margin-top:16px;font-size:13px;color:var(--text-2);">用户增长漏斗：Free → Premium + Standard → Enterprise，形成了清晰的付费转化路径和升级通道。</p>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-3"></div>
+</section>
+
+<!-- ====== CHAPTER 4: AI技术 (4 cards) ====== -->
+<section class="chapter" id="ch-4">
+    <div class="chapter-header">
+        <h2>垂直多智能体AI架构的金融实践</h2>
+        <span class="ch-sub">🤖 AI技术</span>
+        <span class="ch-counter" id="counter-4">1 / 4</span>
+    </div>
+    <div class="card-track" data-ch="4">
+
+        <!-- 1/4 -->
+        <div class="slide"><div class="card"><h3>垂直多智能体架构：为金融优化的AI系统</h3><div class="card-body">
+            <p>Streetbeat采用的不是通用大语言模型的简单应用，而是深度针对金融场景优化的垂直多智能体AI架构。这个架构的核心理念是：通过多个专业化、协同工作的AI代理，解决从数据分析、投资决策到风险管理的完整链路。</p>
+            <p>技术栈中，Streetbeat集成了OpenAI GPT系列大模型作为基础，同时开发了多个自有的垂直微调模型。包括投资组合优化模型（基于Modern Portfolio Theory）、风险评估模型（计算VaR、夏普比率等金融指标）、意图识别模型（精准理解用户投资意图）、市场情感分析模型（评估市场情绪对组合的影响）等。这种"通用+垂直"的双层模型设计确保了既有AI的智能灵活性，又有金融领域的深度优化。</p>
+            <div class="callout">
+                <strong>技术差异化：</strong> 不只是调用API，而是深度垂直微调和集成。25+开箱即用的AI智能体都经过了金融实践验证和持续优化。
+            </div>
+        </div></div></div>
+
+        <!-- 2/4 -->
+        <div class="slide"><div class="card"><h3>六大AI核心能力：智能化的完整闭环</h3><div class="card-body">
+            <p><strong>1. 自然语言理解与对话</strong>：精准理解用户投资意图，支持多轮对话交互。Warren可以从一句话中提取出关键的风险偏好、时间horizon、主题偏好等信息。</p>
+            <p><strong>2. 个性化推荐</strong>：基于用户输入和市场数据实时生成个性化投资组合。算法考量历史表现、风险调整收益、多元化程度等多个维度。</p>
+            <p><strong>3. 自动化决策执行</strong>：一旦用户确认，AI可以自动执行交易和投资组合再平衡。这消除了"知道和做到"之间的执行摩擦。</p>
+            <p><strong>4. 实时风险监控与预警</strong>：持续分析新闻、市场事件等数据源，计算实时风险指标，发送可操作的预警。</p>
+            <p><strong>5. 无代码AI代理构建</strong>：机构用户可通过可视化界面快速部署AI自动化方案，大幅降低实施门槛。</p>
+            <p><strong>6. 自学习与自优化</strong>：AI从执行数据中持续学习，自动改进决策逻辑，形成正向反馈。</p>
+        </div></div></div>
+
+        <!-- 3/4 -->
+        <div class="slide"><div class="card"><h3>实战检验：数字诠释AI的价值</h3><div class="card-body">
+            <p>Streetbeat的AI不仅仅是技术先进，更重要的是已经在真实业务中证明了价值。根据公司数据，使用Streetbeat的财富管理顾问平均每周节省15-17小时的工作时间。这意味着原本需要一个顾问花费整周的报告生成工作，现在AI可以在分钟级完成。</p>
+            <p>提案生成时间缩减了75%，客户入职流程加快了70%。这些指标直接转化为顾问生产效率的提升和机构可服务客户规模的扩大。在Beta期间，Streetbeat获得了35,000+用户注册，首周交易订单突破125,000笔，这些真实的市场数据验证了产品的吸引力。</p>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">15-17h</div>
+                    <div class="metric-label">顾问周节省时间</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">75%</div>
+                    <div class="metric-label">提案生成时间缩减</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">70%</div>
+                    <div class="metric-label">入职流程加快</div>
+                </div>
+            </div>
+        </div></div></div>
+
+        <!-- 4/4 -->
+        <div class="slide"><div class="card"><h3>技术护城河与风险管理</h3><div class="card-body">
+            <p><strong>核心护城河：</strong></p>
+            <ul style="font-size:13px;line-height:1.9;color:var(--text-2);padding-left:18px;margin:14px 0;">
+                <li>垂直化多智能体AI架构，经过金融场景验证和优化</li>
+                <li>170+金融数据集整合，形成数据和计算能力护城河</li>
+                <li>SEC注册和SOC 2 Type II认证，建立了合规信任背书</li>
+                <li>可能拥有的专利技术和垂直模型微调能力</li>
+            </ul>
+            <p><strong>关键风险：</strong></p>
+            <div class="callout" style="margin-top:14px;">
+                <strong>需重点关注：</strong> LLM幻觉风险（AI可能生成看似合理但实际错误的建议）、数据隐私与安全（处理敏感财务数据）、模型可解释性（金融服务的透明度要求）、技术依赖性（依赖OpenAI等第三方）。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-4"></div>
+</section>
+
+<!-- ====== CHAPTER 5: 用户反馈 (3 cards) ====== -->
+<section class="chapter" id="ch-5">
+    <div class="chapter-header">
+        <h2>市场声音：用户如何评价Streetbeat</h2>
+        <span class="ch-sub">👥 用户反馈</span>
+        <span class="ch-counter" id="counter-5">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="5">
+
+        <!-- 1/3 -->
+        <div class="slide"><div class="card"><h3>3.1/5分的启示：AI能力与运营体验的不对称</h3><div class="card-body">
+            <p>Streetbeat在Trustpilot上的综合评分为3.1/5，基于67条用户评论。这个分数反映了一个有趣且现实的现象：用户对AI能力和产品体验评价很高，但对资金管理和客服响应等运营方面有显著吐槽。</p>
+            <p><strong>正面反馈的核心：</strong> 用户高度认可AI驱动的投资建议的易用性和质量。"投资组合构建效率高"、"个性化建议质量好"、"节省了我大量时间和精力"是常见的好评理由。这说明Streetbeat的核心AI产品确实解决了用户的真实痛点。</p>
+            <p><strong>负面反馈的焦点：</strong> 提现流程困难、客户服务响应慢、应用性能偏差是投诉集中点。这些问题虽然与AI能力无直接关系，但严重影响了用户的整体满意度和信任感。对于金融科技产品，资金安全和服务响应速度是红线级别的考核指标。</p>
+            <div class="callout">
+                <strong>诊断：</strong> 产品创新能力强，运营执行力需改进。这是许多AI初创面临的共同挑战——技术领先但运营跟不上。
+            </div>
+        </div></div></div>
+
+        <!-- 2/3 -->
+        <div class="slide"><div class="card"><h3>两类核心用户：个人与顾问的价值获取</h3><div class="card-body">
+            <div class="story-cards">
+                <div class="story-card">
+                    <div style="font-size:20px;margin-bottom:8px;">👨‍💼</div>
+                    <div class="story-name">李明，32岁，科技从业者</div>
+                    <div class="story-tag">个人投资者</div>
+                    <div class="story-text">"我对投资知识了解不多，但想开始理财。Streetbeat的Warren让我可以用自然语言告诉它我的想法，AI直接帮我生成投资组合。省去了我花费数周研究和学习的时间。"</div>
+                </div>
+                <div class="story-card">
+                    <div style="font-size:20px;margin-bottom:8px;">👩‍💼</div>
+                    <div class="story-name">王女士，财富管理顾问</div>
+                    <div class="story-tag">机构用户</div>
+                    <div class="story-text">"原本我每月要花20小时生成客户报告和分析建议。现在用Agent Factory，报告自动生成，我可以将更多时间用在与客户的关系维护上。每周节省了15小时。"</div>
+                </div>
+            </div>
+            <p style="margin-top:16px;font-size:13px;color:var(--text-2);">这两类用户的核心需求差异：个人用户追求的是投资决策的简化和民主化，机构用户追求的是运营效率的提升和规模化。Streetbeat通过双产品线同时满足了这两类不同的价值诉求。</p>
+        </div></div></div>
+
+        <!-- 3/3 -->
+        <div class="slide"><div class="card"><h3>竞争格局：差异化定位的优势与挑战</h3><div class="card-body">
+            <p><strong>直接竞品：</strong> Betterment、Wealthfront等传统智能投顾主要关注算法优化和费用降低，而Streetbeat强调的是AI对话和个性化体验的创新。</p>
+            <p><strong>间接竞品：</strong> 特别是BlackRock Aladdin这样的机构级平台，已经在财富管理机构中建立了强大的地位。但Streetbeat的多智能体架构和无代码部署方式降低了实施门槛，使得中小型机构也能接入AI自动化。</p>
+            <p><strong>Streetbeat的差异化优势：</strong> 垂直多智能体AI架构为金融优化、双边市场设计同时赋能个人和机构、强合规投入和SEC认证背书。</p>
+            <div class="callout">
+                <strong>核心洞察：</strong> 在AI财富管理市场中，赢家不是最先进的技术，而是最理解市场痛点和用户心理的产品。Streetbeat正在朝这个方向努力。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-5"></div>
+</section>
+
+<!-- ====== CHAPTER 6: 核心启示 (3 insight cards) ====== -->
+<section class="chapter" id="ch-6">
+    <div class="chapter-header">
+        <h2>三大核心启示</h2>
+        <span class="ch-sub">💡 核心启示</span>
+        <span class="ch-counter" id="counter-6">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="6">
+
+        <!-- 1/3 -->
+        <div class="slide" style="display:flex;flex-direction:column;gap:16px;">
+            <div class="insight-card">
+                <div class="insight-emoji">🎯</div>
+                <h3>启示一：垂直化AI比横向平台更有威力</h3>
+                <p>在生成式AI浪潮中，许多公司试图构建通用的AI平台，期待"一刀切"解决所有问题。但Streetbeat的成功说明，垂直化的AI架构——为特定领域（金融）深度优化的多智能体系统——能够创造更高的商业价值。</p>
+                <p>原因很简单：金融投资有其特有的决策逻辑、数据特征和风险管理要求。通用大模型可能在这些专业细节上效率低下或精度不足。而Streetbeat通过开发投资组合优化、风险评估、市场情感分析等垂直微调模型，大幅提升了决策质量和执行效率。</p>
+                <div class="insight-highlight">关键启示：不追求大而全，而追求专而精。在AI时代，垂直行业的理解和数据积累比通用算法更值钱。</div>
+            </div>
+        </div>
+
+        <!-- 2/3 -->
+        <div class="slide" style="display:flex;flex-direction:column;gap:16px;">
+            <div class="insight-card">
+                <div class="insight-emoji">🔄</div>
+                <h3>启示二：双边市场设计降低商业风险、加速增长</h3>
+                <p>Streetbeat同时运营ToC端的Streetbeat App和ToB端的Agent Factory，这个双边市场设计看似复杂，实际上降低了商业风险、加速了增长路径。</p>
+                <p>ToC端（个人投资者）提供了大规模用户获取和品牌影响力，验证了产品的市场需求。ToB端（财富管理机构）提供了更高的客户生命周期价值和长期续约稳定性。这两条线形成了相互促进：一方面，ToB用户的需求反馈可以优化ToC产品体验；另一方面，ToC的创新案例可以成为ToB销售的有力背书。</p>
+                <div class="insight-highlight">关键启示：如果你的AI解决方案既能服务个人用户也能服务机构用户，设计一个连接两端的双边市场会更具韧性和增长势能。</div>
+            </div>
+        </div>
+
+        <!-- 3/3 -->
+        <div class="slide" style="display:flex;flex-direction:column;gap:16px;">
+            <div class="insight-card">
+                <div class="insight-emoji">✅</div>
+                <h3>启示三：在金融科技中，合规是核心竞争力</h3>
+                <p>许多初创倾向于先求快速扩张，后补合规。但Streetbeat从成立之初就把合规当作战略优先级。SEC注册和SOC 2 Type II认证虽然需要投入大量资源和时间，但这些背书为Streetbeat赢得了机构用户的信任，开启了B端市场的大门。</p>
+                <p>在金融领域，合规不是可选项，而是必选项。机构用户在选择合作伙伴时，会严格审视合规和数据安全。Streetbeat提前布局合规，相当于为自己竖起了一道竞争壁垒——后来者需要经历同样的认证过程，这会削弱他们的扩张速度。</p>
+                <div class="insight-highlight">关键启示：在受监管行业（金融、医疗等），合规投入不是成本中心，而是利润中心。早期的合规投入会在长期商业价值中回报。</div>
+            </div>
+        </div>
+
+    </div>
+    <div class="dots-bar" id="dots-6"></div>
+</section>
+
+<!-- ====== CHAPTER 7: 近期要闻 (2 cards) ====== -->
+<section class="chapter" id="ch-7">
+    <div class="chapter-header">
+        <h2>最新进展与市场动向</h2>
+        <span class="ch-sub">📰 近期要闻</span>
+        <span class="ch-counter" id="counter-7">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="7">
+
+        <!-- 1/2 -->
+        <div class="slide"><div class="card"><h3>2025年10月：A轮融资完成，全球扩张启动</h3><div class="card-body">
+            <div class="news-item">
+                <div class="news-date">2025年10月22日</div>
+                <div class="news-title">Streetbeat完成1500万美元A轮融资，由CDP Venture Capital领投</div>
+                <div class="news-desc">这是Streetbeat的关键融资里程碑。融资总额达2500万美元，标志着顶级AI和金融科技基金对Streetbeat的垂直多智能体AI架构的深度认可。融资将用于Agent Factory平台在B端市场的规模化拓展、Streetbeat App在北美和欧洲的用户获取加速，以及AI技术研发的深化。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">后续展望</div>
+                <div class="news-title">国际市场扩张与B端生态构建</div>
+                <div class="news-desc">基于A轮融资，Streetbeat计划在2026年加速进入欧洲和亚太地区，特别是新加坡、香港等金融中心。同时，与大型财富管理机构和券商的战略合作将成为重点，通过API集成和白标方案扩大B端覆盖面。预计2026年ARR有望突破新的量级。</div>
+            </div>
+        </div></div></div>
+
+        <!-- 2/2 -->
+        <div class="slide"><div class="card"><h3>产品与技术前沿：实时Agent与多模态交互</h3><div class="card-body">
+            <div class="news-item">
+                <div class="news-date">2025年9月</div>
+                <div class="news-title">推出实时AI Agent功能，Warren智能体持续优化</div>
+                <div class="news-desc">Streetbeat推出了实时AI Agent功能，Warren可以在市场实时变化时主动推送洞察和调整建议。这标志着从"被动回应"向"主动代理"的进化。AI不仅仅是回答问题，而是主动监控、分析和行动，真正成为用户的投资代理。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">研发中</div>
+                <div class="news-title">多模态交互与集成市场数据生态</div>
+                <div class="news-desc">Streetbeat正在探索语音、图表等多模态交互方式，让用户可以用更自然的方式与AI互动。同时，与更多金融数据供应商、新闻聚合平台的集成正在推进，目标是让AI能够access更广泛和更实时的市场信息。这些技术升级将进一步提升AI决策的精度和用户体验。</div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-7"></div>
+</section>
+
+</main>
+
+<script>
+const chapters = ['ch-0','ch-1','ch-2','ch-3','ch-4','ch-5','ch-6','ch-7'];
+let currentChapter = 0;
+let scrollTimeout;
+
+function go(n) {
+    currentChapter = n;
+    const el = document.getElementById(chapters[n]);
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+    updateNav();
+}
+
+function updateNav() {
+    document.querySelectorAll('.nav-btn').forEach((btn,i) => {
+        btn.classList.toggle('active', i === currentChapter);
+    });
+}
+
+function updateDots() {
+    const main = document.getElementById('main');
+    let activeChapter = Math.round(main.scrollTop / main.clientHeight);
+    if (activeChapter !== currentChapter && activeChapter < chapters.length) {
+        currentChapter = activeChapter;
+        updateNav();
+    }
+
+    for (let ch = 1; ch <= 7; ch++) {
+        const track = document.querySelector(`[data-ch="${ch}"]`);
+        const counter = document.getElementById(`counter-${ch}`);
+        if (track && counter) {
+            const slides = track.querySelectorAll('.slide');
+            const scrollLeft = track.scrollLeft;
+            const slideWidth = track.offsetWidth;
+            const active = Math.round(scrollLeft / slideWidth) + 1;
+            counter.textContent = `${active} / ${slides.length}`;
+
+            const dotsBar = document.getElementById(`dots-${ch}`);
+            if (dotsBar) {
+                dotsBar.innerHTML = '';
+                for (let i = 0; i < slides.length; i++) {
+                    const dot = document.createElement('button');
+                    dot.className = 'dot' + (i === Math.round(scrollLeft / slideWidth) ? ' active' : '');
+                    dot.onclick = () => {
+                        track.scrollLeft = i * slideWidth;
+                    };
+                    dotsBar.appendChild(dot);
+                }
+            }
+        }
+    }
+}
+
+document.getElementById('main').addEventListener('scroll', () => {
+    clearTimeout(scrollTimeout);
+    scrollTimeout = setTimeout(updateDots, 100);
+    updateDots();
+});
+
+document.querySelectorAll('.card-track').forEach(track => {
+    track.addEventListener('scroll', updateDots);
+});
+
+updateDots();
+updateNav();
+</script>
+
+</body>
+</html>

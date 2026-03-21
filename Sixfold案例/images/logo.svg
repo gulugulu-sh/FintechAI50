@@ -1,0 +1,26 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="95" fill="#ffffff" stroke="#E91E8C" stroke-width="2"/>
+
+  <!-- Main magenta shape - hexagon-like fold pattern -->
+  <g fill="none" stroke="#E91E8C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Top fold -->
+    <path d="M 100 40 L 130 60 L 150 75"/>
+    <!-- Right upper -->
+    <path d="M 150 75 L 155 105"/>
+    <!-- Right lower -->
+    <path d="M 155 105 L 140 140"/>
+    <!-- Bottom -->
+    <path d="M 140 140 L 100 160 L 60 140"/>
+    <!-- Left lower -->
+    <path d="M 60 140 L 45 105"/>
+    <!-- Left upper -->
+    <path d="M 45 105 L 50 75 L 70 60"/>
+  </g>
+
+  <!-- Center accent circle with number 6 implied by fold -->
+  <circle cx="100" cy="100" r="25" fill="none" stroke="#E91E8C" stroke-width="2.5" opacity="0.6"/>
+
+  <!-- Inner text/symbol -->
+  <text x="100" y="107" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#E91E8C" text-anchor="middle" letter-spacing="2">SIX</text>
+</svg>

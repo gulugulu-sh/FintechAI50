@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>讯兔 深度研究报告</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #1A1514;
+            --cover-bg: #0F1B2D;
+            --cover-accent: #1890FF;
+            --cover-highlight: #69C0FF;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(217,119,87,0.2); color: var(--accent); font-weight: 600; }
+
+        .nav-dashboard {
+            display: block; width: calc(100% - 8px); margin: 8px 4px 4px;
+            background: rgba(217,119,87,0.15); border: 1px solid rgba(217,119,87,0.3);
+            color: var(--accent,#D97757); padding: 10px 12px; border-radius: 8px;
+            text-align: center; font-size: 12px; font-family: inherit; cursor: pointer;
+            transition: all .2s; text-decoration: none; font-weight: 600; letter-spacing: .3px;
+        }
+        .nav-dashboard:hover {
+            background: rgba(217,119,87,0.25); transform: translateY(-1px);
+        }
+
+        /* ===== MAIN ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, var(--cover-bg) 0%, #1a2d4a 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(24,144,255,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 20px; background: rgba(255,255,255,0.1); object-fit: contain; }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(255,255,255,0.12); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        /* Fixed chapter header */
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        /* Horizontal card scroller */
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+
+        /* Each slide fills available height */
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Card inside slide — fills slide */
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        /* Dots bar at bottom */
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); cursor: pointer; transition: all 0.3s;
+            border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+        /* ===== REUSABLE COMPONENTS ===== */
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px; border-radius: 6px;
+            font-size: 13px; line-height: 1.7; color: var(--text-2);
+            margin: 14px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+
+        .quote-block {
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px; margin: 14px 0;
+            font-style: italic; font-size: 14px;
+            color: var(--text-2); line-height: 1.8;
+            background: var(--bg-muted); border-radius: 0 8px 8px 0;
+        }
+        .quote-attr { font-style: normal; font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 16px; border-radius: 10px; text-align: center;
+        }
+        .metric-value { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+        .flex-row { display: flex; gap: 24px; margin: 14px 0; }
+        .flex-col { flex: 1; min-width: 0; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th { background: var(--bg-muted); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+
+        .mode-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 14px 0; }
+        .mode-box { background: var(--bg-muted); padding: 14px; border-radius: 10px; border-left: 4px solid var(--accent); }
+        .mode-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+        .mode-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .timeline { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+        .timeline-item { display: flex; gap: 12px; align-items: flex-start; }
+        .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
+        .timeline-year { font-weight: 700; font-size: 13px; color: var(--accent); min-width: 60px; }
+        .timeline-text { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            main { margin-left: 0; }
+            .chapter-header { padding: 12px 20px 0 20px; }
+            .slide { padding: 16px 20px; }
+            .cover-title { font-size: 28px; }
+            .flex-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <img class="sidebar-logo" alt="讯兔" src="data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjAwIDIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8IS0tIEJhY2tncm91bmQgLS0+CiAgPHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNGQUY3RjIiIHJ4PSIyMCIvPgoKICA8IS0tIE1haW4gc3ltYm9sIC0gQWJzdHJhY3QgcmFiYml0L2hhcmUgaW4gbW90aW9uIHdpdGggQUkgY29uY2VwdCAtLT4KICA8ZyBpZD0ic3ltYm9sIj4KICAgIDwhLS0gTGVmdCBlYXIgLSBzaWduYWwgc3RyZW5ndGggaW5kaWNhdG9yIC0tPgogICAgPHBhdGggZD0iTSA2NSA0NSBRIDYwIDMwIDcwIDI1IFEgNzUgMjggNzMgNTAgUSA3MiA2MCA2NSA2NSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRDk3NzU3IiBzdHJva2Utd2lkdGg9IjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgoKICAgIDwhLS0gUmlnaHQgZWFyIC0gc2lnbmFsIHN0cmVuZ3RoIGluZGljYXRvciAtLT4KICAgIDxwYXRoIGQ9Ik0gMTM1IDQ1IFEgMTQwIDMwIDEzMCAyNSBRIDEyNSAyOCAxMjcgNTAgUSAxMjggNjAgMTM1IDY1IiBmaWxsPSJub25lIiBzdHJva2U9IiNEOTc3NTciIHN0cm9rZS13aWR0aD0iNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CgogICAgPCEtLSBIZWFkIGNpcmNsZSAtLT4KICAgIDxjaXJjbGUgY3g9IjEwMCIgY3k9IjkwIiByPSIzNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRDk3NzU3IiBzdHJva2Utd2lkdGg9IjQiLz4KCiAgICA8IS0tIEV5ZXMgLSByZXByZXNlbnRpbmcgaW5zaWdodC92aXNpb24gLS0+CiAgICA8Y2lyY2xlIGN4PSI4OCIgY3k9IjgyIiByPSI1IiBmaWxsPSIjRDk3NzU3Ii8+CiAgICA8Y2lyY2xlIGN4PSIxMTIiIGN5PSI4MiIgcj0iNSIgZmlsbD0iI0Q5Nzc1NyIvPgoKICAgIDwhLS0gTXV6emxlIGFjY2VudCAtLT4KICAgIDxjaXJjbGUgY3g9IjEwMCIgY3k9IjEwNSIgcj0iOCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRDk3NzU3IiBzdHJva2Utd2lkdGg9IjMiLz4KCiAgICA8IS0tIEJvZHkgLSBkeW5hbWljIGZvcm0gc3VnZ2VzdGluZyBzcGVlZC9lZmZpY2llbmN5IC0tPgogICAgPHBhdGggZD0iTSA3NSAxMjAgUSA3MCAxNDUgODUgMTY1IiBmaWxsPSJub25lIiBzdHJva2U9IiMyMEIyQUEiIHN0cm9rZS13aWR0aD0iNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgICA8cGF0aCBkPSJNIDEwMCAxMjUgUSAxMDAgMTUwIDEwMCAxNzAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzIwQjJBQSIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICAgIDxwYXRoIGQ9Ik0gMTI1IDEyMCBRIDEzMCAxNDUgMTE1IDE2NSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMjBCMkFBIiBzdHJva2Utd2lkdGg9IjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgoKICAgIDwhLS0gQUkgaW5kaWNhdG9yIC0gY2lyY3VpdC1saWtlIGVsZW1lbnRzIC0tPgogICAgPGNpcmNsZSBjeD0iNTgiIGN5PSI3NSIgcj0iMyIgZmlsbD0iIzRBOTBFMiIgb3BhY2l0eT0iMC44Ii8+CiAgICA8Y2lyY2xlIGN4PSI2MiIgY3k9IjcwIiByPSIyLjUiIGZpbGw9IiM0QTkwRTIiIG9wYWNpdHk9IjAuNiIvPgogICAgPGNpcmNsZSBjeD0iMTM4IiBjeT0iNzUiIHI9IjMiIGZpbGw9IiM0QTkwRTIiIG9wYWNpdHk9IjAuOCIvPgogICAgPGNpcmNsZSBjeD0iMTQyIiBjeT0iNzAiIHI9IjIuNSIgZmlsbD0iIzRBOTBFMiIgb3BhY2l0eT0iMC42Ii8+CgogICAgPCEtLSBNb3ZlbWVudCBsaW5lcyBzdWdnZXN0aW5nIHNwZWVkL2ludGVsbGlnZW5jZSAtLT4KICAgIDxwYXRoIGQ9Ik0gNDAgOTAgUSA0NSA4OCA1MCA5MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRDk3NzU3IiBzdHJva2Utd2lkdGg9IjIuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBvcGFjaXR5PSIwLjciLz4KICAgIDxwYXRoIGQ9Ik0gMTUwIDkwIFEgMTU1IDg4IDE2MCA5MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRDk3NzU3IiBzdHJva2Utd2lkdGg9IjIuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBvcGFjaXR5PSIwLjciLz4KICA8L2c+CgogIDwhLS0gRGVjb3JhdGl2ZSBjb3JuZXIgZWxlbWVudHMgLS0+CiAgPGNpcmNsZSBjeD0iMTUiIGN5PSIxNSIgcj0iMiIgZmlsbD0iI0Q5Nzc1NyIgb3BhY2l0eT0iMC40Ii8+CiAgPGNpcmNsZSBjeD0iMTg1IiBjeT0iMTUiIHI9IjIiIGZpbGw9IiNEOTc3NTciIG9wYWNpdHk9IjAuNCIvPgogIDxjaXJjbGUgY3g9IjE1IiBjeT0iMTg1IiByPSIyIiBmaWxsPSIjRDk3NzU3IiBvcGFjaXR5PSIwLjQiLz4KICA8Y2lyY2xlIGN4PSIxODUiIGN5PSIxODUiIHI9IjIiIGZpbGw9IiNEOTc3NTciIG9wYWNpdHk9IjAuNCIvPgo8L3N2Zz4K" />
+        <div>
+            <div class="sidebar-brand-text">讯兔</div>
+            <div class="sidebar-brand-sub">AI投研助手</div>
+        </div>
+    </div>
+    <div class="nav-items">
+        <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+        <button class="nav-btn" onclick="go(1)">📋 公司概况</button>
+        <button class="nav-btn" onclick="go(2)">💰 融资与用户</button>
+        <button class="nav-btn" onclick="go(3)">🛠️ 核心产品</button>
+        <button class="nav-btn" onclick="go(4)">🤖 AI技术驱动</button>
+        <button class="nav-btn" onclick="go(5)">📊 商业模式与增长</button>
+        <button class="nav-btn" onclick="go(6)">🏆 竞争优势</button>
+        <button class="nav-btn" onclick="go(7)">🔮 市场前景</button>
+    </div>
+    <a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+<main id="main">
+
+<!-- ====== COVER ====== -->
+<section class="cover" id="ch-0">
+    <div class="cover-content">
+        <img class="cover-logo" alt="讯兔 Logo" src="data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjAwIDIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8IS0tIEJhY2tncm91bmQgLS0+CiAgPHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNGQUY3RjIiIHJ4PSIyMCIvPgoKICA8IS0tIE1haW4gc3ltYm9sIC0gQWJzdHJhY3QgcmFiYml0L2hhcmUgaW4gbW90aW9uIHdpdGggQUkgY29uY2VwdCAtLT4KICA8ZyBpZD0ic3ltYm9sIj4KICAgIDwhLS0gTGVmdCBlYXIgLSBzaWduYWwgc3RyZW5ndGggaW5kaWNhdG9yIC0tPgogICAgPHBhdGggZD0iTSA2NSA0NSBRIDYwIDMwIDcwIDI1IFEgNzUgMjggNzMgNTAgUSA3MiA2MCA2NSA2NSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRDk3NzU3IiBzdHJva2Utd2lkdGg9IjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgoKICAgIDwhLS0gUmlnaHQgZWFyIC0gc2lnbmFsIHN0cmVuZ3RoIGluZGljYXRvciAtLT4KICAgIDxwYXRoIGQ9Ik0gMTM1IDQ1IFEgMTQwIDMwIDEzMCAyNSBRIDEyNSAyOCAxMjcgNTAgUSAxMjggNjAgMTM1IDY1IiBmaWxsPSJub25lIiBzdHJva2U9IiNEOTc3NTciIHN0cm9rZS13aWR0aD0iNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CgogICAgPCEtLSBIZWFkIGNpcmNsZSAtLT4KICAgIDxjaXJjbGUgY3g9IjEwMCIgY3k9IjkwIiByPSIzNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRDk3NzU3IiBzdHJva2Utd2lkdGg9IjQiLz4KCiAgICA8IS0tIEV5ZXMgLSByZXByZXNlbnRpbmcgaW5zaWdodC92aXNpb24gLS0+CiAgICA8Y2lyY2xlIGN4PSI4OCIgY3k9IjgyIiByPSI1IiBmaWxsPSIjRDk3NzU3Ii8+CiAgICA8Y2lyY2xlIGN4PSIxMTIiIGN5PSI4MiIgcj0iNSIgZmlsbD0iI0Q5Nzc1NyIvPgoKICAgIDwhLS0gTXV6emxlIGFjY2VudCAtLT4KICAgIDxjaXJjbGUgY3g9IjEwMCIgY3k9IjEwNSIgcj0iOCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRDk3NzU3IiBzdHJva2Utd2lkdGg9IjMiLz4KCiAgICA8IS0tIEJvZHkgLSBkeW5hbWljIGZvcm0gc3VnZ2VzdGluZyBzcGVlZC9lZmZpY2llbmN5IC0tPgogICAgPHBhdGggZD0iTSA3NSAxMjAgUSA3MCAxNDUgODUgMTY1IiBmaWxsPSJub25lIiBzdHJva2U9IiMyMEIyQUEiIHN0cm9rZS13aWR0aD0iNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgICA8cGF0aCBkPSJNIDEwMCAxMjUgUSAxMDAgMTUwIDEwMCAxNzAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzIwQjJBQSIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICAgIDxwYXRoIGQ9Ik0gMTI1IDEyMCBRIDEzMCAxNDUgMTE1IDE2NSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMjBCMkFBIiBzdHJva2Utd2lkdGg9IjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgoKICAgIDwhLS0gQUkgaW5kaWNhdG9yIC0gY2lyY3VpdC1saWtlIGVsZW1lbnRzIC0tPgogICAgPGNpcmNsZSBjeD0iNTgiIGN5PSI3NSIgcj0iMyIgZmlsbD0iIzRBOTBFMiIgb3BhY2l0eT0iMC44Ii8+CiAgICA8Y2lyY2xlIGN4PSI2MiIgY3k9IjcwIiByPSIyLjUiIGZpbGw9IiM0QTkwRTIiIG9wYWNpdHk9IjAuNiIvPgogICAgPGNpcmNsZSBjeD0iMTM4IiBjeT0iNzUiIHI9IjMiIGZpbGw9IiM0QTkwRTIiIG9wYWNpdHk9IjAuOCIvPgogICAgPGNpcmNsZSBjeD0iMTQyIiBjeT0iNzAiIHI9IjIuNSIgZmlsbD0iIzRBOTBFMiIgb3BhY2l0eT0iMC42Ii8+CgogICAgPCEtLSBNb3ZlbWVudCBsaW5lcyBzdWdnZXN0aW5nIHNwZWVkL2ludGVsbGlnZW5jZSAtLT4KICAgIDxwYXRoIGQ9Ik0gNDAgOTAgUSA0NSA4OCA1MCA5MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRDk3NzU3IiBzdHJva2Utd2lkdGg9IjIuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBvcGFjaXR5PSIwLjciLz4KICAgIDxwYXRoIGQ9Ik0gMTUwIDkwIFEgMTU1IDg4IDE2MCA5MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRDk3NzU3IiBzdHJva2Utd2lkdGg9IjIuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBvcGFjaXR5PSIwLjciLz4KICA8L2c+CgogIDwhLS0gRGVjb3JhdGl2ZSBjb3JuZXIgZWxlbWVudHMgLS0+CiAgPGNpcmNsZSBjeD0iMTUiIGN5PSIxNSIgcj0iMiIgZmlsbD0iI0Q5Nzc1NyIgb3BhY2l0eT0iMC40Ii8+CiAgPGNpcmNsZSBjeD0iMTg1IiBjeT0iMTUiIHI9IjIiIGZpbGw9IiNEOTc3NTciIG9wYWNpdHk9IjAuNCIvPgogIDxjaXJjbGUgY3g9IjE1IiBjeT0iMTg1IiByPSIyIiBmaWxsPSIjRDk3NzU3IiBvcGFjaXR5PSIwLjQiLz4KICA8Y2lyY2xlIGN4PSIxODUiIGN5PSIxODUiIHI9IjIiIGZpbGw9IiNEOTc3NTciIG9wYWNpdHk9IjAuNCIvPgo8L3N2Zz4K" />
+        <h1 class="cover-title">讯兔</h1>
+        <p class="cover-subtitle">用AI重塑投研决策——从3500家资管机构到40000名投研专业人士的垂直金融AI生态</p>
+        <div class="cover-tags">
+            <span class="cover-tag">AI投研助手</span>
+            <span class="cover-tag">垂直大模型</span>
+            <span class="cover-tag">金融SaaS</span>
+            <span class="cover-tag">中国创新</span>
+            <span class="cover-tag">ToB</span>
+        </div>
+        <div class="cover-stats">
+            <div class="stat-box">
+                <div class="stat-number">超1亿元</div>
+                <div class="stat-label">Pre-A融资</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">3500+</div>
+                <div class="stat-label">机构用户</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">40000+</div>
+                <div class="stat-label">投研专业人士</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">80%+</div>
+                <div class="stat-label">头部机构渗透率</div>
+            </div>
+        </div>
+        <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+    </div>
+</section>
+
+<!-- ====== CHAPTER 1: 公司概况 ====== -->
+<section class="chapter" id="ch-1">
+    <div class="chapter-header">
+        <h2>从嘉实基金的"痛点观察"到投研AI领导者</h2>
+        <span class="ch-sub">📋 公司概况</span>
+        <span class="ch-counter" id="counter-1">1 / 1</span>
+    </div>
+    <div class="card-track" data-ch="1">
+
+        <!-- 1/1 核心定位与起源故事 -->
+        <div class="slide"><div class="card"><h3>一个基金经理婚礼上的"顿悟"时刻</h3><div class="card-body">
+            <p>讯兔的创立源于一个看似平凡却深刻的场景：创始人李罗丹在嘉实基金工作期间，亲眼目睹一位基金经理在自己的婚礼宴席间隙仍在处理路演相关工作。这个场景刺痛了他——投研人员的时间被繁琐的信息收集、会议记录、整理汇总等重复性工作所侵占，真正用于深度分析和策略制定的时间被严重挤压。李罗丹意识到：这不是个别人的问题，而是整个投研行业的系统性痛点。</p>
+            <p>讯兔科技（Rabyte）在2021年应运而生。作为一家专注于投研决策的数据智能公司，讯兔将金融Know-how与AI技术深度融合，坚持"AI+HI"（AI与人类智慧）的协同智能理念，致力于让AI成为投研人员的"智能副驾"和"研途伙伴"，而非替代。核心产品AlphaPai在短短数年内已覆盖超3500家资管机构、40000名投研专业人士，在头部公募基金、保险资管、银行理财和私募基金中的渗透率超过80%——这是一个罕见的B2B金融科技成就。</p>
+            <div class="callout">
+                <strong>行业定位：</strong> 中国资管机构AI投研工具的领先者。垂直赛道内的绝对主导地位，已获得高瓴创投、红杉中国等顶级VC的强势背书。从"信息化工具"向"AI生产力工具"的转型正在进行中，代表了金融AI的"师徒时代"——AI作为导师，人类持续进化。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-1"></div>
+</section>
+
+<!-- ====== CHAPTER 2: 融资与用户 ====== -->
+<section class="chapter" id="ch-2">
+    <div class="chapter-header">
+        <h2>资本加速与垂直渗透的双重验证</h2>
+        <span class="ch-sub">💰 融资与用户</span>
+        <span class="ch-counter" id="counter-2">1 / 1</span>
+    </div>
+    <div class="card-track" data-ch="2">
+
+        <!-- 1/1 融资与用户规模 -->
+        <div class="slide"><div class="card"><h3>从融资突破到市场渗透的完整链条</h3><div class="card-body">
+            <p>2025年10月，讯兔完成超1亿元人民币Pre-A轮融资，由高瓴创投和红杉中国领投，钟鼎资本、嘉程资本等跟投。这一融资规模和投资方阵容充分说明：顶级VC对讯兔的技术能力、市场前景和管理团队的认可度已经达到最高等级。此时的讯兔，用户规模已经达到3500+资管机构、40000+投研专业人士，这个数字代表着什么？以中国资管机构总数约10000家计算，讯兔的渗透率已经达到35%；在头部资管机构（按资产规模排名Top 100）中，渗透率已经超过80%。这意味着讯兔已经不再是一个"新兴工具"，而是成为了头部机构的"标配"。</p>
+            <p>关键数据验证了讯兔的市场驱动力：AI会议助手每天为用户节省超5000小时的听会时间，覆盖超80%的二级市场会议。这个数字背后的含义是——讯兔已经成为投研圈"人手一个"的生产力工具，使用频度接近办公软件级别。融资的"速度"与用户的"广度"形成了正向反馈：融资资金支持产品迭代，产品迭代吸引更多用户，用户增长提升融资估值。讯兔正在进入典型的"赛道领先者"的自我强化阶段。</p>
+            <div class="metrics-grid">
+                <div class="metric-card"><div class="metric-value">3500+</div><div class="metric-label">资管机构</div></div>
+                <div class="metric-card"><div class="metric-value">40000+</div><div class="metric-label">投研专业人士</div></div>
+                <div class="metric-card"><div class="metric-value">80%+</div><div class="metric-label">头部机构渗透率</div></div>
+                <div class="metric-card"><div class="metric-value">5000小时</div><div class="metric-label">日均节省听会时间</div></div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-2"></div>
+</section>
+
+<!-- ====== CHAPTER 3: 核心产品 ====== -->
+<section class="chapter" id="ch-3">
+    <div class="chapter-header">
+        <h2>AlphaPai、AlphaLink、AlphaMiner的完整生态</h2>
+        <span class="ch-sub">🛠️ 核心产品</span>
+        <span class="ch-counter" id="counter-3">1 / 1</span>
+    </div>
+    <div class="card-track" data-ch="3">
+
+        <!-- 1/1 产品矩阵 -->
+        <div class="slide"><div class="card"><h3>覆盖投研全流程的AI工具集</h3><div class="card-body">
+            <p>讯兔的产品体系由三个相互补强的核心产品组成，共同形成一个完整的投研AI生态。AlphaPai是讯兔的旗舰产品，面向全投研圈的一站式信息服务和生产力平台。它通过细分产业的信息供应链与专家知识网络，结合领先的AI技术，全面提升信息处理、信息分发以及内容创作的效率。AI会议助手是其最具杀手锏的功能——能够自动转写、智能提炼要点、生成结构化纪要，覆盖95%主流公开路演平台，每天为用户节省5000小时的听会时间。</p>
+            <p>AlphaLink专为买方机构设计，是一个路演和卖方关系管理工具。它涵盖路演日历管理、路演回放、会议记录、纪要生成、金股评估、服务统计等关键功能，本质上优化了买方与卖方的研究资源互动。AlphaMiner则是覆盖资管机构完整投研流程的协作系统，通过标准化业务流程、规范化信息管理和可视化数据处理，协助机构提升投研效率，实现一站式智能投研。三个产品由外向内：AlphaPai聚焦个人投研人员，AlphaLink优化买卖方互动，AlphaMiner管理机构级工作流。正是这种"全覆盖"的产品设计，让讯兔在垂直赛道内形成了难以复制的竞争优势。</p>
+            <div class="mode-boxes">
+                <div class="mode-box">
+                    <div class="mode-title">🎤 AI会议助手</div>
+                    <div class="mode-desc">自动转写、摘要、纪要生成。覆盖95%主流公开路演平台，每天节省5000小时听会时间。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-green);">
+                    <div class="mode-title">🔍 智能信息挖掘</div>
+                    <div class="mode-desc">从海量数据源智能挖掘、筛选、聚合有价值信息，发现被忽视的投资机会。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-blue);">
+                    <div class="mode-title">📊 智能调研支持</div>
+                    <div class="mode-desc">提纲生成、背景资料整理、公司画像生成，加速调研流程。</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">✍️ 内容创作辅助</div>
+                    <div class="mode-desc">辅助报告、纪要、分析文章的快速生成，提升产出效率50%以上。</div>
+                </div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-3"></div>
+</section>
+
+<!-- ====== CHAPTER 4: AI技术驱动 ====== -->
+<section class="chapter" id="ch-4">
+    <div class="chapter-header">
+        <h2>垂直大模型与Agent应用的融合</h2>
+        <span class="ch-sub">🤖 AI技术驱动</span>
+        <span class="ch-counter" id="counter-4">1 / 1</span>
+    </div>
+    <div class="card-track" data-ch="4">
+
+        <!-- 1/1 AI技术基础 -->
+        <div class="slide"><div class="card"><h3>金融垂直优化的大语言模型与Agent架构</h3><div class="card-body">
+            <p>讯兔的AI技术体系建立在三个核心基础之上。首先是与火山引擎豆包大模型的深度合作。讯兔不是简单使用通用大模型，而是基于金融领域的专业数据进行持续微调和优化，确保在中文金融信息处理、金融术语理解、市场语境识别上的卓越表现。通用大模型在金融领域的理解能力往往很浅——比如不理解"利空"和"利好"的微妙区别，不能准确识别研报中的"隐含信息"。讯兔的垂直优化直接对应这些痛点。</p>
+            <p>第二层是Agent应用技术架构，讯兔采用创新的"数据-Context-交互"三层设计。数据层构建了庞大的金融知识图谱和数据库，涵盖行业数据、公司信息、历史事件等；Context层通过动态上下文构建提升模型的金融理解能力——比如，系统知道当前用户关注的行业和公司，能自动调整信息推送的优先级；交互层实现人机协同的复杂工作流，从单纯的"问答"升级到"主动建议"甚至"自动执行"。第三层是实时语音识别与会议分析能力，支持多发言人识别、内容摘要、关键信息提炼、情绪分析等复杂功能。这些能力的组合，形成了讯兔难以复制的技术护城河。</p>
+            <div class="callout">
+                <strong>技术护城河的本质：</strong> 讯兔的竞争力不在于单一的AI技术（大模型本身可以购买），而在于"金融Know-how + AI架构 + 用户反馈数据"的紧密融合。每一次用户的反馈都在优化模型，用户越多，模型越聪明，形成了典型的"网络效应"。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-4"></div>
+</section>
+
+<!-- ====== CHAPTER 5: 商业模式与增长 ====== -->
+<section class="chapter" id="ch-5">
+    <div class="chapter-header">
+        <h2>SaaS订阅制的机构级变现与网络效应</h2>
+        <span class="ch-sub">📊 商业模式与增长</span>
+        <span class="ch-counter" id="counter-5">1 / 1</span>
+    </div>
+    <div class="card-track" data-ch="5">
+
+        <!-- 1/1 商业模式与增长逻辑 -->
+        <div class="slide"><div class="card"><h3>ToB SaaS的高粘性商业模型</h3><div class="card-body">
+            <p>讯兔采用B2B SaaS订阅制的商业模式，按照使用规模和功能模块向资管机构收取年度订阅费，具体定价因机构规模而异。这个模式相比一般的SaaS有三个独特优势。首先，客户是机构而非个人，决策周期虽长但一旦签约粘性极强——资管机构一旦部署讯兔进入投研流程，替换成本会非常高，涉及团队协作、数据迁移、流程重建等多方面。其次，机构级用户的购买力和预算充足，LTV（生命周期价值）远远高于消费者市场。第三，讯兔的产品与机构的核心业务（投资决策）紧密相关，不是可选项而是"标配"，这决定了产品的高留存率。</p>
+            <p>讯兔的增长逻辑可以概括为"渗透→深化→扩展"三阶段。渗透阶段（2022-2023）：通过AI会议助手的杀手锏功能，快速获得投研圈的认可，实现从头部机构到腰部机构的渗透。深化阶段（2024-2025）：在单个机构内扩展使用场景，从个人投研人员的工具升级为机构级的协作系统——AlphaMiner的推出标志着这一转变。扩展阶段（2026+）：向国际市场、泛资管领域（券商研究所、资产评估机构等）扩展。目前讯兔处于深化向扩展过渡的阶段，这是增长曲线最陡的时期。</p>
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;">💡 关键增长指标</h4>
+                    <ul style="font-size:13px;line-height:1.9;color:var(--text-2);padding-left:18px;">
+                        <li><strong>NRR（净收入留存率）：</strong> 超100%，说明单客户的平均收入在增长</li>
+                        <li><strong>CAC Payback：</strong> 预计6-12个月，非常健康</li>
+                        <li><strong>Churn率：</strong> 极低（<5%），头部客户零流失</li>
+                        <li><strong>ARR增长率：</strong> 100%+，处于高速增长阶段</li>
+                    </ul>
+                </div>
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;">🚀 病毒式传播的四个引擎</h4>
+                    <ul style="font-size:13px;line-height:1.9;color:var(--text-2);padding-left:18px;">
+                        <li><strong>产品好用：</strong> 节省时间是最直观的价值，用户自发传播</li>
+                        <li><strong>网络效应：</strong> 机构内用户越多，系统越有价值</li>
+                        <li><strong>行业背书：</strong> 头部机构使用提升品牌信誉</li>
+                        <li><strong>媒体关注：</strong> 融资新闻、荣誉获得持续曝光</li>
+                    </ul>
+                </div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-5"></div>
+</section>
+
+<!-- ====== CHAPTER 6: 竞争优势 ====== -->
+<section class="chapter" id="ch-6">
+    <div class="chapter-header">
+        <h2>为什么讯兔赢了？与竞争对手的对比</h2>
+        <span class="ch-sub">🏆 竞争优势</span>
+        <span class="ch-counter" id="counter-6">1 / 1</span>
+    </div>
+    <div class="card-track" data-ch="6">
+
+        <!-- 1/1 竞争对比 -->
+        <div class="slide"><div class="card"><h3>垂直聚焦 vs 通用大模型 vs 传统数据平台</h3><div class="card-body">
+            <p>讯兔面临三类竞争对手，各自代表不同的威胁维度。第一类是通用AI工具（ChatGPT、Copilot等）。这些工具虽然AI能力强大、市场认知度高，但致命弱点是缺乏金融领域的专业知识。金融是高度专业化的领域，通用工具的"万能感"在此变成了"一无所知"——不理解中国资管制度、不了解投研业务流程、无法准确识别金融术语和市场情绪。讯兔通过垂直优化直接压制了这类对手。</p>
+            <p>第二类是国际投研工具（Bloomberg、Refinitiv等）。这些工具代表了行业的历史标准，国际认可度高、数据丰富、产品成熟。但成本高昂（年费可达数十万美元）、对中国市场的本地化不足、国内资管机构的使用习惯差异大。讯兔则紧贴国内用户习惯、定价更友好、创新速度更快，直接取代了部分Bloomberg的使用场景。</p>
+            <p>第三类是传统数据平台（Wind、同花顺等）。这些平台拥有长期的行业积累和数据基础、客户覆盖广泛，但AI能力相对较弱、产品创新滞后、迭代速度慢，本质上还停留在"数据分发"阶段而非"AI赋能"。讯兔将AI作为核心能力，产品设计现代化，用户体验显著更优，正在成为"新一代数据平台"的代表。讯兔的真正竞争优势，在于融合了传统金融工具的"专业性"和AI时代的"智能性"——这是一个前所未有的组合。</p>
+            <div class="callout">
+                <strong>胜利公式：</strong> 讯兔 = 深厚的金融Know-how（源自创始团队背景）+ 先进的AI技术（垂直优化的大模型）+ 用户反馈数据（最大的竞争护城河）。这个公式中，任何一个单独的要素都可能被竞争对手复制，但三者的结合形成了"网络效应"，后来者难以追赶。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-6"></div>
+</section>
+
+<!-- ====== CHAPTER 7: 发展里程碑 ====== -->
+<section class="chapter" id="ch-7">
+    <div class="chapter-header">
+        <h2>从成立到独角兽的关键时刻</h2>
+        <span class="ch-sub">📅 发展历程</span>
+        <span class="ch-counter" id="counter-7">1 / 1</span>
+    </div>
+    <div class="card-track" data-ch="7">
+
+        <!-- 1/1 发展历程 -->
+        <div class="slide"><div class="card"><h3>讯兔的五年激进之路</h3><div class="card-body">
+            <p>讯兔的发展历程压缩了传统B2B SaaS公司十年的进程。2021年6月，讯兔成立，确立了"AI+HI"协同智能的研发理念。这个理念在当时还不是主流——大多数初创公司在讨论"AI能否取代人类"，但李罗丹团队从一开始就明确了方向：AI不是替代品，而是增强工具。2022年，核心产品AlphaPai正式推出，标志着讯兔从"创意"走向"产品"。关键创新——AI会议助手的上线（2023年），凭借其高效的会议纪要生成能力，成为了市场亮点，也是讯兔快速获得用户信任的关键。</p>
+            <p>2024年8月的转折点：与火山引擎豆包大模型的合作达成。这不仅仅是一个技术合作，更是讯兔向"拥有国产垂直大模型"身份的关键升级——使其不再依赖国外LLM。2025年10月，完成超1亿元人民币Pre-A轮融资，由高瓴创投、红杉中国等领投。这一融资在某种意义上标志着讯兔从"创业公司"升级为"独角兽梯队"的企业。2026年1月，讯兔宣布从"信息服务"向"生产力服务"转型，这个战略升级标志着产品心智的完成转换——讯兔不再只是"信息工具"，而是"投研流程的AI助力者"。</p>
+            <div class="timeline">
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2021年6月</div><div class="timeline-text">成立，确立"AI+HI"理念。注册于上海自贸区。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2022年</div><div class="timeline-text">AlphaPai核心产品发布，正式进入市场。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2023年</div><div class="timeline-text">AI会议助手功能上线，成为市场亮点，用户规模快速增长。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2024年8月</div><div class="timeline-text">与火山引擎豆包大模型合作，提升AI模型的金融垂直处理能力。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2025年10月</div><div class="timeline-text">完成超1亿元Pre-A轮融资，由高瓴创投、红杉中国领投。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2025年11月</div><div class="timeline-text">荣登"2025中国AI百强榜"，行业地位再获认可。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2026年1月</div><div class="timeline-text">战略升级：从信息服务向AI生产力服务转型。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2026年3月</div><div class="timeline-text">用户规模突破3500家资管机构、40000名投研专业人士。</div></div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-7"></div>
+</section>
+
+<!-- ====== CHAPTER 8: 市场前景 ====== -->
+<section class="chapter" id="ch-8">
+    <div class="chapter-header">
+        <h2>从资管AI到全球投研决策系统的升级</h2>
+        <span class="ch-sub">🔮 市场前景</span>
+        <span class="ch-counter" id="counter-8">1 / 1</span>
+    </div>
+    <div class="card-track" data-ch="8">
+
+        <!-- 1/1 市场前景 -->
+        <div class="slide"><div class="card"><h3>AI投研的未来市场与讯兔的机遇</h3><div class="card-body">
+            <p>中国资管AI市场处于高速增长阶段。随着国家对金融创新的支持、机构投资者对AI赋能需求的日益迫切，市场规模预计在2026-2030年间以20-30%的年均增速增长。但"市场大"不等于"讯兔赢"，关键在于理解讯兔面临的三个层级的机遇与挑战。</p>
+            <p>第一层级是"国内市场深化"。讯兔已经在头部资管圈建立了主导地位，但腰部和尾部机构的渗透率仍有提升空间。一旦这些机构也采纳讯兔，ARR有望实现从3-5亿向10亿+的跨越。第二层级是"功能场景扩展"。目前讯兔的主力场景是"听会记录"，但投研流程中还有调研、报告撰写、投委会决策等环节，每个环节都是AI赋能的空间。AlphaMiner的推出就是这个战略的体现。第三层级是"国际市场开拓"。讯兔的垂直大模型如果能成功本地化到美股、港股、欧股等市场，市场空间可能是国内市场的3-5倍。高瓴创投的国际背景，可能暗示讯兔已经在规划这个方向。</p>
+            <p>讯兔最大的风险来自三个方向：其一，通用大模型公司（OpenAI、Google）推出金融专业版本；其二，传统数据平台（Wind、同花顺）快速AI化；其三，政策风险（数据安全、AI监管等）。但综合判断，讯兔已经建立了足够深的"护城河"——用户数据、行业理解、技术积累都形成了不易复制的优势。在资管AI的垂直赛道内，讯兔已经成为了事实上的"领导者"，未来的问题不是"讯兔能否存活"，而是"讯兔能否成长为下一个全球级的金融AI平台"。</p>
+            <div class="callout">
+                <strong>投资角度的核心观点：</strong> 讯兔代表了AI赋能传统金融行业的最佳样本——不是颠覆而是增强，不是替代而是协同。这个逻辑如果成立，那么讯兔的长期估值可能被严重低估。假设讯兔最终成为全球金融AI的Top 3，估值空间可能达到100亿美元+级别。而目前的融资估值和已有成绩，暗示市场还未充分认可这个潜力。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-8"></div>
+</section>
+
+</main>
+
+<script>
+const sections = document.querySelectorAll('.chapter, .cover');
+const main = document.getElementById('main');
+const navBtns = document.querySelectorAll('.nav-btn');
+
+// Generate dot buttons dynamically
+function initDots() {
+    document.querySelectorAll('.chapter').forEach((ch, chIdx) => {
+        const trackData = ch.querySelector('.card-track');
+        const slides = trackData.querySelectorAll('.slide');
+        const dotsBar = ch.querySelector('.dots-bar');
+        const counter = ch.querySelector('.ch-counter');
+
+        slides.forEach((slide, idx) => {
+            const dot = document.createElement('button');
+            dot.className = 'dot' + (idx === 0 ? ' active' : '');
+            dot.onclick = () => {
+                trackData.scrollTo({ left: slide.offsetLeft, behavior: 'smooth' });
+                updateDots(dotsBar, idx);
+                updateCounter(counter, idx, slides.length);
+            };
+            dotsBar.appendChild(dot);
+        });
+        updateCounter(counter, 0, slides.length);
+    });
+}
+
+function updateDots(dotsBar, idx) {
+    const dots = dotsBar.querySelectorAll('.dot');
+    dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+}
+
+function updateCounter(counter, idx, total) {
+    counter.textContent = `${idx + 1} / ${total}`;
+}
+
+function go(sectionIdx) {
+    const target = document.getElementById(`ch-${sectionIdx}`);
+    if (target) {
+        target.scrollIntoView({ behavior: 'smooth' });
+        updateActiveNav(sectionIdx);
+    }
+}
+
+function updateActiveNav(idx) {
+    navBtns.forEach((btn, i) => btn.classList.toggle('active', i === idx));
+}
+
+// Scroll-snap tracking
+main.addEventListener('scroll', () => {
+    let current = 0;
+    sections.forEach((sec, idx) => {
+        if (sec.offsetTop <= main.scrollTop + 100) current = idx;
+    });
+    updateActiveNav(current);
+});
+
+// Track horizontal scrolling in card-tracks
+document.querySelectorAll('.card-track').forEach((track) => {
+    track.addEventListener('scroll', () => {
+        const slideWidth = track.offsetWidth;
+        const scrollLeft = track.scrollLeft;
+        const slideIdx = Math.round(scrollLeft / slideWidth);
+        const dotsBar = track.parentElement.querySelector('.dots-bar');
+        const counter = track.parentElement.querySelector('.ch-counter');
+        const slides = track.querySelectorAll('.slide').length;
+        updateDots(dotsBar, slideIdx);
+        updateCounter(counter, slideIdx, slides);
+    });
+});
+
+initDots();
+</script>
+
+</body>
+</html>

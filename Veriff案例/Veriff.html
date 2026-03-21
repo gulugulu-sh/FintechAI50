@@ -1,0 +1,2364 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veriff 深度调研报告</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --accent-purple: #7B5EA7;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #1A1514;
+            --cover-bg: #1A0B2E;
+            --cover-accent: #7C3AED;
+            --cover-highlight: #C4B5FD;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(217,119,87,0.2); color: var(--accent); font-weight: 600; }
+        .nav-dashboard {
+            display: block; width: calc(100% - 8px); margin: 8px 4px 4px;
+            background: rgba(217,119,87,0.15); border: 1px solid rgba(217,119,87,0.3);
+            color: var(--accent); padding: 10px 12px; border-radius: 8px;
+            text-align: center; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all .2s; text-decoration: none;
+            font-weight: 600; letter-spacing: .3px;
+        }
+        .nav-dashboard:hover { background: rgba(217,119,87,0.25); transform: translateY(-1px); }
+
+        /* ===== MAIN ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, var(--cover-bg) 0%, #2D0F4E 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(124,58,237,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 20px; background: rgba(255,255,255,0.1); object-fit: contain; }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(255,255,255,0.12); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        /* Fixed chapter header */
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        /* Horizontal card scroller */
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+
+        /* Each slide fills available height */
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Card inside slide — fills slide */
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        /* Dots bar at bottom */
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); cursor: pointer; transition: all 0.3s;
+            border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+        /* ===== CONTENT-SPARSE ===== */
+        .card.sparse p { font-size: 16px; line-height: 2; }
+        .card.sparse h3 { font-size: 22px; margin-bottom: 20px; }
+
+        /* ===== REUSABLE COMPONENTS ===== */
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px; border-radius: 6px;
+            font-size: 13px; line-height: 1.7; color: var(--text-2);
+            margin: 14px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+
+        .quote-block {
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px; margin: 14px 0;
+            font-style: italic; font-size: 14px;
+            color: var(--text-2); line-height: 1.8;
+            background: var(--bg-muted); border-radius: 0 8px 8px 0;
+        }
+        .quote-attr { font-style: normal; font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 16px; border-radius: 10px; text-align: center;
+        }
+        .metric-value { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+        .flex-row { display: flex; gap: 24px; margin: 14px 0; }
+        .flex-col { flex: 1; min-width: 0; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th { background: var(--bg-muted); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+
+        .timeline { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+        .timeline-item { display: flex; gap: 12px; align-items: flex-start; }
+        .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
+        .timeline-year { font-weight: 700; font-size: 13px; color: var(--accent); min-width: 48px; }
+        .timeline-text { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+
+        .avatar {
+            width: 56px; height: 56px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 700; font-size: 20px;
+        }
+
+        .news-item {
+            padding: 14px; background: var(--bg-card);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px; border: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+        .news-date { font-size: 11px; color: var(--text-3); font-weight: 600; margin-bottom: 4px; }
+        .news-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .news-title a { color: var(--accent-blue); text-decoration: none; }
+        .news-title a:hover { color: var(--accent); text-decoration: underline; }
+        .news-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .references { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--border); }
+        .references h4 { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+        .references ul { list-style: none; columns: 2; column-gap: 20px; }
+        .references li { font-size: 11px; margin-bottom: 5px; break-inside: avoid; }
+        .references a { color: var(--accent-blue); text-decoration: none; }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            main { margin-left: 0; }
+            .chapter-header { padding: 12px 20px 0 20px; }
+            .slide { padding: 16px 20px; }
+            .cover-title { font-size: 28px; }
+            .flex-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <img class="sidebar-logo" alt="Veriff" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAOVBMVEVHcEwCJysCKCsT5cQCKCwCJysCKCsCJysCJysCJysDKCwBICYMnIoJb2UBFyAGT0sPvqUR0LQAEh4nfOmzAAAACnRSTlMAm+n/+LzYHnRGOIuJywAABONJREFUeJzVm2uzoyAMhg/eENGq/f8/drVqRQmQhNiZzbed7pw8JG+C3P7+/lPTWhvT7mbM8s9f+m5V3RRV1Z1WFU1dt+Z5Cm1a1Sz+Otf7AbFiqPZJCKOawnd8paiK+hkGbRQwapChq+QZdFsj3e/WiCLoNhV5KBC1FIJWDPcfBGUk/LcNz/1qhcqOQo77TxTytKCxyo9YjhQ42vOtarn+awn3q/GCYMT8r12B4T8/+47R0yCTfseIBdkKu+9oQtBK3j+FQKL6IWuQBM+Mn0Dw0PhXQ2XhAf2RCB71j6hGI13/N0t1JJM5+yIsTiDY/0MWLYWHBbBZHUmAWAFa+7LBH8NJEBKAtd049GOQoAolQaYD2m7op7IswwChbiBRgda+h9V7HCBQiwIJsGNfHhYBgJNg8t13x+hTAJ3y/WuBFnAOPwVQ+GumNrcEX+7wUwBACHIDYMe5JABU9xDk9kDPfwLAC0FmAGw3lTSA4loI2SXQ3/2nAG4NObMJ2sHznwS4zIqZTdCOXgLSAJcQPBCANIA7Lae7cPSvvQH/aQCnH6claIcIAhiANICTg3QTePVThABQACYCZw7STeDVl1PoL/o9CBmBbyvQaQksAOU8hH9jAXw/CxCfgpuT4QX+yAX4igBRhPsoe1AIYAYwAA1+HjjCDEjRjqB/DMAuAo1og988+1KEixAFsM/JmInoFNp8F0IGwC4CGsBCYEM/kQEUeiK4eLlKMQeg5gFcpWgzALYpGfMxdBvm7BBYsBHjALYywCxI7nF2uuI7A+AzISIaMZDopRh2By8QYAr07RvAWocasyAAlHYsf4EUTP34Rox/MYObCWCp7z3Ji8C8oOHcb42ADbAT3CMwjfHPJ0GArSddIzD3ka0RcYByXmJwAViGT7JcgHK4AsDTdcSULADZv0gEThHS/X8AuH3Ai0BP9S4EcERgIg+/2xoRrxWfAPtcEFs3xAFYk5EfgYHjv+JOx34EOAI4pmP6B4kfAV4C9u/yTIBPBFgJOD7JiB+lUAQmlvvjoxSzPZKIADMA++KQtDABIzDDa8Y0gCEvzQCApRP2TIBjnwqxSRmPADMD310i9PI8EAGuBL/Lc+QGRTACvCbkbpmjtmjCEeBm4NyqTIsgsA/0yX5P/Az7mrNfjfjf0GbolgJuBjpnxx5RiBZcAa0RQK2BAKtO/6jTAgttRq0AAhnAfZR078ETwgrAlOD12Ai3W209Am4BdPfTS9SH4VKNdylmANwOL5FHNq+xFwK4n+Jjz2xuUuQDeKe36FOrlysENoB/jQF/d8DtimwA4PiacHB3SjF/GqCroHOFwAUAz+9JJ1d9FgB8kQXXDnfbpcgD8A6OdyOdH29dkQcA3B4g63AVwswEKII3iagHqD0PIHKXinqLoecABBNAlsEiRbr72EWqP2IlsCxUAV8ZPEyQ8v/4hULEBefs6zSZ/p8kqKIF4BA8BYC+3v1MDCrC9fJHCEjX28Uv1yP1d5p0PyjIDwxkCRrGiyMtKISa9+Ip947RYfTwH2aIL9xgYw5fKghF5rO73NcOHPXdLCcPWdF3EZijl3v0yImC8LNPrUhyLGTeOl4RWnQmmvx3jgFr6yaRi6qpW/nBO6ZNWxehqbKolfnJG3BjlKqbpjqsKJpaKfODl9+ufZ6/b/bLl+/i9g+f4LyDYT3ziAAAAABJRU5ErkJggg==" />
+        <div>
+            <div class="sidebar-brand-text">Veriff</div>
+            <div class="sidebar-brand-sub">深度调研报告</div>
+        </div>
+    </div>
+    <div class="nav-items">
+        <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+        <button class="nav-btn" onclick="go(1)">📋 公司概况</button>
+        <button class="nav-btn" onclick="go(2)">💰 融资与财务</button>
+        <button class="nav-btn" onclick="go(3)">🛠️ 产品功能</button>
+        <button class="nav-btn" onclick="go(4)">🤖 AI技术</button>
+        <button class="nav-btn" onclick="go(5)">🎯 竞争力分析</button>
+        <button class="nav-btn" onclick="go(6)">💡 市场机会</button>
+        <button class="nav-btn" onclick="go(7)">📰 近期要闻</button>
+        <a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+    </div>
+</nav>
+
+<main id="main">
+
+<!-- ====== COVER ====== -->
+<section class="cover" id="ch-0">
+    <div class="cover-content">
+        <img class="cover-logo" alt="Veriff Logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAOVBMVEVHcEwCJysCKCsT5cQCKCwCJysCKCsCJysCJysCJysDKCwBICYMnIoJb2UBFyAGT0sPvqUR0LQAEh4nfOmzAAAACnRSTlMAm+n/+LzYHnRGOIuJywAABONJREFUeJzVm2uzoyAMhg/eENGq/f8/drVqRQmQhNiZzbed7pw8JG+C3P7+/lPTWhvT7mbM8s9f+m5V3RRV1Z1WFU1dt+Z5Cm1a1Sz+Otf7AbFiqPZJCKOawnd8paiK+hkGbRQwapChq+QZdFsj3e/WiCLoNhV5KBC1FIJWDPcfBGUk/LcNz/1qhcqOQo77TxTytKCxyo9YjhQ42vOtarn+awn3q/GCYMT8r12B4T8/+47R0yCTfseIBdkKu+9oQtBK3j+FQKL6IWuQBM+Mn0Dw0PhXQ2XhAf2RCB71j6hGI13/N0t1JJM5+yIsTiDY/0MWLYWHBbBZHUmAWAFa+7LBH8NJEBKAtd049GOQoAolQaYD2m7op7IswwChbiBRgda+h9V7HCBQiwIJsGNfHhYBgJNg8t13x+hTAJ3y/WuBFnAOPwVQ+GumNrcEX+7wUwBACHIDYMe5JABU9xDk9kDPfwLAC0FmAGw3lTSA4loI2SXQ3/2nAG4NObMJ2sHznwS4zIqZTdCOXgLSAJcQPBCANIA7Lae7cPSvvQH/aQCnH6claIcIAhiANICTg3QTePVThABQACYCZw7STeDVl1PoL/o9CBmBbyvQaQksAOU8hH9jAXw/CxCfgpuT4QX+yAX4igBRhPsoe1AIYAYwAA1+HjjCDEjRjqB/DMAuAo1og988+1KEixAFsM/JmInoFNp8F0IGwC4CGsBCYEM/kQEUeiK4eLlKMQeg5gFcpWgzALYpGfMxdBvm7BBYsBHjALYywCxI7nF2uuI7A+AzISIaMZDopRh2By8QYAr07RvAWocasyAAlHYsf4EUTP34Rox/MYObCWCp7z3Ji8C8oOHcb42ADbAT3CMwjfHPJ0GArSddIzD3ka0RcYByXmJwAViGT7JcgHK4AsDTdcSULADZv0gEThHS/X8AuH3Ai0BP9S4EcERgIg+/2xoRrxWfAPtcEFs3xAFYk5EfgYHjv+JOx34EOAI4pmP6B4kfAV4C9u/yTIBPBFgJOD7JiB+lUAQmlvvjoxSzPZKIADMA++KQtDABIzDDa8Y0gCEvzQCApRP2TIBjnwqxSRmPADMD310i9PI8EAGuBL/Lc+QGRTACvCbkbpmjtmjCEeBm4NyqTIsgsA/0yX5P/Az7mrNfjfjf0GbolgJuBjpnxx5RiBZcAa0RQK2BAKtO/6jTAgttRq0AAhnAfZR078ETwgrAlOD12Ai3W209Am4BdPfTS9SH4VKNdylmANwOL5FHNq+xFwK4n+Jjz2xuUuQDeKe36FOrlysENoB/jQF/d8DtimwA4PiacHB3SjF/GqCroHOFwAUAz+9JJ1d9FgB8kQXXDnfbpcgD8A6OdyOdH29dkQcA3B4g63AVwswEKII3iagHqD0PIHKXinqLoecABBNAlsEiRbr72EWqP2IlsCxUAV8ZPEyQ8v/4hULEBefs6zSZ/p8kqKIF4BA8BYC+3v1MDCrC9fJHCEjX28Uv1yP1d5p0PyjIDwxkCRrGiyMtKISa9+Ip947RYfTwH2aIL9xgYw5fKghF5rO73NcOHPXdLCcPWdF3EZijl3v0yImC8LNPrUhyLGTeOl4RWnQmmvx3jgFr6yaRi6qpW/nBO6ZNWxehqbKolfnJG3BjlKqbpjqsKJpaKfODl9+ufZ6/b/bLl+/i9g+f4LyDYT3ziAAAAABJRU5ErkJggg==" />
+        <h1 class="cover-title">Veriff</h1>
+        <p class="cover-subtitle">AI驱动的全球身份验证与信任基础设施——从爱沙尼亚海岛到15亿美元独角兽的欺诈防护平台</p>
+        <div class="cover-tags">
+            <span class="cover-tag">身份验证</span>
+            <span class="cover-tag">KYC/KYB/AML</span>
+            <span class="cover-tag">生物识别</span>
+            <span class="cover-tag">独角兽</span>
+            <span class="cover-tag">ToB SaaS</span>
+        </div>
+        <div class="cover-stats">
+            <div class="stat-box">
+                <div class="stat-number" data-count="4160" data-prefix="$" data-suffix="万">$0</div>
+                <div class="stat-label">2024年收入</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="500" data-suffix="M+">0</div>
+                <div class="stat-label">全球用户</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="40" data-suffix="+">0</div>
+                <div class="stat-label">企业客户</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">$15B</div>
+                <div class="stat-label">最新估值</div>
+            </div>
+        </div>
+        <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+    </div>
+</section>
+
+<!-- ====== CHAPTER 1: 公司概况 (3 cards) ====== -->
+<section class="chapter" id="ch-1">
+    <div class="chapter-header">
+        <h2>从海岛灵感到全球信任基础设施</h2>
+        <span class="ch-sub">📋 公司概况</span>
+        <span class="ch-counter" id="counter-1">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="1">
+
+        <!-- 1/3 核心定位与创业故事 -->
+        <div class="slide"><div class="card"><h3>身份验证赛道的全球领导者</h3><div class="card-body">
+            <p>Veriff是一家成立于2015年的爱沙尼亚身份验证独角兽，通过AI驱动的远程身份验证技术，为全球超过40家财富500强与高增长创业公司提供KYC/KYB/AML合规与欺诈防护解决方案。截至2024年底，公司年收入达4160万美元，同比增长105%，拥有超过5亿全球用户覆盖，估值15亿美元。</p>
+            <p>Veriff的故事始于一个个人的困境。创始人Kaarel Kotkas在爱沙尼亚海岛Hiiumaa进行远程交易时，遭遇了身份验证的噩梦——多个平台使用不同的验证流程，效率低下且用户体验极差。这激发了他创办Veriff的灵感：整合多种远程验证方法成一个可靠的在线服务。2018年从Y Combinator毕业后，Veriff正式进入美国市场，并与Stripe、PayPal等顶级支付平台建立了深度合作。</p>
+            <div class="callout">
+                <strong>行业地位：</strong> 全球身份验证与KYC/KYB/AML市场前三，与Jumio、Onfido、Persona并列竞争。融资总额2亿美元，估值15亿美元。市场份额约8-12%。
+            </div>
+        </div></div></div>
+
+        <!-- 2/3 创始人与团队 -->
+        <div class="slide"><div class="card sparse"><h3>爱沙尼亚连续创业者的远见</h3><div class="card-body">
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+                <div class="avatar">KK</div>
+                <div>
+                    <p style="margin:0;font-weight:700;font-size:16px;">Kaarel Kotkas</p>
+                    <p style="margin:0;font-size:13px;color:var(--text-3);">CEO & Co-Founder · 20岁创办Veriff</p>
+                </div>
+            </div>
+            <div class="quote-block">
+                在我个人遭遇身份验证困境时，我意识到这不是一个小问题。全球数亿人每天都在为远程验证而困扰。如果我能用AI和生物识别让这个过程变成10秒钟，那么金融科技、支付、出行等数千个应用都会因此受益。
+                <div class="quote-attr">— Kaarel Kotkas</div>
+            </div>
+            <div class="callout">
+                <strong>核心团队：</strong> Kaarel Kotkas担任CEO兼创始人，曾在Wise积累了验证运营的深厚经验。COO为Juri Saar，前Bolt运营负责人。全球团队超525人，分布在爱沙尼亚、美国、英国等多个地区。
+            </div>
+        </div></div></div>
+
+        <!-- 3/3 关键里程碑 -->
+        <div class="slide"><div class="card"><h3>8年破茧成蝶的关键转折</h3><div class="card-body">
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-year">2015</div>
+                    <div class="timeline-text">Kaarel Kotkas在爱沙尼亚创办Veriff，20岁的年轻人用个人困境激发了一个全球市场</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-year">2018</div>
+                    <div class="timeline-text">从Y Combinator S18 batch毕业，获得国际关注与融资，正式进入美国市场</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-year">2020</div>
+                    <div class="timeline-text">Series A & B融资，AI能力大幅提升，成为Stripe、PayPal等顶级平台的合作伙伴</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-year">2022</div>
+                    <div class="timeline-text">Series C融资1亿美元，估值达15亿美元，正式成为独角兽</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-year">2024</div>
+                    <div class="timeline-text">收入4160万美元，增速105%，验证量800%增长，客户数增加60%</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-year">2026</div>
+                    <div class="timeline-text">收购爱沙尼亚KYB平台Vespia，进军全栈信任平台，为IPO铺路</div>
+                </div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-1"></div>
+</section>
+
+<!-- ====== CHAPTER 2: 融资与财务 (3 cards) ====== -->
+<section class="chapter" id="ch-2">
+    <div class="chapter-header">
+        <h2>从0到15亿美元的融资版图</h2>
+        <span class="ch-sub">💰 融资与财务</span>
+        <span class="ch-counter" id="counter-2">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="2">
+
+        <!-- 1/3 融资历程 -->
+        <div class="slide"><div class="card"><h3>融资历程与投资方阵容</h3><div class="card-body">
+            <p>Veriff的融资之路充分反映了欧洲顶级风投对身份验证赛道的看好。从早期的天使轮到Series C的1亿美元融资，Veriff总共筹集约2亿美元。Tiger Global和Alkeon Capital领投的Series C为公司估值设定了15亿美元，标志着从创新科技公司向全球信任基础设施提供商的正式转变。</p>
+            <p>关键融资方包括IVP（InterWest Partners）、Accel、Balderton Capital、Insight Partners等一线美欧风投。这些投资方不仅贡献资金，更为Veriff提供了国际化拓展、合规指导、企业客户对接等战略支持。目前，管理层表示ARR突破5000万美元后将考虑启动IPO进程，预计2026-2027年可能启动上市，进一步加速全球扩张。</p>
+            <div class="callout">
+                <strong>融资概览：</strong> 总融资2亿美元，当前估值15亿美元。主要投资方为Tiger Global、Alkeon Capital、Accel、IVP、Balderton Capital等。NRR 120%+，现有客户续约率>95%。
+            </div>
+        </div></div></div>
+
+        <!-- 2/3 收入与增长指标 -->
+        <div class="slide"><div class="card"><h3>106%同比增长背后的财务故事</h3><div class="card-body">
+            <p>2024年是Veriff的加速增长年份。公司年收入达4160万美元，同比增长105%，这个增速在身份验证行业中遥遥领先。关键指标表现亮眼：Q4 2024单季增速达75%，验证量翻3倍，企业客户数增加60%。毛利率维持在75%+水平，高于行业平均的65-70%。</p>
+            <p>收入来源双轮驱动：订阅收入占比约65%（月/年合约，$3K-50K+/月），交易收入占比约35%（按验证笔数计费，$0.5-3/笔）。订阅收入的高占比保证了业务的稳定性与可预测性，NRR 120%+说明客户粘性极强。CAC约$15K-25K，CAC Payback周期9-12个月，体现了健康的获客效率。</p>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">$4,160W</div>
+                    <div class="metric-label">2024年ARR</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">105%</div>
+                    <div class="metric-label">同比增速</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">75%+</div>
+                    <div class="metric-label">毛利率</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">120%+</div>
+                    <div class="metric-label">NRR</div>
+                </div>
+            </div>
+        </div></div></div>
+
+        <!-- 3/3 用户与市场规模 -->
+        <div class="slide"><div class="card"><h3>5亿+用户与40家财富500强</h3><div class="card-body">
+            <p>Veriff在用户规模上已经突破重围。全球用户超5亿，其中付费企业客户40+家，包括财富500强与高增长创业公司。地理分布上，北美市场贡献45%收入（美国为核心增长点），欧洲贡献35%，亚太及拉美地区贡献20%（增速最快，>40% YoY）。</p>
+            <p>特别值得关注的是Veriff在拉美与东南亚的增长动力。这两个地区的数字银行爆发式增长催生了对远程KYC验证的强烈需求，Veriff的全球合规与本地化支持为这些市场量身定制了解决方案。月活用户估计数千万，支撑了日均100万+笔验证请求的处理能力。</p>
+            <div class="flex-row">
+                <div class="flex-col">
+                    <p style="font-weight:700;margin-bottom:8px;">地理分布</p>
+                    <table style="font-size:12px;">
+                        <tr><th>地区</th><th>收入占比</th></tr>
+                        <tr><td>北美</td><td>45%</td></tr>
+                        <tr><td>欧洲</td><td>35%</td></tr>
+                        <tr><td>亚太+拉美</td><td>20%</td></tr>
+                    </table>
+                </div>
+                <div class="flex-col">
+                    <p style="font-weight:700;margin-bottom:8px;">关键指标</p>
+                    <table style="font-size:12px;">
+                        <tr><th>指标</th><th>数值</th></tr>
+                        <tr><td>全球用户</td><td>5亿+</td></tr>
+                        <tr><td>付费客户</td><td>40+</td></tr>
+                        <tr><td>月活用户</td><td>数千万</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-2"></div>
+</section>
+
+<!-- ====== CHAPTER 3: 产品功能 (2 cards) ====== -->
+<section class="chapter" id="ch-3">
+    <div class="chapter-header">
+        <h2>从身份验证到全栈信任平台</h2>
+        <span class="ch-sub">🛠️ 产品功能</span>
+        <span class="ch-counter" id="counter-3">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="3">
+
+        <!-- 1/2 核心产品矩阵 -->
+        <div class="slide"><div class="card"><h3>API-First的三大产品支柱</h3><div class="card-body">
+            <p>Veriff核心产品理念是"API为王 + 全球合规即代码"。公司的产品矩阵围绕身份验证与合规检查展开，支持Web、iOS、Android、Native集成等多种平台。最核心的三大产品分别是：</p>
+            <p><strong>1. Veriff Identity Verification API（IDV）</strong>——AI驱动的远程身份验证API，通过自拍 + 证件识别 + 活体检测，在10秒内完成身份核验。支持全球190+国家身份证件，集成生物识别、机器学习欺诈检测、反欺骗技术。识别率>99%，拒真率<1%。</p>
+            <p><strong>2. Know Your Business (KYB) Platform</strong>——收购Vespia后推出的企业身份验证平台，能在30秒内验证企业身份、董事会成员、受益所有人。覆盖全球300+司法管辖区的商业登记数据，支持Web API与Dashboard集成。</p>
+            <p><strong>3. Continuous Monitoring & AML</strong>——持续监控已验证用户，检测制裁名单更新、高风险行为、可疑交易模式。与全球300+数据源实时同步，支持定期重验证、行为分析、交易监控规则自定义。</p>
+        </div></div></div>
+
+        <!-- 2/2 核心技术能力 -->
+        <div class="slide"><div class="card"><h3>五大核心功能支撑全球合规</h3><div class="card-body">
+            <p><strong>① 生物识别 + 活体检测</strong>——采用业界领先的活体检测技术（Liveness Detection），通过随机挑战（眨眼、点头、转身等）区分真人与照片/视频。识别率>99%，拒真率<1%，处理时间<10秒。同时支持指纹、虹膜等生物特征识别。这是欧美监管机构（如英国FCA）认可的反欺诈标准。</p>
+            <p><strong>② 证件识别 & OCR</strong>——支持190+国家和地区的护照、身份证、驾照、签证等证件的自动识别与信息提取。采用深度学习模型，可识别证件的真伪、篡改、过期状态。与全球10+证件签发机构API实时验证。识别准确率>98%，伪造检测率>95%。</p>
+            <p><strong>③ 机器学习欺诈检测</strong>——基于100+特征维度的实时欺诈风险评分模型，检测身份盗窃、合成身份、组织欺诈。集成设备指纹、IP地址、验证行为模式等信号。精准率>98%，召回率>97%，平均检测延迟<100ms。</p>
+            <p><strong>④ 全球合规 & 制裁筛选</strong>——内置300+司法管辖区的KYC/AML规则自动化执行，包括UN制裁名单、OFAC名单、欧盟黑名单等10+全球制裁库的实时检测。支持PEPs（政治公众人物）识别、高危国家检测。</p>
+            <p><strong>⑤ 持续监控 & Ongoing KYC</strong>——完成初次验证后的持续监控，自动检测制裁名单更新、高风险交易、账户异常行为。实时监控覆盖>500M用户，异常检测延迟<1小时，自定义规则>200条。这满足了FinCEN与欧盟对Ongoing KYC的强制要求。</p>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-3"></div>
+</section>
+
+<!-- ====== CHAPTER 4: AI技术 (2 cards) ====== -->
+<section class="chapter" id="ch-4">
+    <div class="chapter-header">
+        <h2>AI技术构筑的护城河</h2>
+        <span class="ch-sub">🤖 AI技术</span>
+        <span class="ch-counter" id="counter-4">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="4">
+
+        <!-- 1/2 AI能力矩阵 -->
+        <div class="slide"><div class="card"><h3>四大AI引擎与数据飞轮</h3><div class="card-body">
+            <p>Veriff的AI技术栈跨越计算机视觉、机器学习、自然语言处理、知识图谱四大领域。每一层都深度优化了金融身份验证的特殊需求：</p>
+            <p><strong>计算机视觉</strong>——深度学习驱动的证件识别、人脸识别、活体检测。采用ResNet + EfficientNet架构，在百万级证件图片上训练的生产级模型。识别率>99%，延迟<2秒。</p>
+            <p><strong>机器学习</strong>——100+维度特征的欺诈风险评分引擎，包括设备指纹、IP地址、验证行为、时空异常等。采用梯度提升树（XGBoost）与深度神经网络集成。精准率>98%，检测延迟<100ms，每秒处理超10万笔验证请求。</p>
+            <p><strong>自然语言处理</strong>——证件上的多语言文本识别与提取（OCR + NLP），支持190+国家、40+语言。采用Transformer模型微调，准确率>98%。</p>
+            <p><strong>知识图谱</strong>——将验证用户与全球制裁名单、PEPs数据库、商业登记簿进行实体链接与匹配，用于KYC/AML合规检查。匹配准确率>99%。这是Veriff与Jumio、Onfido的关键差异所在。</p>
+        </div></div></div>
+
+        <!-- 2/2 数据护城河 -->
+        <div class="slide"><div class="card"><h3>"合规即代码"的数据与战略</h3><div class="card-body">
+            <p>Veriff的数据资产包括：自有生物识别样本库（>1亿人脸）、全球190+国家的身份证件样本与验证API集成、10+全球制裁库实时同步（OFAC/UN/EU）、Vespia收购后的全球300+司法管辖区商业登记库、地表最大的真实验证交易日志（日均>100万笔）。这些数据构成了AI模型迭代的关键基础。</p>
+            <p>Veriff的AI战略是"合规即代码"——将复杂的多国监管规则、欺诈检测、身份验证逻辑全部参数化与自动化，让客户通过简洁的API与可视化Dashboard轻松定制而无需理解底层AI细节。这是相比Jumio（集成商驱动）、Onfido（规则复杂）的核心竞争优势。</p>
+            <p>数据安全方面，Veriff获得了SOC 2 Type II认证、ISO 27001认证、GDPR合规认证，数据中心部署于欧美合规区域。这一安全体系对金融科技客户至关重要。</p>
+            <div class="callout">
+                <strong>AI护城河：</strong> 8年积累的金融对话与验证数据是最深的护城河。这些数据不仅包含"用户做了什么"，更包含"用户在什么情绪下、面对什么财务状况时做出了什么决策"的完整行为链。任何竞争对手都无法在短时间内复制这种数据资产。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-4"></div>
+</section>
+
+<!-- ====== CHAPTER 5: 竞争力分析 (2 cards) ====== -->
+<section class="chapter" id="ch-5">
+    <div class="chapter-header">
+        <h2>与Jumio、Onfido的竞争优势矩阵</h2>
+        <span class="ch-sub">🎯 竞争力分析</span>
+        <span class="ch-counter" id="counter-5">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="5">
+
+        <!-- 1/2 主要竞争对手 -->
+        <div class="slide"><div class="card"><h3>三国杀：竞争格局深度剖析</h3><div class="card-body">
+            <p><strong>Jumio（行业第二）</strong>——老牌身份验证服务商，成立于2010年，拥有银行级客户（美国主流银行）的深度关系。但API易用性弱，UI/UX陈旧，AI技术升级缓慢。识别率约96-97%，验证速度15-20秒。</p>
+            <p><strong>Onfido（行业第三）</strong>——英国背景，2012年创立，欧洲监管关系强，在英国FCA、欧盟等地获得了高度认可。但美国市场渗透有限，技术栈陈旧（仍依赖2014年架构），KYB功能不足。识别率约95-96%，验证速度12-15秒。</p>
+            <p><strong>Persona（新兴竞争者）</strong>——Y Combinator背景，API设计优雅，对初创企业友好。但企业级功能不足（缺少Ongoing KYC、AML），国际扩展能力弱，定价缺乏灵活性。主要聚焦美国市场初创企业。</p>
+            <div class="callout">
+                <strong>市场格局：</strong> Veriff全球市场份额约8-12%，在新兴市场（东南亚、拉美、中东）增速最快。与Jumio形成"新vs旧"竞争态势，与Onfido形成"全球vs欧洲"差异化竞争。
+            </div>
+        </div></div></div>
+
+        <!-- 2/2 五维竞争优势 -->
+        <div class="slide"><div class="card"><h3>五大维度碾压竞争对手</h3><div class="card-body">
+            <table>
+                <tr>
+                    <th>维度</th>
+                    <th>Veriff</th>
+                    <th>竞争对手</th>
+                </tr>
+                <tr>
+                    <td><strong>识别准确率</strong></td>
+                    <td>业界最高 >99%</td>
+                    <td>Jumio 96-97%, Onfido 95-96%</td>
+                </tr>
+                <tr>
+                    <td><strong>验证速度</strong></td>
+                    <td>业界最快 <10秒</td>
+                    <td>Jumio 15-20秒, Onfido 12-15秒</td>
+                </tr>
+                <tr>
+                    <td><strong>合规覆盖</strong></td>
+                    <td>300+司法管辖区</td>
+                    <td>Jumio ~150国, Onfido ~100国</td>
+                </tr>
+                <tr>
+                    <td><strong>产品深度</strong></td>
+                    <td>IDV+KYC+KYB+AML全栈</td>
+                    <td>大多数竞争者IDV+KYC为主</td>
+                </tr>
+                <tr>
+                    <td><strong>API易用性</strong></td>
+                    <td>3行代码集成，文档最清晰</td>
+                    <td>Jumio需集成商辅助</td>
+                </tr>
+            </table>
+            <p style="margin-top:16px;">这五大竞争优势共同构成了Veriff的护城河。在金融监管对身份验证与反欺诈的强制要求背景下，Veriff具有较强的定价权。客户对合规工具的价格敏感度较低，关键是准确率与监管认可度。</p>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-5"></div>
+</section>
+
+<!-- ====== CHAPTER 6: 市场机会 (2 cards) ====== -->
+<section class="chapter" id="ch-6">
+    <div class="chapter-header">
+        <h2>身份验证赛道的五大增长引擎</h2>
+        <span class="ch-sub">💡 市场机会</span>
+        <span class="ch-counter" id="counter-6">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="6">
+
+        <!-- 1/2 TAM与市场驱动力 -->
+        <div class="slide"><div class="card"><h3>从$150B TAM到全球信任基础设施</h3><div class="card-body">
+            <p><strong>市场规模：</strong> 全球KYC/AML市场约150亿美元（TAM），年增长15-18%。可服务市场（SAM）为远程身份验证与API驱动的合规自动化市场，约40亿美元，增速更快（20-25% CAGR）。Veriff当前年收入4160万美元，代表了这个$40B市场的约0.1%，增长空间巨大。</p>
+            <p><strong>五大增长驱动力：</strong></p>
+            <p>① <strong>全球监管趋严</strong>——FinCEN反恐融资规则、欧盟AMLD5/MLD6、中国KYC强制实施推高身份验证需求。企业合规成本从过去的"可选"变为"强制"。</p>
+            <p>② <strong>数字银行与金融科技爆发</strong>——拉美、东南亚、中东数字银行新增用户需要远程KYC验证。Veriff在这些市场增速>40% YoY，远高于全球25% CAGR。</p>
+            <p>③ <strong>欺诈成本上升</strong>——全球欺诈损失超万亿美元，企业对AI反欺诈投入从5%上升至15%预算。Veriff的欺诈防护能力为客户降低成本30-50%。</p>
+            <p>④ <strong>API-First企业堆栈演进</strong>——金融科技企业偏好API集成而非集成商，Veriff的API设计简洁度击败竞争对手。3行代码集成已成为industry standard。</p>
+            <p>⑤ <strong>Vespia收购实现KYB拓展</strong>——从IDV（个人）向KYB（企业）拓展，打开企业级客户的全栈合规方案市场。KYB市场同样是$30B+ TAM。</p>
+        </div></div></div>
+
+        <!-- 2/2 核心启示与未来展望 -->
+        <div class="slide"><div class="card"><h3>三大核心启示与IPO前景</h3><div class="card-body">
+            <p><strong>启示一：全球化合规是SaaS的终极护城河</strong></p>
+            <p>Veriff之所以能在身份验证赛道超越Jumio、Onfido，不是因为单一技术突破，而是因为它系统性地解决了多国合规的自动化问题。300+司法管辖区的规则参数化与执行，是一项需要多年积累的工作。这种全球合规能力本身就是竞争对手难以复制的护城河。</p>
+            <p><strong>启示二：数据 × AI × 领域知识的三角形威力</strong></p>
+            <p>Veriff的AI算法之所以优于竞争对手，核心不在于模型架构（TensorFlow、PyTorch都是开源的），而在于：(1) 8年积累的真实验证数据；(2) 金融身份验证的领域知识；(3) 与监管机构、银行、支付平台的深度合作反馈。这三者合力才能打造出识别率>99%、检测延迟<100ms的生产级系统。</p>
+            <p><strong>启示三：单点技术可被超越，但数据飞轮是永恒护城河</strong></p>
+            <p>GPT-4可以被任何人调用，但Veriff在GPT-4之上构建的fine-tuning数据和用户行为模型是独一无二的。这就是为什么Veriff虽然规模远小于Meta、Google等科技巨头，却能在身份验证领域建立坚不可摧的竞争力。</p>
+            <div class="callout">
+                <strong>IPO展望：</strong> 管理层表示ARR突破$5000万美元后将考虑IPO进程，预计2026-2027年启动。下一阶段重点是KYB与AML的全球扩展、拉美与东南亚市场深耕（增速>40%），以及AI欺诈检测能力进一步升级。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-6"></div>
+</section>
+
+<!-- ====== CHAPTER 7: 近期要闻 (1 card) ====== -->
+<section class="chapter" id="ch-7">
+    <div class="chapter-header">
+        <h2>近期要闻与市场反应</h2>
+        <span class="ch-sub">📰 Latest Updates</span>
+    </div>
+    <div class="card-track" data-ch="7">
+        <div class="slide"><div class="card"><h3>2024-2026年关键动态追踪</h3><div class="card-body">
+            <div class="news-item">
+                <div class="news-date">2026年02月</div>
+                <div class="news-title">Veriff收购爱沙尼亚KYB平台Vespia，进军全栈信任基础设施</div>
+                <div class="news-desc">战略升级，从身份验证向企业级合规扩展。Vespia创始人Julia Ront曾是Veriff第二员工，标志着从IDV向全栈解决方案的进化。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2026年02月</div>
+                <div class="news-title">与Data Zoo整合，强化欺诈防护与AML能力</div>
+                <div class="news-desc">补强第三方数据集成，提高反欺诈精准度。Data Zoo的交易情报库为Veriff的AML监控增添新维度。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2025年01月</div>
+                <div class="news-title">2024年业绩公布：收入4160万美元，增长105%</div>
+                <div class="news-desc">加速增长阶段，已接近IPO前的规模节点。Q4 2024单季增速75%，验证量800%增长，客户数增加60%。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2024年12月</div>
+                <div class="news-title">Q4 2024：75%同比增速，验证量翻3倍，企业客户增60%</div>
+                <div class="news-desc">全年加速，规模突破指日可待。拉美与东南亚市场增速突破40% 大关，成为全球增长第二引擎。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2024年11月</div>
+                <div class="news-title">Veriff API日均处理超100万笔验证请求</div>
+                <div class="news-desc">业界最高的交易处理能力。支撑全球Stripe、PayPal、Wise等顶级支付与金融科技平台的身份验证需求。</div>
+            </div>
+            <div class="references">
+                <h4>📚 参考文献</h4>
+                <ul>
+                    <li><a href="https://www.veriff.com/" target="_blank">Veriff官方网站</a></li>
+                    <li><a href="https://www.veriff.com/developers" target="_blank">Veriff开发者文档</a></li>
+                    <li><a href="https://tracxn.com/d/companies/veriff/" target="_blank">Tracxn: Veriff融资与市场分析</a></li>
+                    <li><a href="https://www.crunchbase.com/organization/veriff" target="_blank">Crunchbase: Veriff融资数据</a></li>
+                    <li><a href="https://sifted.eu/" target="_blank">Sifted: 欧洲科技创新报道</a></li>
+                    <li><a href="https://www.ycombinator.com/companies/veriff" target="_blank">Y Combinator: Veriff公司档案</a></li>
+                </ul>
+            </div>
+        </div></div></div>
+    </div>
+    <div class="dots-bar" id="dots-7" style="visibility:hidden;"></div>
+</section>
+
+</main>
+
+<script>
+const main = document.getElementById('main');
+const navBtns = document.querySelectorAll('.nav-btn');
+const sections = document.querySelectorAll('.cover, .chapter');
+
+function go(i) { sections[i].scrollIntoView({ behavior: 'smooth' }); }
+
+// Active nav tracking
+const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+        if (e.isIntersecting) {
+            const idx = [...sections].indexOf(e.target);
+            navBtns.forEach((b, i) => b.classList.toggle('active', i === idx));
+        }
+    });
+}, { root: main, threshold: 0.5 });
+sections.forEach(s => obs.observe(s));
+
+// Horizontal dots + counter
+document.querySelectorAll('.card-track').forEach(track => {
+    const ch = track.dataset.ch;
+    const slides = track.querySelectorAll('.slide');
+    const dotsBar = document.getElementById('dots-' + ch);
+    const counter = document.getElementById('counter-' + ch);
+    if (!dotsBar || slides.length < 2) return;
+
+    slides.forEach((_, i) => {
+        const d = document.createElement('button');
+        d.className = 'dot' + (i === 0 ? ' active' : '');
+        d.onclick = () => slides[i].scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
+        dotsBar.appendChild(d);
+    });
+
+    track.addEventListener('scroll', () => {
+        const idx = Math.round(track.scrollLeft / track.clientWidth);
+        dotsBar.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === idx));
+        if (counter) counter.textContent = (idx + 1) + ' / ' + slides.length;
+    });
+});
+
+// Cover count-up
+document.querySelectorAll('[data-count]').forEach(el => {
+    const target = parseInt(el.dataset.count);
+    const prefix = el.dataset.prefix || '';
+    const suffix = el.dataset.suffix || '';
+    let cur = 0;
+    const inc = target / 125;
+    const timer = setInterval(() => {
+        cur += inc;
+        if (cur >= target) { el.textContent = prefix + target.toLocaleString() + suffix; clearInterval(timer); }
+        else { el.textContent = prefix + Math.floor(cur).toLocaleString() + suffix; }
+    }, 16);
+});
+</script>
+
+</body>
+</html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veriff 案例研究 - 全球身份验证与信任基础设施领导者</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Brand Colors - Veriff Dark Teal */
+            --brand-primary: #0A7F7E;
+            --brand-light: #1B8D8B;
+            --brand-accent: #2EA9A8;
+            --brand-pale: #B8E5E4;
+
+            /* Warm Palette for Content */
+            --warm-bg: #FAF7F2;
+            --warm-accent: #D97757;
+            --warm-light: #F5E6DB;
+
+            /* Text Colors */
+            --text-1: #1A1A1A;
+            --text-2: #666666;
+            --text-3: #999999;
+            --text-inverse: #FFFFFF;
+
+            /* Utility Colors */
+            --border-light: #E8E8E8;
+            --success: #27AE60;
+            --danger: #E74C3C;
+            --warning: #F39C12;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: white;
+            color: var(--text-1);
+            overflow-x: hidden;
+        }
+
+        /* === LAYOUT === */
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 220px;
+            height: 100vh;
+            background: var(--brand-primary);
+            color: var(--text-inverse);
+            padding: 24px 16px;
+            overflow-y: auto;
+            z-index: 100;
+            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 32px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .sidebar-logo {
+            width: 48px;
+            height: 48px;
+        }
+
+        .sidebar-brand-text {
+            font-size: 16px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .sidebar-brand-sub {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-top: 2px;
+        }
+
+        .nav-items {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: var(--text-inverse);
+            padding: 12px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            text-align: left;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .nav-btn.active {
+            background: var(--warm-accent);
+            color: white;
+            box-shadow: 0 2px 8px rgba(217, 119, 87, 0.4);
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            margin-left: 220px;
+            flex: 1;
+            overflow: auto;
+        }
+
+        /* === COVER SECTION === */
+        .cover {
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-light) 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cover::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .cover-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            max-width: 800px;
+        }
+
+        .cover-logo {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 32px;
+            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .cover-title {
+            font-size: 56px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            line-height: 1.2;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .cover-subtitle {
+            font-size: 24px;
+            font-weight: 300;
+            margin-bottom: 32px;
+            opacity: 0.95;
+            line-height: 1.4;
+        }
+
+        .cover-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 48px;
+        }
+
+        .cover-tag {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 24px;
+            font-size: 13px;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+        }
+
+        .cover-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-bottom: 48px;
+            padding: 32px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-box {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            opacity: 0.85;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .cover-scroll-hint {
+            font-size: 14px;
+            opacity: 0.7;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* === CHAPTER STRUCTURE === */
+        .chapter {
+            min-height: 100vh;
+            padding: 80px 40px;
+            background: white;
+            scroll-snap-align: start;
+        }
+
+        .chapter-header {
+            margin-bottom: 48px;
+            position: relative;
+            padding-bottom: 24px;
+            border-bottom: 2px solid var(--warm-accent);
+        }
+
+        .chapter-header h2 {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--brand-primary);
+        }
+
+        .ch-sub {
+            font-size: 16px;
+            color: var(--warm-accent);
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 12px;
+        }
+
+        .ch-counter {
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            font-size: 13px;
+            color: var(--text-3);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* === CARD TRACK (Horizontal Scroll) === */
+        .card-track {
+            display: flex;
+            gap: 32px;
+            overflow-x: auto;
+            padding-bottom: 24px;
+            scroll-behavior: smooth;
+            scroll-snap-type: x mandatory;
+            margin-bottom: 32px;
+        }
+
+        .card-track::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .card-track::-webkit-scrollbar-track {
+            background: var(--border-light);
+            border-radius: 3px;
+        }
+
+        .card-track::-webkit-scrollbar-thumb {
+            background: var(--warm-accent);
+            border-radius: 3px;
+        }
+
+        .slide {
+            flex: 0 0 calc(100% - 80px);
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
+        }
+
+        /* === CARDS === */
+        .card {
+            background: var(--warm-bg);
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 32px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 24px rgba(217, 119, 87, 0.12);
+            transform: translateY(-4px);
+        }
+
+        .card h3 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--brand-primary);
+        }
+
+        .card-body {
+            flex: 1;
+            font-size: 15px;
+            line-height: 1.7;
+            color: var(--text-2);
+        }
+
+        .card-body p {
+            margin-bottom: 12px;
+        }
+
+        .card.sparse {
+            padding: 40px;
+        }
+
+        .card.sparse h3 {
+            font-size: 28px;
+        }
+
+        .card.sparse p {
+            font-size: 16px;
+        }
+
+        /* === SPECIAL CARDS === */
+        .insight-card {
+            background: linear-gradient(135deg, var(--warm-bg) 0%, #FFF8F3 100%);
+            border-left: 4px solid var(--warm-accent);
+            border-radius: 12px;
+            padding: 32px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .insight-emoji {
+            font-size: 42px;
+            margin-bottom: 16px;
+        }
+
+        .insight-card h3 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--brand-primary);
+            margin-bottom: 16px;
+        }
+
+        .insight-highlight {
+            background: white;
+            border-left: 3px solid var(--warm-accent);
+            padding: 16px;
+            margin-top: 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            color: var(--brand-primary);
+        }
+
+        /* === DATA DISPLAY === */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 20px;
+            margin: 24px 0;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, var(--warm-light) 0%, var(--warm-bg) 100%);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--border-light);
+        }
+
+        .metric-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--warm-accent);
+            margin-bottom: 8px;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: var(--text-2);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* === CALLOUT === */
+        .callout {
+            background: linear-gradient(to right, rgba(217, 119, 87, 0.1), rgba(217, 119, 87, 0.05));
+            border-left: 4px solid var(--warm-accent);
+            padding: 16px 20px;
+            border-radius: 6px;
+            font-size: 15px;
+            line-height: 1.6;
+            margin: 24px 0;
+            color: var(--text-1);
+        }
+
+        .callout strong {
+            color: var(--warm-accent);
+        }
+
+        /* === QUOTE BLOCK === */
+        .quote-block {
+            background: white;
+            border-left: 4px solid var(--warm-accent);
+            padding: 24px;
+            margin: 24px 0;
+            font-size: 16px;
+            font-style: italic;
+            color: var(--text-2);
+            border-radius: 6px;
+            line-height: 1.8;
+        }
+
+        .quote-attr {
+            margin-top: 12px;
+            font-style: normal;
+            color: var(--text-3);
+            font-size: 13px;
+        }
+
+        /* === TABLE === */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 24px 0;
+            background: white;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        table thead {
+            background: linear-gradient(to right, var(--warm-light), var(--warm-bg));
+        }
+
+        table th {
+            padding: 16px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--brand-primary);
+            border-bottom: 2px solid var(--border-light);
+            font-size: 14px;
+        }
+
+        table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-light);
+            font-size: 14px;
+            color: var(--text-2);
+        }
+
+        table tbody tr:hover {
+            background: var(--warm-bg);
+        }
+
+        /* === TIMELINE === */
+        .timeline {
+            margin: 32px 0;
+        }
+
+        .timeline-item {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 32px;
+            padding-left: 24px;
+            position: relative;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: 0;
+            top: 6px;
+            width: 12px;
+            height: 12px;
+            background: var(--warm-accent);
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 0 2px var(--warm-accent);
+        }
+
+        .timeline-year {
+            font-weight: 700;
+            color: var(--warm-accent);
+            min-width: 80px;
+            font-size: 16px;
+        }
+
+        .timeline-text {
+            font-size: 14px;
+            color: var(--text-2);
+            line-height: 1.6;
+        }
+
+        .timeline-text strong {
+            color: var(--text-1);
+        }
+
+        /* === COMPARISON TABLE === */
+        .comparison-table {
+            margin: 24px 0;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 14px;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        .comparison-table th:first-child,
+        .comparison-table td:first-child {
+            text-align: left;
+        }
+
+        /* === MODE BOXES === */
+        .mode-boxes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 24px 0;
+        }
+
+        .mode-box {
+            background: white;
+            border-left: 4px solid var(--warm-accent);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+            transition: all 0.3s ease;
+        }
+
+        .mode-box:hover {
+            box-shadow: 0 4px 12px rgba(217, 119, 87, 0.15);
+        }
+
+        .mode-title {
+            font-weight: 700;
+            font-size: 15px;
+            margin-bottom: 12px;
+            color: var(--brand-primary);
+        }
+
+        .mode-desc {
+            font-size: 13px;
+            color: var(--text-2);
+            line-height: 1.5;
+        }
+
+        /* === NEWS ITEMS === */
+        .news-item {
+            background: var(--warm-bg);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            border-left: 4px solid var(--warm-accent);
+            transition: all 0.3s ease;
+        }
+
+        .news-item:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+        }
+
+        .news-date {
+            font-size: 12px;
+            color: var(--text-3);
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .news-title {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .news-title a {
+            color: var(--brand-primary);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .news-title a:hover {
+            color: var(--warm-accent);
+            text-decoration: underline;
+        }
+
+        .news-desc {
+            font-size: 13px;
+            color: var(--text-2);
+            line-height: 1.5;
+        }
+
+        /* === FLEX LAYOUT === */
+        .flex-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            margin: 32px 0;
+            align-items: center;
+        }
+
+        .flex-col {
+            padding: 0;
+        }
+
+        .flex-row img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+
+        /* === DOTS BAR === */
+        .dots-bar {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 32px;
+            padding: 24px 0;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--border-light);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .dot.active {
+            width: 24px;
+            border-radius: 4px;
+            background: var(--warm-accent);
+        }
+
+        /* === REFERENCE SECTION === */
+        .references {
+            background: var(--warm-bg);
+            padding: 32px;
+            border-radius: 12px;
+            margin-top: 48px;
+            border: 1px solid var(--border-light);
+        }
+
+        .references h4 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--brand-primary);
+            margin-bottom: 20px;
+        }
+
+        .references ul {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 12px;
+        }
+
+        .references li {
+            padding: 8px 0;
+        }
+
+        .references a {
+            color: var(--warm-accent);
+            text-decoration: none;
+            font-size: 13px;
+            transition: color 0.3s ease;
+            word-break: break-word;
+        }
+
+        .references a:hover {
+            color: var(--brand-primary);
+            text-decoration: underline;
+        }
+
+        /* === POSITION CARDS === */
+        .position-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .position-card {
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+            transition: all 0.3s ease;
+        }
+
+        .position-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .position-title {
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--text-1);
+            margin-bottom: 8px;
+        }
+
+        /* === RESPONSIVE === */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 180px;
+                padding: 16px 12px;
+            }
+
+            .main-content {
+                margin-left: 180px;
+            }
+
+            .chapter {
+                padding: 60px 24px;
+            }
+
+            .chapter-header h2 {
+                font-size: 32px;
+            }
+
+            .cover-title {
+                font-size: 36px;
+            }
+
+            .cover-subtitle {
+                font-size: 16px;
+            }
+
+            .cover-stats {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+                padding: 24px;
+            }
+
+            .flex-row {
+                grid-template-columns: 1fr;
+            }
+
+            .slide {
+                flex: 0 0 100%;
+            }
+
+            .position-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* === ANIMATIONS === */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card {
+            animation: slideIn 0.6s ease-out;
+        }
+
+        .chapter {
+            animation: slideIn 0.6s ease-out;
+        }
+    
+        .nav-dashboard {
+            display: block; width: calc(100% - 8px); margin: 8px 4px 4px;
+            background: rgba(217,119,87,0.15); border: 1px solid rgba(217,119,87,0.3);
+            color: var(--accent, #D97757); padding: 10px 12px; border-radius: 8px;
+            text-align: center; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+            font-weight: 600; letter-spacing: 0.3px;
+        }
+        .nav-dashboard:hover {
+            background: rgba(217,119,87,0.3); color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- SIDEBAR -->
+        <nav class="sidebar">
+            <div class="sidebar-brand">
+                <img class="sidebar-logo" alt="Veriff Logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAOVBMVEVHcEwCJysCKCsT5cQCKCwCJysCKCsCJysCJysCJysDKCwBICYMnIoJb2UBFyAGT0sPvqUR0LQAEh4nfOmzAAAACnRSTlMAm+n/+LzYHnRGOIuJywAABONJREFUeJzVm2uzoyAMhg/eENGq/f8/drVqRQmQhNiZzbed7pw8JG+C3P7+/lPTWhvT7mbM8s9f+m5V3RRV1Z1WFU1dt+Z5Cm1a1Sz+Otf7AbFiqPZJCKOawnd8paiK+hkGbRQwapChq+QZdFsj3e/WiCLoNhV5KBC1FIJWDPcfBGUk/LcNz/1qhcqOQo77TxTytKCxyo9YjhQ42vOtarn+awn3q/GCYMT8r12B4T8/+47R0yCTfseIBdkKu+9oQtBK3j+FQKL6IWuQBM+Mn0Dw0PhXQ2XhAf2RCB71j6hGI13/N0t1JJM5+yIsTiDY/0MWLYWHBbBZHUmAWAFa+7LBH8NJEBKAtd049GOQoAolQaYD2m7op7IswwChbiBRgda+h9V7HCBQiwIJsGNfHhYBgJNg8t13x+hTAJ3y/WuBFnAOPwVQ+GumNrcEX+7wUwBACHIDYMe5JABU9xDk9kDPfwLAC0FmAGw3lTSA4loI2SXQ3/2nAG4NObMJ2sHznwS4zIqZTdCOXgLSAJcQPBCANIA7Lae7cPSvvQH/aQCnH6claIcIAhiANICTg3QTePVThABQACYCZw7STeDVl1PoL/o9CBmBbyvQaQksAOU8hH9jAXw/CxCfgpuT4QX+yAX4igBRhPsoe1AIYAYwAA1+HjjCDEjRjqB/DMAuAo1og988+1KEixAFsM/JmInoFNp8F0IGwC4CGsBCYEM/kQEUeiK4eLlKMQeg5gFcpWgzALYpGfMxdBvm7BBYsBHjALYywCxI7nF2uuI7A+AzISIaMZDopRh2By8QYAr07RvAWocasyAAlHYsf4EUTP34Rox/MYObCWCp7z3Ji8C8oOHcb42ADbAT3CMwjfHPJ0GArSddIzD3ka0RcYByXmJwAViGT7JcgHK4AsDTdcSULADZv0gEThHS/X8AuH3Ai0BP9S4EcERgIg+/2xoRrxWfAPtcEFs3xAFYk5EfgYHjv+JOx34EOAI4pmP6B4kfAV4C9u/yTIBPBFgJOD7JiB+lUAQmlvvjoxSzPZKIADMA++KQtDABIzDDa8Y0gCEvzQCApRP2TIBjnwqxSRmPADMD310i9PI8EAGuBL/Lc+QGRTACvCbkbpmjtmjCEeBm4NyqTIsgsA/0yX5P/Az7mrNfjfjf0GbolgJuBjpnxx5RiBZcAa0RQK2BAKtO/6jTAgttRq0AAhnAfZR078ETwgrAlOD12Ai3W209Am4BdPfTS9SH4VKNdylmANwOL5FHNq+xFwK4n+Jjz2xuUuQDeKe36FOrlysENoB/jQF/d8DtimwA4PiacHB3SjF/GqCroHOFwAUAz+9JJ1d9FgB8kQXXDnfbpcgD8A6OdyOdH29dkQcA3B4g63AVwswEKII3iagHqD0PIHKXinqLoecABBNAlsEiRbr72EWqP2IlsCxUAV8ZPEyQ8v/4hULEBefs6zSZ/p8kqKIF4BA8BYC+3v1MDCrC9fJHCEjX28Uv1yP1d5p0PyjIDwxkCRrGiyMtKISa9+Ip943RYfTwH2aIL9xgYw5fKghF5rO73NcOHPXdLCcPWdF3EZijl3v0yImC8LNPrUhyLGTeOl4RWnQmmvx3jgFr6yaRi6qpW/nBO6ZNWxehqbKolfnJG3BjlKqbpjqsKJpaKfODl9+ufZ6/b/bLl+/i9g+f4LyDYT3ziAAAAABJRU5ErkJggg==" />
+                <div>
+                    <div class="sidebar-brand-text">Veriff</div>
+                    <div class="sidebar-brand-sub">深度案例研究</div>
+                </div>
+            </div>
+            <div class="nav-items">
+                <button class="nav-btn active" onclick="scrollToChapter(0)">🏠 封面</button>
+                <button class="nav-btn" onclick="scrollToChapter(1)">📋 公司概况</button>
+                <button class="nav-btn" onclick="scrollToChapter(2)">💰 融资与财务</button>
+                <button class="nav-btn" onclick="scrollToChapter(3)">🚀 产品与技术</button>
+                <button class="nav-btn" onclick="scrollToChapter(4)">🤖 AI能力分析</button>
+                <button class="nav-btn" onclick="scrollToChapter(5)">📊 市场与竞争</button>
+                <button class="nav-btn" onclick="scrollToChapter(6)">💡 核心启示</button>
+                <button class="nav-btn" onclick="scrollToChapter(7)">📰 近期动态</button>
+            </div>
+        
+    <a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <!-- CHAPTER 0: COVER -->
+            <section class="cover" id="ch-0">
+                <div class="cover-content">
+                    <img class="cover-logo" alt="Veriff Logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAOVBMVEVHcEwCJysCKCsT5cQCKCwCJysCKCsCJysCJysCJysDKCwBICYMnIoJb2UBFyAGT0sPvqUR0LQAEh4nfOmzAAAACnRSTlMAm+n/+LzYHnRGOIuJywAABONJREFUeJzVm2uzoyAMhg/eENGq/f8/drVqRQmQhNiZzbed7pw8JG+C3P7+/lPTWhvT7mbM8s9f+m5V3RRV1Z1WFU1dt+Z5Cm1a1Sz+Otf7AbFiqPZJCKOawnd8paiK+hkGbRQwapChq+QZdFsj3e/WiCLoNhV5KBC1FIJWDPcfBGUk/LcNz/1qhcqOQo77TxTytKCxyo9YjhQ42vOtarn+awn3q/GCYMT8r12B4T8/+47R0yCTfseIBdkKu+9oQtBK3j+FQKL6IWuQBM+Mn0Dw0PhXQ2XhAf2RCB71j6hGI13/N0t1JJM5+yIsTiDY/0MWLYWHBbBZHUmAWAFa+7LBH8NJEBKAtd049GOQoAolQaYD2m7op7IswwChbiBRgda+h9V7HCBQiwIJsGNfHhYBgJNg8t13x+hTAJ3y/WuBFnAOPwVQ+GumNrcEX+7wUwBACHIDYMe5JABU9xDk9kDPfwLAC0FmAGw3lTSA4loI2SXQ3/2nAG4NObMJ2sHznwS4zIqZTdCOXgLSAJcQPBCANIA7Lae7cPSvvQH/aQCnH6claIcIAhiANICTg3QTePVThABQACYCZw7STeDVl1PoL/o9CBmBbyvQaQksAOU8hH9jAXw/CxCfgpuT4QX+yAX4igBRhPsoe1AIYAYwAA1+HjjCDEjRjqB/DMAuAo1og988+1KEixAFsM/JmInoFNp8F0IGwC4CGsBCYEM/kQEUeiK4eLlKMQeg5gFcpWgzALYpGfMxdBvm7BBYsBHjALYywCxI7nF2uuI7A+AzISIaMZDopRh2By8QYAr07RvAWocasyAAlHYsf4EUTP34Rox/MYObCWCp7z3Ji8C8oOHcb42ADbAT3CMwjfHPJ0GArSddIzD3ka0RcYByXmJwAViGT7JcgHK4AsDTdcSULADZv0gEThHS/X8AuH3Ai0BP9S4EcERgIg+/2xoRrxWfAPtcEFs3xAFYk5EfgYHjv+JOx34EOAI4pmP6B4kfAV4C9u/yTIBPBFgJOD7JiB+lUAQmlvvjoxSzPZKIADMA++KQtDABIzDDa8Y0gCEvzQCApRP2TIBjnwqxSRmPADMD310i9PI8EAGuBL/Lc+QGRTACvCbkbpmjtmjCEeBm4NyqTIsgsA/0yX5P/Az7mrNfjfjf0GbolgJuBjpnxx5RiBZcAa0RQK2BAKtO/6jTAgttRq0AAhnAfZR078ETwgrAlOD12Ai3W209Am4BdPfTS9SH4VKNdylmANwOL5FHNq+xFwK4n+Jjz2xuUuQDeKe36FOrlysENoB/jQF/d8DtimwA4PiacHB3SjF/GqCroHOFwAUAz+9JJ1d9FgB8kQXXDnfbpcgD8A6OdyOdH29dkQcA3B4g63AVwswEKII3iagHqD0PIHKXinqLoecABBNAlsEiRbr72EWqP2IlsCxUAV8ZPEyQ8v/4hULEBefs6zSZ/p8kqKIF4BA8BYC+3v1MDCrC9fJHCEjX28Uv1yP1d5p0PyjIDwxkCRrGiyMtKISa9+Ip943RYfTwH2aIL9xgYw5fKghF5rO73NcOHPXdLCcPWdF3EZijl3v0yImC8LNPrUhyLGTeOl4RWnQmmvx3jgFr6yaRi6qpW/nBO6ZNWxehqbKolfnJG3BjlKqbpjqsKJpaKfODl9+ufZ6/b/bLl+/i9g+f4LyDYT3ziAAAAABJRU5ErkJggg==" />
+                    <h1 class="cover-title">Veriff</h1>
+                    <p class="cover-subtitle">全球身份验证与信任基础设施领导者</p>
+                    <div class="cover-tags">
+                        <span class="cover-tag">AI身份验证</span>
+                        <span class="cover-tag">KYC/KYB/AML</span>
+                        <span class="cover-tag">独角兽</span>
+                        <span class="cover-tag">爱沙尼亚</span>
+                    </div>
+                    <div class="cover-stats">
+                        <div class="stat-box">
+                            <div class="stat-number" data-count="4160" data-suffix="万美元">0</div>
+                            <div class="stat-label">2024年收入</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-number" data-count="15" data-suffix="亿美元">0</div>
+                            <div class="stat-label">估值</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-number" data-count="105" data-suffix="%">0</div>
+                            <div class="stat-label">增速</div>
+                        </div>
+                    </div>
+                    <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+                </div>
+            </section>
+
+            <!-- CHAPTER 1: COMPANY OVERVIEW -->
+            <section class="chapter" id="ch-1">
+                <div class="chapter-header">
+                    <h2>公司概况</h2>
+                    <span class="ch-sub">📋 创业历程与使命</span>
+                    <span class="ch-counter" id="counter-1">1 / 3</span>
+                </div>
+                <div class="card-track" data-ch="1">
+                    <div class="slide">
+                        <div class="card">
+                            <h3>创业灵感：一个岛屿的身份验证困境</h3>
+                            <div class="card-body">
+                                <p>Kaarel Kotkas在爱沙尼亚海岛Hiiumaa遭遇的一次个人身份验证困境，成为Veriff的创业灵感源头。2015年，这位20岁的年轻人创办Veriff，目标是将多种远程验证方法整合成一个更可靠的在线服务。</p>
+                                <p>他曾在Wise（原TransferWise）工作，积累了支付与验证运营的深厚经验。正是对现有身份验证解决方案的不满，驱动他创办Veriff，立志让全球互联网上的信任变得可扩展。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="card">
+                            <h3>国际化突破：从欧洲到美国</h3>
+                            <div class="card-body">
+                                <p>2016-2017年，Veriff完成天使轮融资，首批客户来自欧洲金融科技公司。2018年6月，公司从Y Combinator（S18 batch）毕业，这标志着进入国际聚光灯的转折点。</p>
+                                <p>随后迅速进入美国市场，与Stripe、PayPal等支付平台建立合作。美国市场的快速扩张，使Veriff成为全球身份验证赛道的新星。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="card">
+                            <h3>使命与愿景</h3>
+                            <div class="card-body">
+                                <p><strong>使命：</strong>让信任在互联网上变得可扩展与可靠</p>
+                                <p>Veriff的核心理念是——复杂的多国身份验证和反欺诈规则，应该被抽象成简洁的API接口。开发者应该用3行代码集成世界级身份验证，同时内置300+司法管辖区的监管规则自动化执行。</p>
+                                <div class="callout">
+                                    <strong>关键洞察：</strong> "合规即代码"是Veriff相比Jumio/Onfido的关键差异——将监管复杂性产品化，让企业客户降低合规成本50%。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dots-bar" id="dots-1"></div>
+            </section>
+
+            <!-- CHAPTER 2: FUNDING & FINANCIALS -->
+            <section class="chapter" id="ch-2">
+                <div class="chapter-header">
+                    <h2>融资与财务</h2>
+                    <span class="ch-sub">💰 资本演进与增长指标</span>
+                    <span class="ch-counter" id="counter-2">1 / 3</span>
+                </div>
+                <div class="card-track" data-ch="2">
+                    <div class="slide">
+                        <div class="card">
+                            <h3>融资历程：从初创到独角兽</h3>
+                            <div class="card-body">
+                                <div class="timeline">
+                                    <div class="timeline-item">
+                                        <div class="timeline-dot"></div>
+                                        <div class="timeline-year">2015-2016</div>
+                                        <div class="timeline-text"><strong>天使轮：</strong> 爱沙尼亚早期投资者支持，初步验证产品-市场契合度</div>
+                                    </div>
+                                    <div class="timeline-item">
+                                        <div class="timeline-dot"></div>
+                                        <div class="timeline-year">2018</div>
+                                        <div class="timeline-text"><strong>种子轮：</strong> Y Combinator毕业前完成，奠定国际化基础</div>
+                                    </div>
+                                    <div class="timeline-item">
+                                        <div class="timeline-dot"></div>
+                                        <div class="timeline-year">2020</div>
+                                        <div class="timeline-text"><strong>Series A & B：</strong> IVP、Accel等顶级VC进入，加速技术与产品升级</div>
+                                    </div>
+                                    <div class="timeline-item">
+                                        <div class="timeline-dot"></div>
+                                        <div class="timeline-year">2022</div>
+                                        <div class="timeline-text"><strong>Series C：</strong> $1亿融资，Tiger Global & Alkeon Capital领投，估值达$15亿</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="card">
+                            <h3>财务表现与增长轨迹</h3>
+                            <div class="card-body">
+                                <div class="metrics-grid">
+                                    <div class="metric-card">
+                                        <div class="metric-value">$4160万</div>
+                                        <div class="metric-label">2024年收入</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-value">105%</div>
+                                        <div class="metric-label">YoY增速</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-value">75%</div>
+                                        <div class="metric-label">Q4增速</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-value">120%+</div>
+                                        <div class="metric-label">NRR</div>
+                                    </div>
+                                </div>
+                                <table class="comparison-table">
+                                    <thead>
+                                        <tr>
+                                            <th>年份</th>
+                                            <th>收入</th>
+                                            <th>增速</th>
+                                            <th>客户数</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>2023</td>
+                                            <td>$2020万</td>
+                                            <td>—</td>
+                                            <td>25+</td>
+                                        </tr>
+                                        <tr>
+                                            <td>2024</td>
+                                            <td>$4160万</td>
+                                            <td>105%</td>
+                                            <td>40+</td>
+                                        </tr>
+                                        <tr>
+                                            <td>2025E</td>
+                                            <td>$8000万+</td>
+                                            <td>~100%</td>
+                                            <td>60+</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="card sparse">
+                            <h3>毛利率与盈利能力</h3>
+                            <div class="card-body">
+                                <div class="callout">
+                                    <strong>交易收入（35%）：</strong> 按验证笔数计费，$0.5-3/笔，毛利>85%
+                                </div>
+                                <div class="callout">
+                                    <strong>订阅收入（65%）：</strong> 企业年订阅$36K-600K+，毛利>70%
+                                </div>
+                                <p style="margin-top: 24px;">整体毛利率约<strong>75%+</strong>，接近SaaS行业头部水平。虽未盈利，但EBITDA margin持续改善，预计2025年中期实现盈利。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dots-bar" id="dots-2"></div>
+            </section>
+
+            <!-- CHAPTER 3: PRODUCT & TECHNOLOGY -->
+            <section class="chapter" id="ch-3">
+                <div class="chapter-header">
+                    <h2>产品与技术</h2>
+                    <span class="ch-sub">🚀 核心产品与特性</span>
+                    <span class="ch-counter" id="counter-3">1 / 4</span>
+                </div>
+                <div class="card-track" data-ch="3">
+                    <div class="slide">
+                        <div class="card">
+                            <h3>Identity Verification API</h3>
+                            <div class="card-body">
+                                <p>Veriff的核心产品是API驱动的远程身份验证服务。通过自拍 + 证件识别 + 活体检测，在10秒内完成身份核验。支持全球190+国家身份证件，集成生物识别、机器学习欺诈检测、反欺骗技术。</p>
+                                <div class="metrics-grid">
+                                    <div class="metric-card">
+                                        <div class="metric-value">>99%</div>
+                                        <div class="metric-label">识别准确率</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-value"><1%</div>
+                                        <div class="metric-label">拒真率</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-value"><10秒</div>
+                                        <div class="metric-label">验证耗时</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="card">
+                            <h3>Know Your Business (KYB) 平台</h3>
+                            <div class="card-body">
+                                <p>2026年2月收购爱沙尼亚KYB平台Vespia后，Veriff推出企业身份验证解决方案。能在30秒内验证企业身份、董事会成员、受益所有人。</p>
+                                <div class="mode-boxes">
+                                    <div class="mode-box">
+                                        <div class="mode-title">🏢 企业验证</div>
+                                        <div class="mode-desc">全球300+司法管辖区的商业登记数据实时查询与验证</div>
+                                    </div>
+                                    <div class="mode-box" style="border-left-color:var(--brand-accent);">
+                                        <div class="mode-title">👥 受益所有人</div>
+                                        <div class="mode-desc">识别最终受益所有人，满足AML监管要求</div>
+                                    </div>
+                                    <div class="mode-box">
+                                        <div class="mode-title">📋 董事验证</div>
+                                        <div class="mode-desc">交叉参照全球制裁库与PEPs数据库</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="card">
+                            <h3>持续监控 & AML</h3>
+                            <div class="card-body">
+                                <p>完成初次验证后的持续监控，自动检测制裁名单更新、高风险交易、账户异常行为。</p>
+                                <div class="callout">
+                                    <strong>监管要求：</strong> FinCEN与欧盟对Ongoing KYC的强制要求，Veriff自动化执行降低人工审查负担50%
+                                </div>
+                                <p style="margin-top: 16px;">支持定期重验证、行为分析、交易监控规则自定义，实时监控覆盖超5亿用户。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="card">
+                            <h3>全球合规规则自动化</h3>
+                            <div class="card-body">
+                                <p>Veriff内置300+司法管辖区的KYC/AML规则自动化执行，包括：</p>
+                                <ul style="padding-left: 20px; margin-top: 12px;">
+                                    <li>UN制裁名单、OFAC名单、欧盟黑名单</li>
+                                    <li>10+全球制裁库的实时检测</li>
+                                    <li>PEPs（政治公众人物）识别，准确率>99%</li>
+                                    <li>高危国家与地区检测</li>
+                                </ul>
+                                <div class="callout" style="margin-top: 16px;">
+                                    <strong>竞争优势：</strong> 自动化合规是Veriff的核心差异，相比Jumio/Onfido降低企业合规成本50%
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dots-bar" id="dots-3"></div>
+            </section>
+
+            <!-- CHAPTER 4: AI TECHNOLOGY -->
+            <section class="chapter" id="ch-4">
+                <div class="chapter-header">
+                    <h2>AI能力分析</h2>
+                    <span class="ch-sub">🤖 深度学习与机器学习驱动</span>
+                    <span class="ch-counter" id="counter-4">1 / 3</span>
+                </div>
+                <div class="card-track" data-ch="4">
+                    <div class="slide">
+                        <div class="card">
+                            <h3>计算机视觉：活体检测与人脸识别</h3>
+                            <div class="card-body">
+                                <p>Veriff采用业界领先的活体检测技术（Liveness Detection），通过随机挑战（眨眼、点头、转身等）区分真人与照片/视频。</p>
+                                <table style="margin-top: 16px;">
+                                    <thead>
+                                        <tr>
+                                            <th>指标</th>
+                                            <th>Veriff</th>
+                                            <th>行业平均</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>活体检测准确率</td>
+                                            <td>>99%</td>
+                                            <td>~95%</td>
+                                        </tr>
+                                        <tr>
+                                            <td>人脸-证件匹配准确率</td>
+                                            <td>>98%</td>
+                                            <td>~94%</td>
+                                        </tr>
+                                        <tr>
+                                            <td>处理延迟</td>
+                                            <td><2秒</td>
+                                            <td>3-5秒</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <p style="margin-top: 16px;">同时支持指纹、虹膜等生物特征识别，采用ResNet + EfficientNet架构，在百万级证件图片上训练。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="card">
+                            <h3>欺诈检测机器学习引擎</h3>
+                            <div class="card-body">
+                                <p>基于100+特征维度的实时欺诈风险评分模型，检测身份盗窃、合成身份、组织欺诈。采用梯度提升树（XGBoost）与深度神经网络集成。</p>
+                                <div class="metrics-grid">
+                                    <div class="metric-card">
+                                        <div class="metric-value">>98%</div>
+                                        <div class="metric-label">精准率</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-value">>97%</div>
+                                        <div class="metric-label">召回率</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-value"><100ms</div>
+                                        <div class="metric-label">检测延迟</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-value">100+</div>
+                                        <div class="metric-label">特征维度</div>
+                                    </div>
+                                </div>
+                                <p style="margin-top: 16px;">每秒处理超10万笔验证请求的实时模型，特征包括设备指纹、IP地址、验证行为、时空异常等信号。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="card">
+                            <h3>自然语言处理与知识图谱</h3>
+                            <div class="card-body">
+                                <p><strong>多语言OCR：</strong> 证件上的190+国家、40+语言文本自动识别与提取，采用Transformer模型微调，准确率>98%。</p>
+                                <p style="margin-top: 16px;"><strong>知识图谱：</strong> 将验证用户与全球制裁名单、PEPs数据库、商业登记簿进行实体链接与匹配，用于KYC/AML合规检查。</p>
+                                <div class="callout">
+                                    <strong>数据基础：</strong> 自有生物识别样本库>1亿人脸，全球真实验证交易日志日均>100万笔，为模型持续优化提供数据反馈
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dots-bar" id="dots-4"></div>
+            </section>
+
+            <!-- CHAPTER 5: MARKET & COMPETITION -->
+            <section class="chapter" id="ch-5">
+                <div class="chapter-header">
+                    <h2>市场与竞争</h2>
+                    <span class="ch-sub">📊 赛道地位与增长驱动</span>
+                    <span class="ch-counter" id="counter-5">1 / 3</span>
+                </div>
+                <div class="card-track" data-ch="5">
+                    <div class="slide">
+                        <div class="card">
+                            <h3>市场规模与增长</h3>
+                            <div class="card-body">
+                                <div class="metrics-grid">
+                                    <div class="metric-card">
+                                        <div class="metric-value">$150B+</div>
+                                        <div class="metric-label">TAM</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-value">$40B</div>
+                                        <div class="metric-label">SAM</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-value">15-18%</div>
+                                        <div class="metric-label">CAGR</div>
+                                    </div>
+                                </div>
+                                <p style="margin-top: 20px;">全球KYC/AML市场约150亿美元，年增长15-18%。远程身份验证与API驱动的合规自动化市场（SAM）达40亿美元。</p>
+                                <p style="margin-top: 12px;"><strong>主要增长驱动力：</strong></p>
+                                <ul style="padding-left: 20px; margin-top: 8px;">
+                                    <li>全球监管趋严（FinCEN、AMLD5/MLD6）</li>
+                                    <li>数字银行与金融科技爆发，拉美、东南亚增速>40%</li>
+                                    <li>全球欺诈损失超万亿美元，企业对反欺诈投入增加</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="card">
+                            <h3>竞争格局与优势</h3>
+                            <div class="card-body">
+                                <p><strong>主要竞争对手：</strong></p>
+                                <table style="margin-top: 16px;">
+                                    <thead>
+                                        <tr>
+                                            <th>公司</th>
+                                            <th>优势</th>
+                                            <th>劣势</th>
+                                            <th>位置</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><strong>Jumio</strong></td>
+                                            <td>老牌，银行级客户深</td>
+                                            <td>API易用性弱，UI陈旧</td>
+                                            <td>第二</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Onfido</strong></td>
+                                            <td>欧洲关系强</td>
+                                            <td>美国市场弱，技术陈旧</td>
+                                            <td>第三</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Persona</strong></td>
+                                            <td>API优雅，初创友好</td>
+                                            <td>企业级功能不足</td>
+                                            <td>新兴</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <p style="margin-top: 16px;"><strong>Veriff核心优势：</strong></p>
+                                <ul style="padding-left: 20px;">
+                                    <li>识别准确率最高（>99%）且速度最快（<10秒）</li>
+                                    <li>KYC/KYB/AML最完整的一体化套餐</li>
+                                    <li>最强的全球化运营与多司法管辖区合规能力</li>
+                                    <li>API设计简洁，开发者体验最好</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="card sparse">
+                            <h3>地理增长与市场机遇</h3>
+                            <div class="card-body">
+                                <p><strong>北美主导（45%ARR）：</strong> 金融科技最发达的市场，客户包括Stripe、PayPal等支付巨头</p>
+                                <p style="margin-top: 12px;"><strong>欧洲稳健（35%ARR）：</strong> AMLD5/MLD6监管驱动，银行与新兴金融机构持续扩张采购</p>
+                                <p style="margin-top: 12px;"><strong>拉美爆发（新增40%+ YoY）：</strong> 数字银行快速增长，巴西、墨西哥、哥伦比亚新建技术中心</p>
+                                <p style="margin-top: 12px;"><strong>东南亚高速（新增40%+ YoY）：</strong> 金融科技创新中心，新增支付与P2P借贷平台需要合规快速实施</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dots-bar" id="dots-5"></div>
+            </section>
+
+            <!-- CHAPTER 6: KEY INSIGHTS -->
+            <section class="chapter" id="ch-6">
+                <div class="chapter-header">
+                    <h2>核心启示</h2>
+                    <span class="ch-sub">💡 战略启示与业务启蒙</span>
+                    <span class="ch-counter" id="counter-6">1 / 4</span>
+                </div>
+                <div class="card-track" data-ch="6">
+                    <div class="slide">
+                        <div class="insight-card">
+                            <div class="insight-emoji">🎭</div>
+                            <h3>合规即代码：产品化监管复杂性</h3>
+                            <div class="card-body">
+                                <p>Veriff的核心竞争力不在单纯的技术（活体检测、人脸识别其他企业也能做），而在于<strong>将全球300+司法管辖区的监管规则参数化、自动化、产品化</strong>。</p>
+                                <p style="margin-top: 12px;">传统方案中，企业需要：维护3-5名合规律师、建立内部审计流程、定期更新制裁名单……成本$500K+/年。而Veriff通过API自动化这一切，让企业只需按需付费$0.5-3/笔验证。</p>
+                                <div class="insight-highlight">
+                                    这种"监管负担转移"正是Veriff获得120%+ NRR、客户粘性极强的根本原因。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="insight-card">
+                            <div class="insight-emoji">🚀</div>
+                            <h3>监管驱动的B2B SaaS：确定性增长源</h3>
+                            <div class="card-body">
+                                <p>Veriff处于一个被动增长的赛道——当FinCEN、欧盟监管收紧时，企业别无选择，必须升级身份验证与反欺诈能力。</p>
+                                <p style="margin-top: 12px;">相比其他B2B SaaS需要争取客户的自主采购决策，<strong>Veriff面对的是"合规强制"需求</strong>。这给了Veriff</p>
+                                <ul style="padding-left: 20px; margin-top: 12px;">
+                                    <li>定价权强（客户对价格敏感度低）</li>
+                                    <li>Churn率低（迁移成本高达$100K+）</li>
+                                    <li>增长确定性高（监管持续趋严）</li>
+                                </ul>
+                                <div class="insight-highlight">
+                                    这解释了为何即使处于竞争激烈的身份验证赛道，Veriff仍能保持105%+ YoY增长。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="insight-card">
+                            <div class="insight-emoji">🌍</div>
+                            <h3>全球化的地理套利：拉美和东南亚的杠杆</h3>
+                            <div class="card-body">
+                                <p>Veriff在拉美、东南亚的增速达40%+，是北美的2倍。这源于两个因素：</p>
+                                <p style="margin-top: 12px;"><strong>1. 合规历史欠账：</strong> 这些地区金融科技增速快但合规投入滞后，现在正在补课，集中采购身份验证。</p>
+                                <p style="margin-top: 12px;"><strong>2. 竞争格局优势：</strong> Jumio/Onfido对这些新兴市场关注度低，Veriff可以低成本高效率地建立市场优势。</p>
+                                <div class="callout">
+                                    <strong>战略意义：</strong> 先发优势+监管刚性需求，使Veriff在拉美、东南亚有机会成为垄断级的身份验证基础设施。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="insight-card">
+                            <div class="insight-emoji">💼</div>
+                            <h3>Vespia收购：从点状到平台的进化</h3>
+                            <div class="card-body">
+                                <p>2026年2月收购Vespia（前员工Julia Ront创办的KYB平台），标志着Veriff从<strong>单点功能（IDV）向全栈合规平台</strong>的进化。</p>
+                                <p style="margin-top: 12px;">这不仅扩展了TAM（从个人验证到企业验证），更重要的是：</p>
+                                <ul style="padding-left: 20px; margin-top: 12px;">
+                                    <li>提高客户ARPU（单客户全套方案价值>300K/年）</li>
+                                    <li>增强竞争壁垒（Jumio/Onfido无法快速跟进）</li>
+                                    <li>提升NRR（客户更难迁移，依赖度更高）</li>
+                                </ul>
+                                <div class="insight-highlight">
+                                    并购策略体现了Veriff的产品远见：从解决单个监管点，进化为企业级全栈信任基础设施。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dots-bar" id="dots-6"></div>
+            </section>
+
+            <!-- CHAPTER 7: NEWS & OUTLOOK -->
+            <section class="chapter" id="ch-7">
+                <div class="chapter-header">
+                    <h2>近期动态与展望</h2>
+                    <span class="ch-sub">📰 2024-2026重大事件与IPO前景</span>
+                    <span class="ch-counter" id="counter-7">1 / 2</span>
+                </div>
+                <div class="card-track" data-ch="7">
+                    <div class="slide">
+                        <div class="card">
+                            <h3>2024-2025年重大事件</h3>
+                            <div class="card-body">
+                                <div class="news-item">
+                                    <div class="news-date">2025年1月7日</div>
+                                    <div class="news-title">
+                                        <a href="https://www.globenewswire.com/news-release/2025/01/07/3005351/0/en/Veriff-Achieves-Exceptional-Growth-in-2024-Driven-By-New-Customers-and-Product-Expansion" target="_blank">2024年业绩发布：收入4160万美元，增长105%</a>
+                                    </div>
+                                    <div class="news-desc">Q4单季实现75%同比增速，验证量翻3倍，客户增60%。进入加速增长阶段，接近IPO前的规模节点。</div>
+                                </div>
+                                <div class="news-item">
+                                    <div class="news-date">2025年2月</div>
+                                    <div class="news-title">
+                                        <a href="https://www.biometricupdate.com/202602/veriff-boosts-kyc-fraud-prevention-capabilities-with-data-zoo-integration" target="_blank">与Data Zoo整合，强化欺诈防护与AML能力</a>
+                                    </div>
+                                    <div class="news-desc">第三方数据集成，补强欺诈防护精准度，提升整体解决方案深度。</div>
+                                </div>
+                                <div class="news-item">
+                                    <div class="news-date">2026年2月5日</div>
+                                    <div class="news-title">
+                                        <a href="https://www.veriff.com/pr-news/kyb-business-verification" target="_blank">收购爱沙尼亚KYB平台Vespia，进军全栈信任基础设施</a>
+                                    </div>
+                                    <div class="news-desc">战略升级，从身份验证向企业级合规拓展。Vespia创始人Julia Ront曾是Veriff第二员工，体现了内外部人才的闭环</div>
+                                </div>
+                                <div class="news-item">
+                                    <div class="news-date">2025年</div>
+                                    <div class="news-title">
+                                        <a href="https://www.veriff.com/pr-news/veriff-achieves-growth-new-customers-products" target="_blank">2025年CyberSecurity Breakthrough Awards "年度欺诈防护解决方案"</a>
+                                    </div>
+                                    <div class="news-desc">行业认可，AI反欺诈能力获全球安全机构官方授予，增强品牌信誉度。</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <div class="card sparse">
+                            <h3>未来展望：IPO与全球扩张</h3>
+                            <div class="card-body">
+                                <p><strong>IPO预期：</strong> Veriff管理层表示，ARR突破$5000万美元后将考虑启动IPO进程。按照当前105%+ YoY增速，预计<strong>2026-2027年上市</strong>，可能在伦敦或纽约交易所。</p>
+                                <p style="margin-top: 20px;"><strong>下一阶段战略重点：</strong></p>
+                                <div class="mode-boxes" style="margin-top: 16px;">
+                                    <div class="mode-box">
+                                        <div class="mode-title">🌏 KYB全球扩展</div>
+                                        <div class="mode-desc">将Vespia收购整合完成，2026年中期向全球客户商业化，扩大TAM</div>
+                                    </div>
+                                    <div class="mode-box" style="border-left-color:var(--brand-accent);">
+                                        <div class="mode-title">🚀 新兴市场深耕</div>
+                                        <div class="mode-desc">拉美与东南亚的40%+增速是关键，建立技术中心并本地化产品</div>
+                                    </div>
+                                    <div class="mode-box">
+                                        <div class="mode-title">🤖 AI升级迭代</div>
+                                        <div class="mode-desc">欺诈检测算法持续进化，LLM驱动的合规自动化问答等新功能</div>
+                                    </div>
+                                </div>
+                                <div class="callout" style="margin-top: 24px;">
+                                    <strong>总体前景：</strong> Veriff处于最佳增长周期。监管驱动的确定性需求+新兴市场杠杆+平台化进化，有望在IPO前实现$10亿+ARR规模。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dots-bar" id="dots-7"></div>
+            </section>
+
+            <!-- REFERENCES -->
+            <section class="chapter">
+                <div class="chapter-header">
+                    <h2>参考文献</h2>
+                    <span class="ch-sub">📚 数据来源与扩展阅读</span>
+                </div>
+                <div class="references">
+                    <h4>📚 参考文献</h4>
+                    <ul>
+                        <li><a href="https://tracxn.com/d/companies/veriff/" target="_blank">Tracxn - Veriff Company Profile & Funding</a></li>
+                        <li><a href="https://www.fintechfutures.com/biometrics-id-verification/digital-id-verification-platform-veriff-raises-100m-series-c-at-1-5bn-valuation" target="_blank">FinTech Futures - Veriff Series C $1.5B Valuation</a></li>
+                        <li><a href="https://www.globenewswire.com/news-release/2025/01/07/3005351/0/en/Veriff-Achieves-Exceptional-Growth-in-2024-Driven-By-New-Customers-and-Product-Expansion" target="_blank">GlobeNewswire - Veriff 2024 Exceptional Growth</a></li>
+                        <li><a href="https://www.veriff.com/blog/veriff-new-brand-identity" target="_blank">Veriff - Brand Identity Evolution Story</a></li>
+                        <li><a href="https://www.veriff.com/pr-news/veriff-achieves-growth-new-customers-products" target="_blank">Veriff Press - 2024 Growth Announcement</a></li>
+                        <li><a href="https://www.veriff.com/pr-news/kyb-business-verification" target="_blank">Veriff Press - Vespia Acquisition</a></li>
+                        <li><a href="https://www.biometricupdate.com/202602/veriff-acquires-estonian-kyb-firm-vespia-to-transition-from-idv-to-full-trust-platform" target="_blank">Biometric Update - Veriff Acquires Vespia</a></li>
+                        <li><a href="https://idtechwire.com/veriff-reports-75-percent-revenue-growth-in-q4-expands-global-idv-services/" target="_blank">IDTech Wire - Veriff Q4 2024 Growth</a></li>
+                        <li><a href="https://www.ycombinator.com/companies/veriff" target="_blank">Y Combinator - Veriff Company Profile</a></li>
+                        <li><a href="https://ee.linkedin.com/in/kaarelkotkas" target="_blank">LinkedIn - Kaarel Kotkas (Founder & CEO)</a></li>
+                        <li><a href="https://getlatka.com/companies/veriff" target="_blank">Latka - Veriff Financial Metrics</a></li>
+                        <li><a href="https://pitchbook.com/profiles/company/182847-25" target="_blank">PitchBook - Veriff 2026 Profile</a></li>
+                    </ul>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        // Counter Animation
+        function animateCounters() {
+            const counters = document.querySelectorAll('.stat-number');
+            counters.forEach(counter => {
+                const target = parseInt(counter.dataset.count);
+                const prefix = counter.dataset.prefix || '';
+                const suffix = counter.dataset.suffix || '';
+                let current = 0;
+                const increment = target / 60;
+
+                const interval = setInterval(() => {
+                    current += increment;
+                    if (current >= target) {
+                        current = target;
+                        clearInterval(interval);
+                    }
+                    counter.textContent = prefix + Math.floor(current).toLocaleString() + suffix;
+                }, 30);
+            });
+        }
+
+        // Dots Bar Generation
+        function generateDotsBars() {
+            for (let i = 1; i <= 7; i++) {
+                const track = document.querySelector(`[data-ch="${i}"]`);
+                if (track) {
+                    const slides = track.querySelectorAll('.slide');
+                    const dotsContainer = document.getElementById(`dots-${i}`);
+
+                    slides.forEach((slide, idx) => {
+                        const dot = document.createElement('div');
+                        dot.className = 'dot' + (idx === 0 ? ' active' : '');
+                        dot.onclick = () => {
+                            track.scrollLeft = slide.offsetLeft;
+                        };
+                        dotsContainer.appendChild(dot);
+                    });
+
+                    // Update dots on scroll
+                    track.addEventListener('scroll', () => {
+                        const activeIdx = Math.round(track.scrollLeft / slides[0].offsetWidth);
+                        const dots = dotsContainer.querySelectorAll('.dot');
+                        dots.forEach((d, idx) => {
+                            d.classList.toggle('active', idx === activeIdx);
+                        });
+                        updateCounter(i, activeIdx, slides.length);
+                    });
+                }
+            }
+        }
+
+        // Update counter
+        function updateCounter(chapter, current, total) {
+            const counter = document.getElementById(`counter-${chapter}`);
+            if (counter) {
+                counter.textContent = `${current + 1} / ${total}`;
+            }
+        }
+
+        // Navigation
+        function scrollToChapter(index) {
+            const chapter = document.getElementById(`ch-${index}`);
+            if (chapter) {
+                chapter.scrollIntoView({ behavior: 'smooth' });
+                updateActiveNav(index);
+            }
+        }
+
+        function updateActiveNav(index) {
+            document.querySelectorAll('.nav-btn').forEach((btn, idx) => {
+                btn.classList.toggle('active', idx === index);
+            });
+        }
+
+        // Intersection Observer for nav highlighting
+        const observerOptions = {
+            threshold: 0.5
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const id = entry.target.id;
+                    const index = parseInt(id.split('-')[1]);
+                    updateActiveNav(index);
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.chapter, .cover').forEach(chapter => {
+            observer.observe(chapter);
+        });
+
+        // Initialize
+        window.addEventListener('load', () => {
+            animateCounters();
+            generateDotsBars();
+        });
+
+        // Trigger animations on scroll into view
+        const elementObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animation = 'slideIn 0.6s ease-out';
+                }
+            });
+        });
+
+        document.querySelectorAll('.card, .insight-card').forEach(card => {
+            elementObserver.observe(card);
+        });
+    </script>
+</body>
+</html>

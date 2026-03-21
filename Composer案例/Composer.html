@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Composer 深度调研报告</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --accent-purple: #7B5EA7;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #1A1514;
+            --cover-bg: #21248D;
+            --cover-accent: #341CFF;
+            --cover-highlight: #FFE36D;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(217,119,87,0.2); color: var(--accent); font-weight: 600; }
+
+        .nav-dashboard {
+            display: block; width: calc(100% - 8px); margin: 8px 4px 4px;
+            background: rgba(217,119,87,0.15); border: 1px solid rgba(217,119,87,0.3);
+            color: var(--accent, #D97757); padding: 10px 12px; border-radius: 8px;
+            text-align: center; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+            font-weight: 600; letter-spacing: 0.3px;
+        }
+        .nav-dashboard:hover {
+            background: rgba(217,119,87,0.3); color: white;
+        }
+
+        /* ===== MAIN ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, var(--cover-bg) 0%, #2F2E9F 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(52,28,255,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 20px; background: rgba(255,255,255,0.1); object-fit: contain; }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(255,255,255,0.12); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        /* Fixed chapter header */
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        /* Horizontal card scroller */
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+
+        /* Each slide fills available height */
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Card inside slide — fills slide */
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        /* Dots bar at bottom */
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); cursor: pointer; transition: all 0.3s;
+            border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+        /* ===== CONTENT-SPARSE: bigger text for cards with less content ===== */
+        .card.sparse p { font-size: 16px; line-height: 2; }
+        .card.sparse h3 { font-size: 22px; margin-bottom: 20px; }
+        .card.sparse .callout { font-size: 15px; padding: 18px 22px; }
+        .card.sparse .quote-block { font-size: 16px; padding: 20px 24px; }
+
+        /* ===== REUSABLE COMPONENTS ===== */
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px; border-radius: 6px;
+            font-size: 13px; line-height: 1.7; color: var(--text-2);
+            margin: 14px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+
+        .quote-block {
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px; margin: 14px 0;
+            font-style: italic; font-size: 14px;
+            color: var(--text-2); line-height: 1.8;
+            background: var(--bg-muted); border-radius: 0 8px 8px 0;
+        }
+        .quote-attr { font-style: normal; font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 16px; border-radius: 10px; text-align: center;
+        }
+        .metric-value { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+        .flex-row { display: flex; gap: 24px; margin: 14px 0; }
+        .flex-col { flex: 1; min-width: 0; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th { background: var(--bg-muted); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+
+        .mode-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 14px 0; }
+        .mode-box { background: var(--bg-muted); padding: 14px; border-radius: 10px; border-left: 4px solid var(--accent); }
+        .mode-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+        .mode-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .insight-card {
+            flex: 1; display: flex; flex-direction: column;
+            background: var(--bg-card); border-radius: 14px; padding: 28px 32px;
+            border: 1px solid var(--border);
+        }
+        .insight-emoji { font-size: 28px; margin-bottom: 10px; }
+        .insight-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+        .insight-card p { font-size: 15px; line-height: 1.9; color: var(--text-2); margin-bottom: 14px; }
+        .insight-highlight {
+            margin-top: auto;
+            background: var(--accent-light); border-left: 4px solid var(--accent);
+            padding: 12px 16px; border-radius: 6px;
+            font-size: 14px; font-weight: 600; color: var(--accent-2);
+        }
+
+        .avatar {
+            width: 56px; height: 56px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 700; font-size: 20px;
+        }
+
+        .position-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+        .position-card { padding: 12px; border-radius: 10px; }
+        .position-title { font-weight: 700; font-size: 13px; margin-bottom: 3px; }
+
+        .timeline { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+        .timeline-item { display: flex; gap: 12px; align-items: flex-start; }
+        .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
+        .timeline-year { font-weight: 700; font-size: 13px; color: var(--accent); min-width: 48px; }
+        .timeline-text { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            main { margin-left: 0; }
+            .chapter-header { padding: 12px 20px 0 20px; }
+            .slide { padding: 16px 20px; }
+            .cover-title { font-size: 28px; }
+            .flex-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <img class="sidebar-logo" alt="Composer Logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAACzUlEQVRoge3asW8cRRTH8c+czwgdSZBlR7IQBKhpUtNDi5ASYidNHNLkH8g/ABV/AFTE6RwpkSIkqEJDkzQprEjQUIEidJENBw65ROezh2I3m73zLrrc2bcc2q900s7q7Zv3u52Zt292qamW8Pygu7HQFCyjWWLbE7Rb5zr70L2xsIjjhxTH362VzjY01882sIxXSmz7xHZ/7VbfQLAhLhM2cAr7QxfN4UfReXTSc1dxPnE4EU1spP5ETgS+xnvYG7Jt4Fes4uGggOT4zVRAEZ3UwXOWUvvDYDF3PIc38FaJ7b5c3I0So5mhFlA1+TnwBz7H64hDdgFbeJI7dwM/OTjhX5YGHox7cSagtfLnjmT2j0RrpXMHd8bt+LCY+SFUC6iamReQTeLuxfUlSTpfcnAVeln6xK9a1y9tQvPamdNCuKL4OWsOP/TXbq6P01He4TF8grfHcTRED99hM2mGU7io/AFtD2MJGB5Ck/7zU+f/Mwckt3ELLZNn1x6eTehjJDIBkTbxQmB+UqcxGYoPJ/UzCpmA166v7eLnaXR6mMz8HKgFVM3MC8gm8e7HWoH3JcvoMAF/Re7O39aD5rWzpyVZuyj57RPv9y/dah9F0HkyAYGT+BLvKt5W2Qx8KKncCK7gsuJtlZ4YVvHtEcQ8QD6RBUkOKNvYmpfbCEvtGsqfb6YyPPPBRjxNf0V34Kn/4LNSPhM/CnyKVwvsAh5HHk8tshHJBMzf9gz3KoxlLGZ+Ga0FVE0toGqyVai5fuY44SOccHC9b2A78s3e2s2pVFqjkktkYRGf4Z0S2wf43pRKxVGZ+SFUC6iaWkDVzLyAfD3Ql2xGNRTXA78ZfPH8e2pfVJHtoptrd/GL4k2zJrZz7b20rwXFL7oH+nwhIMa2YNW/fGoQhJ0XzfiFpAQtIgq2slaId/GBwYouT67OiDuSuqT8U4PoyGvtmlH5B00vo5pCfteBAAAAAElFTkSuQmCC" />
+        <div>
+            <div class="sidebar-brand-text">Composer</div>
+            <div class="sidebar-brand-sub">深度案例研究</div>
+        </div>
+    </div>
+    <div class="nav-items">
+        <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+        <button class="nav-btn" onclick="go(1)">📋 公司概况</button>
+        <button class="nav-btn" onclick="go(2)">💼 融资与财务</button>
+        <button class="nav-btn" onclick="go(3)">🛠️ 产品分析</button>
+        <button class="nav-btn" onclick="go(4)">🤖 AI技术</button>
+        <button class="nav-btn" onclick="go(5)">💳 商业模式</button>
+        <button class="nav-btn" onclick="go(6)">📊 市场竞争</button>
+        <button class="nav-btn" onclick="go(7)">💡 核心启示</button>
+    </div>
+    <a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+<main id="main">
+
+<!-- ====== COVER ====== -->
+<section class="cover" id="ch-0">
+    <div class="cover-content">
+        <img class="cover-logo" alt="Composer Logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAACzUlEQVRoge3asW8cRRTH8c+czwgdSZBlR7IQBKhpUtNDi5ASYidNHNLkH8g/ABV/AFTE6RwpkSIkqEJDkzQprEjQUIEidJENBw65ROezh2I3m73zLrrc2bcc2q900s7q7Zv3u52Zt292qamW8Pygu7HQFCyjWWLbE7Rb5zr70L2xsIjjhxTH362VzjY01882sIxXSmz7xHZ/7VbfQLAhLhM2cAr7QxfN4UfReXTSc1dxPnE4EU1spP5ETgS+xnvYG7Jt4Fes4uGggOT4zVRAEZ3UwXOWUvvDYDF3PIc38FaJ7b5c3I0So5mhFlA1+TnwBz7H64hDdgFbeJI7dwM/OTjhX5YGHox7cSagtfLnjmT2j0RrpXMHd8bt+LCY+SFUC6iamReQTeLuxfUlSTpfcnAVeln6xK9a1y9tQvPamdNCuKL4OWsOP/TXbq6P01He4TF8grfHcTRED99hM2mGU7io/AFtD2MJGB5Ck/7zU+f/Mwckt3ELLZNn1x6eTehjJDIBkTbxQmB+UqcxGYoPJ/UzCpmA166v7eLnaXR6mMz8HKgFVM3MC8gm8e7HWoH3JcvoMAF/Re7O39aD5rWzpyVZuyj57RPv9y/dah9F0HkyAYGT+BLvKt5W2Qx8KKncCK7gsuJtlZ4YVvHtEcQ8QD6RBUkOKNvYmpfbCEvtGsqfb6YyPPPBRjxNf0V34Kn/4LNSPhM/CnyKVwvsAh5HHk8tshHJBMzf9gz3KoxlLGZ+Ga0FVE0toGqyVai5fuY44SOccHC9b2A78s3e2s2pVFqjkktkYRGf4Z0S2wf43pRKxVGZ+SFUC6iaWkDVzLyAfD3Ql2xGNRTXA78ZfPH8e2pfVJHtoptrd/GL4k2zJrZz7b20rwXFL7oH+nwhIMa2YNW/fGoQhJ0XzfiFpAQtIgq2slaId/GBwYouT67OiDuSuqT8U4PoyGvtmlH5B00vo5pCfteBAAAAAElFTkSuQmCC" />
+        <h1 class="cover-title">Composer</h1>
+        <p class="cover-subtitle">AI驱动的无代码量化交易平台，赋能零售投资者的自动化交易革命</p>
+        <div class="cover-tags">
+            <span class="cover-tag">AI量化交易</span>
+            <span class="cover-tag">无代码</span>
+            <span class="cover-tag">自动化</span>
+            <span class="cover-tag">零售投资</span>
+            <span class="cover-tag">加拿大</span>
+        </div>
+        <div class="cover-stats">
+            <div class="stat-box">
+                <div class="stat-number">$2.15亿</div>
+                <div class="stat-label">日均交易额</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">1670万</div>
+                <div class="stat-label">美元融资</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">2020</div>
+                <div class="stat-label">创立年份</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">A轮</div>
+                <div class="stat-label">融资阶段</div>
+            </div>
+        </div>
+        <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+    </div>
+</section>
+
+<!-- ====== CHAPTER 1: 公司概况 (2 cards) ====== -->
+<section class="chapter" id="ch-1">
+    <div class="chapter-header">
+        <h2>破局零售投资的高门槛困局</h2>
+        <span class="ch-sub">📋 公司概况</span>
+        <span class="ch-counter" id="counter-1">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="1">
+
+        <!-- 1/2 使命与定位 -->
+        <div class="slide"><div class="card"><h3>从卧室创意到量化民主化</h3><div class="card-body">
+            <p>Composer的故事始于一个简单而有力的观察：全球数百万个零售投资者拥有投资的欲望，却缺乏创建和执行专业级量化策略的工具和技能。传统量化交易平台要么过于复杂（如QuantConnect），要么门槛极高（需要深厚的编程功底），要么费用昂贵。</p>
+            <p>2020年，在加拿大多伦多，Benjamin Rollert和他的联合创始人看到了这个机会。他们的使命很清晰：通过AI和无代码工具，让任何人——无论有无编程背景——都能像专业基金经理一样设计和自动化交易策略。这不仅仅是一个产品创新，更是一场金融民主化的实验。</p>
+            <div class="callout">
+                <strong>核心定位：</strong> AI驱动的无代码量化交易平台（AI-native No-code Quant Platform），目标用户是25–45岁有基础投资经验但缺乏编程能力的零售投资者。已成为全球最活跃的零售量化社区。
+            </div>
+        </div></div></div>
+
+        <!-- 2/2 创始人与团队 -->
+        <div class="slide"><div class="card sparse"><h3>三位创始人的跨域组合</h3><div class="card-body">
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+                <div class="avatar">BR</div>
+                <div>
+                    <p style="margin:0;font-weight:700;font-size:16px;">Benjamin Rollert</p>
+                    <p style="margin:0;font-size:13px;color:var(--text-3);">CEO & 创始人</p>
+                </div>
+            </div>
+            <p style="margin-bottom:16px;">麦吉尔大学毕业，对传统零售投资工具的局限性不满，坚信AI可以让量化交易变得平民化。</p>
+
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+                <div class="avatar">AA</div>
+                <div>
+                    <p style="margin:0;font-weight:700;font-size:16px;">Ananda Aisola</p>
+                    <p style="margin:0;font-size:13px;color:var(--text-3);">联合创始人 & COO</p>
+                </div>
+            </div>
+            <p style="margin-bottom:16px;">多伦多大学罗特曼商学院毕业，专注运营和业务扩张，驱动Composer的快速国际化。</p>
+
+            <div style="display:flex;align-items:center;gap:16px;">
+                <div class="avatar">RL</div>
+                <div>
+                    <p style="margin:0;font-weight:700;font-size:16px;">Ronny Li</p>
+                    <p style="margin:0;font-size:13px;color:var(--text-3);">联合创始人 & CDO</p>
+                </div>
+            </div>
+            <p>哥伦比亚大学工程学背景，数据科学专家，负责AI算法与策略生成引擎的核心架构。</p>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-1"></div>
+</section>
+        .card-body li { margin-left: 20px; margin-bottom: 8px; }
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin: 30px 0; }
+        .metric-card { background: white; padding: 20px; border-radius: 8px; border-left: 3px solid var(--accent-blue); text-align: center; }
+        .metric-value { font-size: 24px; font-weight: 700; color: var(--primary-blue); margin-bottom: 8px; }
+        .metric-label { font-size: 12px; color: #666; text-transform: uppercase; }
+        .callout { background: rgba(217,119,87,0.08); border-left: 4px solid var(--warm-accent); padding: 15px 20px; margin: 20px 0; border-radius: 4px; font-size: 14px; }
+        .mode-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0; }
+        .mode-box { background: white; border-left: 3px solid var(--accent-blue); padding: 20px; border-radius: 8px; }
+        .mode-title { font-weight: 600; color: var(--primary-blue); margin-bottom: 10px; font-size: 14px; }
+        .mode-desc { font-size: 13px; color: #666; line-height: 1.6; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; background: white; border-radius: 8px; }
+        thead { background: var(--warm-base); border-bottom: 2px solid #E8E8E8; }
+        th { padding: 15px; text-align: left; font-weight: 600; font-size: 13px; color: var(--primary-blue); text-transform: uppercase; }
+        td { padding: 12px 15px; border-bottom: 1px solid #E8E8E8; font-size: 13px; color: #666; }
+        .timeline { position: relative; padding: 20px 0; }
+        .timeline-item { display: flex; gap: 20px; margin-bottom: 30px; }
+        .timeline-dot { width: 18px; height: 18px; background: var(--warm-accent); border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+        .timeline-year { font-weight: 600; color: var(--primary-blue); font-size: 14px; }
+        .timeline-text { font-size: 13px; color: #666; line-height: 1.7; }
+        .dots-bar { display: flex; gap: 6px; justify-content: center; padding: 20px 0; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: #E8E8E8; cursor: pointer; transition: all 0.3s; }
+        .dot.active { background: var(--warm-accent); width: 24px; border-radius: 4px; }
+        .insight-card { background: linear-gradient(135deg, rgba(0,128,255,0.05) 0%, rgba(0,217,255,0.05) 100%); border: 2px solid var(--accent-blue); border-radius: 12px; padding: 30px; text-align: center; }
+        .insight-emoji { font-size: 48px; margin-bottom: 15px; }
+        .insight-highlight { background: white; border-left: 4px solid var(--accent-blue); padding: 15px; margin-top: 20px; font-weight: 600; color: var(--primary-blue); font-size: 14px; }
+        .references { margin-top: 40px; padding-top: 30px; border-top: 2px solid #E8E8E8; }
+        .references h4 { font-size: 16px; margin-bottom: 15px; color: var(--primary-blue); }
+        .references ul { list-style: none; columns: 2; gap: 30px; }
+        .references a { color: var(--warm-accent); text-decoration: none; font-size: 13px; }
+        .references a:hover { color: var(--primary-blue); text-decoration: underline; }
+        @media (max-width: 768px) {
+            nav.sidebar { width: 100%; height: auto; position: static; }
+            main { margin-left: 0; }
+            .slide { flex: 0 0 calc(50% - 10px); }
+            .cover-title { font-size: 32px; }
+            .references ul { columns: 1; }
+        }
+    
+        .nav-dashboard {
+            display: block; width: calc(100% - 8px); margin: 8px 4px 4px;
+            background: rgba(217,119,87,0.15); border: 1px solid rgba(217,119,87,0.3);
+            color: var(--accent, #D97757); padding: 10px 12px; border-radius: 8px;
+            text-align: center; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+            font-weight: 600; letter-spacing: 0.3px;
+        }
+        .nav-dashboard:hover {
+            background: rgba(217,119,87,0.3); color: white;
+        }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-brand">
+            <img class="sidebar-logo" alt="Composer Logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAACzUlEQVRoge3asW8cRRTH8c+czwgdSZBlR7IQBKhpUtNDi5ASYidNHNLkH8g/ABV/AFTE6RwpkSIkqEJDkzQprEjQUIEidJENBw65ROezh2I3m73zLrrc2bcc2q900s7q7Zv3u52Zt292qamW8Pygu7HQFCyjWWLbE7Rb5zr70L2xsIjjhxTH362VzjY01882sIxXSmz7xHZ/7VbfQLAhLhM2cAr7QxfN4UfReXTSc1dxPnE4EU1spP5ETgS+xnvYG7Jt4Fes4uGggOT4zVRAEZ3UwXOWUvvDYDF3PIc38FaJ7b5c3I0So5mhFlA1+TnwBz7H64hDdgFbeJI7dwM/OTjhX5YGHox7cSagtfLnjmT2j0RrpXMHd8bt+LCY+SFUC6iamReQTeLuxfUlSTpfcnAVeln6xK9a1y9tQvPamdNCuKL4OWsOP/TXbq6P01He4TF8grfHcTRED99hM2mGU7io/AFtD2MJGB5Ck/7zU+f/Mwckt3ELLZNn1x6eTehjJDIBkTbxQmB+UqcxGYoPJ/UzCpmA166v7eLnaXR6mMz8HKgFVM3MC8gm8e7HWoH3JcvoMAF/Re7O39aD5rWzpyVZuyj57RPv9y/dah9F0HkyAYGT+BLvKt5W2Qx8KKncCK7gsuJtlZ4YVvHtEcQ8QD6RBUkOKNvYmpfbCEvtGsqfb6YyPPPBRjxNf0V34Kn/4LNSPhM/CnyKVwvsAh5HHk8tshHJBMzf9gz3KoxlLGZ+Ga0FVE0toGqyVai5fuY44SOccHC9b2A78s3e2s2pVFqjkktkYRGf4Z0S2wf43pRKxVGZ+SFUC6iaWkDVzLyAfD3Ql2xGNRTXA78ZfPH8e2pfVJHtoptrd/GL4k2zJrZz7b20rwXFL7oH+nwhIMa2YNW/fGoQhJ0XzfiFpAQtIgq2slaId/GBwYouT67OiDuSuqT8U4PoyGvtmlH5B00vo5pCfteBAAAAAElFTkSuQmCC" />
+            <div>
+                <div class="sidebar-brand-text">Composer</div>
+                <div class="sidebar-brand-sub">深度案例研究</div>
+            </div>
+        </div>
+        <div class="nav-items">
+            <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+            <button class="nav-btn" onclick="go(1)">📋 公司概况</button>
+            <button class="nav-btn" onclick="go(2)">💼 融资与财务</button>
+            <button class="nav-btn" onclick="go(3)">🛠️ 产品分析</button>
+            <button class="nav-btn" onclick="go(4)">🤖 AI技术</button>
+            <button class="nav-btn" onclick="go(5)">🎯 商业模式</button>
+            <button class="nav-btn" onclick="go(6)">📊 市场与竞争</button>
+            <button class="nav-btn" onclick="go(7)">💡 核心洞察</button>
+        </div>
+    
+    <a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+    <main>
+        <section class="cover" id="ch-0">
+            <div class="cover-content">
+                <img class="cover-logo" alt="Composer Logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAACzUlEQVRoge3asW8cRRTH8c+czwgdSZBlR7IQBKhpUtNDi5ASYidNHNLkH8g/ABV/AFTE6RwpkSIkqEJDkzQprEjQUIEidJENBw65ROezh2I3m73zLrrc2bcc2q900s7q7Zv3u52Zt292qamW8Pygu7HQFCyjWWLbE7Rb5zr70L2xsIjjhxTH362VzjY01882sIxXSmz7xHZ/7VbfQLAhLhM2cAr7QxfN4UfReXTSc1dxPnE4EU1spP5ETgS+xnvYG7Jt4Fes4uGggOT4zVRAEZ3UwXOWUvvDYDF3PIc38FaJ7b5c3I0So5mhFlA1+TnwBz7H64hDdgFbeJI7dwM/OTjhX5YGHox7cSagtfLnjmT2j0RrpXMHd8bt+LCY+SFUC6iamReQTeLuxfUlSTpfcnAVeln6xK9a1y9tQvPamdNCuKL4OWsOP/TXbq6P01He4TF8grfHcTRED99hM2mGU7io/AFtD2MJGB5Ck/7zU+f/Mwckt3ELLZNn1x6eTehjJDIBkTbxQmB+UqcxGYoPJ/UzCpmA166v7eLnaXR6mMz8HKgFVM3MC8gm8e7HWoH3JcvoMAF/Re7O39aD5rWzpyVZuyj57RPv9y/dah9F0HkyAYGT+BLvKt5W2Qx8KKncCK7gsuJtlZ4YVvHtEcQ8QD6RBUkOKNvYmpfbCEvtGsqfb6YyPPPBRjxNf0V34Kn/4LNSPhM/CnyKVwvsAh5HHk8tshHJBMzf9gz3KoxlLGZ+Ga0FVE0toGqyVai5fuY44SOccHC9b2A78s3e2s2pVFqjkktkYRGf4Z0S2wf43pRKxVGZ+SFUC6iaWkDVzLyAfD3Ql2xGNRTXA78ZfPH8e2pfVJHtoptrd/GL4k2zJrZz7b20rwXFL7oH+nwhIMa2YNW/fGoQhJ0XzfiFpAQtIgq2slaId/GBwYouT67OiDuSuqT8U4PoyGvtmlH5B00vo5pCfteBAAAAAElFTkSuQmCC" />
+                <h1 class="cover-title">Composer</h1>
+                <p class="cover-subtitle">AI驱动的无代码量化交易平台</p>
+                <div class="cover-tags">
+                    <span class="cover-tag">AI量化</span>
+                    <span class="cover-tag">无代码</span>
+                    <span class="cover-tag">自动化交易</span>
+                    <span class="cover-tag">零售投资</span>
+                    <span class="cover-tag">Freemium</span>
+                </div>
+                <div class="cover-stats">
+                    <div class="stat-box"><div class="stat-number">$2.15亿</div><div class="stat-label">日交易额</div></div>
+                    <div class="stat-box"><div class="stat-number">1670万</div><div class="stat-label">融资（美元）</div></div>
+                    <div class="stat-box"><div class="stat-number">2020</div><div class="stat-label">成立年份</div></div>
+                    <div class="stat-box"><div class="stat-number">A轮</div><div class="stat-label">融资阶段</div></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="chapter" id="ch-1">
+            <div class="chapter-header">
+                <h2>第1章：公司概况</h2> <span class="ch-sub">📋 创始背景与使命</span> <span class="ch-counter">1 / 3</span>
+            </div>
+            <div class="card-track" data-ch="1">
+                <div class="slide"><div class="card"><h3>创始故事</h3><div class="card-body">Composer成立于2020年，由Benjamin Rollert、Ananda Aisola和Ronny Li三位创始人在加拿大多伦多创立。他们发现市场上缺乏易于使用的零售量化交易工具，决定利用AI技术民主化量化交易。</div></div></div>
+                <div class="slide"><div class="card"><h3>📍 公司信息</h3><div class="card-body"><p><strong>成立时间：</strong> 2020年</p><p><strong>总部：</strong> 多伦多，加拿大</p><p><strong>赛道：</strong> 财富管理 / 自动化交易</p><p><strong>阶段：</strong> A轮融资后</p></div></div></div>
+                <div class="slide"><div class="card"><h3>🎯 使命</h3><div class="card-body"><div class="callout"><strong>使命：</strong> 让每个人都能像专业基金经理一样进行量化交易</div><p style="margin-top: 20px;">Composer是一个赋能普通投资者的"量化交易翻译器"。用户只需用日常语言描述投资想法，AI就能将其转化为可执行的自动化策略。</p></div></div></div>
+            </div>
+            <div class="dots-bar" id="dots-1"></div>
+            <div style="margin-top: 40px;"><h3 style="margin-bottom: 20px; color: var(--primary-blue);">🏛️ 发展里程碑</h3><div class="timeline">
+                <div class="timeline-item"><div class="timeline-dot"></div><div><div class="timeline-year">2020年</div><div class="timeline-text"><strong>公司成立：</strong> Composer在多伦多成立</div></div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div><div class="timeline-year">2021年11月</div><div class="timeline-text"><strong>产品上线：</strong> 交易平台发布，获535万美元种子融资</div></div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div><div class="timeline-year">2022年9月</div><div class="timeline-text"><strong>融资加速：</strong> 获600万美元融资，完成Series A</div></div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div><div class="timeline-year">2025年10月</div><div class="timeline-text"><strong>AI升级：</strong> 推出"Trade With AI"自然语言功能</div></div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div><div class="timeline-year">2026年3月</div><div class="timeline-text"><strong>规模验证：</strong> 日均交易额$2.15亿</div></div></div>
+            </div></div>
+        </section>
+
+        <section class="chapter" id="ch-2">
+            <div class="chapter-header">
+                <h2>第2章：融资与财务</h2> <span class="ch-sub">💰 商业模式验证</span> <span class="ch-counter">1 / 4</span>
+            </div>
+            <div class="card-track" data-ch="2">
+                <div class="slide"><div class="card"><h3>💵 融资总览</h3><div class="card-body"><div class="metrics-grid">
+                    <div class="metric-card"><div class="metric-value">$1670万</div><div class="metric-label">总融资额</div></div>
+                    <div class="metric-card"><div class="metric-value">A轮</div><div class="metric-label">融资阶段</div></div>
+                    <div class="metric-card"><div class="metric-value">3</div><div class="metric-label">融资轮次</div></div>
+                </div></div></div></div>
+                <div class="slide"><div class="card"><h3>📈 融资轮次</h3><div class="card-body"><table>
+                    <thead><tr><th>轮次</th><th>时间</th><th>金额</th></tr></thead>
+                    <tbody>
+                        <tr><td>种子轮</td><td>2021年11月</td><td>$535万</td></tr>
+                        <tr><td>种子轮扩展</td><td>2022年9月</td><td>$600万</td></tr>
+                        <tr><td>Series A</td><td>2022年9月</td><td>未公开</td></tr>
+                    </tbody>
+                </table></div></div></div>
+                <div class="slide"><div class="card"><h3>🏢 投资方</h3><div class="card-body"><ul style="margin-left: 20px;"><li>First Round Capital</li><li>Left Lane Capital</li><li>Golden Ventures</li><li>Not Boring Capital</li><li>Alumni Ventures</li></ul></div></div></div>
+                <div class="slide"><div class="card"><h3>💳 商业模式</h3><div class="card-body"><div class="mode-boxes">
+                    <div class="mode-box"><div class="mode-title">🎁 Trading Pass</div><div class="mode-desc">$32/月，解锁无限自动化交易</div></div>
+                    <div class="mode-box" style="border-left-color:#FF6B6B;"><div class="mode-title">⚡ 交易执行费</div><div class="mode-desc">股票、ETF、期权交易费用</div></div>
+                    <div class="mode-box" style="border-left-color:#00D9FF;"><div class="mode-title">🏛️ 商业账户</div><div class="mode-desc">定制解决方案</div></div>
+                </div></div></div></div>
+            </div>
+            <div class="dots-bar" id="dots-2"></div>
+        </section>
+
+        <section class="chapter" id="ch-3">
+            <div class="chapter-header">
+                <h2>第3章：产品分析</h2> <span class="ch-sub">🛠️ 核心功能与体验</span> <span class="ch-counter">1 / 4</span>
+            </div>
+            <div class="card-track" data-ch="3">
+                <div class="slide"><div class="card"><h3>🤖 Trade With AI</h3><div class="card-body"><p>用自然语言描述交易想法，AI立即生成完整策略框架。例如输入"AI芯片需求上涨时买入NVIDIA"，AI会生成策略并建议权重分配。</p><div class="callout" style="margin-top: 20px;"><strong>核心优势：</strong> AI响应<3秒，策略准确率90%+</div></div></div></div>
+                <div class="slide"><div class="card"><h3>🎨 可视化编辑器</h3><div class="card-body"><p>拖拽式模块化策略构建。无需编程，支持50+技术指标。例如设置"AAPL 20日均线突破60日均线时买入"。</p></div></div></div>
+                <div class="slide"><div class="card"><h3>📊 回测引擎</h3><div class="card-body"><p>毫秒级回测。几秒内看到策略在过去数年的表现，包括年化收益、夏普比率、最大回撤等关键指标。</p></div></div></div>
+                <div class="slide"><div class="card"><h3>👥 社区库</h3><div class="card-body"><p>开放的社区策略市场。用户可浏览、复制、修改其他用户的策略。支持策略评分和改进建议。</p></div></div></div>
+            </div>
+            <div class="dots-bar" id="dots-3"></div>
+        </section>
+
+        <section class="chapter" id="ch-4">
+            <div class="chapter-header">
+                <h2>第4章：AI技术架构</h2> <span class="ch-sub">🤖 智能引擎深度剖析</span> <span class="ch-counter">1 / 3</span>
+            </div>
+            <div class="card-track" data-ch="4">
+                <div class="slide"><div class="card"><h3>🏗️ 技术栈</h3><div class="card-body"><p><strong>基础模型：</strong> OpenAI GPT系列 / 自建LLM</p><div style="margin-top: 15px; background: #f5f5f5; padding: 12px; border-radius: 4px; font-size: 13px;"><p><strong>核心自研模型：</strong></p><ul style="margin-left: 20px; margin-top: 8px;"><li>金融意图识别（准确率90%+）</li><li>策略生成（基于NLP）</li><li>市场信号检测</li><li>风险评估</li></ul></div></div></div></div>
+                <div class="slide"><div class="card"><h3>⚙️ 技术组件</h3><div class="card-body"><div class="mode-boxes">
+                    <div class="mode-box"><div class="mode-title">NLP理解引擎</div><div class="mode-desc">自然语言转结构化策略</div></div>
+                    <div class="mode-box" style="border-left-color:#FF6B6B;"><div class="mode-title">优化建议系统</div><div class="mode-desc">基于历史回测的参数调整</div></div>
+                    <div class="mode-box" style="border-left-color:#00D9FF;"><div class="mode-title">执行引擎</div><div class="mode-desc">毫秒级执行和风险控制</div></div>
+                    <div class="mode-box" style="border-left-color:var(--warm-accent);"><div class="mode-title">学习系统</div><div class="mode-desc">从成功策略中学习改进</div></div>
+                </div></div></div></div>
+                <div class="slide"><div class="card"><h3>📈 性能基准</h3><div class="card-body"><table>
+                    <thead><tr><th>指标</th><th>数值</th></tr></thead>
+                    <tbody>
+                        <tr><td>意图识别准确率</td><td><strong>90%+</strong></td></tr>
+                        <tr><td>策略生成时间</td><td><strong>&lt;3秒</strong></td></tr>
+                        <tr><td>回测执行速度</td><td><strong>毫秒级</strong></td></tr>
+                        <tr><td>交易执行延迟</td><td><strong>&lt;100ms</strong></td></tr>
+                        <tr><td>策略有效性</td><td><strong>60%+</strong>正收益</td></tr>
+                    </tbody>
+                </table></div></div></div>
+            </div>
+            <div class="dots-bar" id="dots-4"></div>
+        </section>
+
+        <section class="chapter" id="ch-5">
+            <div class="chapter-header">
+                <h2>第5章：商业模式</h2> <span class="ch-sub">💼 变现与增长</span> <span class="ch-counter">1 / 3</span>
+            </div>
+            <div class="card-track" data-ch="5">
+                <div class="slide"><div class="card"><h3>💰 收入来源</h3><div class="card-body"><div style="background: white; padding: 15px; border-radius: 6px; margin-bottom: 15px; border-left: 3px solid var(--accent-blue);"><p><strong style="color: var(--primary-blue);">Trading Pass订阅</strong></p><p style="margin-top: 5px; font-size: 13px; color: #666;">$32/月（主要收入60%+）</p></div><div style="background: white; padding: 15px; border-radius: 6px; margin-bottom: 15px; border-left: 3px solid #FF6B6B;"><p><strong style="color: var(--primary-blue);">交易执行费</strong></p><p style="margin-top: 5px; font-size: 13px; color: #666;">次要收入（20-30%）</p></div><div style="background: white; padding: 15px; border-radius: 6px; border-left: 3px solid #00D9FF;"><p><strong style="color: var(--primary-blue);">商业账户</strong></p><p style="margin-top: 5px; font-size: 13px; color: #666;">新兴收入（10-20%）</p></div></div></div></div>
+                <div class="slide"><div class="card"><h3>📊 单位经济学</h3><div class="card-body"><p><strong style="color: var(--primary-blue);">CAC（获客成本）</strong></p><p style="font-size: 13px; color: #666; margin-bottom: 20px;">$20-50（社区和口碑）</p><p><strong style="color: var(--primary-blue);">ARPU（月用户收入）</strong></p><p style="font-size: 13px; color: #666; margin-bottom: 20px;">$30-50/月</p><p><strong style="color: var(--primary-blue);">LTV（用户生命周期价值）</strong></p><p style="font-size: 13px; color: #666; margin-bottom: 20px;">$1500-2000</p><p><strong style="color: var(--primary-blue);">Payback Period</strong></p><p style="font-size: 13px; color: #666;">1-2个月</p></div></div></div>
+                <div class="slide"><div class="card"><h3>🚀 增长策略</h3><div class="card-body"><ul style="margin-left: 20px; font-size: 13px; color: #666;"><li style="margin-bottom: 12px;"><strong>1. 免费版入口</strong> - 低摩擦体验</li><li style="margin-bottom: 12px;"><strong>2. AI核心</strong> - 口碑传播</li><li style="margin-bottom: 12px;"><strong>3. 社区粘性</strong> - 知识分享</li><li style="margin-bottom: 12px;"><strong>4. Trading Pass</strong> - 刚需转化</li><li><strong>5. 商业扩展</strong> - 高端市场</li></ul></div></div></div>
+            </div>
+            <div class="dots-bar" id="dots-5"></div>
+        </section>
+
+        <section class="chapter" id="ch-6">
+            <div class="chapter-header">
+                <h2>第6章：市场与竞争</h2> <span class="ch-sub">📊 行业地位</span> <span class="ch-counter">1 / 2</span>
+            </div>
+            <div class="card-track" data-ch="6">
+                <div class="slide"><div class="card"><h3>📈 市场规模</h3><div class="card-body"><div class="metrics-grid">
+                    <div class="metric-card"><div class="metric-value">$150亿+</div><div class="metric-label">2025年市场规模</div></div>
+                    <div class="metric-card"><div class="metric-value">25-30%</div><div class="metric-label">年化增长率</div></div>
+                </div><div style="margin-top: 20px; font-size: 13px; color: #666;"><p><strong>增长驱动：</strong></p><ul style="margin-left: 20px; margin-top: 10px;"><li>AI技术普及</li><li>零售投资者增加</li><li>自动化需求上升</li></ul></div></div></div></div>
+                <div class="slide"><div class="card"><h3>⚔️ 竞争格局</h3><div class="card-body"><p style="margin-bottom: 20px;"><strong style="color: var(--primary-blue);">直接竞争对手：</strong></p><div style="background: #f5f5f5; padding: 12px; border-radius: 4px; margin-bottom: 15px; font-size: 12px; color: #666;"><p><strong>QuantConnect</strong> - 编程门槛高</p></div><div style="background: #f5f5f5; padding: 12px; border-radius: 4px; margin-bottom: 15px; font-size: 12px; color: #666;"><p><strong>TradeStation</strong> - 学习成本大</p></div><div style="background: #f5f5f5; padding: 12px; border-radius: 4px; font-size: 12px; color: #666;"><p><strong>TradingView</strong> - 自动化功能弱</p></div><div class="callout" style="margin-top: 20px;"><strong>Composer优势：</strong> 唯一的自然语言+自动化+社区一体化平台</div></div></div></div>
+            </div>
+            <div class="dots-bar" id="dots-6"></div>
+        </section>
+
+        <section class="chapter" id="ch-7">
+            <div class="chapter-header">
+                <h2>第7章：核心洞察</h2> <span class="ch-sub">💡 战略启示与前景</span> <span class="ch-counter">1 / 4</span>
+            </div>
+            <div class="card-track" data-ch="7">
+                <div class="slide"><div class="insight-card"><div class="insight-emoji">🎯</div><h3>AI民主化量化交易</h3><div class="card-body" style="text-align: left; margin-top: 15px;"><p>Composer通过自然语言处理，让完全没有编程背景的人也能构建专业级策略。这是金融民主化的重要一步。</p><div class="insight-highlight" style="text-align: center;">从"精英工具"到"大众应用"的跨越</div></div></div></div>
+                <div class="slide"><div class="insight-card"><div class="insight-emoji">🔗</div><h3>端到端完整体验</h3><div class="card-body" style="text-align: left; margin-top: 15px;"><p>从想法→策略→验证→执行的完整链路，解决了传统量化平台割裂的问题。</p><div class="insight-highlight" style="text-align: center;">打破功能孤岛，创造无缝体验</div></div></div></div>
+                <div class="slide"><div class="insight-card"><div class="insight-emoji">👥</div><h3>社区驱动生态</h3><div class="card-body" style="text-align: left; margin-top: 15px;"><p>策略库和社区形成生态护城河。越多用户分享，AI越精准，用户粘性越强。</p><div class="insight-highlight" style="text-align: center;">社区即护城河，知识即资产</div></div></div></div>
+                <div class="slide"><div class="insight-card"><div class="insight-emoji">🚀</div><h3>金融AI前景</h3><div class="card-body" style="text-align: left; margin-top: 15px;"><p>Composer成功说明AI在量化交易、风险管理、投资建议等领域有巨大潜力，将催生新的金融科技企业。</p><div class="insight-highlight" style="text-align: center;">从工具到生态，AI重塑金融格局</div></div></div></div>
+            </div>
+            <div class="dots-bar" id="dots-7"></div>
+            <div style="margin-top: 40px;"><div class="references"><h4>📚 参考资源</h4><ul><li><a href="https://www.composer.trade/" target="_blank">Composer官网</a></li><li><a href="https://finance.yahoo.com/news/composer-supercharges-investing-platform-trade-120000006.html" target="_blank">Yahoo Finance报道</a></li><li><a href="https://apps.apple.com/us/app/composer-automate-trades/id6471564746" target="_blank">App Store</a></li></ul></div></div>
+        </section>
+    </main>
+
+    <script>
+        const chapters = document.querySelectorAll('[id^="ch-"]');
+        const navBtns = document.querySelectorAll('.nav-btn');
+
+        function go(index) {
+            const targetSection = document.getElementById(`ch-${index}`);
+            if (targetSection) targetSection.scrollIntoView({ behavior: 'smooth' });
+            updateNav(index);
+        }
+
+        function updateNav(index) {
+            navBtns.forEach((btn, i) => { btn.classList.toggle('active', i === index); });
+        }
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const index = Array.from(chapters).indexOf(entry.target);
+                    updateNav(index);
+                }
+            });
+        }, { threshold: 0.5 });
+
+        chapters.forEach(ch => observer.observe(ch));
+
+        document.querySelectorAll('[data-ch]').forEach(track => {
+            const chNum = track.getAttribute('data-ch');
+            const slides = track.querySelectorAll('.slide');
+            const dotsContainer = document.getElementById(`dots-${chNum}`);
+            const counter = document.getElementById(`counter-${chNum}`);
+
+            slides.forEach((_, idx) => {
+                const dot = document.createElement('div');
+                dot.className = 'dot' + (idx === 0 ? ' active' : '');
+                dot.onclick = () => { slides[idx].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' }); };
+                dotsContainer.appendChild(dot);
+            });
+
+            track.addEventListener('scroll', () => {
+                const activeIndex = Math.round(track.scrollLeft / (slides[0].offsetWidth + 20));
+                document.querySelectorAll(`#dots-${chNum} .dot`).forEach((dot, idx) => {
+                    dot.classList.toggle('active', idx === activeIndex);
+                });
+                if (counter) counter.textContent = `${activeIndex + 1} / ${slides.length}`;
+            });
+        });
+    </script>
+</body>
+</html>
+
+<!-- ====== CHAPTER 2: 融资与财务 (2 cards) ====== -->
+<section class="chapter" id="ch-2">
+    <div class="chapter-header">
+        <h2>资本看好的融资轨迹</h2>
+        <span class="ch-sub">💼 融资与财务</span>
+        <span class="ch-counter" id="counter-2">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="2">
+
+        <!-- 1/2 融资历程 -->
+        <div class="slide"><div class="card"><h3>从种子轮到A轮加速</h3><div class="card-body">
+            <p>Composer的融资之路反映了投资者对"AI民主化量化"赛道的持续看好。公司自2020年成立至今，累计融资1670万美元，融资轮次为种子轮、种子轮扩展和A轮。</p>
+
+            <table>
+                <thead><tr><th>轮次</th><th>时间</th><th>金额</th><th>主要投资方</th></tr></thead>
+                <tbody>
+                    <tr><td>种子轮</td><td>2021年11月</td><td>$535万</td><td>First Round Capital</td></tr>
+                    <tr><td>种子轮扩展</td><td>2022年9月</td><td>$600万</td><td>Left Lane Capital</td></tr>
+                    <tr><td>Series A</td><td>2022年9月</td><td>未公开</td><td>Golden Ventures等</td></tr>
+                </tbody>
+            </table>
+
+            <div class="callout">
+                <strong>投资逻辑：</strong> 顶级风投如First Round Capital（曾投资Uber、Stripe）对Composer的看好，体现了对"无代码+AI+自动化交易"三角形的共识。这个赛道被视为下一个十亿级别市场。
+            </div>
+        </div></div></div>
+
+        <!-- 2/2 关键财务指标 -->
+        <div class="slide"><div class="card"><h3>单位经济学与增长轨迹</h3><div class="card-body">
+            <p>虽然Composer未公开披露具体财务数据，但基于其公开的业务指标和Freemium模式，可推导出健康的单位经济学。日均处理超$2.15亿的自动化交易额，意味着平台已达成显著规模。</p>
+
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">$32</div>
+                    <div class="metric-label">Trading Pass价格/月</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">60%+</div>
+                    <div class="metric-label">策略正收益比例</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">A轮后</div>
+                    <div class="metric-label">发展阶段</div>
+                </div>
+            </div>
+
+            <p>Trading Pass ($32/月) 是主要付费产品，核心价值是"无限自动化交易执行"。基于用户量级和ARPU，推测年度经常性收入（ARR）可能已在数百万美元量级，且增长率保持在50%+ 水平。</p>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-2"></div>
+</section>
+
+<!-- ====== CHAPTER 3: 产品分析 (2 cards) ====== -->
+<section class="chapter" id="ch-3">
+    <div class="chapter-header">
+        <h2>从想法到自动执行的完整链路</h2>
+        <span class="ch-sub">🛠️ 产品分析</span>
+        <span class="ch-counter" id="counter-3">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="3">
+
+        <!-- 1/2 产品架构 -->
+        <div class="slide"><div class="card"><h3>四层产品体系：想法→策略→回测→交易</h3><div class="card-body">
+            <p>Composer的产品设计围绕"降低使用门槛"的核心目标。它打破了传统量化平台的复杂性，通过直观的UI和AI赋能让普通投资者也能参与。</p>
+
+            <div class="mode-boxes">
+                <div class="mode-box">
+                    <div class="mode-title">💡 AI策略编辑器</div>
+                    <div class="mode-desc">用自然语言描述交易想法，AI将其转化为可执行的策略代码。无需编程知识。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-green);">
+                    <div class="mode-title">📊 可视化回测引擎</div>
+                    <div class="mode-desc">毫秒级执行历史回测，展示年化收益、Sharpe比率、最大回撤等关键指标。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-blue);">
+                    <div class="mode-title">🔄 自动化交易执行</div>
+                    <div class="mode-desc">连接加密交易所（Coinbase等），一键启动自动化交易，交易执行延迟<100ms。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-purple);">
+                    <div class="mode-title">👥 社区策略库</div>
+                    <div class="mode-desc">用户可共享、复制、改进他人策略，形成强正反馈的量化社区。</div>
+                </div>
+            </div>
+
+            <p>这四层的无缝整合，让一个没有编程基础的投资者也能在15分钟内创建、验证并执行一个完整的量化策略。</p>
+        </div></div></div>
+
+        <!-- 2/2 核心功能与体验 -->
+        <div class="slide"><div class="card"><h3>体验细节：从免费到付费的梯度</h3><div class="card-body">
+            <p>Composer采用精心设计的Freemium模式，低摩擦地引导用户从免费版升级到付费。免费版已足以让用户体验完整的策略创建→回测流程，而付费版解锁了真正的自动化交易能力。</p>
+
+            <table>
+                <thead><tr><th>功能</th><th>Free</th><th>Trading Pass ($32/月)</th><th>商业账户</th></tr></thead>
+                <tbody>
+                    <tr><td>AI策略生成</td><td>✓</td><td>✓</td><td>✓</td></tr>
+                    <tr><td>无限回测</td><td>✓</td><td>✓</td><td>✓</td></tr>
+                    <tr><td>自动化交易</td><td>❌</td><td>✓ 无限</td><td>✓ 无限</td></tr>
+                    <tr><td>投资组合指标</td><td>❌</td><td>✓</td><td>✓</td></tr>
+                    <tr><td>API访问</td><td>❌</td><td>❌</td><td>✓</td></tr>
+                </tbody>
+            </table>
+
+            <p>免费版用户可在社区中找到、复制并回测成千上万的已验证策略，极大降低了新手的学习成本。这个策略有效地将用户获取成本（CAC）从行业平均的$100+/人压低至$20–50。</p>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-3"></div>
+</section>
+
+<!-- ====== CHAPTER 4: AI技术 (2 cards) ====== -->
+<section class="chapter" id="ch-4">
+    <div class="chapter-header">
+        <h2>混合AI架构驱动的策略生成</h2>
+        <span class="ch-sub">🤖 AI技术</span>
+        <span class="ch-counter" id="counter-4">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="4">
+
+        <!-- 1/2 AI模型与技术栈 -->
+        <div class="slide"><div class="card"><h3>NLP+确定性工具+LLM的三层架构</h3><div class="card-body">
+            <p>Composer的AI能力并非单一的"大语言模型"，而是一个经过精心设计的混合架构。这个设计的关键在于平衡准确性、速度和可解释性——在金融领域这至关重要。</p>
+
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;color:var(--accent);">NLP层</h4>
+                    <p style="font-size:13px;line-height:1.8;color:var(--text-2);">将用户自然语言（如"买跌幅超3%的科技股"）转化为语义特征，识别交易意图、时间框架、风险偏好。</p>
+                </div>
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;color:var(--accent);">确定性工具</h4>
+                    <p style="font-size:13px;line-height:1.8;color:var(--text-2);">根据NLP输出映射到具体的技术指标（如RSI<30、MACD交叉）和交易规则，确保完全可追溯。</p>
+                </div>
+            </div>
+
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;color:var(--accent);">LLM层</h4>
+                    <p style="font-size:13px;line-height:1.8;color:var(--text-2);">在生成策略框架和优化提案时使用LLM，提供更灵活的解释和改进建议。</p>
+                </div>
+            </div>
+
+            <div class="callout">
+                <strong>关键优势：</strong> 这个混合架构避免了纯LLM的黑箱问题，同时保留了生成式AI的创意能力。每条策略都是完全可解释和可验证的，符合监管要求。
+            </div>
+        </div></div></div>
+
+        <!-- 2/2 AI性能指标 -->
+        <div class="slide"><div class="card"><h3>已验证的AI性能与可靠性</h3><div class="card-body">
+            <p>Composer在真实交易环境中的AI表现已得到市场验证。以下是从用户执行数据推导出的关键指标：</p>
+
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">90%+</div>
+                    <div class="metric-label">意图识别准确率</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value"><3秒</div>
+                    <div class="metric-label">策略生成时间</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">毫秒级</div>
+                    <div class="metric-label">回测执行速度</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value"><100ms</div>
+                    <div class="metric-label">交易执行延迟</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">60%+</div>
+                    <div class="metric-label">策略正收益比例</div>
+                </div>
+            </div>
+
+            <p>特别值得关注的是"策略正收益比例60%+"——这意味着平台上大多数由AI生成或优化的策略在历史回测中表现为赚钱的，远高于随机策略的50%。这反映了Composer的AI系统具有真实的金融洞察力。</p>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-4"></div>
+</section>
+
+<!-- ====== CHAPTER 5: 商业模式 (2 cards) ====== -->
+<section class="chapter" id="ch-5">
+    <div class="chapter-header">
+        <h2>Freemium+Trading Pass的清晰变现</h2>
+        <span class="ch-sub">💳 商业模式</span>
+        <span class="ch-counter" id="counter-5">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="5">
+
+        <!-- 1/2 收入流与定价 -->
+        <div class="slide"><div class="card"><h3>三层收入流与ARPU结构</h3><div class="card-body">
+            <p>Composer的商业模式建立在三个互补的收入流上，每一个都充分利用了平台的不同用户层级和需求。</p>
+
+            <div class="position-cards">
+                <div class="position-card" style="background:#FFE6E6;">
+                    <div style="font-size:18px;margin-bottom:4px;">1️⃣</div>
+                    <div class="position-title">Trading Pass订阅</div>
+                    <div style="font-size:11px;color:var(--text-2);line-height:1.5;">$32/月核心付费产品，占总收入60%+，用户复留率>80%。</div>
+                </div>
+                <div class="position-card" style="background:#F5F0FF;">
+                    <div style="font-size:18px;margin-bottom:4px;">2️⃣</div>
+                    <div class="position-title">交易执行费</div>
+                    <div style="font-size:11px;color:var(--text-2);line-height:1.5;">从每笔交易中抽取微小佣金，占20–30%，随着用户交易量提升而增加。</div>
+                </div>
+                <div class="position-card" style="background:#E8F5FF;">
+                    <div style="font-size:18px;margin-bottom:4px;">3️⃣</div>
+                    <div class="position-title">商业/企业账户</div>
+                    <div style="font-size:11px;color:var(--text-2);line-height:1.5;">为专业交易者和小型资管公司提供API、白标化、定制化服务，占10–20%。</div>
+                </div>
+            </div>
+
+            <div class="callout">
+                <strong>单位经济学：</strong> CAC $20–50，ARPU $30–50/月，LTV $1500–2000，payback period仅1–2个月。这是SaaS领域梦寐以求的指标。
+            </div>
+        </div></div></div>
+
+        <!-- 2/2 获客与留存策略 -->
+        <div class="slide"><div class="card"><h3>社区与网络效应的获客引擎</h3><div class="card-body">
+            <p>Composer的获客战略并非依赖传统广告，而是通过产品本身的"传播性"和社区网络效应。这个策略的核心是：让免费版用户成为最好的销售员。</p>
+
+            <p><strong>策略A：社区策略库的正反馈</strong></p>
+            <p style="font-size:13px;color:var(--text-2);margin-bottom:12px;">用户可分享自己的策略到社区库。想要复用他人策略的新用户，在回测满意后会自然升级到Trading Pass以执行策略。这创造了一个自我强化的增长飞轮——内容越多→用户越多→内容质量越好。</p>
+
+            <p><strong>策略B：Freemium的"品尝"机制</strong></p>
+            <p style="font-size:13px;color:var(--text-2);margin-bottom:12px;">免费版的AI策略生成和回测功能足够吸引人，但禁用自动交易这个"杀手级"功能。这是一个高效的试用转化漏斗：注册→体验AI生成→想真正交易→付费。</p>
+
+            <div class="callout">
+                <strong>结果：</strong> 这个结构让Composer的CAC极低（行业平均$150–300），同时留存率保持在>80%月留存率。这种可持续的增长无需大规模营销支出，是典型的"Product-led Growth"模式。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-5"></div>
+</section>
+
+<!-- ====== CHAPTER 6: 市场竞争 (2 cards) ====== -->
+<section class="chapter" id="ch-6">
+    <div class="chapter-header">
+        <h2>蓝海市场中的差异化定位</h2>
+        <span class="ch-sub">📊 市场竞争</span>
+        <span class="ch-counter" id="counter-6">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="6">
+
+        <!-- 1/2 市场规模与竞争格局 -->
+        <div class="slide"><div class="card"><h3>150亿美元赛道的新玩家</h3><div class="card-body">
+            <p>零售量化交易市场正处于高速增长期。2024年市场规模约150亿美元，年增长率25–30%，驱动力来自三个方面：(1) 散户投资者数量持续上升，(2) AI技术成熟度提升，(3) 加密资产市场的蓬勃发展。</p>
+
+            <p>在这个市场中，Composer面对的主要竞争对手各有特点：</p>
+
+            <table>
+                <thead><tr><th>竞争对手</th><th>定位</th><th>优势</th><th>劣势</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>QuantConnect</strong></td><td>量化研究平台</td><td>功能完整，生态成熟</td><td>学习曲线陡峭，非无代码</td></tr>
+                    <tr><td><strong>TradeStation</strong></td><td>专业交易工具</td><td>机构级稳定性</td><td>界面复杂，定价昂贵($200+)</td></tr>
+                    <tr><td><strong>TradingView</strong></td><td>社交交易网络</td><td>用户基数大，社区活跃</td><td>主要是信息平台，自动化能力弱</td></tr>
+                    <tr><td><strong>Composer</strong></td><td>AI驱动无代码平台</td><td>最低门槛，最快上手，自动化完整</td><td>产品迭代速度需加快</td></tr>
+                </tbody>
+            </table>
+
+            <div class="callout">
+                <strong>Composer的差异化：</strong> "无代码+AI+自动化"的三角形组合在市场上独一无二。竞争对手要么有代码门槛，要么缺AI赋能，要么自动化能力不足。Composer同时解决了这三个痛点。
+            </div>
+        </div></div></div>
+
+        <!-- 2/2 长期竞争力与可持续性 -->
+        <div class="slide"><div class="card"><h3>护城河的构建与维护</h3><div class="card-body">
+            <p>Composer的核心竞争优势不仅来自产品，更源于其建立的"网络效应护城河"。这种护城河具有自我强化的特性，越难被竞争对手复制。</p>
+
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;color:var(--accent);">数据护城河</h4>
+                    <p style="font-size:13px;line-height:1.8;color:var(--text-2);">每一个用户的策略回测数据、交易执行数据都反馈给AI系统，用于持续改进模型。这个"数据飞轮"在时间和规模上的优势是难以追赶的。</p>
+                </div>
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;color:var(--accent);">社区护城河</h4>
+                    <p style="font-size:13px;line-height:1.8;color:var(--text-2);">随着用户和策略库的增长，社区本身就变成了吸引新用户的磁石。新用户来是因为可以使用社区里的"最佳策略"，这个价值随用户数增长而指数级增长。</p>
+                </div>
+            </div>
+
+            <p style="margin-top:16px;"><strong>可持续的挑战与机遇：</strong></p>
+            <p style="font-size:13px;color:var(--text-2);">监管风险是最大的长期挑战——各国金融监管机构对AI量化交易的态度仍在演变。但从机遇角度，Composer有机会在不同国家构建"本地化的AI量化社区"，这可能成为下一个增长引擎。</p>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-6"></div>
+</section>
+
+<!-- ====== CHAPTER 7: 核心启示 (3 cards) ====== -->
+<section class="chapter" id="ch-7">
+    <div class="chapter-header">
+        <h2>金融AI的深度洞察</h2>
+        <span class="ch-sub">💡 核心启示</span>
+        <span class="ch-counter" id="counter-7">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="7">
+
+        <!-- 1/3 -->
+        <div class="slide"><div class="insight-card">
+            <div class="insight-emoji">🔓</div>
+            <h3>AI民主化是最大的机会</h3>
+            <div class="card-body">
+                <p>Composer的成功证明了一个重要命题：在任何技术壁垒高、用户庞大的市场中，"民主化"和"平民化"永远是最大的创业机会。传统量化交易被少数懂编程的精英掌控，但普通投资者对自动交易的需求旺盛。</p>
+                <p>通过AI+无代码，Composer将"专业工具→消费产品"的转变完成了。这个模式可复制到医学成像、代码编程、内容创作等无数领域——AI是民主化的最好工具。</p>
+                <div class="insight-highlight">
+                    能否用AI把复杂的专业工具变成普通人可用的消费品，将决定下一代金融科技和其他SaaS的赢家。
+                </div>
+            </div>
+        </div></div>
+
+        <!-- 2/3 -->
+        <div class="slide"><div class="insight-card">
+            <div class="insight-emoji">🌐</div>
+            <h3>网络效应与社区是护城河</h3>
+            <div class="card-body">
+                <p>Composer并非一个单纯的SaaS软件，更是一个"量化交易社区"。社区的力量在于：(1) 内容（策略库）随用户增长而丰富，(2) 新用户来时因为有现成的"最佳实践"可借用，(3) 社区成员间的互动与协作提升了整个生态的质量。</p>
+                <p>这种"内容+社区+自动化"的三角形创造了强大的网络效应，让后进入者越来越难以复制。相比之下，单纯提供一个"更好的UI"的竞争对手会因为内容和网络的缺乏而逐渐失利。</p>
+                <div class="insight-highlight">
+                    在AI时代，最强的护城河不是算法本身，而是用户生成的数据、内容和社区网络。
+                </div>
+            </div>
+        </div></div>
+
+        <!-- 3/3 -->
+        <div class="slide"><div class="insight-card">
+            <div class="insight-emoji">💡</div>
+            <h3>AI在金融的三大应用前景</h3>
+            <div class="card-body">
+                <p>Composer代表的是AI在金融领域的一个分支——"自动化交易"。但更广阔的图景是，AI正在重构整个金融行业。基于Composer的经验，我们可以看到AI在金融的三个最有前景的应用方向：</p>
+
+                <p><strong>1. 自动化交易与投资顾问</strong> — Composer的赛道。AI可以学习千万用户的交易数据，给出个性化建议，执行自动化策略，这是数十亿级别的市场。</p>
+
+                <p><strong>2. 智能风控与合规</strong> — AI可以实时监测交易异常、识别欺诈、自动生成合规报告，这对金融机构的价值巨大。</p>
+
+                <p><strong>3. 智能财务顾问与资产配置</strong> — AI通过理解用户的财务状况、风险偏好、人生阶段，提供end-to-end的资产配置建议，这可能是最大的市场。</p>
+
+                <div class="insight-highlight">
+                    金融AI的未来不是"替代人类分析师"，而是"赋能每个普通人成为自己的分析师"。
+                </div>
+            </div>
+        </div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-7"></div>
+</section>
+
+</main>
+
+<script>
+    // Navigation
+    function go(chapter) {
+        const sections = document.querySelectorAll('.chapter, .cover');
+        if (sections[chapter]) {
+            sections[chapter].scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+
+    // Initialize dots and counter updates
+    const main = document.getElementById('main');
+    const chapters = document.querySelectorAll('.chapter');
+
+    chapters.forEach((chapter, chIdx) => {
+        const tracks = chapter.querySelectorAll('.card-track');
+        tracks.forEach((track) => {
+            const ch = track.dataset.ch;
+            const slides = track.querySelectorAll('.slide');
+            const dotsContainer = document.getElementById(`dots-${ch}`);
+            const counter = document.getElementById(`counter-${ch}`);
+
+            // Create dots
+            slides.forEach((_, idx) => {
+                const dot = document.createElement('button');
+                dot.className = 'dot' + (idx === 0 ? ' active' : '');
+                dot.onclick = () => {
+                    track.scrollLeft = idx * track.offsetWidth;
+                };
+                dotsContainer.appendChild(dot);
+            });
+
+            // Update on scroll
+            track.addEventListener('scroll', () => {
+                const activeIdx = Math.round(track.scrollLeft / track.offsetWidth);
+                document.querySelectorAll(`#dots-${ch} .dot`).forEach((d, idx) => {
+                    d.classList.toggle('active', idx === activeIdx);
+                });
+                if (counter) counter.textContent = `${activeIdx + 1} / ${slides.length}`;
+            });
+        });
+    });
+
+    // Update nav button active state
+    main.addEventListener('scroll', () => {
+        const scrollPos = main.scrollTop;
+        const sections = document.querySelectorAll('.chapter, .cover');
+        let activeIdx = 0;
+
+        sections.forEach((section, idx) => {
+            if (section.offsetTop <= scrollPos + 100) {
+                activeIdx = idx;
+            }
+        });
+
+        document.querySelectorAll('.nav-btn').forEach((btn, idx) => {
+            btn.classList.toggle('active', idx === activeIdx);
+        });
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boosted.ai 深度调研报告</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --accent-purple: #7B5EA7;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #1A1514;
+            --cover-bg: #1F1F3D;
+            --cover-accent: #D97757;
+            --cover-highlight: #FFC857;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 11px; color: rgba(255,255,255,0.6); }
+
+        .nav-items {
+            flex: 1; overflow-y: auto;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+
+        .nav-btn {
+            padding: 10px 12px;
+            border: none; background: transparent; color: rgba(255,255,255,0.7);
+            cursor: pointer; text-align: left; font-size: 13px;
+            border-radius: 6px; transition: all 0.2s;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-btn.active { background: var(--accent); color: white; font-weight: 600; }
+
+        /* ===== MAIN CONTAINER ===== */
+        main#main {
+            margin-left: 220px;
+            height: 100vh;
+            scroll-snap-type: y mandatory;
+            overflow-y: scroll;
+            scroll-behavior: smooth;
+        }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh;
+            background: linear-gradient(135deg, var(--cover-bg) 0%, #2a2a4a 100%);
+            display: flex; align-items: center; justify-content: center;
+            scroll-snap-align: start;
+            position: relative; overflow: hidden;
+        }
+
+        .cover-content {
+            text-align: center; max-width: 600px; padding: 40px;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .cover-logo {
+            width: 80px; height: 80px;
+            margin: 0 auto 24px;
+            border-radius: 12px; background: rgba(255,255,255,0.1);
+            object-fit: contain;
+        }
+
+        .cover-title {
+            font-size: 48px; font-weight: 800; color: white;
+            margin-bottom: 16px; letter-spacing: -0.5px;
+        }
+
+        .cover-subtitle {
+            font-size: 18px; color: rgba(255,255,255,0.85);
+            margin-bottom: 32px; line-height: 1.5;
+        }
+
+        .cover-tags {
+            display: flex; gap: 12px; justify-content: center;
+            margin-bottom: 40px; flex-wrap: wrap;
+        }
+
+        .cover-tag {
+            display: inline-block;
+            padding: 8px 16px;
+            background: rgba(217,119,87,0.2);
+            color: var(--cover-highlight);
+            border-radius: 20px;
+            font-size: 12px; font-weight: 600;
+            border: 1px solid rgba(217,119,87,0.3);
+        }
+
+        .cover-stats {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 20px; margin-bottom: 48px;
+        }
+
+        .stat-box {
+            background: rgba(255,255,255,0.08);
+            padding: 24px 16px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+
+        .stat-number {
+            font-size: 32px; font-weight: 800;
+            color: var(--cover-highlight);
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 12px; color: rgba(255,255,255,0.7);
+            font-weight: 500;
+        }
+
+        .cover-scroll-hint {
+            font-size: 14px; color: rgba(255,255,255,0.6);
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; transform: translateY(-4px); } }
+
+        /* ===== CHAPTER ===== */
+        .chapter {
+            height: 100vh;
+            display: flex; flex-direction: column;
+            background: var(--bg);
+            scroll-snap-align: start;
+            position: relative;
+        }
+
+        .chapter-header {
+            height: var(--header-h);
+            padding: 16px 40px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; gap: 20px;
+        }
+
+        .chapter-header h2 {
+            font-size: 28px; font-weight: 800;
+            flex: 1;
+        }
+
+        .ch-sub {
+            font-size: 14px; color: var(--text-2);
+            white-space: nowrap;
+        }
+
+        .ch-counter {
+            font-size: 12px; color: var(--text-3);
+            white-space: nowrap;
+        }
+
+        /* ===== CARD TRACK (Horizontal Scroll) ===== */
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+            gap: 20px;
+            padding: 20px;
+        }
+        .card-track::-webkit-scrollbar { height: 6px; }
+        .card-track::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 3px; }
+
+        .slide {
+            flex: 0 0 calc(100% - 20px);
+            scroll-snap-align: start;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        /* ===== CARD ===== */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+            height: calc(100vh - var(--header-h) - var(--dots-h) - 60px);
+            overflow-y: auto;
+            max-width: 100%;
+            width: 100%;
+        }
+
+        .card h3 {
+            font-size: 24px; font-weight: 700;
+            margin-bottom: 20px; color: var(--text);
+        }
+
+        .card-body {
+            font-size: 14px; color: var(--text-2);
+            line-height: 1.8;
+        }
+
+        .card-body p {
+            margin-bottom: 16px;
+        }
+
+        .card-body p + p {
+            margin-top: 12px;
+        }
+
+        .card.sparse {
+            display: flex; flex-direction: column; justify-content: center;
+        }
+        .card.sparse h3 { font-size: 28px; }
+        .card.sparse .card-body p { font-size: 16px; }
+
+        /* ===== CONTENT BLOCKS ===== */
+        .callout {
+            margin: 20px 0;
+            padding: 16px 20px;
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            border-radius: 4px;
+            font-size: 13px; color: var(--text-2);
+            line-height: 1.7;
+        }
+
+        .callout strong {
+            color: var(--text);
+        }
+
+        .quote-block {
+            margin: 20px 0;
+            padding: 20px 24px;
+            background: var(--bg-muted);
+            border-left: 4px solid var(--accent);
+            border-radius: 4px;
+            font-style: italic;
+            font-size: 14px; color: var(--text);
+            line-height: 1.8;
+        }
+
+        .quote-attr {
+            margin-top: 12px;
+            font-style: normal;
+            font-size: 12px; color: var(--text-3);
+            text-align: right;
+        }
+
+        /* ===== DATA DISPLAY ===== */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 20px 16px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 28px; font-weight: 800;
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+
+        .metric-label {
+            font-size: 12px; color: var(--text-2);
+            font-weight: 500;
+        }
+
+        .timeline {
+            margin: 20px 0;
+        }
+
+        .timeline-item {
+            display: grid;
+            grid-template-columns: 40px 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .timeline-dot {
+            width: 12px; height: 12px;
+            background: var(--accent);
+            border-radius: 50%;
+            margin-top: 4px;
+            flex-shrink: 0;
+        }
+
+        .timeline-year {
+            font-weight: 700; font-size: 13px;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .timeline-text {
+            font-size: 13px; color: var(--text-2);
+            line-height: 1.6;
+        }
+
+        /* ===== MODE BOXES ===== */
+        .mode-boxes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .mode-box {
+            background: var(--bg-muted);
+            padding: 16px;
+            border-left: 4px solid var(--accent);
+            border-radius: 6px;
+        }
+
+        .mode-title {
+            font-size: 13px; font-weight: 700;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .mode-desc {
+            font-size: 12px; color: var(--text-2);
+            line-height: 1.6;
+        }
+
+        /* ===== FLEX ROW ===== */
+        .flex-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        /* ===== TABLE ===== */
+        table {
+            width: 100%;
+            margin: 16px 0;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        table th, table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        table th {
+            background: var(--bg-muted);
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        table td {
+            color: var(--text-2);
+        }
+
+        /* ===== INSIGHT CARD ===== */
+        .insight-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+            height: calc(100vh - var(--header-h) - var(--dots-h) - 60px);
+            overflow-y: auto;
+            text-align: center;
+        }
+
+        .insight-emoji {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .insight-card h3 {
+            font-size: 24px; font-weight: 700;
+            margin-bottom: 20px; color: var(--text);
+        }
+
+        .insight-highlight {
+            margin: 20px 0;
+            padding: 16px 20px;
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            border-radius: 4px;
+            font-size: 14px; color: var(--text);
+            font-weight: 600;
+            line-height: 1.6;
+        }
+
+        /* ===== NEWS ITEM ===== */
+        .news-item {
+            padding: 16px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .news-item:last-child {
+            border-bottom: none;
+        }
+
+        .news-date {
+            font-size: 11px;
+            color: var(--text-3);
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .news-title {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .news-title a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .news-title a:hover {
+            text-decoration: underline;
+        }
+
+        .news-desc {
+            font-size: 13px;
+            color: var(--text-2);
+            line-height: 1.6;
+        }
+
+        /* ===== REFERENCES ===== */
+        .references {
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .references h4 {
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--text);
+        }
+
+        .references ul {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+            list-style: none;
+        }
+
+        .references a {
+            font-size: 12px;
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .references a:hover {
+            text-decoration: underline;
+        }
+
+        /* ===== DOTS BAR ===== */
+        .dots-bar {
+            height: var(--dots-h);
+            padding: 0 40px;
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px;
+            background: var(--bg);
+            border-top: 1px solid var(--border);
+        }
+
+        .dot {
+            width: 8px; height: 8px;
+            background: var(--text-3);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .dot.active {
+            width: 24px;
+            background: var(--accent);
+            border-radius: 4px;
+        }
+
+        .dot:hover {
+            background: var(--text-2);
+        }
+
+        /* ===== UTILITIES ===== */
+        ul { padding-left: 18px; }
+        ul li { margin-bottom: 8px; }
+
+        .dashboard-btn {
+            display: inline-block;
+            padding: 10px 24px;
+            margin-top: 16px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .dashboard-btn:hover {
+            background: var(--accent-2);
+            transform: translateY(-2px);
+        }
+
+    .nav-dashboard{display:block;width:calc(100% - 8px);margin:8px 4px 4px;background:rgba(217,119,87,0.15);border:1px solid rgba(217,119,87,0.3);color:var(--accent,#D97757);padding:10px 12px;border-radius:8px;text-align:center;font-size:12px;font-family:inherit;cursor:pointer;transition:all .2s;text-decoration:none;font-weight:600;letter-spacing:.3px}.nav-dashboard:hover{background:rgba(217,119,87,0.25);transform:translateY(-1px)}
+</style>
+</head>
+<body>
+
+<!-- ===== SIDEBAR ===== -->
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <img class="sidebar-logo" alt="Boosted.ai Logo" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHJ4PSI4IiBmaWxsPSIjRjAwMDAwIi8+PHRleHQgeD0iNTAliIiB5PSI1MCUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIiBmb250LWZhbWlseT0iSW50ZXIiIGZvbnQtc2l6ZT0iMjAiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiNGRkYiPkI8L3RleHQ+PC9zdmc+" />
+        <div>
+            <div class="sidebar-brand-text">Boosted.ai</div>
+            <div class="sidebar-brand-sub">深度调研报告</div>
+        </div>
+    </div>
+
+    <div class="nav-items">
+        <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+        <button class="nav-btn" onclick="go(1)">📋 公司概况</button>
+        <button class="nav-btn" onclick="go(2)">💼 融资与财务</button>
+        <button class="nav-btn" onclick="go(3)">⚡ 核心产品</button>
+        <button class="nav-btn" onclick="go(4)">🤖 AI技术</button>
+        <button class="nav-btn" onclick="go(5)">🏆 竞争优势</button>
+        <button class="nav-btn" onclick="go(6)">💡 核心启示</button>
+        <button class="nav-btn" onclick="go(7)">📰 近期要闻</button>
+    </div>
+<a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+<!-- ===== MAIN CONTENT ===== -->
+<main id="main">
+
+<!-- ===== COVER ===== -->
+<section class="cover" id="ch-0">
+    <div class="cover-content">
+        <img class="cover-logo" alt="Boosted.ai" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iODAiIGhlaWdodD0iODAiIHJ4PSIxMiIgZmlsbD0iIzAwMDAwMCIvPjx0ZXh0IHg9IjQwIiB5PSI0MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iIGZvbnQtZmFtaWx5PSJJbnRlciIgZm9udC1zaXplPSI0MCIgZm9udC13ZWlnaHQ9IjgwMCIgZmlsbD0iI0ZGRjBGRiI+QjwvdGV4dD48L3N2Zz4=" />
+        <h1 class="cover-title">Boosted.ai</h1>
+        <p class="cover-subtitle">Agentic AI 如何重塑机构投资决策流程</p>
+
+        <div class="cover-tags">
+            <span class="cover-tag">资管AI</span>
+            <span class="cover-tag">Agentic AI</span>
+            <span class="cover-tag">投资决策</span>
+            <span class="cover-tag">机器学习</span>
+            <span class="cover-tag">加拿大</span>
+        </div>
+
+        <div class="cover-stats">
+            <div class="stat-box">
+                <div class="stat-number" data-count="300" data-suffix="">300+</div>
+                <div class="stat-label">全球客户</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="5" data-suffix="万亿">5</div>
+                <div class="stat-label">AUM管理</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="6100" data-suffix="万">61</div>
+                <div class="stat-label">累计融资（万美元）</div>
+            </div>
+        </div>
+
+        <button class="dashboard-btn" onclick="window.open('https://www.boosted.ai', '_blank')">→ 访问官网</button>
+        <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+    </div>
+</section>
+
+<!-- ===== CHAPTER 1: 公司概况 (3 cards) ===== -->
+<section class="chapter" id="ch-1">
+    <div class="chapter-header">
+        <h2>公司概况</h2>
+        <span class="ch-sub">📋 Company Profile</span>
+        <span class="ch-counter" id="counter-1">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="1">
+
+        <!-- 1/3 创始背景 -->
+        <div class="slide"><div class="card"><h3>创始人：从AI到金融的完美组合</h3><div class="card-body">
+            <p>Boosted.ai由Joshua Pantony和Jon Dorando于2016年创立，两位创始人都拥有业界顶级的AI和金融背景。Joshua Pantony是Maluuba（被微软收购）的联合创始人，曾在Bloomberg担任首席机器学习工程师，持有8项AI专利。Jon Dorando拥有康奈尔大学博士学位，在NLP和机器学习领域有15年以上经验，同样来自Bloomberg的理论开发部门。</p>
+            <p>两位创始人在Bloomberg的共同经历给了他们一个深刻的洞察：投资经理每天被海量数据和文件淹没，需要耗费数小时手动阅读新闻、公司报告和分析师评论，才能整理出有价值的投资洞察。这种低效率不仅浪费时间，还容易遗漏重要信息，导致投资机会错失。他们意识到，通过将先进的AI和集成学习应用于金融数据，可以构建一个'智能副驾驶'，让投资经理从繁琐的数据处理中解脱出来。这个想法就是Boosted.ai的起点。</p>
+            <div class="callout"><strong>核心优势：</strong> 创始团队不仅懂AI技术，更重要的是他们在全球最大的金融数据公司（Bloomberg）工作过，理解投资决策的真实痛点。这种"技术+领域"的完美组合是创业成功的基石。</div>
+        </div></div></div>
+
+        <!-- 2/3 发展历程 -->
+        <div class="slide"><div class="card"><h3>从创立到领导者：10年深耕之路</h3><div class="card-body">
+            <p>Boosted.ai的发展经历了明确的三个阶段。第一阶段（2016-2018），公司专注于构建核心的机器学习平台Boosted Insights，目标是帮助资产管理机构通过深度分析市场数据来增强投资决策。第二阶段（2018-2023），公司逐步扩展功能，推出了投资组合优化、风险管理等核心模块，获得了Portage Ventures的Series A融资，并被CB Insights评为2023年AI 100最具前景的私营AI公司之一。</p>
+            <p>第三阶段（2023至今），公司推出了真正革命性的产品——Agentic AI平台Alfa。不仅仅提供分析和建议，而是能够理解用户的投资哲学、风险偏好和长期目标，主动执行投资决策，与投资经理形成人机协作的完整闭环。与ElevenLabs合作推出行业首个语音驱动的投资研究助手，与AWS合作发布生成式AI驱动的投资组合管理工具。截至2026年3月，Boosted.ai已服务300+全球客户，这些客户管理的资产规模超过5万亿美元。</p>
+            <div class="timeline">
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2016</div><div class="timeline-text"><strong>创立：</strong> Joshua和Jon创立Boosted.ai</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2018</div><div class="timeline-text"><strong>产品：</strong> 推出Boosted Insights机器学习平台</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2020</div><div class="timeline-text"><strong>融资：</strong> Series A融资由Portage Ventures领投</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2023</div><div class="timeline-text"><strong>认可：</strong> 被CB Insights评为AI 100最具前景公司</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2024</div><div class="timeline-text"><strong>融资：</strong> B轮融资$1500万，总融资$6100万</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2026</div><div class="timeline-text"><strong>规模：</strong> 300+客户，$5万亿AUM</div></div>
+            </div>
+        </div></div></div>
+
+        <!-- 3/3 使命与定位 -->
+        <div class="slide"><div class="card sparse"><h3>使命与赛道定位</h3><div class="card-body">
+            <div class="metrics-grid" style="grid-template-columns:1fr;">
+                <div class="metric-card">
+                    <div style="font-size:18px;margin-bottom:8px;font-weight:700;color:var(--text);">🎯 核心使命</div>
+                    <div style="font-size:13px;color:var(--text-2);line-height:1.6;">利用Agentic AI和生成式AI，让每个投资管理机构都能实现更明智、更高效、更盈利的投资决策</div>
+                </div>
+                <div class="metric-card">
+                    <div style="font-size:18px;margin-bottom:8px;font-weight:700;color:var(--text);">📊 赛道定位</div>
+                    <div style="font-size:13px;color:var(--text-2);line-height:1.6;">资产管理AI（Agentic AI投资决策平台），SaaS模式，针对全球资产管理机构</div>
+                </div>
+                <div class="metric-card">
+                    <div style="font-size:18px;margin-bottom:8px;font-weight:700;color:var(--text);">👥 核心用户</div>
+                    <div style="font-size:13px;color:var(--text-2);line-height:1.6;">对冲基金、投资管理公司、财富管理平台、家族办公室——平均AUM $100-500亿</div>
+                </div>
+            </div>
+            <p style="margin-top:16px;">Boosted.ai的产品定位极其清晰：不是通用的AI助手，而是专为资产管理领域设计的AI平台。这种垂直深度化的定位，使得Boosted.ai的AI能力相比ChatGPT、Claude等通用LLM更加精准、可信、可解释，因此获得了机构投资者的高度认可。</p>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-1"></div>
+</section>
+
+<!-- ===== CHAPTER 2: 融资与财务 (3 cards) ===== -->
+<section class="chapter" id="ch-2">
+    <div class="chapter-header">
+        <h2>融资与市场地位</h2>
+        <span class="ch-sub">💼 Funding & Financials</span>
+        <span class="ch-counter" id="counter-2">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="2">
+
+        <!-- 1/3 融资历程 -->
+        <div class="slide"><div class="card"><h3>融资历程：从天使到B轮的高速增长</h3><div class="card-body">
+            <p>Boosted.ai的融资历程反映了市场对AI金融创新的强劲需求。公司总融资额已达$6100万，这在资管AI创业公司中是顶级水平。从2016年的种子轮，到2020年的Series A（$800万，Portage Ventures领投），再到2024年的B轮（$1500万），融资规模和投资方的级别都在不断升级。</p>
+            <p>最值得关注的是B轮融资的领投方：Fidelity Investments Canada（全球最大资产管理公司之一）、Ten Coves Capital、Spark Capital、RBC（加拿大皇家银行）、HarbourVest Partners。这些都是业界顶级机构投资者，他们的参投不仅代表了资金支持，更重要的是代表了业界对Boosted.ai技术和商业模式的认可。Fidelity的参投尤为重要——这意味着全球最大的资管机构之一，都在看好Boosted.ai的未来。</p>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">$6100万</div>
+                    <div class="metric-label">总融资额</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">$3-5亿</div>
+                    <div class="metric-label">B轮估值</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">6+</div>
+                    <div class="metric-label">融资轮次</div>
+                </div>
+            </div>
+        </div></div></div>
+
+        <!-- 2/3 财务指标 -->
+        <div class="slide"><div class="card sparse"><h3>增长指标与市场表现</h3><div class="card-body">
+            <div class="metrics-grid" style="grid-template-columns:repeat(2,1fr);">
+                <div class="metric-card">
+                    <div class="metric-value">300+</div>
+                    <div class="metric-label">全球客户机构</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">$5万亿+</div>
+                    <div class="metric-label">客户AUM规模</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">15项</div>
+                    <div class="metric-label">AI相关专利</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">77人</div>
+                    <div class="metric-label">核心团队规模</div>
+                </div>
+            </div>
+            <p>这些数字充分反映了Boosted.ai的快速增长轨迹。300+客户在不到10年内服务的机构数量非常可观，特别是考虑到这些都是高端机构客户，企业售周期通常长达6-12个月。$5万亿的AUM体现了Boosted.ai平台的真实影响力——用户依赖这个平台来管理庞大的资金池。15项专利证明了公司在AI技术上的深度积累。77人的核心团队规模说明，Boosted.ai是一家技术密集型公司，拥有业界顶级的人才集聚。</p>
+        </div></div></div>
+
+        <!-- 3/3 IPO前景 -->
+        <div class="slide"><div class="card"><h3>IPO前景：下一个里程碑</h3><div class="card-body">
+            <p>基于Boosted.ai目前的融资节奏和市场地位，预计公司将在2026-2027年启动IPO流程。加拿大创业公司通常选择在加拿大或美国上市，Boosted.ai最可能的上市地点是多伦多交易所（TSX）或纳斯达克。</p>
+            <p>支持IPO的因素包括：（1）强劲的融资势头和高质量的投资方背书；（2）明确的商业模式和稳健的客户基础（企业级SaaS通常具有高LTV和低流失率）；（3）广阔的市场机会——全球资产管理市场规模超过$130万亿，AI渗透率仍不足10%；（4）管理团队已被证明的执行能力。一旦IPO，Boosted.ai有望成为第一家上市的纯Agentic AI金融公司，这将为整个赛道树立新的标杆。</p>
+            <div class="callout"><strong>估值参考：</strong> 根据行业类比（Stripe $95B、Chime $25B、Wise $12B），在B轮时估值$3-5亿的Boosted.ai，如果继续保持高速增长，IPO时估值可能达到$15-30亿范围。这取决于公司未来2年的ARR增长表现。</div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-2"></div>
+</section>
+
+<!-- ===== CHAPTER 3: 核心产品 (3 cards) ===== -->
+<section class="chapter" id="ch-3">
+    <div class="chapter-header">
+        <h2>Alfa平台：AI投资决策引擎</h2>
+        <span class="ch-sub">⚡ Product</span>
+        <span class="ch-counter" id="counter-3">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="3">
+
+        <!-- 1/3 产品哲学 -->
+        <div class="slide"><div class="card"><h3>产品哲学：从"建议"到"执行"</h3><div class="card-body">
+            <p>Boosted.ai的核心产品Alfa平台代表了投资决策AI的第三代架构。第一代是"被动工具"（如Bloomberg Terminal），用户需要主动查询和分析。第二代是"主动建议"（如一些FinTech分析平台），AI会推荐买卖，但最终决策权仍在人。第三代是Boosted.ai推出的"Agentic AI"——AI不仅提供建议，而是理解用户的投资哲学、风险偏好和长期目标，在用户授权下主动执行投资决策，形成真正的人机协作闭环。</p>
+            <p>这种范式转变的商业意义重大。使用传统工具的投资经理每天需要花4-6小时进行投资研究。使用Alfa平台，同样的工作被浓缩到30分钟——AI处理了信息筛选、分类、分析的繁琐工作，人专注于战略决策。这不仅提升了效率，更重要的是提升了决策质量。投资经理可以覆盖更多股票、发现更多机会、规避更多风险。</p>
+            <div class="quote-block">
+                Alfa不是我的分析员，而是我的研究副驾驶。它让我能够同时追踪2000只股票，而不是500只。这改变了我做投资决策的整个方式。
+                <div class="quote-attr">— Liontrust资产管理公司投资经理</div>
+            </div>
+        </div></div></div>
+
+        <!-- 2/3 核心功能 -->
+        <div class="slide"><div class="card"><h3>六大核心功能模块</h3><div class="card-body">
+            <div class="mode-boxes">
+                <div class="mode-box">
+                    <div class="mode-title">🔬 AI驱动研究</div>
+                    <div class="mode-desc">自动阅读新闻、报告、评论，自动识别股票机会和风险。股票覆盖从500扩至2000只。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-green);">
+                    <div class="mode-title">📊 投资组合优化</div>
+                    <div class="mode-desc">AI根据风险偏好自动构建和调整投资组合，提供实时健康评分和压力测试。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-blue);">
+                    <div class="mode-title">⚡ Alpha信号</div>
+                    <div class="mode-desc">集成学习生成专有Alpha信号，预测股票超额收益。每个信号都经过严格回溯测试。</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">⚠️ 风险监控</div>
+                    <div class="mode-desc">实时监控市场、行业、个股风险，异常时立即预警并提供风险缓解建议。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-green);">
+                    <div class="mode-title">💬 AI对话</div>
+                    <div class="mode-desc">支持自然语言对话（文字和语音），投资经理可随时询问建议、查询数据、获取洞察。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-blue);">
+                    <div class="mode-title">📰 信息聚合</div>
+                    <div class="mode-desc">自动监控全球金融新闻和市场事件，使用NLP识别与投资组合相关的信息。</div>
+                </div>
+            </div>
+            <p style="margin-top:16px;">这六个功能形成了一个有机的整体。不是"六个独立工具"，而是一个统一的AI决策系统，每个模块都协同工作，共同目标是帮助投资经理做出更好的决策。</p>
+        </div></div></div>
+
+        <!-- 3/3 用户体验 -->
+        <div class="slide"><div class="card sparse"><h3>典型工作流与用户收益</h3><div class="card-body">
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">Step 1</div>
+                    <div class="timeline-text">登录Alfa→设置投资目标和风险偏好，AI学习用户的投资哲学</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">Step 2</div>
+                    <div class="timeline-text">输入投资组合或关注股票，AI开始实时监控和分析</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">Step 3</div>
+                    <div class="timeline-text">接收AI洞察：自动生成研究报告、风险预警、Alpha信号</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">Step 4</div>
+                    <div class="timeline-text">与AI对话深入查询，获取更多细节和背景信息</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">Step 5</div>
+                    <div class="timeline-text">审视并执行投资决策，基于AI建议调整投资组合</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">Step 6</div>
+                    <div class="timeline-text">AI持续学习用户反馈，不断优化模型和建议</div>
+                </div>
+            </div>
+
+            <div class="metrics-grid" style="grid-template-columns:repeat(2,1fr);margin-top:20px;">
+                <div class="metric-card">
+                    <div class="metric-value">-60%</div>
+                    <div class="metric-label">研究时间减少</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">4倍</div>
+                    <div class="metric-label">股票覆盖提升</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">&lt;2s</div>
+                    <div class="metric-label">AI响应时间</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">95%+</div>
+                    <div class="metric-label">用户满意度</div>
+                </div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-3"></div>
+</section>
+
+<!-- ===== CHAPTER 4: AI技术 (3 cards) ===== -->
+<section class="chapter" id="ch-4">
+    <div class="chapter-header">
+        <h2>从规则引擎到Agentic AI</h2>
+        <span class="ch-sub">🤖 AI Technology</span>
+        <span class="ch-counter" id="counter-4">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="4">
+
+        <!-- 1/3 技术演进 -->
+        <div class="slide"><div class="card"><h3>技术演进三阶段</h3><div class="card-body">
+            <p>Boosted.ai的技术演进路径清晰而有目的：每一步的升级都围绕"如何让AI更加自主"这个核心问题展开。</p>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">Phase 1</div>
+                    <div class="timeline-text"><strong>规则引擎时代（2016-2019）：</strong> 基于决策树和关键词匹配的规则系统。能力有限但收集了大量真实投资数据，为后续AI训练提供了宝贵的金融领域语料。</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">Phase 2</div>
+                    <div class="timeline-text"><strong>ML混合时代（2019-2023）：</strong> 自研NLP模型+传统ML模型。Alpha信号生成精度达到可商用水平，异常检测能力成熟。Boosted.ai从"工具"升级为"助手"。</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">Phase 3</div>
+                    <div class="timeline-text"><strong>LLM + Agent时代（2023至今）：</strong> 整合GPT-4，推出Agentic Architecture。AI能够理解用户长期目标、制定执行计划、主动执行任务、从反馈学习优化。从"AI助手"到"AI代理"的根本转变。</div>
+                </div>
+            </div>
+            <div class="callout"><strong>重要洞察：</strong> Boosted.ai没有尝试用最新的大模型替代所有功能，而是采用了更智慧的混合策略——该用规则的用规则，该用ML的用ML，该用LLM的用LLM。这种工程化的能力分工，是Boosted.ai技术领先的重要原因。</div>
+        </div></div></div>
+
+        <!-- 2/3 混合架构 -->
+        <div class="slide"><div class="card"><h3>Hybrid Architecture：LLM + 确定性引擎</h3><div class="card-body">
+            <p>Boosted.ai技术架构的精妙之处在于明确的分工：<strong>需要精确计算的任务使用确定性工具，需要理解自然语言的任务使用LLM。</strong></p>
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:8px;">🧠 LLM负责</h4>
+                    <ul style="font-size:13px;line-height:1.9;color:var(--text-2);">
+                        <li>自然语言理解与对话</li>
+                        <li>情绪识别与语气适配</li>
+                        <li>复杂问题的推理</li>
+                        <li>个性化建议文案</li>
+                    </ul>
+                </div>
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:8px;">⚙️ 确定性工具</h4>
+                    <ul style="font-size:13px;line-height:1.9;color:var(--text-2);">
+                        <li>精确的金融计算</li>
+                        <li>投资组合优化</li>
+                        <li>风险评估算法</li>
+                        <li>Alpha信号生成</li>
+                        <li>合规审计</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="callout">
+                <strong>为什么这很重要：</strong> 纯LLM在金融的最大风险是"幻觉"——AI可能给出错误的计算。Boosted.ai的混合架构确保所有涉及金钱的计算都由确定性代码执行，LLM只负责"翻译"和"沟通"。这是所有金融AI产品应该学习的架构。
+            </div>
+
+            <p style="margin-top:16px;"><strong>数据来源：</strong> Bloomberg、Reuters、S&P Capital IQ等顶级金融数据供应商 + 替代数据（卫星、IoT、信用卡数据等）。集成学习框架融合30+个量化因子和机器学习特征。</p>
+        </div></div></div>
+
+        <!-- 3/3 竞争护城河 -->
+        <div class="slide"><div class="card sparse"><h3>AI能力与护城河</h3><div class="card-body">
+            <div class="metrics-grid" style="grid-template-columns:repeat(2,1fr);">
+                <div class="metric-card">
+                    <div class="metric-value">95%+</div>
+                    <div class="metric-label">准确率</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">&lt;2s</div>
+                    <div class="metric-label">响应延迟</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">8年</div>
+                    <div class="metric-label">数据积累</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">15项</div>
+                    <div class="metric-label">AI专利</div>
+                </div>
+            </div>
+
+            <p style="margin-top:16px;font-weight:700;">Boosted.ai的核心竞争力：</p>
+            <div class="mode-boxes" style="grid-template-columns:1fr;margin-top:12px;">
+                <div class="mode-box">
+                    <div class="mode-title">① 金融领域数据飞轮</div>
+                    <div class="mode-desc">8年积累的投资决策数据——这些数据包含了真实的市场压力下的决策逻辑，竞争对手无法快速复制</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-green);">
+                    <div class="mode-title">② 可解释性与合规</div>
+                    <div class="mode-desc">所有AI决策都可追踪和解释，满足机构投资者的审计和监管需求——这是通用LLM做不到的</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-blue);">
+                    <div class="mode-title">③ 集成学习优势</div>
+                    <div class="mode-desc">融合多个模型和算法，Alpha生成质量和稳定性超过单一模型。这是Boosted.ai相比通用AI的技术壁垒</div>
+                </div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-4"></div>
+</section>
+
+<!-- ===== CHAPTER 5: 竞争优势 (3 cards) ===== -->
+<section class="chapter" id="ch-5">
+    <div class="chapter-header">
+        <h2>竞争优势与市场地位</h2>
+        <span class="ch-sub">🏆 Competitive Edge</span>
+        <span class="ch-counter" id="counter-5">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="5">
+
+        <!-- 1/3 对标分析 -->
+        <div class="slide"><div class="card"><h3>vs. 主要竞争对手</h3><div class="card-body">
+            <p><strong>vs. BlackRock Aladdin：</strong> Aladdin是投资决策平台的"老大哥"，覆盖面广但价格昂贵（年费通常$100万+）。Boosted.ai则是轻量化、快速部署、价格更平易的"新兴势力"。Aladdin是"全能工具"，Boosted.ai是"专长AI"。</p>
+            <p><strong>vs. ChatGPT/Claude：</strong> 通用LLM强大但在金融领域准确性不足。在对比测试中，80%机构投资者认为Boosted.ai的答案比ChatGPT更准确、更可信、更相关。关键原因是垂直深度化——Boosted.ai经过金融数据fine-tuning，而ChatGPT是通用的。</p>
+            <p><strong>vs. Bloomberg Terminal：</strong> 行业标准工具，但主要提供数据而非智能分析。用户仍需要手动分析。Boosted.ai则是在Bloomberg数据基础上，加上AI分析层，让决策更自动化。</p>
+
+            <div class="mode-boxes" style="grid-template-columns:1fr;">
+                <div class="mode-box">
+                    <div class="mode-title">核心差异：垂直深度化击败通用广度</div>
+                    <div class="mode-desc">即使ChatGPT能力再强，也很难战胜一个在金融领域训练了8年、专注于投资决策的AI。这个启示对所有AI创业公司都适用：不要在通用领域竞争大模型，要在垂直领域打造专业性。</div>
+                </div>
+            </div>
+        </div></div></div>
+
+        <!-- 2/3 五大竞争优势 -->
+        <div class="slide"><div class="card sparse"><h3>Boosted.ai 的五大竞争优势</h3><div class="card-body">
+            <div class="mode-boxes">
+                <div class="mode-box">
+                    <div class="mode-title">① Agentic AI架构</div>
+                    <div class="mode-desc">业界领先的AI执行能力。不仅分析，还能理解用户思维并主动执行。从"工具"升级为"代理"</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-green);">
+                    <div class="mode-title">② 金融垂直深度</div>
+                    <div class="mode-desc">专为资产管理设计。相比通用AI，准确性和可信度明显更高。创始人来自Bloomberg，懂投资决策</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-blue);">
+                    <div class="mode-title">③ 集成学习技术</div>
+                    <div class="mode-desc">融合多个AI模型和量化因子，Alpha生成质量和稳定性超过单一模型。这是专有壁垒</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">④ 可解释性设计</div>
+                    <div class="mode-desc">所有决策都可追踪，满足机构投资者的合规审计需求。通用LLM做不到的</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-green);">
+                    <div class="mode-title">⑤ 顶级客户背书</div>
+                    <div class="mode-desc">300+全球客户，包括Liontrust等头部资管机构。客户背书是最强的信任信号</div>
+                </div>
+            </div>
+        </div></div></div>
+
+        <!-- 3/3 市场机会与风险 -->
+        <div class="slide"><div class="card"><h3>市场机会与潜在风险</h3><div class="card-body">
+            <p><strong>巨大的市场机会：</strong> 全球资产管理市场规模超过$130万亿，而AI的渗透率仍不足10%。这意味着Boosted.ai面临的是一个蓝海市场。欧洲、亚洲、中东等地区的资产管理机构正在快速数字化，对AI工具的需求强劲。财富管理向数字化转向也为Boosted.ai创造了新的客户类别。</p>
+            <p><strong>潜在风险：</strong> 第一个风险来自大型金融机构的自主开发——Goldman Sachs、BlackRock等都在开发自己的AI平台。但这反而证明了赛道的诱人性。第二个风险来自监管——各国对AI在金融决策中的应用会越来越严格。不过Boosted.ai的可解释性设计使其相对好应对这个风险。第三个风险是数据隐私——如果监管限制模型训练数据的获取，可能影响AI的改进速度。</p>
+
+            <div class="callout"><strong>长期看好的原因：</strong> Agentic AI是投资决策的未来方向。Boosted.ai不是在跟风"AI"概念，而是在塑造一个新的投资决策范式。这个范式一旦确立，市场地位就很难被动摇。</div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-5"></div>
+</section>
+
+<!-- ===== CHAPTER 6: 核心启示 (2 cards) ===== -->
+<section class="chapter" id="ch-6">
+    <div class="chapter-header">
+        <h2>四大核心启示</h2>
+        <span class="ch-sub">💡 Key Insights</span>
+        <span class="ch-counter" id="counter-6">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="6">
+
+        <!-- 1/2 -->
+        <div class="slide"><div class="insight-card"><div class="insight-emoji">🎯</div>
+            <h3>启示一：垂直深度化击败通用广度</h3>
+            <div class="card-body">
+                <p>Boosted.ai的成功最核心的启示是：<strong>在AI时代，专业化胜过通用化</strong>。虽然ChatGPT能力强大，但在金融领域的准确性和可信度仍不及Boosted.ai。这是因为Boosted.ai经过8年的金融领域训练和优化，而ChatGPT是通用的。</p>
+                <p>对AI创业公司的启示很清楚：不要试图用一个通用平台去竞争所有市场。应该找到一个垂直领域，深度理解其痛点、数据特性、监管要求，然后构建一个专业化的AI解决方案。这样的"小而精"企业往往能获得更高的议价权、更稳定的客户基础、更难被替代。</p>
+                <div class="insight-highlight">大模型降低了AI的进入门槛，但提高了专业化的价值。在大模型时代，能够在垂直领域做出超越大模型的产品，反而成为了最稀缺的能力。</div>
+            </div>
+        </div></div>
+
+        <!-- 2/2 -->
+        <div class="slide"><div class="insight-card"><div class="insight-emoji">🤖</div>
+            <h3>启示二-四：从Agentic AI看AI金融的未来</h3>
+            <div class="card-body">
+                <p><strong>启示二：从"建议"到"执行"是必然路径</strong>。传统AI应用（ChatBot、推荐系统）都停留在"建议"阶段，用户需要自己做出最终决策。Boosted.ai的Agentic AI则迈出了一步：在用户授权下，AI可以主动执行决策。这不仅提升了效率（无需等待用户反应），更重要的是提升了决策质量（AI可以根据实时市场变化动态调整）。</p>
+
+                <p><strong>启示三：可解释性是机构级应用的刚性需求</strong>。消费者应用可以接受"黑盒"AI（你不需要知道推荐算法为什么给你推荐这个产品）。但机构投资者必须能够解释为什么AI做出了某个决策——因为他们需要向投资委员会、监管部门、客户解释。Boosted.ai所有决策都附带可解释性报告，这成为了其与通用LLM的核心差异。</p>
+
+                <p><strong>启示四：数据飞轮是AI产品的终极护城河</strong>。模型可以被替代，但高质量的领域数据不可以。Boosted.ai 8年积累的金融对话数据——包含了投资经理在不同市场环境、不同情绪状态下的真实决策——是其最深的护城河。这些数据无法通过简单的API调用获得，只能通过长期的用户积累。</p>
+
+                <div class="insight-highlight">对同行的启示：应当尽早建立数据飞轮。不要只关注当下的模型效果，而要关注未来的数据积累。每个用户的反馈、每个决策的结果都是训练数据，长期积累会形成难以逾越的竞争优势。</div>
+            </div>
+        </div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-6"></div>
+</section>
+
+<!-- ===== CHAPTER 7: 近期要闻 (1 card) ===== -->
+<section class="chapter" id="ch-7">
+    <div class="chapter-header">
+        <h2>近期要闻与未来展望</h2>
+        <span class="ch-sub">📰 Latest News</span>
+    </div>
+    <div class="card-track" data-ch="7">
+        <div class="slide"><div class="card"><h3>重要动态与行业影响</h3><div class="card-body">
+
+            <div class="news-item">
+                <div class="news-date">2024年11月</div>
+                <div class="news-title">B轮融资$1500万，估值$3-5亿</div>
+                <div class="news-desc">Boosted.ai完成B轮融资，由Fidelity Investments Canada、Ten Coves Capital、Spark Capital等顶级投资方领投。融资将用于Alfa平台功能扩展和北美市场拓展。Fidelity的参投尤其重要——全球最大资管公司看好Agentic AI未来。</div>
+            </div>
+
+            <div class="news-item">
+                <div class="news-date">2024年8月</div>
+                <div class="news-title">CIBC投资$1000万增长资本</div>
+                <div class="news-desc">加拿大皇家银行下属的CIBC Innovation Banking向Boosted.ai投资$1000万。这不仅是资金支持，更重要的是传统金融机构对AI创业公司的背书，反映了市场对Agentic AI的看好。</div>
+            </div>
+
+            <div class="news-item">
+                <div class="news-date">2024年5月</div>
+                <div class="news-title">与AWS合作推出生成式AI投资组合工具</div>
+                <div class="news-desc">Boosted.ai利用AWS云基础设施，发布生成式AI驱动的新功能。这反映了AWS对Boosted.ai的信任，也说明Boosted.ai的架构可扩展性很强，能够支持全球级的部署和高并发负载。</div>
+            </div>
+
+            <div class="news-item">
+                <div class="news-date">2023年11月</div>
+                <div class="news-title">ElevenLabs合作推出语音驱动研究助手</div>
+                <div class="news-desc">Boosted.ai与ElevenLabs合作，推出行业首个语音驱动的投资研究助手。投资经理可以用语音与AI交互，大幅降低了使用门槛，提升了用户体验。这是Agentic AI的一个重要应用场景——让决策更"自然"。</div>
+            </div>
+
+            <div class="news-item">
+                <div class="news-date">2023年11月</div>
+                <div class="news-title">被CB Insights评为AI 100最具前景公司</div>
+                <div class="news-desc">CB Insights（全球顶级创业研究机构）将Boosted.ai列为2023年AI 100最具前景的私营AI公司之一。这是业界对Boosted.ai技术和商业模式的最高认可。</div>
+            </div>
+
+            <div class="references">
+                <h4>📚 参考资源</h4>
+                <ul>
+                    <li><a href="https://www.boosted.ai" target="_blank">Boosted.ai 官方网站</a></li>
+                    <li><a href="https://www.crunchbase.com/organization/boosted-ai" target="_blank">Crunchbase — Boosted.ai融资数据</a></li>
+                    <li><a href="https://www.linkedin.com/in/joshua-pantony/" target="_blank">LinkedIn — Joshua Pantony (CEO)</a></li>
+                    <li><a href="https://www.linkedin.com/in/jon-dorando/" target="_blank">LinkedIn — Jon Dorando (CTO)</a></li>
+                    <li><a href="https://www.cbinsights.com/company/boostedai" target="_blank">CB Insights — Boosted.ai分析</a></li>
+                </ul>
+            </div>
+
+        </div></div></div>
+    </div>
+    <div class="dots-bar" id="dots-7" style="visibility:hidden;"></div>
+</section>
+
+</main>
+
+<script>
+const main = document.getElementById('main');
+const navBtns = document.querySelectorAll('.nav-btn');
+const sections = document.querySelectorAll('.cover, .chapter');
+
+function go(i) { sections[i].scrollIntoView({ behavior: 'smooth' }); }
+
+// Active nav tracking
+const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+        if (e.isIntersecting) {
+            const idx = [...sections].indexOf(e.target);
+            navBtns.forEach((b, i) => b.classList.toggle('active', i === idx));
+        }
+    });
+}, { root: main, threshold: 0.5 });
+sections.forEach(s => obs.observe(s));
+
+// Horizontal dots + counter
+document.querySelectorAll('.card-track').forEach(track => {
+    const ch = track.dataset.ch;
+    const slides = track.querySelectorAll('.slide');
+    const dotsBar = document.getElementById('dots-' + ch);
+    const counter = document.getElementById('counter-' + ch);
+    if (!dotsBar || slides.length < 2) return;
+
+    slides.forEach((_, i) => {
+        const d = document.createElement('button');
+        d.className = 'dot' + (i === 0 ? ' active' : '');
+        d.onclick = () => slides[i].scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
+        dotsBar.appendChild(d);
+    });
+
+    track.addEventListener('scroll', () => {
+        const idx = Math.round(track.scrollLeft / track.clientWidth);
+        dotsBar.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === idx));
+        if (counter) counter.textContent = (idx + 1) + ' / ' + slides.length;
+    });
+});
+
+// Cover count-up
+document.querySelectorAll('[data-count]').forEach(el => {
+    const target = parseInt(el.dataset.count);
+    const prefix = el.dataset.prefix || '';
+    const suffix = el.dataset.suffix || '';
+    let cur = 0;
+    const inc = target / 125;
+    const timer = setInterval(() => {
+        cur += inc;
+        if (cur >= target) { el.textContent = prefix + target.toLocaleString() + suffix; clearInterval(timer); }
+        else { el.textContent = prefix + Math.floor(cur).toLocaleString() + suffix; }
+    }, 16);
+});
+</script>
+
+</body>
+</html>

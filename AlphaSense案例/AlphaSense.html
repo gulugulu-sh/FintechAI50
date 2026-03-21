@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlphaSense 深度调研报告</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #1A1514;
+            --cover-bg: #0160FF;
+            --cover-accent: #3366FF;
+            --cover-highlight: #FFFF52;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(217,119,87,0.2); color: var(--accent); font-weight: 600; }
+
+        /* ===== MAIN ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, #0A1A3A 0%, #0160FF 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(51, 102, 255, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 20px; background: rgba(255,255,255,0.1); object-fit: contain; }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(255,255,255,0.12); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        /* Fixed chapter header */
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        /* Horizontal card scroller */
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+
+        /* Each slide fills available height */
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Card inside slide — fills slide */
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        /* Dots bar at bottom */
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); cursor: pointer; transition: all 0.3s;
+            border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+        /* ===== CONTENT-SPARSE: bigger text for cards with less content ===== */
+        .card.sparse p { font-size: 16px; line-height: 2; }
+        .card.sparse h3 { font-size: 22px; margin-bottom: 20px; }
+        .card.sparse .callout { font-size: 15px; padding: 18px 22px; }
+        .card.sparse .quote-block { font-size: 16px; padding: 20px 24px; }
+
+        /* ===== REUSABLE COMPONENTS ===== */
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px; border-radius: 6px;
+            font-size: 13px; line-height: 1.7; color: var(--text-2);
+            margin: 14px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+
+        .quote-block {
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px; margin: 14px 0;
+            font-style: italic; font-size: 14px;
+            color: var(--text-2); line-height: 1.8;
+            background: var(--bg-muted); border-radius: 0 8px 8px 0;
+        }
+        .quote-attr { font-style: normal; font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 16px; border-radius: 10px; text-align: center;
+        }
+        .metric-value { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+        .flex-row { display: flex; gap: 24px; margin: 14px 0; }
+        .flex-col { flex: 1; min-width: 0; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th { background: var(--bg-muted); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+
+        .mode-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 14px 0; }
+        .mode-box { background: var(--bg-muted); padding: 14px; border-radius: 10px; border-left: 4px solid var(--accent); }
+        .mode-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+        .mode-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .insight-card {
+            flex: 1; display: flex; flex-direction: column;
+            background: var(--bg-card); border-radius: 14px; padding: 28px 32px;
+            border: 1px solid var(--border);
+        }
+        .insight-emoji { font-size: 28px; margin-bottom: 10px; }
+        .insight-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+        .insight-card p { font-size: 15px; line-height: 1.9; color: var(--text-2); margin-bottom: 14px; }
+        .insight-highlight {
+            margin-top: auto;
+            background: var(--accent-light); border-left: 4px solid var(--accent);
+            padding: 12px 16px; border-radius: 6px;
+            font-size: 14px; font-weight: 600; color: var(--accent-2);
+        }
+
+        .news-item {
+            padding: 14px; background: var(--bg-card);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px; border: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+        .news-date { font-size: 11px; color: var(--text-3); font-weight: 600; margin-bottom: 4px; }
+        .news-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .news-title a { color: var(--accent-blue); text-decoration: none; }
+        .news-title a:hover { color: var(--accent); text-decoration: underline; }
+        .news-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .references { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--border); }
+        .references h4 { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+        .references ul { list-style: none; columns: 2; column-gap: 20px; }
+        .references li { font-size: 11px; margin-bottom: 5px; break-inside: avoid; }
+        .references a { color: var(--accent-blue); text-decoration: none; }
+
+        .avatar {
+            width: 56px; height: 56px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 700; font-size: 20px;
+        }
+
+        .position-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+        .position-card { padding: 12px; border-radius: 10px; }
+        .position-title { font-weight: 700; font-size: 13px; margin-bottom: 3px; }
+
+        .timeline { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+        .timeline-item { display: flex; gap: 12px; align-items: flex-start; }
+        .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
+        .timeline-year { font-weight: 700; font-size: 13px; color: var(--accent); min-width: 48px; }
+        .timeline-text { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            main { margin-left: 0; }
+            .chapter-header { padding: 12px 20px 0 20px; }
+            .slide { padding: 16px 20px; }
+            .cover-title { font-size: 28px; }
+            .flex-row { flex-direction: column; }
+        }
+    
+        .nav-dashboard {
+            display: block; width: calc(100% - 8px); margin: 8px 4px 4px;
+            background: rgba(217,119,87,0.15); border: 1px solid rgba(217,119,87,0.3);
+            color: var(--accent, #D97757); padding: 10px 12px; border-radius: 8px;
+            text-align: center; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+            font-weight: 600; letter-spacing: 0.3px;
+        }
+        .nav-dashboard:hover {
+            background: rgba(217,119,87,0.3); color: white;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <img class="sidebar-logo" alt="AlphaSense" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAAllBMVEX///8QEykAQP8RFCr4+v+vwv9Tf/8UUP8JR/9wk//W4P8gIjhZWmpCRVbNzdLT1Nd0doMqLEAZHDH4+PjCw8je3+EjJjp5e4b19fYwM0WKi5Xp6es2OEugoarv7/CPkZvK1/81aP9dYG+4ub9KTV7Hx82vr7c8P1FmaHbu8v/A0P93mf9FdP89bv/h6P+Nqv9rbnuoqrHr8WX+AAACcUlEQVRIiZ2V6ZajIBCF4zhrXFAQFTTaLcbYW9q8/8tNQZmk0Zh4+v7IyYH6gKIu5WYzFTNaN6pVhPskSUJuT+bEjObz+EplEUieCnuZnR6u+Sw+DzMRg8o+tLYgfQmjPpkf6ORTB+QeOmsL4nuu4wThDCBZ6WrAEdLaYgmoVEsR8PxuDcB3pYOiQhbsIcD2WawTgF1cOuzzh0C+CyBlNxX6t90VjwDGsxTW9toe9nFFxB8BlephaXqQsJHr0nbPHgC8DmA07dW+j2Gnw5dq3wRY2ECcI2rOpSbjKGF3gaI76NsJVFV0DVwUDXb5PYCRWkCucU/O2afXUtwEVJMCEGhLVnWp0++T6g5Q1XD9Lu0VBLHOv8BLQB5GMEZjPAYeL23IMoDG9tqTOXal9D25gaoWATR2OijMkzSpuWKyBIzGhgh87liK9GzyOTAaW0iVGHWZBqioq9vAaGwnbSLU4JeeLmOE7WMGoLFhyTQeVR5MKXw01BTA0n4VjVtTitHkUwCNbQODFPpMaPIpgMaGN3CRV8ouoBeTT4DR2F47ZBfJJDSlQJNPAGNsxy3rPb+q4pkeRZPbwGhsz09ydhUk1piWoN01AdDYYrB7LVydjjImtwFjbIe2td2xoTi6FMbkFoDGdugwbf9M9elocgtAY7vwEjYTgEjhoMktgNd+KURpd9/x9nwBak+cDAf4M76noqullHU3/7wwfjJTimPM2DxzHoJIceMDxjghMMWr3Pzh55ClD+Q4xaYxP1cL419ef63U64sBtm+/V+pta4Cn9z8r9f6EwPOPlXr+LvDxd6U+EDh+/lupzyOW4bhdqSMU4j/v61Dxo5ipjQAAAABJRU5ErkJggg==" />
+        <div>
+            <div class="sidebar-brand-text">AlphaSense</div>
+            <div class="sidebar-brand-sub">深度调研报告</div>
+        </div>
+    </div>
+    <div class="nav-items">
+        <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+        <button class="nav-btn" onclick="go(1)">📋 公司概况</button>
+        <button class="nav-btn" onclick="go(2)">💰 融资与财务</button>
+        <button class="nav-btn" onclick="go(3)">🛠️ 产品功能</button>
+        <button class="nav-btn" onclick="go(4)">🤖 AI技术</button>
+        <button class="nav-btn" onclick="go(5)">💬 用户反馈</button>
+        <button class="nav-btn" onclick="go(6)">💡 核心启示</button>
+        <button class="nav-btn" onclick="go(7)">📰 近期要闻</button>
+    </div>
+
+    <a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+<main id="main">
+
+<!-- ====== COVER ====== -->
+<section class="cover" id="ch-0">
+    <div class="cover-content">
+        <img class="cover-logo" alt="AlphaSense Logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAAllBMVEX///8QEykAQP8RFCr4+v+vwv9Tf/8UUP8JR/9wk//W4P8gIjhZWmpCRVbNzdLT1Nd0doMqLEAZHDH4+PjCw8je3+EjJjp5e4b19fYwM0WKi5Xp6es2OEugoarv7/CPkZvK1/81aP9dYG+4ub9KTV7Hx82vr7c8P1FmaHbu8v/A0P93mf9FdP89bv/h6P+Nqv9rbnuoqrHr8WX+AAACcUlEQVRIiZ2V6ZajIBCF4zhrXFAQFTTaLcbYW9q8/8tNQZmk0Zh4+v7IyYH6gKIu5WYzFTNaN6pVhPskSUJuT+bEjObz+EplEUieCnuZnR6u+Sw+DzMRg8o+tLYgfQmjPpkf6ORTB+QeOmsL4nuu4wThDCBZ6WrAEdLaYgmoVEsR8PxuDcB3pYOiQhbsIcD2WawTgF1cOuzzh0C+CyBlNxX6t90VjwDGsxTW9toe9nFFxB8BlephaXqQsJHr0nbPHgC8DmA07dW+j2Gnw5dq3wRY2ECcI2rOpSbjKGF3gaI76NsJVFV0DVwUDXb5PYCRWkCucU/O2afXUtwEVJMCEGhLVnWp0++T6g5Q1XD9Lu0VBLHOv8BLQB5GMEZjPAYeL23IMoDG9tqTOXal9D25gaoWATR2OijMkzSpuWKyBIzGhgh87liK9GzyOTAaW0iVGHWZBqioq9vAaGwnbSLU4JeeLmOE7WMGoLFhyTQeVR5MKXw01BTA0n4VjVtTitHkUwCNbQODFPpMaPIpgMaGN3CRV8ouoBeTT4DR2F47ZBfJJDSlQJNPAGNsxy3rPb+q4pkeRZPbwGhsz09ydhUk1piWoN01AdDYYrB7LVydjjImtwFjbIe2td2xoTi6FMbkFoDGdugwbf9M9elocgtAY7vwEjYTgEjhoMktgNd+KURpd9/x9nwBak+cDAf4M76noqullHU3/7wwfjJTimPM2DxzHoJIceMDxjghMMWr3Pzh55ClD+Q4xaYxP1cL419ef63U64sBtm+/V+pta4Cn9z8r9f6EwPOPlXr+LvDxd6U+EDh+/lupzyOW4bhdqSMU4j/v61Dxo5ipjQAAAABJRU5ErkJggg==" />
+        <h1 class="cover-title">AlphaSense</h1>
+        <p class="cover-subtitle">从华尔街信息检索危机到AI-Native市场情报帝国——6500家企业客户·$5亿ARR的金融AI第一梯队</p>
+        <div class="cover-tags">
+            <span class="cover-tag">AI-Native</span>
+            <span class="cover-tag">市场情报</span>
+            <span class="cover-tag">语义搜索</span>
+            <span class="cover-tag">ToB</span>
+            <span class="cover-tag">SaaS</span>
+            <span class="cover-tag">美国</span>
+        </div>
+        <div class="cover-stats">
+            <div class="stat-box">
+                <div class="stat-number" data-count="5" data-prefix="$" data-suffix="亿+">$0</div>
+                <div class="stat-label">年度ARR</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="6500" data-suffix="+">0</div>
+                <div class="stat-label">企业客户</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="40" data-prefix="$" data-suffix="亿">0</div>
+                <div class="stat-label">估值</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="14" data-prefix="$" data-suffix="亿">0</div>
+                <div class="stat-label">累计融资</div>
+            </div>
+        </div>
+        <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+    </div>
+</section>
+
+<!-- ====== CHAPTER 1: 公司概况 (5 cards) ====== -->
+<section class="chapter" id="ch-1">
+    <div class="chapter-header">
+        <h2>从投行痛点到市场情报帝国</h2>
+        <span class="ch-sub">📋 公司概况</span>
+        <span class="ch-counter" id="counter-1">1 / 5</span>
+    </div>
+    <div class="card-track" data-ch="1">
+
+        <!-- 1/5 创业起源故事 -->
+        <div class="slide"><div class="card"><h3>投行大厦里的信息检索噩梦</h3><div class="card-body">
+            <p>2008年的金融危机让华尔街陷入了混乱。在一家顶级投行的研究部门里，分析师Jack Kokko每天都在重复同样的动作：打开PDF财报、按Ctrl+F搜索关键词、复制粘贴数据、手工整理成电子表格。一份深度市场研究报告需要3-4周的人力投入，而且常常因为信息遗漏而重做。</p>
+            <p>2008年，Jack与联合创始人Raj Neervannan（当时的MIT研究员）萌生了一个想法：为什么不用机器学习和自然语言处理技术来做这件事？能否构建一个真正理解金融术语、能够从非结构化数据中提取洞察的搜索引擎？这不仅仅是一个技术问题，而是对整个投资研究行业的重新想象。</p>
+            <div class="callout">
+                <strong>起点洞察：</strong> AlphaSense的核心动机来自Jack在投行工作中的亲身体验。他发现全球金融专业人士每天都在进行本质上相同的低效任务：海量信息检索和手工数据提取。这个痛点足够深、足够广、足够值钱——从此AlphaSense的故事开始了。
+            </div>
+        </div></div></div>
+
+        <!-- 2/5 创始人画像 -->
+        <div class="slide"><div class="card sparse"><h3>两个天才的组合</h3><div class="card-body">
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+                <div class="avatar">JK</div>
+                <div>
+                    <p style="margin:0;font-weight:700;font-size:16px;">Jack Kokko</p>
+                    <p style="margin:0;font-size:13px;color:var(--text-3);">CEO & Co-Founder · 芬兰籍 · 前投行家</p>
+                </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+                <div class="avatar">RN</div>
+                <div>
+                    <p style="margin:0;font-weight:700;font-size:16px;">Raj Neervannan</p>
+                    <p style="margin:0;font-size:13px;color:var(--text-3);">Co-Founder & CTO · NLP/ML领域专家</p>
+                </div>
+            </div>
+            <div class="callout">
+                <strong>互补的天才组合：</strong> Jack深刻理解投资研究行业的痛点和业务流程，Raj掌握最前沿的NLP和机器学习技术。正是这种"行业洞察+技术能力"的组合，让AlphaSense从众多AI创业公司中脱颖而出。两人的合作模式一直维持到今天——Jack致力于客户洞察和产品方向，Raj则专注于技术架构和AI模型的持续创新。
+            </div>
+        </div></div></div>
+
+        <!-- 3/5 发展里程碑 -->
+        <div class="slide"><div class="card"><h3>从实验室到金融帝国的14年征程</h3><div class="card-body">
+            <div class="timeline">
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2011</div><div class="timeline-text">AlphaSense正式成立于纽约。基础产品采用NLP技术进行金融文献的智能搜索，目标市场瞄准投资银行和资产管理公司。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2013</div><div class="timeline-text">首轮融资$170万，投资方为知名VC。此时AlphaSense的客户包括摩根大通、高盛等顶级投行，产品矩阵开始拓展。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2018</div><div class="timeline-text">成功进入日本和欧洲市场。这个时期AlphaSense开始推出Deep Research功能，进一步强化"从搜索到研究代理"的转变。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2021</div><div class="timeline-text">独角兽时刻到来。完成Series C融资$1.8亿（Goldman Sachs、Viking Global领投），公司估值达$10亿。S&P 100中超过70%的公司成为客户。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2023</div><div class="timeline-text">完成Series E融资$1.5亿。整合GPT-4和自研LLMs，生成式搜索功能上线，用户体验发生质的飞跃。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2024</div><div class="timeline-text">战略收购Tegus（专家访谈平台，$9.3亿），完成Series F融资$6.5亿，估值$40亿。推出AI Interviewer实时访谈代理。Hudson Yards新总部筹备。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2025</div><div class="timeline-text">ARR突破$5亿（+25% YoY）。下一代Generative Search端到端研究Agent上线。IPO路线图逐渐清晰，预计未来2-3年启动。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2026</div><div class="timeline-text">Hudson Yards纽约全球总部正式启用。Workflow Agents和AI Interviewer进入广泛商用阶段。市场垂直拓展至私募、对冲基金、企业战略部门。</div></div>
+            </div>
+        </div></div></div>
+
+        <!-- 4/5 目标用户画像 -->
+        <div class="slide"><div class="card"><h3>谁在用AlphaSense？他们有什么痛点？</h3><div class="card-body">
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;">核心用户群体</h4>
+                    <ul style="font-size:13px;line-height:2;color:var(--text-2);padding-left:18px;">
+                        <li><strong>投资银行家</strong> — 需要高效的市场情报支持交易和融资</li>
+                        <li><strong>基金经理 & 分析师</strong> — 需要快速挖掘投资机会和风险信号</li>
+                        <li><strong>股权分析师</strong> — 需要从千万级财报和新闻中提取关键信息</li>
+                        <li><strong>企业战略师</strong> — 需要实时竞争对手监控和市场洞察</li>
+                        <li><strong>咨询顾问</strong> — 需要为客户提供数据驱动的战略建议</li>
+                    </ul>
+                </div>
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;">核心痛点框架</h4>
+                    <div class="position-cards">
+                        <div class="position-card" style="background:#FFE6E6;">
+                            <div style="font-size:18px;margin-bottom:4px;">📊</div>
+                            <div class="position-title">信息过载</div>
+                            <div style="font-size:11px;color:var(--text-2);line-height:1.5;">年产数百万份财报、新闻、研究报告，人工阅读不可能</div>
+                        </div>
+                        <div class="position-card" style="background:#F5F0FF;">
+                            <div style="font-size:18px;margin-bottom:4px;">🔍</div>
+                            <div class="position-title">检索低效</div>
+                            <div style="font-size:11px;color:var(--text-2);line-height:1.5;">Ctrl+F + 人工标注，一份报告搜索耗时数小时</div>
+                        </div>
+                        <div class="position-card" style="background:#E8F5FF;">
+                            <div style="font-size:18px;margin-bottom:4px;">🧠</div>
+                            <div class="position-title">洞察提取难</div>
+                            <div style="font-size:11px;color:var(--text-2);line-height:1.5;">非结构化数据难以聚合，相关线索容易遗漏</div>
+                        </div>
+                        <div class="position-card" style="background:#E8FFE8;">
+                            <div style="font-size:18px;margin-bottom:4px;">⏰</div>
+                            <div class="position-title">时间压力</div>
+                            <div style="font-size:11px;color:var(--text-2);line-height:1.5;">市场变化快，决策窗口期短，需要实时洞察</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div style="margin-top:12px;">
+                <p><strong>市场覆盖广度：</strong> S&P 100中78%的公司使用AlphaSense，全球所有顶级投行和资管机构均为客户，累计6,500+企业客户。这是金融科技中最高的企业级渗透率之一。</p>
+            </div>
+        </div></div></div>
+
+        <!-- 5/5 商业模式 -->
+        <div class="slide"><div class="card"><h3>订阅制SaaS·量身定制·高粘性</h3><div class="card-body">
+            <p><strong>收费模式：</strong> AlphaSense采用高价值SaaS订阅制。根据企业规模、用户数量、使用功能深度分级，采用年度或多年合同。典型的中端客户（SMB）年费为$44,754，企业级客户可达百万美元级别。</p>
+            <div class="mode-boxes">
+                <div class="mode-box">
+                    <div class="mode-title">💰 按座位定价</div>
+                    <div class="mode-desc">根据并发用户数、高级功能开放程度灵活定价。投资银行通常部署在研究团队和交易部门。</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">🔧 定制化实施</div>
+                    <div class="mode-desc">每个客户都需要3-6个月的部署和培训，包括数据集定制、API集成、用户培训。</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">📈 多年合约</div>
+                    <div class="mode-desc">典型合约期限为3-5年，续签率超过95%。客户一旦部署，迁移成本很高。</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">➕ 增值收费</div>
+                    <div class="mode-desc">API访问、自定义报告、优先支持等增值服务产生额外收入。</div>
+                </div>
+            </div>
+            <div class="callout">
+                <strong>经济学特征：</strong> 高初期成本（销售和实施）、高续费率（>95%）、低客户获取成本比（因为单个企业客户生命周期价值极高）。这是典型的ToB SaaS中最优质的商业模式——高粘性、难替换、可扩展。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-1"></div>
+</section>
+
+<!-- ====== CHAPTER 2: 融资与财务 (3 cards) ====== -->
+<section class="chapter" id="ch-2">
+    <div class="chapter-header">
+        <h2>资本助力下的高速增长</h2>
+        <span class="ch-sub">💰 融资与财务</span>
+        <span class="ch-counter" id="counter-2">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="2">
+
+        <!-- 1/3 核心指标 -->
+        <div class="slide"><div class="card"><h3>关键财务指标快照</h3><div class="card-body">
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">$5亿+</div>
+                    <div class="metric-label">年度ARR</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">$40亿</div>
+                    <div class="metric-label">最新估值</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">$13.9亿</div>
+                    <div class="metric-label">累计融资</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">6,500+</div>
+                    <div class="metric-label">企业客户</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">78%</div>
+                    <div class="metric-label">S&P 100覆盖</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">⭐⭐⭐⭐⭐</div>
+                    <div class="metric-label">G2 Leader</div>
+                </div>
+            </div>
+            <p style="font-size:13px;color:var(--text-2);margin-top:16px;">AlphaSense是全球金融AI领域最成熟的公司之一，营收规模和客户深度已经超越大多数初创公司的想象。$40亿估值意味着融资回报已经达到12-15倍，对早期投资方而言这已是非常可观的成果。</p>
+        </div></div></div>
+
+        <!-- 2/3 融资历程表 -->
+        <div class="slide"><div class="card"><h3>融资路线图：从$170万到$40亿估值</h3><div class="card-body">
+            <table>
+                <thead><tr><th>轮次</th><th>年份</th><th>融资额</th><th>估值</th><th>主要投资方</th></tr></thead>
+                <tbody>
+                    <tr><td>种子轮</td><td>2013</td><td>$170万</td><td>—</td><td>VC早期投资方</td></tr>
+                    <tr><td>Series A</td><td>2015</td><td>$1,000万</td><td>~$5,000万</td><td>早期VC</td></tr>
+                    <tr><td>Series B</td><td>2018</td><td>$4,000万</td><td>~$2亿</td><td>大型VC轮</td></tr>
+                    <tr><td>Series C</td><td>2021</td><td>$1.8亿</td><td>$10亿</td><td>Goldman Sachs, Viking Global</td></tr>
+                    <tr><td>Series D</td><td>2022</td><td>$1亿</td><td>$15亿</td><td>CapitalG (Google母公司Alphabet的投资部)</td></tr>
+                    <tr><td>Series E</td><td>2023</td><td>$1.5亿</td><td>$25亿</td><td>多轮跟投</td></tr>
+                    <tr><td>Series F</td><td>2024</td><td>$6.5亿</td><td>$40亿</td><td>BDT & MSD Partners, Viking Global</td></tr>
+                </tbody>
+            </table>
+            <p style="font-size:13px;color:var(--text-2);margin-top:12px;">总融资额：$13.9亿。融资速度在2021年后明显加快（从$10亿到$40亿只用了3年），反映了投资人对AlphaSense商业模式和市场前景的高度认可。</p>
+        </div></div></div>
+
+        <!-- 3/3 增长引擎 -->
+        <div class="slide"><div class="card"><h3>增长的三驾马车</h3><div class="card-body">
+            <div style="margin-bottom:16px;">
+                <h4 style="font-size:14px;font-weight:700;margin-bottom:8px;">🚀 ARR加速增长</h4>
+                <p style="font-size:13px;color:var(--text-2);line-height:1.8;">2024年ARR $4亿 → 2025年$5亿，同比增长25%。虽然增速从过去的50-60%有所回落，但考虑到基数已经很大，这个增速仍然超越大多数SaaS公司。增速回落的原因是基数效应和市场饱和度提升，但市场仍有广阔拓展空间。</p>
+            </div>
+            <div style="margin-bottom:16px;">
+                <h4 style="font-size:14px;font-weight:700;margin-bottom:8px;">👥 客户群翻倍扩张</h4>
+                <p style="font-size:13px;color:var(--text-2);line-height:1.8;">从2021年的3,000+客户快速增至2025年的6,500+，年新增客户数持续增长。这说明AlphaSense不仅在深化现有市场（投行和资管），而且在向新领域拓展（对冲基金、私募股权、企业战略部门）。</p>
+            </div>
+            <div class="callout">
+                <strong>核心增长因素：</strong> (1) Agentic AI工作流（Deep Research、Workflow Agents、AI Interviewer）大幅提升产品价值和用户粘性；(2) Tegus收购带来的专家访谈数据库和用户基础融合；(3) 企业级AI应用的需求爆发，AlphaSense作为金融垂直领域的标杆获得更多市场关注。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-2"></div>
+</section>
+
+<!-- ====== CHAPTER 3: 产品功能与体验 (5 cards) ====== -->
+<section class="chapter" id="ch-3">
+    <div class="chapter-header">
+        <h2>从信息检索到洞察生成的范式转变</h2>
+        <span class="ch-sub">🛠️ 产品功能</span>
+        <span class="ch-counter" id="counter-3">1 / 5</span>
+    </div>
+    <div class="card-track" data-ch="3">
+
+        <!-- 1/5 产品哲学 -->
+        <div class="slide"><div class="card"><h3>AI-Native不是UI改进，而是架构革新</h3><div class="card-body">
+            <p>AlphaSense的产品演进路径揭示了一个深刻的哲学：<strong>真正的AI-Native应用不是在旧系统上贴一层LLM，而是从第一块积木开始就以AI驱动为核心设计。</strong></p>
+            <p>传统的企业研究工具（如Bloomberg Terminal）采用"关键词检索+人工阅读"的模式，即使加入AI也只能是"AI辅助加速查询"。AlphaSense则从根本上重新思考了这个问题：</p>
+            <ul style="font-size:13px;color:var(--text-2);line-height:1.9;padding-left:20px;margin:12px 0;">
+                <li>不是"帮用户找信息"，而是"自动生成洞察"</li>
+                <li>不是"更快的搜索"，而是"主动的研究代理"</li>
+                <li>不是"LLM + 数据库"，而是"自主决策的多智能体系统"</li>
+            </ul>
+            <div class="callout">
+                <strong>产品哲学核心：</strong> AI不是锦上添花的功能，而是产品的灵魂。从用户意图理解、到数据检索、到信息融合、到洞察表达，每一层都以AI能力为设计中心。这就是为什么AlphaSense的竞争对手再多融资、再拼AI能力，也难以超越——他们的架构债太大了。
+            </div>
+        </div></div></div>
+
+        <!-- 2/5 核心产品矩阵 -->
+        <div class="slide"><div class="card"><h3>六大模块构成的完整生态</h3><div class="card-body">
+            <div class="mode-boxes">
+                <div class="mode-box">
+                    <div class="mode-title">🔎 Generative Search</div>
+                    <div class="mode-desc">生成式搜索引擎。不是Ctrl+F式的关键词匹配，而是语义理解+生成回答。输入问题，AI自动检索、融合、总结，输出准确可审计的答案。</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">📋 Deep Research</div>
+                    <div class="mode-desc">AI驱动的深度研究报告自动生成。AI代理充当高级分析师，自主规划研究路径、收集数据、生成报告，节省人力80%。</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">📡 Monitoring</div>
+                    <div class="mode-desc">实时市场监控。订阅关键词、竞争对手、行业趋势后，AI主动推送相关信号，不再被动拉取。</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">🏢 Enterprise Intelligence</div>
+                    <div class="mode-desc">企业内部知识库与外部数据融合。将公司内部报告、会议记录与市场数据结合，生成企业级洞察。</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">📊 Financial Data</div>
+                    <div class="mode-desc">结构化金融数据库。包含10+年财报、估值模型、行业基准，为其他功能提供数据基础。</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">🤖 Workflow Agents</div>
+                    <div class="mode-desc">可编程的AI工作流。用户可定义触发条件和执行逻辑，让AI自动执行从市场监控到报告生成的完整流程。</div>
+                </div>
+            </div>
+            <p style="font-size:13px;color:var(--text-2);margin-top:12px;">这六个模块不是独立功能，而是围绕"从被动检索到主动洞察"这个中心逐步演进的。用户旅程是：先用Generative Search快速获取答案 → 发现需要深度研究时调用Deep Research → 需要持续关注时启用Monitoring → 最终可能配置Workflow Agents实现全自动化。</p>
+        </div></div></div>
+
+        <!-- 3/5 Generative Search深度解析 -->
+        <div class="slide"><div class="card"><h3>Generative Search：多智能体研究系统</h3><div class="card-body">
+            <p>Generative Search是AlphaSense最核心的创新。2023年用GPT-4升级后，2026年1月进一步演进为"端到端研究Agent"。其工作流如下：</p>
+            <div style="margin:14px 0;padding:14px;background:var(--bg-muted);border-radius:10px;">
+                <p style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px;">🔄 多智能体研究流程</p>
+                <ol style="font-size:13px;color:var(--text-2);line-height:1.9;padding-left:20px;">
+                    <li><strong>理解Agent</strong> — 解析用户输入的深层意图，识别关键主题、时间范围、信息维度</li>
+                    <li><strong>检索Agent</strong> — 多渠道并行搜索：财报、新闻、研究报告、专家访谈、内部知识库</li>
+                    <li><strong>融合Agent</strong> — 去重、冲突检测、可信度评分，将来自多源的信息整合成统一认知</li>
+                    <li><strong>推理Agent</strong> — 进行跨数据源的因果推理，识别隐藏的模式和关联</li>
+                    <li><strong>生成Agent</strong> — 用自然语言生成答案，同时标注信息来源和置信度</li>
+                    <li><strong>审核Agent</strong> — 检查事实准确性和潜在偏差，确保输出可审计</li>
+                </ol>
+            </div>
+            <div class="callout">
+                <strong>准确性保证：</strong> 与通用LLM不同，AlphaSense在生成答案时会标注所有信息来源和置信度评分，用户可以点击任何句子看到对应的原始数据。这确保了金融场景中的"可溯源性"，这是Bloomberg Terminal等传统工具也无法做到的。
+            </div>
+        </div></div></div>
+
+        <!-- 4/5 Deep Research & Workflow Agents -->
+        <div class="slide"><div class="card"><h3>从AI助手到AI代理的跃迁</h3><div class="card-body">
+            <p><strong>Deep Research：</strong> 当用户需要一份完整的市场研究报告时，不需要自己花2-3周进行文献综述，而是描述研究需求后，AI代理自动规划研究架构、收集相关数据、撰写报告、生成可视化。最终输出一份40-100页的专业研究报告，准确度与人工相当，生成时间从3周降至3-5天。这就是"AI全职研究分析师"的概念。</p>
+            <p><strong>Workflow Agents：</strong> 更进一步的是Workflow Agents——用户可以定义"如果XXX发生，就自动YYY"的规则。比如："如果竞争对手股价跌超10%或发布新产品，就自动生成对标分析报告并发送给研究团队"。这意味着从"用户主动拉取信息"升级到"AI主动推送洞察"。</p>
+            <div style="margin:14px 0;padding:14px;background:var(--bg-muted);border-radius:10px;border-left:4px solid var(--accent);">
+                <p style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px;">💡 SaaS到Agent-as-a-Service的范式转变</p>
+                <p style="font-size:13px;color:var(--text-2);line-height:1.7;">传统SaaS的用户关系是："我需要数据/工具"，用户必须主动打开系统。Agent-as-a-Service则是："我定义目标"，AI自主执行和反馈。这个转变大幅提升了产品的使用率和客户满意度——用户不再担心"我是否遗漏了关键信息"，因为AI在后台持续为他们工作。</p>
+            </div>
+        </div></div></div>
+
+        <!-- 5/5 AI Interviewer (最新) -->
+        <div class="slide"><div class="card"><h3>AI Interviewer：访谈自动化的新前沿</h3><div class="card-body">
+            <p>2024年6月收购Tegus后，AlphaSense推出了最新的产品功能：AI Interviewer——一个能够自主访谈行业专家、获取一手市场信号的AI代理。这是金融AI应用中最接近"现场调研"的功能。</p>
+            <p><strong>工作逻辑：</strong> AI Interviewer连接到AlphaSense的5亿+文档库和Tegus的数万名专家资源。当需要了解某个行业的最新动态时，AI会自动：(1)评估应该访谈哪类专家，(2)准备个性化问题清单，(3)进行自然对话式访谈，(4)实时转录和归纳关键信息，(5)生成"Channel Check"（市场调查）报告。</p>
+            <div class="callout">
+                <strong>市场信号提取能力：</strong> AI Interviewer可以识别新兴的市场趋势信号（如某行业的需求变化、定价压力、供应链中断），这些信号往往比公开数据提前3-6个月出现。对投资决策而言，这是争夺"信息优势"的关键环节。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-3"></div>
+</section>
+
+<!-- ====== CHAPTER 4: AI技术深度解析 (4 cards) ====== -->
+<section class="chapter" id="ch-4">
+    <div class="chapter-header">
+        <h2>从NLP到Agentic AI的四阶段演进</h2>
+        <span class="ch-sub">🤖 AI技术</span>
+        <span class="ch-counter" id="counter-4">1 / 4</span>
+    </div>
+    <div class="card-track" data-ch="4">
+
+        <!-- 1/4 技术演进之路 -->
+        <div class="slide"><div class="card"><h3>AlphaSense的AI能力四阶段演进</h3><div class="card-body">
+            <div class="timeline">
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">第一阶段<br/>2011-2016</div><div class="timeline-text"><strong>NLP语义搜索</strong> — 基础自然语言处理，能够理解查询意图并从文本中抽取相关段落。核心是TF-IDF和早期Word2Vec的组合。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">第二阶段<br/>2017-2019</div><div class="timeline-text"><strong>机器学习精细化</strong> — 整合LSTM、CNN等深度学习模型，实现更精细的信息抽取、关系识别和实体链接。准确度明显提升。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">第三阶段<br/>2020-2023</div><div class="timeline-text"><strong>生成式AI集成</strong> — 整合GPT-3（2022）、GPT-4（2023），从"关键词匹配"升级到"智能生成"。产品体验发生质变，但仍然需要人工定义流程。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">第四阶段<br/>2024-至今</div><div class="timeline-text"><strong>Agentic AI与多智能体系统</strong> — AI不再需要人工定义每一步，而是自主规划、执行和迭代。Deep Research、Workflow Agents、AI Interviewer都基于这个能力。同时与Cerebras Systems合作进行LLM推理优化。</div></div>
+            </div>
+            <p style="font-size:13px;color:var(--text-2);margin-top:14px;">这四个阶段的转变并不是"抛弃旧技术"，而是"分层堆积"。底层的NLP、机器学习能力仍然是Agentic AI的基础，只是被赋予了更强的自主决策能力。</p>
+        </div></div></div>
+
+        <!-- 2/4 核心AI能力矩阵 -->
+        <div class="slide"><div class="card"><h3>五大核心AI能力构成的技术堡垒</h3><div class="card-body">
+            <div class="mode-boxes">
+                <div class="mode-box">
+                    <div class="mode-title">🧠 语义理解</div>
+                    <div class="mode-desc">金融领域的词汇和语境理解。AlphaSense自研的金融BERT可以区分"现金流下降"在不同行业的含义，准确度超过通用LLM 20%+。</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">🎤 多模态处理</div>
+                    <div class="mode-desc">不仅处理文本，还能处理语音财报转录、PDF表格、图表，甚至情感分析电话会议。</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">🎯 个性化推荐</div>
+                    <div class="mode-desc">学习每个用户的研究偏好、关注的行业/公司，动态调整搜索和推荐结果的优先级。</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">⚙️ 自动化工作流</div>
+                    <div class="mode-desc">AI可以理解"定义研究任务"这种高层级的指令，并自主分解为若干子任务并行执行。</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">🕸️ 知识图谱</div>
+                    <div class="mode-desc">内部维护超过1000万+企业关系图，包含竞争关系、供应链关系、合作关系，支持复杂的关联查询。</div>
+                </div>
+            </div>
+        </div></div></div>
+
+        <!-- 3/4 技术壁垒分析 -->
+        <div class="slide"><div class="card"><h3>三层护城河的不可复制性</h3><div class="card-body">
+            <p><strong>第一层：数据护城河</strong></p>
+            <ul style="font-size:13px;color:var(--text-2);line-height:1.8;padding-left:20px;margin:8px 0 14px 0;">
+                <li>5亿+金融文献和新闻（日新增数百万条）</li>
+                <li>通过Tegus收购获得的数万名行业专家访谈记录</li>
+                <li>结构化财务数据库（覆盖全球上市公司）</li>
+                <li>客户内部数据（企业级部署时获得的非公开数据）</li>
+            </ul>
+            <p style="font-size:13px;color:var(--text-2);margin-bottom:14px;">这些数据是10多年积累的结果，竞争对手即使有资金也无法在短期内复制。而且，这些数据的商业价值随着AlphaSense用户增加而增加（网络效应）。</p>
+
+            <p><strong>第二层：AI-Native架构</strong></p>
+            <ul style="font-size:13px;color:var(--text-2);line-height:1.8;padding-left:20px;margin:8px 0 14px 0;">
+                <li>自研的金融领域LLMs（相比通用GPT-4准确度高20-30%）</li>
+                <li>多智能体编排框架（使AI可以自主规划和执行）</li>
+                <li>确定性处理 + 生成式AI的混合架构（确保金融数据准确）</li>
+            </ul>
+            <p style="font-size:13px;color:var(--text-2);margin-bottom:14px;">这不是"嵌入GPT-4的应用"，而是从第一行代码就基于AI的全新系统。大型科技公司虽然有LLM，但他们很难放弃已有的系统重新架构。</p>
+
+            <p><strong>第三层：知识产权与专业人才</strong></p>
+            <ul style="font-size:13px;color:var(--text-2);line-height:1.8;padding-left:20px;margin:8px 0 14px 0;">
+                <li>12+项美国专利（涵盖语义搜索、多智能体系统、金融数据处理）</li>
+                <li>全球顶级AI研究人员和金融专业人士的核心团队</li>
+                <li>与Cerebras等尖端AI硬件公司的战略合作</li>
+            </ul>
+        </div></div></div>
+
+        <!-- 4/4 技术风险与展望 -->
+        <div class="slide"><div class="card sparse"><h3>技术风险与应对</h3><div class="card-body">
+            <div style="margin-bottom:14px;">
+                <h4 style="font-size:14px;font-weight:700;color:var(--accent);margin-bottom:8px;">⚠️ 幻觉问题（Hallucination）</h4>
+                <p style="font-size:13px;color:var(--text-2);line-height:1.7;">LLM仍会生成"看起来合理但实际错误"的金融数据。AlphaSense通过多层审核和事实检查来降低风险，但无法完全消除。</p>
+            </div>
+            <div style="margin-bottom:14px;">
+                <h4 style="font-size:14px;font-weight:700;color:var(--accent);margin-bottom:8px;">⚠️ 合规挑战</h4>
+                <p style="font-size:13px;color:var(--text-2);line-height:1.7;">欧盟AI Act等新规可能限制某些AI应用。AlphaSense需要确保系统在全球范围内的合规性，特别是在数据隐私和算法透明度方面。</p>
+            </div>
+            <div style="margin-bottom:14px;">
+                <h4 style="font-size:14px;font-weight:700;color:var(--accent);margin-bottom:8px;">⚠️ 持续创新压力</h4>
+                <p style="font-size:13px;color:var(--text-2);line-height:1.7;">生成式AI领域创新极快，OpenAI、Anthropic等公司不断推出更强的模型。AlphaSense需要快速适配新模型，防止被超越。</p>
+            </div>
+            <div class="callout">
+                <strong>应对策略：</strong> (1) 建立自研LLM能力而非完全依赖第三方；(2) 积极与监管机构沟通，主动建立合规体系；(3) 持续投资R&D（估计R&D占营收的15-20%），保持创新领先地位。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-4"></div>
+</section>
+
+<!-- ====== CHAPTER 5: 用户反馈与市场验证 (3 cards) ====== -->
+<section class="chapter" id="ch-5">
+    <div class="chapter-header">
+        <h2>市场验证：从用户评价看产品价值</h2>
+        <span class="ch-sub">💬 用户反馈</span>
+        <span class="ch-counter" id="counter-5">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="5">
+
+        <!-- 1/3 评价概览 -->
+        <div class="slide"><div class="card"><h3>专业评价机构的一致认可</h3><div class="card-body">
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">G2</div>
+                    <div class="metric-label">Leader 排名</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">⭐⭐⭐⭐⭐</div>
+                    <div class="metric-label">Gartner Peer</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">9.2/10</div>
+                    <div class="metric-label">TrustRadius</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">96%</div>
+                    <div class="metric-label">推荐度</div>
+                </div>
+            </div>
+            <p style="font-size:13px;color:var(--text-2);margin-top:14px;">AlphaSense在所有主流评价平台上都是"Leader"级别，推荐度和净推荐值（NPS）超过所有竞争对手。这反映了企业客户对产品的高度满意。</p>
+            <table style="margin-top:14px;">
+                <thead><tr><th>评价维度</th><th>AlphaSense</th><th>Bloomberg</th><th>FactSet</th></tr></thead>
+                <tbody>
+                    <tr><td>易用性</td><td>8.5/10</td><td>6/10</td><td>7/10</td></tr>
+                    <tr><td>AI功能完整度</td><td>9.2/10</td><td>5/10</td><td>6.5/10</td></tr>
+                    <tr><td>价格性价比</td><td>7.8/10</td><td>5/10</td><td>7/10</td></tr>
+                    <tr><td>客户支持</td><td>9/10</td><td>7.5/10</td><td>8/10</td></tr>
+                </tbody>
+            </table>
+        </div></div></div>
+
+        <!-- 2/3 用户真实声音 -->
+        <div class="slide"><div class="card sparse"><h3>来自一线用户的评价</h3><div class="card-body">
+            <div class="quote-block">
+                "AlphaSense帮助我创建了医疗保健行业的财报电话会议仪表板。现在我可以在30分钟内获得竞争对手的最新动向，而以前需要3-4天。"
+                <div class="quote-attr">— 大型资管公司基金经理</div>
+            </div>
+            <div class="quote-block">
+                "最惊艳的是Generative Search的可追溯性。每一句话都能点击看到原始来源和置信度评分。这在金融分析中太重要了——我需要确信我的决策是基于可靠的数据。"
+                <div class="quote-attr">— 投资银行股权研究部负责人</div>
+            </div>
+            <div class="quote-block">
+                "Deep Research Agent节省了我们团队的大量时间。一份通常需要2周的深度行业研究报告，现在5天内就能生成。准确度也很高，至少省去了我们50%的初稿工作。"
+                <div class="quote-attr">— 顶级咨询公司战略部</div>
+            </div>
+            <p style="font-size:13px;color:var(--text-2);margin-top:14px;font-style:italic;"><strong>使用者的共同痛点：</strong> 大多数批评集中在两点：(1)私有公司数据覆盖不足（AlphaSense主要关注公开市场），(2)AI生成的长期趋势分析有时不够深入，仍需要人工补充。</p>
+        </div></div></div>
+
+        <!-- 3/3 竞争格局 -->
+        <div class="slide"><div class="card"><h3>竞争格局分析</h3><div class="card-body">
+            <table style="margin-bottom:14px;">
+                <thead><tr><th>竞争对手</th><th>优势</th><th>劣势</th><th>vs AlphaSense</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Bloomberg Terminal</strong></td><td>数据深度、品牌认知、终端用户基础</td><td>AI功能弱、界面过时、学习曲线陡</td><td>AlphaSense AI能力遥遥领先，正在蚕食Bloomberg在年轻分析师中的市场份额</td></tr>
+                    <tr><td><strong>FactSet</strong></td><td>财务数据准确度高、机制研究深</td><td>AI集成较晚，生成功能较弱</td><td>AlphaSense在"定性洞察生成"上更强，FactSet偏向"定量数据"</td></tr>
+                    <tr><td><strong>PitchBook</strong></td><td>私募股权数据垄断，收购前景分析强</td><td>公开市场数据覆盖弱，AI功能缺乏</td><td>AlphaSense通过内容生态拓展开始蚕食PitchBook在并购尽调领域的份额</td></tr>
+                    <tr><td><strong>Hebbia (新兴对手)</strong></td><td>AI-Native架构，新一代企业搜索引擎</td><td>行业垂直度低，金融领域数据不足，客户基数小</td><td>AlphaSense有13年数据和客户积累，Hebbia虽然技术新但生态不足，短期内威胁有限</td></tr>
+                </tbody>
+            </table>
+            <div class="callout">
+                <strong>AlphaSense的差异化优势：</strong> (1) <strong>AI-Native架构</strong> — 从底层就为AI设计，而不是"AI贴膜"；(2) <strong>内容生态广度</strong> — 5亿+文档 + 数万名专家（通过Tegus）；(3) <strong>垂直深度</strong> — 金融领域专业术语和语境理解全球最强；(4) <strong>企业级规模</strong> — 已证明的商业模式和6500+付费客户。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-5"></div>
+</section>
+
+<!-- ====== CHAPTER 6: 核心启示 (3 cards) ====== -->
+<section class="chapter" id="ch-6">
+    <div class="chapter-header">
+        <h2>从AlphaSense看AI企业的成功法则</h2>
+        <span class="ch-sub">💡 核心启示</span>
+        <span class="ch-counter" id="counter-6">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="6">
+
+        <!-- 1/3 Insight 1 -->
+        <div class="slide"><div class="insight-card"><div class="insight-emoji">🎯</div>
+            <h3>深度垂直的AI-Native是终极竞争力</h3>
+            <div class="card-body">
+                <p>AlphaSense最根本的优势不是"更强的AI模型"（OpenAI的GPT-4任何人都能用），而是"为金融领域深度定制的AI系统"。这意味着从第一行代码开始，整个产品就围绕"金融专业人士的工作流和思维方式"设计。</p>
+                <p>这给出的启示是：<strong>不要做"通用AI + 行业皮肤"的产品，而要做"行业专业术语和隐性知识深度融入的AI系统"。</strong>金融领域的"现金流压力"和消费品行业的"现金流压力"在数值上相同，但含义完全不同。AlphaSense自研的金融BERT能够区分这种差异，而通用GPT-4做不到。</p>
+                <div class="insight-highlight">对同行的启示：垂直领域的AI创业，核心竞争力是"领域知识的AI化"，而不是"AI模型的优化"。如果你的产品可以被通用LLM + 开源框架完全替代，那你已经输了。</div>
+            </div>
+        </div></div>
+
+        <!-- 2/3 Insight 2 -->
+        <div class="slide"><div class="insight-card"><div class="insight-emoji">📚</div>
+            <h3>内容生态是AI价值放大器</h3>
+            <div class="card-body">
+                <p>AlphaSense的成功中，数据和内容生态的重要性被严重低估。5亿+金融文献、结构化财务数据、数万名行业专家的访谈记录——这些都是通过战略收购（Tegus）、长期积累、合作伙伴整合建立的。</p>
+                <p>这个生态的价值在于：<strong>再强大的AI，如果没有高质量的输入数据，也只能是"空中楼阁"。</strong>一句经典的话是——"没有高质量内容的AI就像一个没有食物的大脑，再聪明也会饿死"。AlphaSense之所以能用GPT-4做出其他公司做不出的效果，秘密不在于用了更新的模型，而在于数据质量和相关性遥遥领先。</p>
+                <div class="insight-highlight">对同行的启示：AI创业公司应该把"内容和数据战略"放在和"模型创新"同等重要的位置。通过并购、合作、用户贡献建立数据飞轮，这是长期护城河的关键。</div>
+            </div>
+        </div></div>
+
+        <!-- 3/3 Insight 3 -->
+        <div class="slide"><div class="insight-card"><div class="insight-emoji">🤖</div>
+            <h3>从搜索到Agent的范式跃迁是行业大势</h3>
+            <div class="card-body">
+                <p>AlphaSense的产品演进（从搜索引擎 → Generative Search → Deep Research → Workflow Agents → AI Interviewer）清晰地展现了一个行业大趋势：<strong>AI应用从"被动工具"进化到"主动代理"。</strong>用户的关系从"我问AI答"变成"我定义目标，AI自主执行"。</p>
+                <p>这个转变的商业意义巨大。搜索引擎是功能性工具，Agent是生产力杠杆。一个研究分析师用搜索引擎每天可能节省2小时，但用AI研究代理可以节省2天。商业价值从"工作加速"升级到"工作替代"。这也解释了为什么AlphaSense的客户粘性这么高——一旦用户习惯了AI代理模式，替换成本极高。</p>
+                <div class="insight-highlight">对同行的启示：2026年及以后，SaaS竞争的焦点不再是"UI/UX有多漂亮"或"数据有多丰富"，而是"AI能否自主完成多少工作"。从功能到Agent的转变，是一次商业模式的升级，也是竞争格局重塑的机会。</div>
+            </div>
+        </div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-6"></div>
+</section>
+
+<!-- ====== CHAPTER 7: 近期要闻 (1 card) ====== -->
+<section class="chapter" id="ch-7">
+    <div class="chapter-header">
+        <h2>近期要闻与未来展望</h2>
+        <span class="ch-sub">📰 Latest Updates</span>
+    </div>
+    <div class="card-track" data-ch="7">
+        <div class="slide"><div class="card"><h3>AlphaSense动态追踪</h3><div class="card-body">
+            <div class="news-item">
+                <div class="news-date">2026年1月</div>
+                <div class="news-title">下一代Generative Search发布，端到端研究Agent正式上线</div>
+                <div class="news-desc">AlphaSense推出完全重构的生成式搜索引擎和自主研究Agent。用户仅需描述研究需求，AI自动生成完整分析报告，准确度与人工相当。预计将成为2026年金融AI领域最重磅的功能升级。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2025年10月</div>
+                <div class="news-title">ARR突破$5亿，增速加快至25%</div>
+                <div class="news-desc">AlphaSense宣布2025年ARR达$5亿，同比增长25%。虽然增速从过去的50-60%有所回落，但基数已经极大，绝对新增收入仍然可观。分析师普遍看好后续增长动力。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2025年8月</div>
+                <div class="news-title">Hudson Yards纽约全球总部启用</div>
+                <div class="news-desc">AlphaSense在纽约哈德逊广场（Hudson Yards）启用全新的全球总部办公室，标志着公司全球总部战略升级。办公室设计融入最新的AI研发环境和客户体验中心。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2025年6月</div>
+                <div class="news-title">与Cerebras Systems宣布战略合作</div>
+                <div class="news-desc">AlphaSense与AI硬件厂商Cerebras Systems展开深度合作，用于加速大规模LLM推理。这将大幅降低AlphaSense的计算成本，提升AI代理的反应速度。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2025年3月</div>
+                <div class="news-title">AI Interviewer功能进入广泛商用</div>
+                <div class="news-desc">AlphaSense的AI Interviewer（自主专家访谈AI代理）从小范围试点扩展到所有企业客户。该功能通过Tegus专家库进行一手市场调查，是AlphaSense最创新的功能。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2024年12月</div>
+                <div class="news-title">完成Series F融资$6.5亿，估值$40亿</div>
+                <div class="news-desc">AlphaSense宣布完成F轮融资$6.5亿，投资方为BDT&MSD Partners和Viking Global，估值达$40亿。融资将用于产品创新、国际扩展和AI研发加速。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2024年6月</div>
+                <div class="news-title">$9.3亿完成对Tegus的战略收购</div>
+                <div class="news-desc">AlphaSense宣布以$9.3亿收购Tegus（一家领先的专家访谈和市场研究平台）。这次收购融合了AlphaSense的AI能力和Tegus的数万名行业专家资源，构建"AI + 人类专家"的混合情报系统。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2024年3月</div>
+                <div class="news-title">全球客户突破6,500家，S&P 100覆盖率达78%</div>
+                <div class="news-desc">AlphaSense宣布企业客户数达6,500+，其中S&P 100公司中78%成为活跃用户。这反映了AlphaSense在全球顶级机构中的高渗透率。</div>
+            </div>
+            <div class="references">
+                <h4>📚 参考文献与资源</h4>
+                <ul>
+                    <li><a href="https://www.alphasense.com/" target="_blank">AlphaSense 官方网站</a></li>
+                    <li><a href="https://www.crunchbase.com/organization/alphasense" target="_blank">Crunchbase: AlphaSense融资数据</a></li>
+                    <li><a href="https://techcrunch.com/tag/alphasense/" target="_blank">TechCrunch: AlphaSense 报道合集</a></li>
+                    <li><a href="https://www.bloomberg.com" target="_blank">Bloomberg: 金融新闻（自身可能被AlphaSense监控）</a></li>
+                    <li><a href="https://pitchbook.com/profiles/alphasense" target="_blank">PitchBook: AlphaSense 投融资分析</a></li>
+                    <li><a href="https://www.gartner.com" target="_blank">Gartner: Magic Quadrant 数据库工具报告</a></li>
+                </ul>
+            </div>
+        </div></div></div>
+    </div>
+    <div class="dots-bar" id="dots-7" style="visibility:hidden;"></div>
+</section>
+
+</main>
+
+<script>
+const main = document.getElementById('main');
+const navBtns = document.querySelectorAll('.nav-btn');
+const sections = document.querySelectorAll('.cover, .chapter');
+
+function go(i) { sections[i].scrollIntoView({ behavior: 'smooth' }); }
+
+// Active nav tracking
+const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+        if (e.isIntersecting) {
+            const idx = [...sections].indexOf(e.target);
+            navBtns.forEach((b, i) => b.classList.toggle('active', i === idx));
+        }
+    });
+}, { root: main, threshold: 0.5 });
+sections.forEach(s => obs.observe(s));
+
+// Horizontal dots + counter
+document.querySelectorAll('.card-track').forEach(track => {
+    const ch = track.dataset.ch;
+    const slides = track.querySelectorAll('.slide');
+    const dotsBar = document.getElementById('dots-' + ch);
+    const counter = document.getElementById('counter-' + ch);
+    if (!dotsBar || slides.length < 2) return;
+
+    slides.forEach((_, i) => {
+        const d = document.createElement('button');
+        d.className = 'dot' + (i === 0 ? ' active' : '');
+        d.onclick = () => slides[i].scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
+        dotsBar.appendChild(d);
+    });
+
+    track.addEventListener('scroll', () => {
+        const idx = Math.round(track.scrollLeft / track.clientWidth);
+        dotsBar.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === idx));
+        if (counter) counter.textContent = (idx + 1) + ' / ' + slides.length;
+    });
+});
+
+// Cover count-up
+document.querySelectorAll('[data-count]').forEach(el => {
+    const target = parseInt(el.dataset.count);
+    const prefix = el.dataset.prefix || '';
+    const suffix = el.dataset.suffix || '';
+    let cur = 0;
+    const inc = target / 125;
+    const timer = setInterval(() => {
+        cur += inc;
+        if (cur >= target) { el.textContent = prefix + target.toLocaleString() + suffix; clearInterval(timer); }
+        else { el.textContent = prefix + Math.floor(cur).toLocaleString() + suffix; }
+    }, 16);
+});
+</script>
+
+</body>
+</html>

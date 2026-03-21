@@ -1,0 +1,56 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="95" fill="#FFFFFF" stroke="#2E5090" stroke-width="2"/>
+
+  <!-- Primary gradient definition for icon -->
+  <defs>
+    <linearGradient id="fiscalGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2E5090;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4A8FD9;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#F39C12;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#E67E22;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Main icon: Financial chart/data visualization concept -->
+  <!-- Represents: Growth, Data, Analysis -->
+
+  <!-- Left bar chart element -->
+  <rect x="45" y="95" width="12" height="35" fill="url(#fiscalGradient)" rx="2"/>
+  <rect x="45" y="80" width="12" height="20" fill="#4A8FD9" rx="2" opacity="0.7"/>
+
+  <!-- Center bar chart element (highest) -->
+  <rect x="65" y="70" width="12" height="60" fill="url(#fiscalGradient)" rx="2"/>
+  <rect x="65" y="55" width="12" height="20" fill="#4A8FD9" rx="2" opacity="0.7"/>
+
+  <!-- Right bar chart element -->
+  <rect x="85" y="85" width="12" height="45" fill="#4A8FD9" rx="2"/>
+  <rect x="85" y="70" width="12" height="20" fill="#2E5090" rx="2" opacity="0.7"/>
+
+  <!-- Upward trend line (data growth indicator) -->
+  <path d="M 108 115 L 125 95 L 142 70"
+        stroke="url(#accentGradient)"
+        stroke-width="3"
+        fill="none"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+
+  <!-- Accent dot on trend line -->
+  <circle cx="142" cy="70" r="4" fill="url(#accentGradient)"/>
+
+  <!-- Subtle grid pattern (data infrastructure concept) -->
+  <g opacity="0.15" stroke="#2E5090" stroke-width="0.5">
+    <line x1="35" y1="130" x2="165" y2="130"/>
+    <line x1="35" y1="145" x2="165" y2="145"/>
+    <line x1="40" y1="50" x2="40" y2="150"/>
+    <line x1="55" y1="50" x2="55" y2="150"/>
+  </g>
+
+  <!-- Company name text positioning guide -->
+  <!-- (Text will be added via CSS in HTML) -->
+
+  <!-- Decorative corner accent -->
+  <path d="M 165 35 L 155 35 L 165 45 Z" fill="url(#accentGradient)"/>
+</svg>

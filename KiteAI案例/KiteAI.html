@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KiteAI 深度调研报告</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --accent-purple: #7B5EA7;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #1A1514;
+            --cover-bg: #2563EB;
+            --cover-accent: #1D4ED8;
+            --cover-highlight: #FBBF24;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(217,119,87,0.2); color: var(--accent); font-weight: 600; }
+
+        /* ===== MAIN ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, var(--cover-bg) 0%, var(--cover-accent) 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(29,78,216,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 20px; background: rgba(255,255,255,0.1); object-fit: contain; }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(255,255,255,0.12); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        /* Fixed chapter header */
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        /* Horizontal card scroller */
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+
+        /* Each slide fills available height */
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Card inside slide — fills slide */
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        /* Dots bar at bottom */
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); cursor: pointer; transition: all 0.3s;
+            border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+        /* ===== CONTENT-SPARSE: bigger text for cards with less content ===== */
+        .card.sparse p { font-size: 16px; line-height: 2; }
+        .card.sparse h3 { font-size: 22px; margin-bottom: 20px; }
+        .card.sparse .callout { font-size: 15px; padding: 18px 22px; }
+        .card.sparse .quote-block { font-size: 16px; padding: 20px 24px; }
+
+        /* ===== REUSABLE COMPONENTS ===== */
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px; border-radius: 6px;
+            font-size: 13px; line-height: 1.7; color: var(--text-2);
+            margin: 14px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+
+        .quote-block {
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px; margin: 14px 0;
+            font-style: italic; font-size: 14px;
+            color: var(--text-2); line-height: 1.8;
+            background: var(--bg-muted); border-radius: 0 8px 8px 0;
+        }
+        .quote-attr { font-style: normal; font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 16px; border-radius: 10px; text-align: center;
+        }
+        .metric-value { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+        .flex-row { display: flex; gap: 24px; margin: 14px 0; }
+        .flex-col { flex: 1; min-width: 0; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th { background: var(--bg-muted); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+
+        .phone-gallery { display: flex; gap: 12px; justify-content: center; margin: 16px 0; flex-wrap: wrap; }
+        .phone-frame {
+            flex-shrink: 0; background: var(--sidebar-bg);
+            border-radius: 24px; padding: 8px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+        }
+        .phone-frame img {
+            display: block; border-radius: 16px;
+            width: 110px; height: auto;
+            aspect-ratio: 9/16; object-fit: cover;
+            background: var(--bg-muted);
+        }
+        .phone-label { text-align: center; font-size: 10px; color: var(--text-3); margin-top: 6px; }
+
+        .wide-screenshot {
+            width: 100%; max-width: 560px; border-radius: 12px;
+            border: 1px solid var(--border); margin: 12px auto; display: block;
+            aspect-ratio: 16/9; object-fit: cover; background: var(--bg-muted);
+        }
+
+        .mode-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 14px 0; }
+        .mode-box { background: var(--bg-muted); padding: 14px; border-radius: 10px; border-left: 4px solid var(--accent); }
+        .mode-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+        .mode-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .insight-card {
+            flex: 1; display: flex; flex-direction: column;
+            background: var(--bg-card); border-radius: 14px; padding: 28px 32px;
+            border: 1px solid var(--border);
+        }
+        .insight-emoji { font-size: 28px; margin-bottom: 10px; }
+        .insight-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+        .insight-card p { font-size: 15px; line-height: 1.9; color: var(--text-2); margin-bottom: 14px; }
+        .insight-highlight {
+            margin-top: auto;
+            background: var(--accent-light); border-left: 4px solid var(--accent);
+            padding: 12px 16px; border-radius: 6px;
+            font-size: 14px; font-weight: 600; color: var(--accent-2);
+        }
+
+        .news-item {
+            padding: 14px; background: var(--bg-card);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px; border: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+        .news-date { font-size: 11px; color: var(--text-3); font-weight: 600; margin-bottom: 4px; }
+        .news-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .news-title a { color: var(--accent-blue); text-decoration: none; }
+        .news-title a:hover { color: var(--accent); text-decoration: underline; }
+        .news-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .references { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--border); }
+        .references h4 { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+        .references ul { list-style: none; columns: 2; column-gap: 20px; }
+        .references li { font-size: 11px; margin-bottom: 5px; break-inside: avoid; }
+        .references a { color: var(--accent-blue); text-decoration: none; }
+
+        .avatar {
+            width: 56px; height: 56px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 700; font-size: 20px;
+        }
+
+        .position-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+        .position-card { padding: 12px; border-radius: 10px; }
+        .position-title { font-weight: 700; font-size: 13px; margin-bottom: 3px; }
+
+        .story-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin: 14px 0; }
+        .story-card { background: var(--bg-muted); border-radius: 10px; padding: 18px; }
+        .story-name { font-weight: 700; font-size: 14px; margin-bottom: 2px; }
+        .story-tag { font-size: 11px; color: var(--text-3); margin-bottom: 8px; }
+        .story-text { font-size: 13px; color: var(--text-2); line-height: 1.7; font-style: italic; }
+
+        .timeline { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+        .timeline-item { display: flex; gap: 12px; align-items: flex-start; }
+        .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
+        .timeline-year { font-weight: 700; font-size: 13px; color: var(--accent); min-width: 48px; }
+        .timeline-text { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            main { margin-left: 0; }
+            .chapter-header { padding: 12px 20px 0 20px; }
+            .slide { padding: 16px 20px; }
+            .cover-title { font-size: 28px; }
+            .flex-row { flex-direction: column; }
+        }
+    
+        .nav-dashboard {
+            display: block; width: calc(100% - 8px); margin: 8px 4px 4px;
+            background: rgba(217,119,87,0.15); border: 1px solid rgba(217,119,87,0.3);
+            color: var(--accent, #D97757); padding: 10px 12px; border-radius: 8px;
+            text-align: center; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+            font-weight: 600; letter-spacing: 0.3px;
+        }
+        .nav-dashboard:hover {
+            background: rgba(217,119,87,0.3); color: white;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <img class="sidebar-logo" src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iKSUdHx8kKDQsJCY9Jx8lLT01MTU3Ojo6Jy03OT8vNzQ1My0BCgoKDQwNGg8PGjclHyU1NS81Li0vNTUtNTc1NS01LCsrNTUtKzgrNS0rNys3Ly0tLTU1LSswNTU1OC0tLS0tK//AABEIACsALAMBIgACEQEDEQH/xAAaAAACAwEBAAAAAAAAAAAAAAAFBgAEBwMC/8QAMBAAAQMDAAkBBwUAAAAAAAAAAQACAwQFEQYSExQhIjFRYUEzcZGxwdHwFTJDgqH/xAAXAQEBAQEAAAAAAAAAAAAAAAADAQIE/8QAHREAAgICAwEAAAAAAAAAAAAAAAECEQMhMUFCEv/aAAwDAQACEQMRAD8A1S5aRNgqXUtHDt5WnDiTytPZDZdIbiDhzY4vcz7lC7cTHNURTcJ2yHXz1/MrtcJGiAAnmJ4Lnc29i/KLX6zXSfuqHf1AHyXqKpqJ3hrp5Dnu4lBo3q3TT7KRruuPRRSLQcYx0fNFI4OHlGbfVbxTh7yA4HBS7vzNXkzreUZsTA6hLnDOXn6JYvejDRxvGj1LcpDO1zoKnHtGevvCVbnYLjQZkcN4iHWRmTgeR1C0NRWWNMim0ZXHIrMciKaX2llHI2tpWhsUjsPaOjXdx4KDUkUk/sxwHUnoudpp0KnasuskTrZG6trg8gn4kpEeySFwEgx2PdaDb2bOhp2domj/ABLi5MTLCiiiYMq3SjbX2+eld/I3lPY+h+KQ7Y/ZNfTSjUmjeQ5h6rRkr6bUNLum+bFoqM41xwJHnuiyR9G4PoEVGaqeCkh5pXvHAeifmgNaAOgGEA0RoaaOgbVMhbt3ZBeck4+iYFcapWST6P/Z" alt="Logo" style="width:32px;height:32px;border-radius:8px;object-fit:contain;" />
+        <div>
+            <div class="sidebar-brand-text">KiteAI</div>
+            <div class="sidebar-brand-sub">深度调研报告</div>
+        </div>
+    </div>
+    <div class="nav-items">
+        <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+        <button class="nav-btn" onclick="go(1)">📋 公司概况</button>
+        <button class="nav-btn" onclick="go(2)">💰 融资与财务</button>
+        <button class="nav-btn" onclick="go(3)">🛠️ 产品功能</button>
+        <button class="nav-btn" onclick="go(4)">🤖 AI技术</button>
+        <button class="nav-btn" onclick="go(5)">👥 用户反馈</button>
+        <button class="nav-btn" onclick="go(6)">💡 核心启示</button>
+        <button class="nav-btn" onclick="go(7)">📰 近期要闻</button>
+    </div>
+
+    <a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+<main id="main">
+
+<!-- ====== COVER ====== -->
+<section class="cover" id="ch-0">
+    <div class="cover-content">
+        <div style="width: 56px; height: 56px; border-radius: 14px; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 32px; margin: 0 auto 20px;">K</div>
+        <h1 class="cover-title">KiteAI</h1>
+        <p class="cover-subtitle">AI Agent自主交易的信任基石与支付高速公路</p>
+        <div class="cover-tags">
+            <span class="cover-tag">Layer 1区块链</span>
+            <span class="cover-tag">AI Agent</span>
+            <span class="cover-tag">支付基础设施</span>
+            <span class="cover-tag">美国</span>
+            <span class="cover-tag">ToB</span>
+        </div>
+        <div class="cover-stats">
+            <div class="stat-box">
+                <div class="stat-number">$3,300万</div>
+                <div class="stat-label">总融资</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="1780" data-suffix="万">0</div>
+                <div class="stat-label">Agent Passport</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="17" data-suffix="亿">0</div>
+                <div class="stat-label">总交互量</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">1秒</div>
+                <div class="stat-label">出块时间</div>
+            </div>
+        </div>
+        <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+    </div>
+</section>
+
+<!-- ====== CH1: 公司概况 ====== -->
+<section class="chapter" id="ch-1">
+    <div class="chapter-header">
+        <h2>公司概况</h2>
+        <span class="ch-sub">📋 KiteAI的使命与发展</span>
+        <span class="ch-counter" id="counter-1">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="1">
+        <div class="slide">
+            <div class="card">
+                <h3>创始背景与战略转型</h3>
+                <div class="card-body">
+                    <p>KiteAI最初以Zettablock的身份出现，成立于2022年，专注于Web3应用中的大规模实时数据基础设施。然而，随着AI Agent概念的兴起，团队敏锐地察觉到一个全新的、万亿级的市场机会——AI Agent自主经济。</p>
+                    <p>在2024年11月，KiteAI推出了创新产品，并完成了战略转型，专注于为AI Agent构建Layer 1支付区块链。这一转变体现了创始团队对未来趋势的深刻洞察：传统的人类中心化支付系统无法满足AI Agent对身份、信任、可编程治理和微支付的独特需求。</p>
+                    <p>核心领导团队拥有深厚的AI、大数据和区块链背景。CEO Chi Zhang曾是Databricks产品管理负责人、加州大学伯克利分校AI博士；CTO Scott Shi曾在Uber负责实时AI基础设施，并是Salesforce Einstein AI的创始工程师。这种跨学科的复合背景使团队能够从第一性原理出发，为AI Agent自主经济设计基础设施。</p>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="card">
+                <h3>融资历程与投资方认可</h3>
+                <div class="card-body">
+                    <p>KiteAI的融资历程展现了资本市场对其愿景和执行力的强劲认可。自2025年以来，公司完成了两轮重要融资，总额达到3,300万美元。</p>
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-year">2025年2月</div>
+                            <div class="timeline-text"><strong>种子轮：</strong>1,500万美元，General Catalyst、Hashed、Hashkey Capital等领投</div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-year">2025年9月</div>
+                            <div class="timeline-text"><strong>A轮：</strong>1,800万美元，PayPal Ventures和General Catalyst领投</div>
+                        </div>
+                    </div>
+                    <p>除了融资金额的增长，更值得关注的是投资方的体量和背景。PayPal作为全球支付巨头的战略投资，表明传统金融科技企业已经认识到AI Agent支付的重要性。Coinbase Ventures、Samsung Next等创新企业的参与，进一步验证了该市场的广阔前景。</p>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="card">
+                <h3>市场定位与业务模式</h3>
+                <div class="card-body">
+                    <p>KiteAI的市场定位是"AI Agent支付领域的Layer 1基础设施"，这一定位既独特又前瞻性。它不是传统的支付公司，也不是通用的区块链平台，而是一个专门为AI Agent设计的操作系统级别的基础设施。</p>
+                    <p>其业务模式是纯粹的ToB（企业对企业）。核心客户包括：(1) AI Agent开发者和初创团队，(2) 寻求AI自动化的大型企业，(3) 数据和API服务提供商，(4) Web3项目和区块链开发者。</p>
+                    <p>收入来源预计包含多个维度：链上交易费用（AI Agent每笔微支付的极低Gas费），Agent App Store佣金（平台内服务提供商的分成），企业级SaaS订阅（高级功能和管理工具），以及开发者API使用费。这种多元化的收入结构既能保证底层基础设施的广泛采用，又能通过增值服务实现可观的商业化。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="dots-bar" id="dots-1"></div>
+</section>
+
+<!-- ====== CH2: 融资与财务 ====== -->
+<section class="chapter" id="ch-2">
+    <div class="chapter-header">
+        <h2>融资与财务</h2>
+        <span class="ch-sub">💰 资本结构与增长指标</span>
+        <span class="ch-counter" id="counter-2">1 / 4</span>
+    </div>
+    <div class="card-track" data-ch="2">
+        <div class="slide">
+            <div class="card">
+                <h3>融资总览与投资方</h3>
+                <div class="card-body">
+                    <p><strong>总融资规模：</strong> $3,300万（截至2025年9月）</p>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-value">$1,500万</div>
+                            <div class="metric-label">种子轮（2月）</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">$1,800万</div>
+                            <div class="metric-label">A轮（9月）</div>
+                        </div>
+                    </div>
+                    <p><strong>核心投资方包括：</strong></p>
+                    <ul style="margin: 12px 0; padding-left: 20px; font-size: 14px; color: var(--text-2); line-height: 1.8;">
+                        <li>PayPal Ventures — 全球支付领域的战略玩家</li>
+                        <li>General Catalyst — 连续投资方，从种子轮到A轮</li>
+                        <li>Coinbase Ventures — Web3和加密生态的标杆</li>
+                        <li>8VC、Samsung Next、Hashed 等创新基金</li>
+                    </ul>
+                    <p>这个投资方阵容的亮点在于既包含传统金融科技巨头（PayPal），也包含Web3和AI创新企业，充分反映了KiteAI在不同生态中的战略价值。</p>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="card">
+                <h3>财务指标与网络增长</h3>
+                <div class="card-body">
+                    <p>作为基础设施层企业，KiteAI的财务表现主要体现在网络指标而非传统营收指标上。根据官网披露的数据，网络已经展现出强劲的增长动力：</p>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-value">1,780万</div>
+                            <div class="metric-label">Agent Passport总数</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">17亿</div>
+                            <div class="metric-label">总交互量</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">101万+</div>
+                            <div class="metric-label">最高日交互量</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">100+</div>
+                            <div class="metric-label">Kite模块数</div>
+                        </div>
+                    </div>
+                    <p>1,780万的Agent Passport数量表明网络已经积累了大量的AI Agent用户基础。17亿的总交互量和101万的最高日交互量证明了系统具备处理高频交易的能力。这些数据对于一个2024年11月才正式推出的产品来说，增长速度令人瞩目。</p>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="card">
+                <h3>商业模式与单位经济</h3>
+                <div class="card-body">
+                    <p><strong>KiteAI的收入模式是多层次的：</strong></p>
+                    <div class="mode-boxes">
+                        <div class="mode-box" style="border-left-color: var(--accent-blue);">
+                            <div class="mode-title">链上交易费用</div>
+                            <div class="mode-desc">AI Agent每笔微支付的极低Gas费。单笔费用&lt;$0.000001，通过高交易量实现规模化收入。</div>
+                        </div>
+                        <div class="mode-box" style="border-left-color: var(--accent-green);">
+                            <div class="mode-title">App Store佣金</div>
+                            <div class="mode-desc">Kite Agent App Store对入驻服务提供商收取的平台费用或交易佣金。</div>
+                        </div>
+                        <div class="mode-box" style="border-left-color: var(--accent-purple);">
+                            <div class="mode-title">SaaS订阅</div>
+                            <div class="mode-desc">企业级解决方案订阅，包含Agent Passport高级管理、合规审计、定制支持。</div>
+                        </div>
+                        <div class="mode-box" style="border-left-color: var(--accent);">
+                            <div class="mode-title">开发者API</div>
+                            <div class="mode-desc">高级SDK、开发者工具和API使用费，根据调用量或数据访问量计费。</div>
+                        </div>
+                    </div>
+                    <p><strong>单位经济分析：</strong> KiteAI的LTV/CAC模型将高度依赖于网络效应的发展。如果能吸引足够多的AI Agent和服务提供商，形成强大的闭环，那么基于交易的收入模式将具有显著的杠杆效应——交易量每增加10倍，而边际成本几乎不增加。</p>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="card">
+                <h3>融资对标与竞争优势</h3>
+                <div class="card-body">
+                    <p><strong>融资规模对标：</strong></p>
+                    <table>
+                        <thead><tr><th>企业</th><th>融资轮次</th><th>融资额</th><th>赛道</th></tr></thead>
+                        <tbody>
+                            <tr><td>KiteAI</td><td>A轮</td><td>$3,300万</td><td>AI Agent支付</td></tr>
+                            <tr><td>Cleo（对标）</td><td>C轮</td><td>$1.38亿+</td><td>AI金融助手</td></tr>
+                            <tr><td>OpenAI（早期）</td><td>种子轮</td><td>$1M+</td><td>大模型</td></tr>
+                        </tbody>
+                    </table>
+                    <p>KiteAI在A轮就获得了$3,300万的融资，这在基础设施领域是相当可观的。这反映了投资方对其市场潜力和团队执行力的高度认可。相比之下，许多区块链基础设施项目需要多年才能积累到这样的融资规模。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="dots-bar" id="dots-2"></div>
+</section>
+
+<!-- ====== CH3: 产品功能 ====== -->
+<section class="chapter" id="ch-3">
+    <div class="chapter-header">
+        <h2>产品功能</h2>
+        <span class="ch-sub">🛠️ 核心产品与使用场景</span>
+        <span class="ch-counter" id="counter-3">1 / 4</span>
+    </div>
+    <div class="card-track" data-ch="3">
+        <div class="slide">
+            <div class="card">
+                <h3>产品矩阵概览</h3>
+                <div class="card-body">
+                    <p>KiteAI的核心产品矩阵围绕其作为"AI Agent Layer 1支付区块链"的定位展开，形成了一个紧密集成的生态系统：</p>
+                    <p><strong>1. Kite Layer 1区块链</strong><br>这是整个生态的基础。一个专为AI Agent优化的区块链网络，具有极高的吞吐量和极低的延迟。平均出块时间仅1秒，日交互量可超百万，单笔交易费用低于$0.000001。这种性能指标使得AI Agent能够进行真正意义上的高频、微额交易。</p>
+                    <p><strong>2. Agent Passport（身份系统）</strong><br>为每个AI Agent颁发可验证的加密身份。这个"护照"记录了Agent的权限、归属方、操作范围等关键信息。这是整个生态的信任基础，解决了"AI Agent是谁"和"它被允许做什么"的问题。</p>
+                    <p><strong>3. Agent App Store（服务市场）</strong><br>一个供AI Agent发现和访问各种服务（API、数据、工具）的平台。商家和开发者可以在此发布服务，接受AI Agent的微支付。这个市场形成了双边网络效应——越多的服务吸引越多的Agent，越多的Agent驱动更多的服务商入驻。</p>
+                    <p><strong>4. 可编程治理（Programmable Governance）</strong><br>通过智能合约为AI Agent设定精细化的行为规则、权限范围和支出限制。这些规则在协议层面强制执行，确保AI Agent在自主运行时不会越权。</p>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="card">
+                <h3>关键性能指标与优势</h3>
+                <div class="card-body">
+                    <p><strong>KiteAI的关键性能指标：</strong></p>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-value">1秒</div>
+                            <div class="metric-label">平均出块时间</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">&lt;$0.000001</div>
+                            <div class="metric-label">单笔交易费</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">101万+</div>
+                            <div class="metric-label">最高日交互量</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">~100ms</div>
+                            <div class="metric-label">交易延迟</div>
+                        </div>
+                    </div>
+                    <p><strong>相比通用型区块链的优势：</strong></p>
+                    <ul style="margin: 12px 0; padding-left: 20px; font-size: 14px; color: var(--text-2); line-height: 1.8;">
+                        <li>比以太坊（12-15秒出块）快12倍，确保AI Agent的实时响应</li>
+                        <li>交易费用接近零，而通常区块链可能需要数美元</li>
+                        <li>AI Agent原生身份系统，而不是模拟或外部管理</li>
+                        <li>可编程治理在协议层强制执行，而非依赖应用层逻辑</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="card">
+                <h3>使用场景一：AI购物Agent</h3>
+                <div class="card-body">
+                    <p><strong>场景描述：</strong> 用户授权一个AI购物Agent在电商平台（如Shopify）上自主寻找和购买特定商品。</p>
+                    <p><strong>传统方案的痛点：</strong> Agent需要通过复杂的OAuth握手和API密钥管理来完成认证，效率低下且存在安全风险。</p>
+                    <p><strong>KiteAI解决方案：</strong></p>
+                    <ul style="margin: 12px 0; padding-left: 20px; font-size: 14px; color: var(--text-2); line-height: 1.8;">
+                        <li>AI购物Agent获得Agent Passport，拥有可验证的加密身份</li>
+                        <li>在Kite Agent App Store中发现Shopify商户的服务列表</li>
+                        <li>当找到目标商品时，Agent通过KiteAI自动与商户协商价格</li>
+                        <li>使用稳定币进行即时、链上结算，整个过程可追溯且符合预设权限</li>
+                        <li>Shopify商户可通过App Store选择加入，扩大销售渠道</li>
+                    </ul>
+                    <p><strong>效果：</strong> 购物效率提升100倍，交易成本降低99%，同时完全透明和可审计。</p>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="card">
+                <h3>使用场景二：供应链自动化</h3>
+                <div class="card-body">
+                    <p><strong>场景描述：</strong> 一家制造企业拥有多个AI Agent分别负责采购、生产调度和物流，需要进行频繁交易和结算。</p>
+                    <p><strong>传统方案的痛点：</strong> 人工审批周期长、对账复杂、结算缓慢，容易出错且难以审计。</p>
+                    <p><strong>KiteAI解决方案：</strong></p>
+                    <ul style="margin: 12px 0; padding-left: 20px; font-size: 14px; color: var(--text-2); line-height: 1.8;">
+                        <li>采购Agent、生产Agent、物流Agent各拥有独立的Agent Passport</li>
+                        <li>采购Agent自主在Agent App Store中找到合适供应商，完成谈判</li>
+                        <li>原材料到达后，生产Agent验证质量并通过智能合约触发尾款支付</li>
+                        <li>物流完成后，物流Agent自动向运输公司支付运费</li>
+                        <li>企业管理层可实时查看所有Agent的交易活动、成本和审计记录</li>
+                    </ul>
+                    <p><strong>效果：</strong> 支付周期从周级缩短到秒级，人工成本降低80%，供应链透明度大幅提升。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="dots-bar" id="dots-3"></div>
+</section>
+
+<!-- ====== CH4: AI技术 ====== -->
+<section class="chapter" id="ch-4">
+    <div class="chapter-header">
+        <h2>AI技术</h2>
+        <span class="ch-sub">🤖 技术架构与创新能力</span>
+        <span class="ch-counter" id="counter-4">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="4">
+        <div class="slide">
+            <div class="card">
+                <h3>核心技术架构</h3>
+                <div class="card-body">
+                    <p>KiteAI的技术架构是其核心竞争力所在。它并非简单地调用现有API或区块链，而是从底层重新设计了一个专为AI Agent优化的系统。</p>
+                    <p><strong>三层身份架构：</strong></p>
+                    <ul style="margin: 12px 0; padding-left: 20px; font-size: 14px; color: var(--text-2); line-height: 1.8;">
+                        <li><strong>用户层(User)：</strong> 根权限方，代表人类用户或组织</li>
+                        <li><strong>Agent层：</strong> 获得用户委托的AI实体，拥有独立Agent Passport</li>
+                        <li><strong>会话层(Session)：</strong> 临时、细粒度的权限，用于特定任务</li>
+                    </ul>
+                    <p>这种分层设计通过BIP-32分层确定性密钥派生实现，确保权限的数学委托和安全管理。</p>
+                    <p><strong>Proof of Artificial Intelligence (PoAI)共识机制：</strong> 这是KiteAI的核心创新。不同于比特币的PoW（工作量证明）或以太坊的PoS（权益证明），PoAI旨在激励参与者为AI Agent生态贡献有意义的工作——验证Agent身份、确保交易合法性、数据真实性等。这个共识机制体现了"公平和透明的协作"理念。</p>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="card">
+                <h3>AI能力与差异化优势</h3>
+                <div class="card-body">
+                    <p><strong>KiteAI的AI能力并非体现在生成式AI的输出质量上，而是体现在其作为"AI Agent操作系统"的底层支撑能力：</strong></p>
+                    <p><strong>1. AI Agent身份认证与管理</strong><br>为每个AI Agent提供唯一的可验证加密身份，解决了"AI Agent是什么"的根本问题。</p>
+                    <p><strong>2. 可编程治理与行为约束</strong><br>允许用户通过智能合约为AI Agent设定精细化的行为规则、权限范围和支出限制，确保其在自主运行时的可控性。</p>
+                    <p><strong>3. Agent原生微支付</strong><br>提供高效率、低成本的稳定币支付通道，支持AI Agent之间的即时、高频交易。</p>
+                    <p><strong>4. 合规性与审计追踪</strong><br>所有交易和关键行为都在链上留下不可篡改的记录，满足欧盟AI Act等监管要求。</p>
+                    <p><strong>5. 互操作性与生态集成</strong><br>与x402协议、Google A2A、Anthropic MCP、OAuth 2.1等主流Agent协议原生兼容，成为通用执行层而非孤立生态。</p>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="card">
+                <h3>技术壁垒与风险</h3>
+                <div class="card-body">
+                    <p><strong>技术壁垒：</strong></p>
+                    <div class="callout">
+                        <strong>PoAI共识机制的独特性：</strong> 新型共识算法难以被复制，形成专有技术优势。
+                    </div>
+                    <div class="callout">
+                        <strong>三层身份+可编程治理的复杂性：</strong> 设计和维护难度高，需要深厚的区块链和AI领域知识。
+                    </div>
+                    <div class="callout">
+                        <strong>高性能微支付基础设施：</strong> 1秒出块和接近零的交易费用，通过状态通道等Layer 2技术实现，技术难度大。
+                    </div>
+                    <p><strong>技术风险：</strong></p>
+                    <p><strong>1. PoAI共识的成熟度：</strong> 作为新型共识机制，其长期运行的稳定性和安全性仍需市场验证。</p>
+                    <p><strong>2. 智能合约安全：</strong> 智能合约漏洞是区块链领域的常见风险，需要持续的代码审计。</p>
+                    <p><strong>3. 互操作性挑战：</strong> 保持与快速演进的多种Agent协议的兼容性，是持续的技术挑战。</p>
+                    <p><strong>4. 性能扩展性：</strong> 随着AI Agent数量指数级增长，网络可能面临性能瓶颈。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="dots-bar" id="dots-4"></div>
+</section>
+
+<!-- ====== CH5: 用户反馈 ====== -->
+<section class="chapter" id="ch-5">
+    <div class="chapter-header">
+        <h2>用户反馈</h2>
+        <span class="ch-sub">👥 市场验证与生态反应</span>
+        <span class="ch-counter" id="counter-5">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="5">
+        <div class="slide">
+            <div class="card">
+                <h3>投资方评价</h3>
+                <div class="card-body">
+                    <p><strong>由于KiteAI尚处早期，公开的终端用户评价较少。但投资方的评价具有高度的参考价值，他们代表了市场对KiteAI的认可：</strong></p>
+                    <div class="quote-block">
+                        "Kite正在构建我们相信将定义未来Agent如何运作的基础设施。他们正在为机器对机器经济铺设轨道。"
+                        <div class="quote-attr">— Marc Bhargava, General Catalyst董事总经理</div>
+                    </div>
+                    <div class="quote-block">
+                        "Kite是第一个真正为Agentic经济而构建的基础设施。支付已被证明是一个具有挑战性的技术鸿沟。Kite通过提供基于稳定币、毫秒级结算、低交易费用且无退款欺诈风险的解决方案，弥合了这一关键鸿沟。"
+                        <div class="quote-attr">— Alan Du, PayPal Ventures合伙人</div>
+                    </div>
+                    <div class="quote-block">
+                        "Kite的基础信任基础设施，结合受良好监管的稳定币在Agentic支付中的优势，将创造前所未有的机会。"
+                        <div class="quote-attr">— Steve Everett, PayPal Crypto & Digital Assets全球市场开发主管</div>
+                    </div>
+                    <p>这些评价反映了三个关键认知：(1) KiteAI被视为未来AI经济的关键基础设施，(2) 支付问题是AI Agent发展的核心瓶颈，(3) 稳定币+区块链的组合是解决方案。</p>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="card">
+                <h3>目标用户与生态</h3>
+                <div class="card-body">
+                    <p><strong>KiteAI的核心目标用户群体：</strong></p>
+                    <div class="position-cards">
+                        <div class="position-card" style="background:#FFE6E6;">
+                            <div style="font-size:18px;margin-bottom:4px;">👨‍💻</div>
+                            <div class="position-title">AI Agent开发者</div>
+                            <div style="font-size:11px;color:var(--text-2);">构建和部署AI Agent应用的开发者团队，需要身份和支付基础设施</div>
+                        </div>
+                        <div class="position-card" style="background:#E6F3FF;">
+                            <div style="font-size:18px;margin-bottom:4px;">🏢</div>
+                            <div class="position-title">大型企业</div>
+                            <div style="font-size:11px;color:var(--text-2);">寻求内部或外部部署AI Agent实现业务自动化的企业</div>
+                        </div>
+                        <div class="position-card" style="background:#E6FFE6;">
+                            <div style="font-size:18px;margin-bottom:4px;">🔗</div>
+                            <div class="position-title">数据/API商</div>
+                            <div style="font-size:11px;color:var(--text-2);">将数据和API服务商业化，向AI Agent开放的服务提供商</div>
+                        </div>
+                        <div class="position-card" style="background:#FFF5E6;">
+                            <div style="font-size:18px;margin-bottom:4px;">⛓️</div>
+                            <div class="position-title">Web3项目</div>
+                            <div style="font-size:11px;color:var(--text-2);">将AI Agent能力集成到dApps中的区块链开发团队</div>
+                        </div>
+                    </div>
+                    <p><strong>合作伙伴验证：</strong> KiteAI已与PayPal、Shopify、Coinbase等行业巨头达成战略合作。这些合作的形成本身就是对KiteAI市场价值的最好验证——顶级企业已经认可其作为AI Agent支付基础设施的地位。</p>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="card">
+                <h3>网络增长与市场反应</h3>
+                <div class="card-body">
+                    <p><strong>网络指标显示强劲增长动力：</strong></p>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-value">1,780万</div>
+                            <div class="metric-label">Agent Passport总数</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">17亿</div>
+                            <div class="metric-label">总交互量</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">101万+</div>
+                            <div class="metric-label">最高日交互量</div>
+                        </div>
+                    </div>
+                    <p>考虑到KiteAI的Layer 1区块链在2024年11月才正式推出，在不到半年的时间内达成1,780万Agent Passport和17亿交互量，增长速度非常惊人。这表明市场对AI Agent支付基础设施的需求远超预期。</p>
+                    <p><strong>社区反应：</strong> KiteAI在X（原Twitter）、LinkedIn和加密货币媒体上获得了较高的关注度。CEO Chi Zhang和CTO Scott Shi在行业内具有较大影响力，他们定期分享关于AI Agent、区块链和支付基础设施的深度洞察。这种高管的个人影响力有助于吸引优质的开发者和合作伙伴。</p>
+                    <p><strong>行业口碑：</strong> PayPal Ventures等顶级投资方的背书本身就是最强的市场验证。在科技投资圈，大基金的投资决策往往代表了对未来趋势的最前沿认知。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="dots-bar" id="dots-5"></div>
+</section>
+
+<!-- ====== CH6: 核心启示 ====== -->
+<section class="chapter" id="ch-6">
+    <div class="chapter-header">
+        <h2>核心启示</h2>
+        <span class="ch-sub">💡 战略洞察与投资启示</span>
+        <span class="ch-counter" id="counter-6">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="6">
+        <div class="slide">
+            <div class="insight-card">
+                <div class="insight-emoji">🔮</div>
+                <h3>AI Agent经济时代的基础设施定位</h3>
+                <div class="card-body">
+                    <p>KiteAI最核心的战略洞察是：AI Agent经济的爆发不是遥远的未来，而是正在眼前发生。而在这个新经济中，支付和身份认证是最基础的需求。</p>
+                    <p>从互联网发展历史看，支付基础设施往往成为推动商业创新的关键。PayPal通过降低支付摩擦，使得电商和数字服务得以爆发；移动支付的普及，催生了O2O、外卖、共享出行等新商业模式。AI Agent经济也需要类似的基础设施革新。</p>
+                    <p>KiteAI的洞察在于：传统支付系统（Visa、PayPal）以人类为中心，无法处理AI Agent的高频、微额、需要可验证身份的交易；通用区块链（以太坊、Solana）缺乏AI Agent原生的身份和治理能力。因此，一个"为AI Agent而生"的Layer 1区块链是必然的。</p>
+                    <div class="insight-highlight">
+                        支付基础设施的演进总是领先于应用的爆发——KiteAI正在为AI Agent大爆发提前铺设轨道。
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="insight-card">
+                <div class="insight-emoji">🎯</div>
+                <h3>ToB基础设施的网络效应与平台化</h3>
+                <div class="card-body">
+                    <p>KiteAI的商业模式展现了ToB基础设施企业的典型特征：通过打造强大的网络效应，形成双边或多边市场。</p>
+                    <p>具体来看，KiteAI的网络包括：(1) AI Agent使用者（企业和开发者），(2) AI Agent本身，(3) 数据和服务提供商，(4) 区块链验证节点。这些参与者之间的互动越频繁，网络价值越高。</p>
+                    <p>Agent App Store的设计尤其关键。它不仅是一个简单的API市场，更是一个生态平台。随着更多服务提供商入驻，更多的AI Agent会被吸引来发现和使用这些服务，进而吸引更多的服务提供商。这形成了正向循环的网络效应。</p>
+                    <p>从投资角度，那些能够快速积累用户和服务提供商、形成强大网络效应的ToB基础设施企业，往往具有超越行业平均水平的商业价值。KiteAI在这一点上已经展现出了初步的势头。</p>
+                    <div class="insight-highlight">
+                        平台化和网络效应是ToB基础设施企业从好到伟大的关键路径。
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="insight-card">
+                <div class="insight-emoji">⚡</div>
+                <h3>AI与区块链的融合点</h3>
+                <div class="card-body">
+                    <p>KiteAI代表了AI与区块链融合的一个重要方向。这种融合并不是简单的"AI + 区块链"，而是找到了它们各自的最佳应用场景的交汇点。</p>
+                    <p>区块链的核心价值是提供"不可篡改的记录"和"去中心化的信任"。在AI Agent的语境下，这些价值得到了升华：(1) Agent身份的不可篡改记录，确保了身份的唯一性和可追溯性，(2) 链上的不可篡改交易记录，满足了企业对AI Agent行为的审计需求，(3) 智能合约提供的可编程治理，让企业能够以代码的形式强制执行对AI Agent的约束。</p>
+                    <p>反过来说，AI并未替代区块链，而是为其找到了最合适的应用场景。这种相互成就的关系，往往预示着一个新的、巨大的市场。</p>
+                    <div class="insight-highlight">
+                        真正的AI × Web3融合应该是找到它们各自最擅长的东西，然后让两者相互赋能。KiteAI做到了这一点。
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="dots-bar" id="dots-6"></div>
+</section>
+
+<!-- ====== CH7: 近期要闻 ====== -->
+<section class="chapter" id="ch-7">
+    <div class="chapter-header">
+        <h2>近期要闻</h2>
+        <span class="ch-sub">📰 最新进展与行业动态</span>
+        <span class="ch-counter" id="counter-7">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="7">
+        <div class="slide">
+            <div class="card">
+                <h3>融资与战略合作</h3>
+                <div class="card-body">
+                    <div class="news-item">
+                        <div class="news-date">2025年9月2日</div>
+                        <div class="news-title">
+                            <a href="https://newsroom.paypal-corp.com/" target="_blank">KiteAI完成1800万美元A轮融资，PayPal Ventures领投</a>
+                        </div>
+                        <div class="news-desc">这是KiteAI历史上最重要的融资事件。PayPal Ventures的领投不仅代表了资金支持，更代表了全球支付巨头对AI Agent支付基础设施的战略认可。融资总额达3,300万美元，投资方包括Coinbase Ventures、8VC、Samsung Next等顶级机构。</div>
+                    </div>
+                    <div class="news-item">
+                        <div class="news-date">2025年9月2日</div>
+                        <div class="news-title">
+                            <a href="https://gokite.ai/" target="_blank">推出Kite Agent Identity Resolution (Kite AIR)，与Shopify和PayPal集成</a>
+                        </div>
+                        <div class="news-desc">Kite AIR是KiteAI的核心产品，包括Agent Passport和Agent App Store两个关键组件。与Shopify和PayPal的集成表明，AI Agent支付已经从概念阶段进入到真实的商业应用。电商平台的支持对于推广Agent购物等应用场景至关重要。</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="card">
+                <h3>产品与生态发展</h3>
+                <div class="card-body">
+                    <div class="news-item">
+                        <div class="news-date">2026年3月</div>
+                        <div class="news-title">
+                            <a href="https://gokite.ai/" target="_blank">KiteAI网络达到1780万Agent Passport和17亿交互量里程碑</a>
+                        </div>
+                        <div class="news-desc">在仅半年多的时间内，KiteAI网络已经积累了1,780万个Agent Passport，完成了17亿次交互。这些数字充分证明了市场对AI Agent支付基础设施的强烈需求，也验证了KiteAI在产品设计和市场推广方面的有效性。</div>
+                    </div>
+                    <div class="news-item">
+                        <div class="news-date">2025年全年</div>
+                        <div class="news-title">
+                            <a href="https://docs.gokite.ai" target="_blank">持续完善开发者文档和工具，扩展与主流Agent协议的兼容性</a>
+                        </div>
+                        <div class="news-desc">KiteAI在2025年持续投入开发者体验，发布了详细的API文档、SDK和代码示例。同时与x402协议、Google A2A、Anthropic MCP、OAuth 2.1等主流标准保持兼容性，确保开发者能够相对平滑地集成KiteAI服务。这种开发者友好的态度有助于加快生态建设。</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="dots-bar" id="dots-7"></div>
+</section>
+
+</main>
+
+<script>
+const sections = document.querySelectorAll('.chapter, .cover');
+const navBtns = document.querySelectorAll('.nav-btn');
+const main = document.getElementById('main');
+
+function go(index) {
+    sections[index].scrollIntoView({ behavior: 'smooth' });
+    navBtns.forEach((btn, i) => {
+        btn.classList.toggle('active', i === index);
+    });
+}
+
+// Intersection observer for nav button updates and stat counter
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            const index = Array.from(sections).indexOf(entry.target);
+            if (index >= 0) {
+                navBtns.forEach((btn, i) => {
+                    btn.classList.toggle('active', i === index);
+                });
+                if (index === 0) {
+                    animateCounters();
+                }
+            }
+        }
+    });
+}, { threshold: 0.5 });
+
+sections.forEach(section => observer.observe(section));
+
+// Horizontal card scroller
+document.querySelectorAll('.card-track').forEach((track, chIndex) => {
+    const slides = track.querySelectorAll('.slide');
+    const dotsBar = document.getElementById(`dots-${chIndex}`);
+    const counter = document.getElementById(`counter-${chIndex}`);
+
+    slides.forEach((_, idx) => {
+        const dot = document.createElement('button');
+        dot.className = `dot ${idx === 0 ? 'active' : ''}`;
+        dot.onclick = () => {
+            slides[idx].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+        };
+        dotsBar.appendChild(dot);
+    });
+
+    track.addEventListener('scroll', () => {
+        const activeIdx = Math.round(track.scrollLeft / track.offsetWidth);
+        document.querySelectorAll(`#dots-${chIndex} .dot`).forEach((dot, idx) => {
+            dot.classList.toggle('active', idx === activeIdx);
+        });
+        if (counter) counter.textContent = `${activeIdx + 1} / ${slides.length}`;
+    });
+});
+
+// Stat counter animation
+function animateCounters() {
+    document.querySelectorAll('.stat-number[data-count]').forEach(el => {
+        const target = parseInt(el.dataset.count);
+        const prefix = el.dataset.prefix || '';
+        const suffix = el.dataset.suffix || '';
+        let current = 0;
+        const step = target / 30;
+        const interval = setInterval(() => {
+            current += step;
+            if (current >= target) {
+                current = target;
+                clearInterval(interval);
+            }
+            el.textContent = prefix + Math.floor(current).toLocaleString() + suffix;
+        }, 16);
+    });
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salient 深度调研报告</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --accent-purple: #7B5EA7;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #1A1514;
+            --cover-bg: #0D2137;
+            --cover-accent: #2E86DE;
+            --cover-highlight: #54D2F5;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(217,119,87,0.2); color: var(--accent); font-weight: 600; }
+
+        .nav-dashboard {
+            display: block; width: calc(100% - 8px); margin: 8px 4px 4px;
+            background: rgba(217,119,87,0.15); border: 1px solid rgba(217,119,87,0.3);
+            color: var(--accent); padding: 10px 12px; border-radius: 8px;
+            text-align: center; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+            font-weight: 600; letter-spacing: 0.3px;
+        }
+        .nav-dashboard:hover {
+            background: rgba(217,119,87,0.25); transform: translateY(-1px);
+        }
+
+        /* ===== MAIN ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, var(--cover-bg) 0%, #1A3D5C 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(46,134,222,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 20px; background: rgba(255,255,255,0.1); object-fit: contain; }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(255,255,255,0.12); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        /* Fixed chapter header */
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        /* Card track (horizontal scroll) */
+        .card-track {
+            flex: 1;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            display: flex; gap: 24px;
+            padding: 24px 48px;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { height: 0; }
+        .card-track { scrollbar-width: none; }
+
+        .slide {
+            flex: 0 0 100%;
+            display: flex;
+            scroll-snap-align: start;
+        }
+
+        /* Cards */
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 28px;
+            display: flex; flex-direction: column;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            transition: all 0.3s;
+        }
+        .card:hover {
+            border-color: var(--accent);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+        .card h3 {
+            font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--text);
+        }
+        .card-body {
+            flex: 1; font-size: 13px; color: var(--text-2); line-height: 1.7;
+        }
+        .card-body p {
+            margin-bottom: 12px;
+        }
+        .card-body p:last-child {
+            margin-bottom: 0;
+        }
+        .card.sparse {
+            padding: 28px;
+        }
+
+        /* Dots bar */
+        .dots-bar {
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            background: var(--bg);
+            border-top: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); border: none; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .dot.active {
+            width: 24px; border-radius: 4px; background: var(--accent);
+        }
+
+        /* Components */
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 12px 14px;
+            margin: 16px 0;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .metrics-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-item {
+            background: var(--bg-muted);
+            padding: 12px; border-radius: 8px;
+            border-left: 3px solid var(--accent);
+        }
+        .metric-value {
+            font-size: 18px; font-weight: 700; color: var(--accent);
+        }
+        .metric-label {
+            font-size: 11px; color: var(--text-3); margin-top: 4px;
+        }
+
+        .timeline {
+            position: relative;
+        }
+        .timeline-item {
+            display: flex; gap: 16px; margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .timeline-item:last-child {
+            border-bottom: none;
+        }
+        .timeline-year {
+            flex-shrink: 0; font-weight: 700; color: var(--accent); min-width: 60px;
+        }
+        .timeline-content {
+            flex: 1; font-size: 13px;
+        }
+        .timeline-event {
+            font-weight: 600; margin-bottom: 4px;
+        }
+
+        .quote-block {
+            background: var(--bg-muted);
+            padding: 16px; border-left: 4px solid var(--accent);
+            border-radius: 4px;
+            font-size: 13px; font-style: italic;
+            margin-bottom: 16px;
+            line-height: 1.6;
+        }
+        .quote-attr {
+            font-style: normal; font-weight: 600; color: var(--accent);
+            font-size: 12px; margin-top: 8px;
+        }
+
+        .insight-card {
+            background: linear-gradient(135deg, rgba(217,119,87,0.08) 0%, rgba(217,119,87,0.04) 100%);
+            border: 1px solid rgba(217,119,87,0.2);
+            border-radius: 12px;
+            padding: 28px;
+            display: flex; flex-direction: column;
+        }
+        .insight-emoji {
+            font-size: 36px; margin-bottom: 12px;
+        }
+        .insight-card h3 {
+            font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--text);
+        }
+        .insight-highlight {
+            background: rgba(217,119,87,0.12);
+            border-left: 4px solid var(--accent);
+            padding: 12px 14px;
+            margin: 16px 0 0 0;
+            border-radius: 4px;
+            font-size: 13px; font-weight: 500;
+            color: var(--accent-2);
+        }
+
+        .news-item {
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .news-item:last-child {
+            border-bottom: none;
+        }
+        .news-date {
+            font-size: 11px; color: var(--text-3); font-weight: 600; margin-bottom: 4px;
+        }
+        .news-title {
+            font-size: 14px; font-weight: 700; margin-bottom: 6px;
+        }
+        .news-title a {
+            color: var(--accent); text-decoration: none; transition: all 0.2s;
+        }
+        .news-title a:hover {
+            text-decoration: underline;
+        }
+        .news-desc {
+            font-size: 12px; color: var(--text-2);
+        }
+
+        .mode-boxes {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 12px; margin: 16px 0;
+        }
+        .mode-box {
+            background: var(--bg-muted);
+            padding: 12px; border-radius: 8px;
+            border-left: 3px solid var(--accent);
+        }
+        .mode-name {
+            font-weight: 600; font-size: 13px;
+        }
+        .mode-desc {
+            font-size: 12px; color: var(--text-3); margin-top: 4px;
+        }
+
+        .founder-card {
+            background: var(--bg-muted);
+            padding: 14px; border-radius: 8px;
+            margin-bottom: 12px;
+        }
+        .founder-name {
+            font-weight: 700; font-size: 13px;
+        }
+        .founder-title {
+            font-size: 12px; color: var(--accent); font-weight: 600;
+        }
+        .founder-desc {
+            font-size: 12px; color: var(--text-2); margin-top: 6px; line-height: 1.5;
+        }
+
+        .table-container {
+            overflow-x: auto; margin: 12px 0;
+        }
+        table {
+            width: 100%; font-size: 12px; border-collapse: collapse;
+        }
+        th, td {
+            padding: 8px; text-align: left; border-bottom: 1px solid var(--border);
+        }
+        th {
+            background: var(--bg-muted); font-weight: 700;
+        }
+
+        .references {
+            margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);
+        }
+        .references h4 {
+            font-size: 12px; font-weight: 700; margin-bottom: 8px; color: var(--text);
+        }
+        .references ul {
+            list-style: none;
+        }
+        .references li {
+            margin-bottom: 6px;
+        }
+        .references a {
+            color: var(--accent); font-size: 12px; text-decoration: none;
+        }
+        .references a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .sidebar { width: 180px; }
+            main { margin-left: 180px; }
+            .chapter-header { padding: 16px 32px 0; }
+            .card-track { padding: 20px 32px; }
+            .cover { padding: 30px 20px; }
+            .cover-title { font-size: 32px; }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { width: 100%; height: auto; position: static; flex-direction: row; align-items: center; padding: 12px; margin-bottom: 12px; }
+            main { margin-left: 0; }
+            .nav-items { flex-direction: row; flex-wrap: wrap; }
+            .cover { padding: 20px; }
+            .cover-title { font-size: 24px; }
+            .chapter-header { padding: 12px 20px 0; }
+            .card-track { padding: 16px 20px; }
+            .metrics-grid { grid-template-columns: 1fr; }
+            .mode-boxes { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <img class="sidebar-logo" src="data:image/png;base64,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" alt="Salient">
+        <div>
+            <div class="sidebar-brand-text">Salient</div>
+            <div class="sidebar-brand-sub">AI语音代理</div>
+        </div>
+    </div>
+    <div class="nav-items" id="nav">
+        <button class="nav-btn active" onclick="go(0)">📍 封面</button>
+        <button class="nav-btn" onclick="go(1)">📋 公司概况</button>
+        <button class="nav-btn" onclick="go(2)">🎯 产品功能</button>
+        <button class="nav-btn" onclick="go(3)">🤖 AI技术</button>
+        <button class="nav-btn" onclick="go(4)">💰 融资与财务</button>
+        <button class="nav-btn" onclick="go(5)">📊 用户反馈</button>
+        <button class="nav-btn" onclick="go(6)">🔮 核心启示</button>
+        <button class="nav-btn" onclick="go(7)">📰 近期要闻</button>
+    </div>
+    <a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main id="main">
+
+<!-- ====== COVER ====== -->
+<section class="cover">
+    <div class="cover-content">
+        <img class="cover-logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABBCAYAAABhNaJ7AAAHIElEQVR4nO2bTWhUVxTHf7ZdFFdjuxDBlJGUdKOQQhMYTWGELhp4WRWEuEo3wuui9G0UBekioJjN6CYD2dRFcUBw5UA2QgMOOoQssnAVDH0QQVxIp7uuShf3nHn3vblvMu9jHIs5MFxz5879+N9zzj1fHvP8gA+ZPpr0BiZNRwBMegOTpiMAJr2BSdMHD8An72KRdrMxDSwBp4ApoAZU5GNTCLwCDuSzC2x7frA/rr0dG5cd0G426sAicIXBg2alEHgOPAY2PT/oFZyvT6UDIAdfBRas7h6wCWwDb6R9ax+k3WxUgM8xHHIKmCXilmpimRaw4fnBVtH9lgaAHOA6cFW69NCFNyoiNA/8RBzYDnCzyPylACAbfEJ0U2vAbb1hAWcWIxJpOqAnH1sHbAK7CU6ZxojVJWu9FgaIzLqiMACJw4fAj3ojJeqBDvAIeKyHtIBQjoutPSoVAsBx+O88P9h3iIMe4hmi2RlNB5wnzvI6z00LZHsPa54fXMtyhqIAPJUNhkSHT4pDbva01qljbnuRiJNi87abjel3KgLtZmMZeCB/fuk4fIiAIuMrwApGmU0Bp4lrd1sHPANeY+R/y1rTJf8XiyjBIobQLWlbFvL24b/2/KAnB18Hlg+ZT5ViFYvt281G8jW51m42NjBP7XbRFyYXAHL7VfnzpvTdIX7zPYc49JUZQJJlZbxLBywDy+1mIyRSdJfz7D1JeTlgSdqWxfqq8G44xGGk91oAUVBaELMBbslci8DQebJQXgAWpX0s7by0oecHLfn3KhFHLFnisCLjXRZeSGQHbBPpgH2glVfRDaPMAMiNqCbelFY54qE1RmU+TRxcVLW+X5a5QoTtx+EU5eGAKWl71juufbvSKiAda9P3icRhHYeXJyDpfLPAD8CzMmz+NMoDwClpbY/srLSvE2MOoP8EqmZfSbtJq38fI+d3c+wvE33wAZE8AOgtJx0ZiG5ex0wBiKiE0nfFYvWJUx4ROJC20m42KnK45xj5nsU8X6oLFqwx94AG5rm82m420uYPiazBsUeEMnOAbEZvfFZaBeW8jNkiuvHr0ncXY7x0DlmiitEXVzGm9st2s/FUjK/SKZcvYDlBa54fXBNn5Q/5+qLnB1sJXyEQAEaZW63BRQa9wRDLvyiD8gLwC4ade54fnJA+BaXj+cG30neHyEJsYQynTCwtgKwS9yUyu71plBeACvAnRhHqjU8DL5MbTIBwGPWAFxiRioHlAKLl+UFhf+Djmbla5h/NzNX+2dvpfgZcAOozc7V7M3O1v/Z2un8D3wMX9na6x2fmak9m5mpP9na6vwNd4CTwL+nRoU+BL4BzGCPo572d7ld7O91dzw/2Z+Zqj/Z2usdl3XO6RuYDWFQkHmBzQdqNZwqGWLFDtQJt+e/rkcQaI+sXFxWNCKkugDgIdj9EbvAuiSDnIfMn2d4FdA/4Jq9iLCMoat+GvUGX8jqMQowNEPMV0m7cUry59UFZYXF7gx0se9/y55cwz9tZRo8Qp4mWhuDqRM/viTwZozITI0ltnzkYmpIAsUFwPbUxmyTrvktNjckB7jOYvUkNhw+Zy9Yjlz0/aKUYXAp8H5QsNJbkqBXGzmq+doB1jSrZis5hcLms0MxiMBZ3WKI3l4ETGPt/DXO4DvE4QpIWgAdy+wC3ZXxFDgrmNQHxO4gcLzCJlUw01voAuY2WfIZSItX1K3BXQmkvMMDMYoIkb+Qnp3UNCZtVMfoj03P43gRERFnelj8rVsxAPU0NvGqsoVrGuu8NAEI2C79NfHfAGGisIiBK7DyRFXgAQxMiq9LVcQRck/HG0JqikhgzMo0NAFFamsNbSHw37KchJnegwOhvNQehQZhXMsauM8jMJaWLgMquvARngItAgFGEHeI3pxTKdwEmp6gpdvX07PD6JWnXpdUkTS+PP1AqB+i7LVr5BlHycivjPGpQVTHP4Ir02znJbWk1B/Eiz57LFoFNIrZ/ANBuNmxL8DWGTZPFEarxl4i7wSHxugPNSK9ZfWpsKUdkosIAiNEyT5T8PJMoaFhgsMrjMD0Ali9hiUMVA4o+l6o07ZxkJioEgBxUT1JrNxsPifL4W9aYWeKFEa4CKQ2FbQP3rQIrV9FFL3H7N/KeIW9MsJ+ldfj9pZTHpRRBucpwcjlBSpkBsByU/oakv85ggSTEvcE0HaAFUvO4i6P6ZXfDynDyUB4A6sBvxGsCNxIckVRmeWiAkxJrh5SQI8gtAsTZPsTUBmzYG3IUSA7TAZpiGyiQdJTdhZSUICkaFK0zyPap+f+c8ycLLWNVqEWprJhgHXcAJCS61VF1wElp7ZpAKKEu2EVlh8QqmI0v4a4Byko9YANTIr9VcC4nje3/C0AsyKml764CSRgslN7GqgseJ40VgP8DvW8BkXdORwBMegOTpiMAJr2BSdMRAJPewKTpP5XDxgL2gRcGAAAAAElFTkSuQmCC" alt="Salient">
+        <h1 class="cover-title">Salient</h1>
+        <p class="cover-subtitle">合规优先的AI代理，自动化消费贷款的催收、客户服务和争议解决</p>
+        <div class="cover-tags">
+            <span class="cover-tag">AI语音代理</span>
+            <span class="cover-tag">合规优先</span>
+            <span class="cover-tag">消费贷款</span>
+            <span class="cover-tag">金融科技</span>
+        </div>
+        <div class="cover-stats">
+            <div class="stat-box">
+                <div class="stat-number" data-count="25000000" data-prefix="$" data-suffix="">2500万</div>
+                <div class="stat-label">ARR (2025年12月)</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="500000000" data-prefix="$" data-suffix="">5亿</div>
+                <div class="stat-label">估值</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="60000000" data-prefix="$" data-suffix="">6000万</div>
+                <div class="stat-label">A轮融资</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">100%</div>
+                <div class="stat-label">试点转化率</div>
+            </div>
+        </div>
+    </div>
+    <div class="cover-scroll-hint">向下滑动探索</div>
+</section>
+
+<!-- ====== CHAPTER 1: 公司概况 (5 cards) ====== -->
+<section class="chapter" id="ch-1">
+    <div class="chapter-header">
+        <h2>公司概况</h2>
+        <span class="ch-sub">📋 History & Team</span>
+        <span class="ch-counter" id="counter-1">1 / 5</span>
+    </div>
+    <div class="card-track" data-ch="1">
+
+        <!-- 1/5 来源故事与创始人 -->
+        <div class="slide"><div class="card"><h3>创始人与创立背景</h3><div class="card-body">
+            <p>Salient由Ari Malik和Mukund Tibrewala于2023年在旧金山创立。Ari Malik在特斯拉金融部门工作时，亲身经历了贷款行业系统落后和流程低效的问题。他意识到，AI可以不仅提升效率，还能确保合规性。</p>
+            <p>Mukund Tibrewala曾在Dropbox和Airtable工作，专长是AI/ML基础设施和监管合规工程。两人互补的经验为Salient的诞生奠定了坚实基础。他们不是想做通用AI客服，而是要构建从底层就将合规性融入AI决策逻辑的专业解决方案。</p>
+            <p>团队搬迁到洛杉矶，与Westlake Financial建立合作关系，共同设计产品。这不仅是一次性销售，而是与客户的深度共创。</p>
+        </div></div></div>
+
+        <!-- 2/5 融资与成长 -->
+        <div class="slide"><div class="card"><h3>融资历程与估值</h3><div class="card-body">
+            <p><strong>2023年</strong>：Salient获得Y Combinator支持，开始验证AI-Native的想法。</p>
+            <p><strong>2025年7月</strong>：完成6000万美元A轮融资，由Andreessen Horowitz领投。融资后估值达5亿美元。投资方还包括Matrix Partners和著名投资人Michael Ovitz。</p>
+            <div class="metrics-grid">
+                <div class="metric-item">
+                    <div class="metric-value">$2500万</div>
+                    <div class="metric-label">2025年ARR</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value">$5亿</div>
+                    <div class="metric-label">最新估值</div>
+                </div>
+            </div>
+            <p>这个融资速度表明顶级VC对Salient商业模式的强烈认可。从0到5亿美元估值仅用两年多，显示了市场对合规AI的巨大需求。</p>
+        </div></div></div>
+
+        <!-- 3/5 公司使命与地位 -->
+        <div class="slide"><div class="card"><h3>公司使命与行业地位</h3><div class="card-body">
+            <p><strong>使命</strong>：通过AI自动化和合规优先设计，重新定义消费贷款的催收、客户服务和争议解决。帮助金融机构在降本增效的同时提升客户体验和监管准备度。</p>
+            <p>Salient已被摩根大通纳入创新名人堂，《财富》杂志将其报道为"AI驱动的贷款处理独角兽候选"。Y Combinator官方认可为"两年内ARR达2500万、零客户流失的金融AI明星"。</p>
+            <div class="callout">
+                Salient成立于2023年，但已经成为美国消费贷款AI自动化的标杆企业。其成功的关键在于"合规优先"的设计哲学。
+            </div>
+        </div></div></div>
+
+        <!-- 4/5 里程碑 -->
+        <div class="slide"><div class="card"><h3>关键里程碑</h3><div class="card-body">
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-year">2023</div>
+                    <div class="timeline-content">
+                        <div class="timeline-event">创立并获Y Combinator支持</div>
+                        <p>AI-Native初创验证</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-year">2024年</div>
+                    <div class="timeline-content">
+                        <div class="timeline-event">与Westlake Financial合作，Taylor上线</div>
+                        <p>平均降低50%运营成本</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-year">2024下</div>
+                    <div class="timeline-content">
+                        <div class="timeline-event">Marshall和Alex代理上线</div>
+                        <p>从点状自动化到面状覆盖</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-year">2025年</div>
+                    <div class="timeline-content">
+                        <div class="timeline-event">A轮融资、Agent Studio发布</div>
+                        <p>从定制到产品化的规模化拐点</p>
+                    </div>
+                </div>
+            </div>
+        </div></div></div>
+
+        <!-- 5/5 目标用户 -->
+        <div class="slide"><div class="card"><h3>目标用户与痛点</h3><div class="card-body">
+            <p><strong>目标用户</strong>：美国消费贷款机构高管与运营团队。具体为年资产规模10亿美元以上的银行、信用合作社、汽车贷款公司的COO、CTO、合规负责人。</p>
+            <div class="callout">
+                <strong>关键痛点</strong>：催收人工成本高昂（年均数千万）、合规风险巨大（FDCPA/TCPA违规罚款数百万）、催收效率低下、系统集成复杂、客户满意度低。
+            </div>
+            <p>这些机构对AI自动化充满期待但谨慎于监管风险。他们需要完整的审计、可解释性文档，并重视与供应商的长期合作关系。Salient正是为这个痛点而生的解决方案。</p>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-1"></div>
+</section>
+
+<!-- ====== CHAPTER 2: 产品功能 (5 cards) ====== -->
+<section class="chapter" id="ch-2">
+    <div class="chapter-header">
+        <h2>产品功能</h2>
+        <span class="ch-sub">🎯 Core Products</span>
+        <span class="ch-counter" id="counter-2">1 / 5</span>
+    </div>
+    <div class="card-track" data-ch="2">
+
+        <!-- 1/5 Taylor AI代理 -->
+        <div class="slide"><div class="card"><h3>Taylor：语音/文本催收代理</h3><div class="card-body">
+            <p>Taylor是Salient的核心产品，负责处理入站和出站的催收、客户服务、支付支持。能进行自然、富有同情心的对话，并根据借款人历史信息进行个性化交互。</p>
+            <p><strong>关键特性</strong>：24/7可用性、借款人级别记忆、意图识别、支付流程引导、异常情况智能路由。</p>
+            <div class="metrics-grid">
+                <div class="metric-item">
+                    <div class="metric-value">50万+</div>
+                    <div class="metric-label">日独特交互</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value">55%</div>
+                    <div class="metric-label">承诺支付率</div>
+                </div>
+            </div>
+            <p>Westlake Financial每月处理1000万+呼叫，服务人员编制削减45%，年度节省1200万美元。这是对Taylor价值的最有力证明。</p>
+        </div></div></div>
+
+        <!-- 2/5 Marshall合规监控 -->
+        <div class="slide"><div class="card"><h3>Marshall：合规监控与质保</h3><div class="card-body">
+            <p>Marshall监控100%的电话、短信和邮件对话，自动检测合规风险，生成"一键导出证据包"以应对内部审计和监管检查。这是Salient相比竞品的关键差异化能力。</p>
+            <p><strong>关键特性</strong>：100%监控覆盖、自动合规标签、TCPA/FDCPA风险识别、可审计记录、实时告警。</p>
+            <div class="callout">
+                <strong>监管价值</strong>：100%监控覆盖意味着零合规漏洞。ACA的30万+自动化呼叫就是最好的例证。避免了潜在的数百万美元罚款风险。
+            </div>
+        </div></div></div>
+
+        <!-- 3/5 Alex与Agent Studio -->
+        <div class="slide"><div class="card"><h3>Alex & Agent Studio：自动化与产品化</h3><div class="card-body">
+            <p><strong>Alex</strong>是全损索赔处理代理，自动化处理从首次通知到最终结算的全流程，包括信息收集、流程协调、系统更新。Alex已实现30万+自动化索赔处理。</p>
+            <p><strong>Agent Studio</strong>（2026年新发布）是为受监管贷款行业设计的代理构建器。客户可不借助编码，通过预构建模板和可视化编辑，快速部署和定制AI代理。部署时间从3-6个月降至2-4周。</p>
+            <div class="callout">
+                从定制化服务到产品化是Salient的重要转折点，标志着规模化的开始。
+            </div>
+        </div></div></div>
+
+        <!-- 4/5 核心差异化能力 -->
+        <div class="slide"><div class="card"><h3>核心差异化能力</h3><div class="card-body">
+            <p><strong>合规优先的设计架构</strong>：从底层将法规融入AI决策，而非事后补救。100%合规监控覆盖，自动生成可审计记录。</p>
+            <p><strong>借款人级别上下文记忆</strong>：AI代理记住借款人的完整历史——电话记录、承诺、困难、争议等。每次交互时自动加载，减少客户重复提问80%以上。</p>
+            <p><strong>端到端工作流自动化</strong>：AI不仅回答问题，还能执行复杂多步骤任务。全损索赔处理周期缩短60%以上。</p>
+            <p><strong>与主流基础设施无缝集成</strong>：与Genesys、NICE、Amazon Connect等联络中心平台深度集成，无需"撕毁"现有系统。</p>
+        </div></div></div>
+
+        <!-- 5/5 用户旅程 -->
+        <div class="slide"><div class="card"><h3>贷款机构的完整用户旅程</h3><div class="card-body">
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-year">Step 1</div>
+                    <div class="timeline-content">
+                        <div class="timeline-event">评估与试点</div>
+                        <p>确定痛点，与Salient商讨试点计划（100-1000笔贷款）</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-year">Step 2</div>
+                    <div class="timeline-content">
+                        <div class="timeline-event">集成与配置</div>
+                        <p>与LMS/LOS系统、联络中心集成，配置合规规则</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-year">Step 3</div>
+                    <div class="timeline-content">
+                        <div class="timeline-event">AI代理上线</div>
+                        <p>开始处理实际贷款业务，现场支持</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-year">Step 4</div>
+                    <div class="timeline-content">
+                        <div class="timeline-event">规模化部署</div>
+                        <p>试点成功后全量部署，扩展到更多贷款产品线</p>
+                    </div>
+                </div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-2"></div>
+</section>
+
+<!-- ====== CHAPTER 3: AI技术 (4 cards) ====== -->
+<section class="chapter" id="ch-3">
+    <div class="chapter-header">
+        <h2>AI技术与架构</h2>
+        <span class="ch-sub">🤖 Tech Stack</span>
+        <span class="ch-counter" id="counter-3">1 / 4</span>
+    </div>
+    <div class="card-track" data-ch="3">
+
+        <!-- 1/4 技术架构 -->
+        <div class="slide"><div class="card"><h3>混合AI技术架构</h3><div class="card-body">
+            <p>Salient采用混合AI架构，而非纯粹的LLM驱动。生成式LLM处理自然语言交互与意图识别，规则引擎与确定性逻辑处理精确的金融计算和合规决策，知识图谱支撑借款人上下文记忆，RAG确保回复的准确性和可溯源性。</p>
+            <p><strong>核心设计原则</strong>：合规优先。每个AI决策都经过合规规则约束和可解释性验证。这不仅是技术问题，更是工程和领域知识的深度整合。</p>
+            <div class="callout">
+                推测采用OpenAI GPT或Anthropic Claude作为基础模型，但Salient在其之上构建了金融领域的垂直定制能力。
+            </div>
+        </div></div></div>
+
+        <!-- 2/4 核心AI能力 -->
+        <div class="slide"><div class="card"><h3>七大核心AI能力</h3><div class="card-body">
+            <p><strong>自然语言理解与生成</strong>：理解借款人口语请求，生成自然流畅且富有同情心的回复。不同于机械式应答。</p>
+            <p><strong>多轮对话管理</strong>：维持连贯对话，理解上下文，记住承诺和约定，避免重复提问。</p>
+            <p><strong>借款人级别上下文记忆</strong>：持久化存储历史交互、还款记录、争议信息，每次交互时动态加载。</p>
+            <p><strong>意图识别与任务规划</strong>：从请求中识别真实意图，规划完成任务所需的步骤（支付流程、安排延期等）。</p>
+            <p><strong>复杂工作流自动化</strong>：执行实际任务：更新系统、转账资金、生成文档。涉及与后端API深度集成。</p>
+            <p><strong>合规性推理与可解释性</strong>：AI决策嵌入合规逻辑，每个输出都经过合规校验，自动生成决策解释。</p>
+            <p><strong>实时监控与异常检测</strong>：持续监控对话，实时识别合规风险、情感异常或欺诈迹象。</p>
+        </div></div></div>
+
+        <!-- 3/4 性能与壁垒 -->
+        <div class="slide"><div class="card"><h3>性能基准与技术壁垒</h3><div class="card-body">
+            <div class="metrics-grid">
+                <div class="metric-item">
+                    <div class="metric-value">50万+</div>
+                    <div class="metric-label">日独特交互</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value">&lt;2秒</div>
+                    <div class="metric-label">平均回应时间</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value">50%</div>
+                    <div class="metric-label">成本降低</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value">100%</div>
+                    <div class="metric-label">合规覆盖</div>
+                </div>
+            </div>
+            <p><strong>数据护城河</strong>：10亿+真实贷款交易数据和合规验证的金融对话数据。任何竞争对手都无法短期内复制。</p>
+            <p><strong>合规工程壁垒</strong>：将TCPA、FDCPA等复杂法规深度融入AI设计的能力。这不仅是算法问题，更是领域知识的深度整合。</p>
+        </div></div></div>
+
+        <!-- 4/4 风险与挑战 -->
+        <div class="slide"><div class="card"><h3>技术风险与挑战</h3><div class="card-body">
+            <p><strong>幻觉问题</strong>：生成式AI可能产生不准确的金融信息，在金融服务中后果严重。需要持续事实核查和人类监督。Salient通过规则引擎约束缓解。</p>
+            <p><strong>监管适应性</strong>：金融监管环境不断变化，AI系统需快速适应新规定。任何监管延迟都可能导致合规问题。</p>
+            <p><strong>模型偏见</strong>：AI模型可能学习数据中的偏见，在催收决策中体现为不公平对待。需持续的公平性审计。</p>
+            <p><strong>数据隐私</strong>：处理敏感借款人数据，需确保GDPR、CCPA等合规性。任何泄露都是灾难性的。</p>
+            <div class="callout">
+                Salient的"合规优先"设计正是为了主动应对这些风险，而非被动防守。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-3"></div>
+</section>
+
+<!-- ====== CHAPTER 4: 融资与财务 (3 cards) ====== -->
+<section class="chapter" id="ch-4">
+    <div class="chapter-header">
+        <h2>融资与财务</h2>
+        <span class="ch-sub">💰 Growth Metrics</span>
+        <span class="ch-counter" id="counter-4">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="4">
+
+        <!-- 1/3 融资与ARR增长 -->
+        <div class="slide"><div class="card"><h3>融资与ARR增长</h3><div class="card-body">
+            <p><strong>融资历程</strong>：2023年获Y Combinator支持 → 2025年7月完成6000万美元A轮融资，由Andreessen Horowitz领投。</p>
+            <p><strong>ARR增长</strong>：2024年Q4约1600万美元 → 2025年12月2500万美元。同比增长约56%，是Y Combinator官方认可的"创业明星"。</p>
+            <div class="metrics-grid">
+                <div class="metric-item">
+                    <div class="metric-value">$2500万</div>
+                    <div class="metric-label">2025年ARR</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value">~70%</div>
+                    <div class="metric-label">毛利率</div>
+                </div>
+            </div>
+            <p><strong>财务状况</strong>：目前仍处于增长期，优先规模扩张而非盈利。但极高的毛利率和零客户流失率表明商业模式的健康性。</p>
+        </div></div></div>
+
+        <!-- 2/3 单位经济学 -->
+        <div class="slide"><div class="card"><h3>单位经济学与客户获取</h3><div class="card-body">
+            <p><strong>关键指标</strong>：</p>
+            <div class="table-container">
+                <table>
+                    <tr><td><strong>指标</strong></td><td><strong>数值</strong></td></tr>
+                    <tr><td>订阅收入占比</td><td>~80%</td></tr>
+                    <tr><td>交易费用占比</td><td>~20%</td></tr>
+                    <tr><td>推算CAC回本周期</td><td>&lt;3个月</td></tr>
+                    <tr><td>客户流失率</td><td>0%</td></tr>
+                    <tr><td>试点转化率</td><td>100%</td></tr>
+                    <tr><td>ARPU（年）</td><td>~200-500万美元/客户</td></tr>
+                </table>
+            </div>
+            <p><strong>市场数据</strong>：20+主流贷款机构客户，包括Westlake Financial（240亿资产）和ACA（60亿资产）。</p>
+            <p>100%试点转化率和0%客户流失率表明Salient的产品粘性远超行业平均。这是其快速增长的深层驱动力。</p>
+        </div></div></div>
+
+        <!-- 3/3 IPO前景与增长 -->
+        <div class="slide"><div class="card"><h3>IPO前景与未来增长</h3><div class="card-body">
+            <p><strong>IPO时间表</strong>：融资速度与估值提升表明，公司IPO时间表可能在2027-2028年，潜在地点为纽约或纳斯达克（金融科技首选）。</p>
+            <p><strong>增长驱动力</strong>：</p>
+            <ul style="margin: 12px 0; padding-left: 20px;">
+                <li>Agent Studio产品化降低部署门槛，加速客户获取</li>
+                <li>扩展到新的贷款类型（抵押、学生贷款）</li>
+                <li>国际扩展（欧洲、亚洲等）</li>
+                <li>垂直领域扩展（处理投诉、债务重组等新AI代理）</li>
+            </ul>
+            <p><strong>竞争格局</strong>：在金融AI自动化领域，Salient相比通用AI公司具有专业化优势。其"合规优先"的设计哲学将成为受监管行业AI应用的标准范式。</p>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-4"></div>
+</section>
+
+<!-- ====== CHAPTER 5: 用户反馈 (3 cards) ====== -->
+<section class="chapter" id="ch-5">
+    <div class="chapter-header">
+        <h2>用户反馈</h2>
+        <span class="ch-sub">📊 Market Validation</span>
+        <span class="ch-counter" id="counter-5">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="5">
+
+        <!-- 1/3 客户案例 -->
+        <div class="slide"><div class="card"><h3>头部客户案例</h3><div class="card-body">
+            <div class="founder-card">
+                <div class="founder-name">Westlake Financial</div>
+                <div class="founder-title">资产规模：$240亿</div>
+                <div class="founder-desc"><strong>影响</strong>：服务人员编制削减45%，年度节省1200万美元，月处理呼叫1000万+。<br><strong>反馈</strong>："Salient的AI代理完全改变了我们的催收运营。不仅成本大幅下降，而且合规性更强，客户满意度也提高了。"</div>
+            </div>
+            <div class="founder-card">
+                <div class="founder-name">ACA</div>
+                <div class="founder-title">资产规模：$60亿</div>
+                <div class="founder-desc"><strong>影响</strong>：30万+呼叫自动化，零合规漏洞，处理周期缩短。<br><strong>反馈</strong>："在严格的监管环境中，能找到一个既能自动化又能保证合规的解决方案极其罕见。Salient做到了。"</div>
+            </div>
+        </div></div></div>
+
+        <!-- 2/3 市场认可 -->
+        <div class="slide"><div class="card"><h3>行业认可与荣誉</h3><div class="card-body">
+            <p><strong>顶级VC背书</strong>：由Andreessen Horowitz领投A轮，Matrix Partners、Michael Ovitz等顶级投资人参投。这说明专业投资机构对Salient的长期潜力有高度共识。</p>
+            <p><strong>行业认可</strong>：</p>
+            <ul style="margin: 12px 0; padding-left: 20px;">
+                <li>被摩根大通纳入创新名人堂（2025年）</li>
+                <li>《财富》杂志深度报道为"AI驱动的贷款处理独角兽候选"（2025年12月）</li>
+                <li>Y Combinator官方背书为"两年内ARR达2500万、零客户流失的金融AI明星"</li>
+            </ul>
+            <div class="callout">
+                这些荣誉不仅是营销价值，更代表了产业内最权威机构对Salient创新能力的认可。
+            </div>
+        </div></div></div>
+
+        <!-- 3/3 关键指标 -->
+        <div class="slide"><div class="card"><h3>产品健康指标</h3><div class="card-body">
+            <div class="metrics-grid">
+                <div class="metric-item">
+                    <div class="metric-value">0%</div>
+                    <div class="metric-label">客户流失率</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value">100%</div>
+                    <div class="metric-label">试点转化率</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value">&gt;70</div>
+                    <div class="metric-label">估计NPS</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value">极高</div>
+                    <div class="metric-label">用户满意度</div>
+                </div>
+            </div>
+            <p><strong>指标解读</strong>：0%客户流失和100%试点转化率是市场验证最有力的证明。这意味着一旦客户与Salient合作，就会永久保留，且试点几乎100%会转化为生产部署。</p>
+            <p>这种指标组合在SaaS行业极其罕见，特别是在复杂的企业金融软件领域。显示Salient已经找到了产品-市场匹配的最优点。</p>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-5"></div>
+</section>
+
+<!-- ====== CHAPTER 6: 核心启示 (3 cards) ====== -->
+<section class="chapter" id="ch-6">
+    <div class="chapter-header">
+        <h2>从Salient看金融AI的未来</h2>
+        <span class="ch-sub">🔮 Key Insights</span>
+        <span class="ch-counter" id="counter-6">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="6">
+
+        <!-- 1/3 启示一：合规是生命线 -->
+        <div class="slide"><div class="insight-card"><div class="insight-emoji">⚖️</div>
+            <h3>启示一：合规优先是金融AI的生命线</h3>
+            <div class="card-body">
+                <p>Salient的成功证明，在金融行业，将合规性置于AI设计的核心，而非事后补救，是赢得客户信任的关键。大多数通用AI解决方案假设"AI首先要精准和聪明"，Salient则假设"AI首先要合规和可解释"。</p>
+                <p>这不仅改变了技术架构（混合LLM+规则引擎），更改变了商业模式（从按使用量计费转向高价值订阅）。客户愿意为"合规保证"支付溢价，而非仅为"成本节省"。</p>
+                <div class="insight-highlight">对同行的启示：受监管行业的AI应用，合规性不是功能，而是基础设施。任何忽视这一点的创业公司都将陷入"技术再好也无法销售"的困境。</div>
+            </div>
+        </div></div>
+
+        <!-- 2/3 启示二：垂直深耕胜过通用化 -->
+        <div class="slide"><div class="insight-card"><div class="insight-emoji">🎯</div>
+            <h3>启示二：垂直深耕比通用化更能创造护城河</h3>
+            <div class="card-body">
+                <p>Salient专注于美国消费贷款这一细分领域，比试图做通用AI客服更能创造不可替代的价值和竞争壁垒。关键在于积累领域数据和专业知识。</p>
+                <p>10亿+贷款交易数据、深度理解TCPA/FDCPA法规、与主流联络中心平台的集成能力——这些都是通用AI巨头无法短期内复制的。OpenAI或Google可以构建更强大的基础模型，但无法复制Salient的"垂直专业性"。</p>
+                <div class="insight-highlight">对同行的启示：AI创业公司的未来不在于"更大的模型"，而在于"更深的领域专业化"。选择一个细分市场，深耕至不可被替代，是对抗大模型公司的唯一出路。</div>
+            </div>
+        </div></div>
+
+        <!-- 3/3 启示三：数据飞轮与规模化 -->
+        <div class="slide"><div class="insight-card"><div class="insight-emoji">🔄</div>
+            <h3>启示三：从ChatBot到Agent是必然的进化路径</h3>
+            <div class="card-body">
+                <p>Salient的产品演进（聊天机器人→AI助手→AI代理）可能是所有AI应用的标准进化路线。关键转折点在于：<strong>当AI从"给建议"升级到"替你做"，用户价值和商业价值同时跃迁。</strong></p>
+                <p>Taylor只是告诉借款人"你可以支付$500"，但不帮他处理。当升级到能自动处理支付、更新系统、生成审计记录，价值就从"效率提升10%"跃迁到"替代整个部门"。这是从SaaS到Agent-as-a-Service的转型。</p>
+                <div class="insight-highlight">对同行的启示：AI产品的终局不是更好的聊天体验，而是让用户"无感"地解决问题。最好的AI是用户不需要打开的AI——完全后台执行，用户只看结果。</div>
+            </div>
+        </div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-6"></div>
+</section>
+
+<!-- ====== CHAPTER 7: 近期要闻 (1 card) ====== -->
+<section class="chapter" id="ch-7">
+    <div class="chapter-header">
+        <h2>近期要闻</h2>
+        <span class="ch-sub">📰 Latest Updates</span>
+    </div>
+    <div class="card-track" data-ch="7">
+        <div class="slide"><div class="card"><h3>Salient近期动态</h3><div class="card-body">
+            <div class="news-item">
+                <div class="news-date">2026年3月</div>
+                <div class="news-title">Agent Studio正式发布，代理构建产品化</div>
+                <div class="news-desc">Salient发布Agent Studio，客户可无需编码快速定制部署AI代理。标志着从定制服务向产品化的重要转变。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2025年12月</div>
+                <div class="news-title">被纳入摩根大通创新名人堂，《财富》深度报道</div>
+                <div class="news-desc">Salient ARR达2500万美元，被摩根大通创新委员会认可为"AI金融科技标杆"，《财富》报道其为"独角兽候选"。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2025年8月</div>
+                <div class="news-title">与主流联络中心平台深度集成</div>
+                <div class="news-desc">Salient宣布与Genesys、NICE、Amazon Connect建立战略合作，实现原生集成。生态融合加速。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2025年7月</div>
+                <div class="news-title">完成6000万美元A轮融资</div>
+                <div class="news-desc">Andreessen Horowitz领投，Matrix Partners、Michael Ovitz等参投。估值达5亿美元，标志着AI金融科技融资新高度。</div>
+            </div>
+            <div class="references">
+                <h4>📚 参考文献</h4>
+                <ul>
+                    <li><a href="https://www.trysalient.com/" target="_blank">Salient官方网站</a></li>
+                    <li><a href="https://www.trysalient.com/customers" target="_blank">Salient客户案例</a></li>
+                    <li><a href="https://fortune.com/2025/12/18/salients-quiet-ai-boom/" target="_blank">Fortune: Salient深度报道 (2025.12)</a></li>
+                    <li><a href="https://a16z.com/announcement/investing-in-salient/" target="_blank">Andreessen Horowitz: 投资公告 (2025.07)</a></li>
+                    <li><a href="https://www.ycombinator.com/" target="_blank">Y Combinator官方声明</a></li>
+                    <li><a href="https://www.crunchbase.com/organization/salient" target="_blank">Crunchbase: Salient融资数据</a></li>
+                </ul>
+            </div>
+        </div></div></div>
+    </div>
+    <div class="dots-bar" id="dots-7" style="visibility:hidden;"></div>
+</section>
+
+</main>
+
+<script>
+const main = document.getElementById('main');
+const navBtns = document.querySelectorAll('.nav-btn');
+const sections = document.querySelectorAll('.cover, .chapter');
+
+function go(i) { sections[i].scrollIntoView({ behavior: 'smooth' }); }
+
+// Active nav tracking
+const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+        if (e.isIntersecting) {
+            const idx = [...sections].indexOf(e.target);
+            navBtns.forEach((b, i) => b.classList.toggle('active', i === idx));
+        }
+    });
+}, { root: main, threshold: 0.5 });
+sections.forEach(s => obs.observe(s));
+
+// Horizontal dots + counter
+document.querySelectorAll('.card-track').forEach(track => {
+    const ch = track.dataset.ch;
+    const slides = track.querySelectorAll('.slide');
+    const dotsBar = document.getElementById('dots-' + ch);
+    const counter = document.getElementById('counter-' + ch);
+    if (!dotsBar || slides.length < 2) return;
+
+    slides.forEach((_, i) => {
+        const d = document.createElement('button');
+        d.className = 'dot' + (i === 0 ? ' active' : '');
+        d.onclick = () => slides[i].scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
+        dotsBar.appendChild(d);
+    });
+
+    track.addEventListener('scroll', () => {
+        const idx = Math.round(track.scrollLeft / track.clientWidth);
+        dotsBar.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === idx));
+        if (counter) counter.textContent = (idx + 1) + ' / ' + slides.length;
+    });
+});
+
+// Cover count-up
+document.querySelectorAll('[data-count]').forEach(el => {
+    const target = parseInt(el.dataset.count);
+    const prefix = el.dataset.prefix || '';
+    const suffix = el.dataset.suffix || '';
+    let cur = 0;
+    const inc = target / 125;
+    const timer = setInterval(() => {
+        cur += inc;
+        if (cur >= target) { el.textContent = prefix + target.toLocaleString() + suffix; clearInterval(timer); }
+        else { el.textContent = prefix + Math.floor(cur).toLocaleString() + suffix; }
+    }, 16);
+});
+</script>
+
+</body>
+</html>

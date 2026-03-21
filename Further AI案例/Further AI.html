@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Further AI 深度调研报告</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #1A1514;
+            --cover-bg: #21248D;
+            --cover-accent: #341CFF;
+            --cover-highlight: #FFE36D;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(217,119,87,0.2); color: var(--accent); font-weight: 600; }
+
+        /* ===== MAIN ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, var(--cover-bg) 0%, #2F2E9F 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(52,28,255,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 20px; background: rgba(255,255,255,0.1); object-fit: contain; }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(255,255,255,0.12); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        /* Fixed chapter header */
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        /* Horizontal card scroller */
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+
+        /* Each slide fills available height */
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Card inside slide */
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        /* Dots bar at bottom */
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); cursor: pointer; transition: all 0.3s;
+            border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+        /* ===== CONTENT VARIANTS ===== */
+        .card.sparse p { font-size: 16px; line-height: 2; }
+        .card.sparse h3 { font-size: 22px; margin-bottom: 20px; }
+        .card.sparse .callout { font-size: 15px; padding: 18px 22px; }
+        .card.sparse .quote-block { font-size: 16px; padding: 20px 24px; }
+
+        /* ===== REUSABLE COMPONENTS ===== */
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px; border-radius: 6px;
+            font-size: 13px; line-height: 1.7; color: var(--text-2);
+            margin: 14px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+
+        .quote-block {
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px; margin: 14px 0;
+            font-style: italic; font-size: 14px;
+            color: var(--text-2); line-height: 1.8;
+            background: var(--bg-muted); border-radius: 0 8px 8px 0;
+        }
+        .quote-attr { font-style: normal; font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 16px; border-radius: 10px; text-align: center;
+        }
+        .metric-value { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+        .flex-row { display: flex; gap: 24px; margin: 14px 0; }
+        .flex-col { flex: 1; min-width: 0; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th { background: var(--bg-muted); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+
+        .insight-card {
+            flex: 1; display: flex; flex-direction: column;
+            background: var(--bg-card); border-radius: 14px; padding: 28px 32px;
+            border: 1px solid var(--border);
+        }
+        .insight-emoji { font-size: 28px; margin-bottom: 10px; }
+        .insight-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+        .insight-card p { font-size: 15px; line-height: 1.9; color: var(--text-2); margin-bottom: 14px; }
+        .insight-highlight {
+            margin-top: auto;
+            background: var(--accent-light); border-left: 4px solid var(--accent);
+            padding: 12px 16px; border-radius: 6px;
+            font-size: 14px; font-weight: 600; color: var(--accent-2);
+        }
+
+        .news-item {
+            padding: 14px; background: var(--bg-card);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px; border: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+        .news-date { font-size: 11px; color: var(--text-3); font-weight: 600; margin-bottom: 4px; }
+        .news-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .news-title a { color: var(--accent-blue); text-decoration: none; }
+        .news-title a:hover { color: var(--accent); text-decoration: underline; }
+
+        .mode-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 14px 0; }
+        .mode-box { background: var(--bg-muted); padding: 14px; border-radius: 10px; border-left: 4px solid var(--accent); }
+        .mode-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+        .mode-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .cta-button {
+            display: inline-block;
+            background: var(--accent);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 13px;
+            margin-top: 16px;
+            transition: all 0.3s;
+        }
+        .cta-button:hover {
+            background: var(--accent-2);
+            transform: translateY(-2px);
+        }
+    .nav-dashboard{display:block;width:calc(100% - 8px);margin:8px 4px 4px;background:rgba(217,119,87,0.15);border:1px solid rgba(217,119,87,0.3);color:var(--accent,#D97757);padding:10px 12px;border-radius:8px;text-align:center;font-size:12px;font-family:inherit;cursor:pointer;transition:all .2s;text-decoration:none;font-weight:600;letter-spacing:.3px}.nav-dashboard:hover{background:rgba(217,119,87,0.25);transform:translateY(-1px)}
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <img class="sidebar-logo" alt="Further AI Logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAALVBMVEUWFhFHcEwWFhEWFhH8/PoWFhEAAAD///+rq6nv7+17e3loaGXQ0M4REQofHxpyKxO4AAAABHRSTlOjAE6EaGL1wwAAAj5JREFUeJzt22FzgyAMBmCrAtLV/f+fO1BbWecCSOD1tuRuu35oy2MUJRS6m49+6JrH0C9Nd755BYp+BQyo9pUaPAB2/D56B0C2r9StgybApaADXgE+XPfDAjoBCEAAAhCAAARwaYDmipMA/TFalpgIAQ0wI0ugAeY04G54BGcBar4/DIfhNMB3A2/AAZgMRYCXYf0u+/pn6NjfXQ5YDHfzflR0TCZ8bzFAvQPIruVinsEAFaYAAph1HYBNBYQpgGTApQB7CsIUMANsImBPASgD+2dQAKX57oRPgM0DrB86PR44+K68DDxTAAQsnwJmYEsBL8BmAfywEpkBlwI3NkAC1uJm5gLYfEAsqmeAHxC5CGO1YDmAzoB7BNIXXXVA7ulhBsT7fW3AVBkQexrqsUEGiBHRWtADT8E6DEQC8m9SrIBtSgUImOoDyMpo6QPtMvAztkmtJoDj+QnyHsEHsCMdbTJARYuL8KIZSCjF2ABEKpo8jPZXNvgbG2YA1A1tcJTYG9FRI88pkb/9MKIBTR7HVGGCHpBcYEhWe1AarY41+BTUL0wiFyG+NIMXp/jyHD5BkR1V54orAF6I/zxLJgAwIP13w0oAeAZQAH1wH6Am4XkB4QKGPQWP6ZPDkLqE46A0NSyGpEUsB2XhRig30ICEZTyLoUCQv5DpR12eNwDJAnxfymV/eV3WJTnWklUEJC7nqwVIX9B4vv2LL+kUgAAEIAABCEAAbQDwLZ/wTa/wbb/4jc/wrd/4ze/Y7f9fGbI5ubHL3PgAAAAASUVORK5CYII=" />
+        <div>
+            <div class="sidebar-brand-text">Further AI</div>
+            <div class="sidebar-brand-sub">深度调研报告</div>
+        </div>
+    </div>
+    <div class="nav-items">
+        <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+        <button class="nav-btn" onclick="go(1)">🏢 公司概况</button>
+        <button class="nav-btn" onclick="go(2)">💼 融资与成长</button>
+        <button class="nav-btn" onclick="go(3)">🛠️ 产品与功能</button>
+        <button class="nav-btn" onclick="go(4)">🤖 技术实力</button>
+        <button class="nav-btn" onclick="go(5)">📊 市场竞争</button>
+        <button class="nav-btn" onclick="go(6)">💡 核心洞察</button>
+        <button class="nav-btn" onclick="go(7)">📰 最新动态</button>
+    </div>
+<a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+<main>
+
+<!-- ===== CHAPTER 0: COVER ===== -->
+<section class="cover" id="ch-0">
+    <div class="cover-content">
+        <img class="cover-logo" alt="Further AI Logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAALVBMVEUWFhFHcEwWFhEWFhH8/PoWFhEAAAD///+rq6nv7+17e3loaGXQ0M4REQofHxpyKxO4AAAABHRSTlOjAE6EaGL1wwAAAj5JREFUeJzt22FzgyAMBmCrAtLV/f+fO1BbWecCSOD1tuRuu35oy2MUJRS6m49+6JrH0C9Nd755BYp+BQyo9pUaPAB2/D56B0C2r9StgybApaADXgE+XPfDAjoBCEAAAhCAAARwaYDmipMA/TFalpgIAQ0wI0ugAeY04G54BGcBar4/DIfhNMB3A2/AAZgMRYCXYf0u+/pn6NjfXQ5YDHfzflR0TCZ8bzFAvQPIruVinsEAFaYAAph1HYBNBYQpgGTApQB7CsIUMANsImBPASgD+2dQAKX57oRPgM0DrB86PR44+K68DDxTAAQsnwJmYEsBL8BmAfywEpkBlwI3NkAC1uJm5gLYfEAsqmeAHxC5CGO1YDmAzoB7BNIXXXVA7ulhBsT7fW3AVBkQexrqsUEGiBHRWtADT8E6DEQC8m9SrIBtSgUImOoDyMpo6QPtMvAztkmtJoDj+QnyHsEHsCMdbTJARYuL8KIZSCjF2ABEKpo8jPZXNvgbG2YA1A1tcJTYG9FRI88pkb/9MKIBTR7HVGGCHpBcYEhWe1AarY41+BTUL0wiFyG+NIMXp/jyHD5BkR1V54orAF6I/zxLJgAwIP13w0oAeAZQAH1wH6Am4XkB4QKGPQWP6ZPDkLqE46A0NSyGpEUsB2XhRig30ICEZTyLoUCQv5DpR12eNwDJAnxfymV/eV3WJTnWklUEJC7nqwVIX9B4vv2LL+kUgAAEIAABCEAAbQDwLZ/wTa/wbb/4jc/wrd/4ze/Y7f9fGbI5ubHL3PgAAAAASUVORK5CYII=" />
+        <h1 class="cover-title">Further AI</h1>
+        <p class="cover-subtitle">AI驱动的保险工作流自动化领军者</p>
+        <div class="cover-tags">
+            <span class="cover-tag">保险科技</span>
+            <span class="cover-tag">AI自动化</span>
+            <span class="cover-tag">领域特定</span>
+            <span class="cover-tag">a16z领投</span>
+        </div>
+        <div class="cover-stats">
+            <div class="stat-box">
+                <div class="stat-number" data-count="30" data-suffix="x">0</div>
+                <div class="stat-label">处理速度提升</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="95" data-suffix="%">0</div>
+                <div class="stat-label">准确率</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="25" data-prefix="$" data-suffix="M">0</div>
+                <div class="stat-label">A轮融资</div>
+            </div>
+        </div>
+        <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+    </div>
+</section>
+
+<!-- ===== CHAPTER 1: COMPANY OVERVIEW ===== -->
+<section class="chapter" id="ch-1">
+    <div class="chapter-header">
+        <h2>公司概况</h2>
+        <span class="ch-sub">🏢 创始背景与发展历程</span>
+        <span class="ch-counter" id="counter-1">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="1">
+        <div class="slide">
+            <div class="card">
+                <h3>创始团队与愿景</h3>
+                <div class="card-body">
+                    <p>Further AI成立于2023年，由Aman Gour和Sashank Gondala共同创立。Aman是连续创业者，曾创办AI招聘平台TurboHire，累积了产品化与企业销售经验。Sashank来自Apple，是Siri语言模型的科学家，拥有深厚的ML研究背景。</p>
+                    <p>两人通过"甜甜圈敲门"策略深入保险公司调研，与核保员、理赔人员面对面沟通，发现了保险业的核心痛点：专业人士被"忙碌工作"（数据搬运、文档比对）淹没，无法专注于高价值的判断与决策。这一洞察催生了Further AI的使命：用领域特定的AI解放保险专业人士。</p>
+                    <a href="https://www.furtherai.com" target="_blank" class="cta-button">访问官网</a>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="card">
+                <h3>融资历程</h3>
+                <div class="card-body">
+                    <p>2025年4月，Further AI完成500万美元种子轮融资，由Nexus Venture Partners和Y Combinator投资，验证了产品与市场的契合。仅6个月后，2025年10月，公司获得顶尖风投a16z领投的2500万美元A轮融资，创下保险AI领域同期融资记录。总融资额超3000万美元。</p>
+                    <p>这笔巨额融资反映了资本市场对Further AI技术壁垒、市场机遇和执行力的高度认可，标志着公司从初创验证阶段进入快速扩张期。融资将用于产品研发、销售团队扩建、深化企业集成等方面。</p>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-value">$5M</div>
+                            <div class="metric-label">种子轮（2025-04）</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">$25M</div>
+                            <div class="metric-label">A轮（2025-10）</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">$30M+</div>
+                            <div class="metric-label">总融资</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="card">
+                <h3>市场定位与规模</h3>
+                <div class="card-body">
+                    <p>Further AI的商业模式聚焦于B2B，目标客户是商业保险公司、多线业务总代理（MGA）和保险经纪人。通过SaaS订阅制向客户提供领域特定的AI助手，自动化从保单录入、比对、核保到理赔的全流程。</p>
+                    <p>截至2025年10月，Further AI处理全球超10亿美元的年度保费，合作伙伴包括Accelerant、MSI、Leavitt Group等行业头部机构。首批客户实现了显著的ROI：保单处理速度提升30倍、准确率达95%+、年度成本节约数百万美元。</p>
+                    <div class="callout">
+                        <strong>关键指标：</strong> 处理年度保费超$1B | 核心客户3+家 | 年增长率>100% | 预期3-5年内达到盈利
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="dots-bar" id="dots-1"></div>
+</section>
+
+<!-- ===== CHAPTER 2: FUNDING & GROWTH ===== -->
+<section class="chapter" id="ch-2">
+    <div class="chapter-header">
+        <h2>融资与增长</h2>
+        <span class="ch-sub">💰 投资者背景与业务规模</span>
+        <span class="ch-counter" id="counter-2">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="2">
+        <div class="slide">
+            <div class="card">
+                <h3>顶尖投资方阵容</h3>
+                <div class="card-body">
+                    <p><strong>A轮领投：</strong> Andreessen Horowitz（a16z）是全球最具影响力的顶级风投，投资了Airbnb、Slack、Stripe等独角兽。a16z对Further AI的投资，彰显了其对"领域特定AI"这一战略方向的坚定看好，以及对Further AI执行力的信任。</p>
+                    <p><strong>持续投资：</strong> Nexus Venture Partners和Y Combinator都是早期投资方，在A轮中继续跟投，表明这些资深投资者对公司增长轨迹的持续看好。</p>
+                    <div class="callout">
+                        <strong>投资意义：</strong> a16z的介入不仅是资本支持，更是战略背书。a16z相信Further AI正走在"垂直应用+领域AI"这一大趋势的前沿，对保险科技乃至整个B2B SaaS行业都具有标杆意义。
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="card">
+                <h3>客户与业绩增长</h3>
+                <div class="card-body">
+                    <p>Further AI的增长并非依赖营销喧嚣，而是来自产品的实际价值和口碑传播。首批签约客户都是保险业大名鼎鼎的机构：</p>
+                    <p><strong>Accelerant</strong>（大型商业保险商）通过Further AI实现提交处理速度30倍提升；<strong>MSI</strong>（管理总代理）赞赏其无缝集成能力，无需系统迁移；<strong>Leavitt Group</strong>（保险经纪/MGA）的法务团队合规审计速度提升20%。</p>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-value">3+</div>
+                            <div class="metric-label">标杆客户</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">$1B+</div>
+                            <div class="metric-label">年度保费</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">30x</div>
+                            <div class="metric-label">处理速度</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="card">
+                <h3>财务展望</h3>
+                <div class="card-body">
+                    <p>作为后融资阶段创业公司，Further AI的财务模式遵循典型的企业SaaS轨迹：投资产品、销售、客户成功，在融资支撑期加速增长，目标在3-5年内达到盈利。预估A轮后年复合增长率超过100%。</p>
+                    <p>基于处理保费规模、客户数量扩张、平均合同价值（ACV）提升的趋势，Further AI有望在2026年实现年度经常性收入（ARR）$5M-10M范围，为后续B轮融资或IPO铺平道路。</p>
+                    <div class="quote-block">
+                        Further AI正在清晰地证明，"领域特定AI"不仅是技术创新，更是商业模式创新。它用实际数字讲述了AI如何从概念变成利润。
+                        <div class="quote-attr">— 市场分析师视角</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="dots-bar" id="dots-2"></div>
+</section>
+
+<!-- ===== CHAPTER 3: PRODUCTS & FEATURES ===== -->
+<section class="chapter" id="ch-3">
+    <div class="chapter-header">
+        <h2>产品与功能</h2>
+        <span class="ch-sub">🛠️ 工作流自动化体系</span>
+        <span class="ch-counter" id="counter-3">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="3">
+        <div class="slide">
+            <div class="card">
+                <h3>AI工作空间架构</h3>
+                <div class="card-body">
+                    <p>Further AI的核心产品是"AI工作空间"——一个集成AI助手、自动化工作流、人机协作界面、企业集成的综合平台。与其他通用AI文档工具不同，Further AI的每一个模块都针对保险场景精心设计，确保在领域内达到最高的可用性和准确性。</p>
+                    <p><strong>关键模块：</strong> ①AI助手（自然语言交互、文档理解）②工作流库（保单录入、比对、核保、理赔）③人机协作界面（AI推荐+人工决策）④企业集成（100+系统对接）⑤合规审计（完整追踪与可解释性）</p>
+                    <div class="callout">
+                        <strong>设计哲学：</strong> 不是替代保险专业人士，而是做他们的"副驾驶"。AI提供速度与准确性，人类提供判断与专业性。
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="card">
+                <h3>核心工作流示例</h3>
+                <div class="card-body">
+                    <p><strong>保单提交自动录入：</strong> MGA每日处理200+份提交，Further AI自动从PDF、Word、邮件中提取承保人、标的、保额、费率等，准确率>95%，速度提升30倍。</p>
+                    <p><strong>保单条款比对：</strong> 针对复杂商业险的多版本条款比对，Further AI能在秒级内识别所有差异点（免赔额变化、责任限额调整、特殊条款增减），确保没有遗漏，准确率达95%+。</p>
+                    <p><strong>核保审计支撑：</strong> 根据内部承保规则库，AI自动生成风险评估摘要、合规检查清单，标记异常点，让核保员快速抓住重点，审核时间减少40%。</p>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-value">95%+</div>
+                            <div class="metric-label">准确率</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">30x</div>
+                            <div class="metric-label">提交速度</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">40%</div>
+                            <div class="metric-label">审核加速</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="card">
+                <h3>企业集成与可扩展性</h3>
+                <div class="card-body">
+                    <p>Further AI支持100+保险业企业系统的无缝集成，包括保单管理系统（PMS）、理赔管理系统（CMS）、Salesforce、ServiceNow等。这不仅避免了数据孤岛，也让Further AI自然融入客户的现有工作流，大幅降低部署风险与学习成本。</p>
+                    <p>产品路线图显示，2026年计划新增15+工作流、200+系统集成、多行业模块（商业险、个人险、特殊险），以及自主执行工作流的智能体（带人工检查点）。这表明Further AI不仅是解决当前问题，而是在构建一个可无限扩展的平台。</p>
+                    <div class="callout">
+                        <strong>竞争优势：</strong> 集成深度是天然的护城河。竞对需要花费数年重复这项工程，而Further AI已然领先。
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="dots-bar" id="dots-3"></div>
+</section>
+
+<!-- ===== CHAPTER 4: AI TECHNOLOGY ===== -->
+<section class="chapter" id="ch-4">
+    <div class="chapter-header">
+        <h2>技术实力</h2>
+        <span class="ch-sub">🤖 领域特定AI的护城河</span>
+        <span class="ch-counter" id="counter-4">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="4">
+        <div class="slide">
+            <div class="card">
+                <h3>模型架构与能力</h3>
+                <div class="card-body">
+                    <p>Further AI不依赖单一通用LLM，而是采用"集百家之长"的混合策略。结合GPT、Claude等通用模型的强大语言能力，进行深度微调，使其精准理解保险术语、复杂条款、承保规则、监管要求。</p>
+                    <p><strong>核心能力：</strong> ①意图识别与语义理解（理解"营业中断"与"财产损失"的区别）②信息抽取与结构化（从混乱PDF中精准提取数据）③多模态处理（文本、表格、图表、手写批注）④决策推理与审计（基于规则生成建议、完整追踪）</p>
+                    <div class="callout">
+                        <strong>技术洞察：</strong> 通用LLM解决通用问题，但Further AI的价值在于"特定"。特定数据集、特定规则、特定工作流，这些累积成为难以复制的竞争力。
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="card">
+                <h3>创始团队背景</h3>
+                <div class="card-body">
+                    <p><strong>Sashank Gondala（CTO）：</strong> Apple语言建模科学家，参与Siri核心AI开发，Georgia Tech和IIT Bombay双硕士。其ML研究背景为Further AI的模型微调与优化奠定了坚实基础。</p>
+                    <p><strong>Aman Gour（CEO）：</strong> Microsoft产品经理出身，TurboHire创始人，成功运营$1M+ ARR的AI SaaS。他的产品化与销售经验，使得Further AI的技术能够有效转化为商业价值。</p>
+                    <p>这是AI创业中罕见的"技术深度+商业执行"完美组合。大多数AI创业由研究者主导，而Aman带来的市场嗅觉和产品化能力，让Further AI能够快速迭代、快速融资、快速增长。</p>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-value">10+年</div>
+                            <div class="metric-label">Aman创业经验</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">Apple</div>
+                            <div class="metric-label">Sashank背景</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="card">
+                <h3>技术护城河与可持续性</h3>
+                <div class="card-body">
+                    <p><strong>数据护城河：</strong> 每处理一份保单，Further AI的模型都在学习。累积的保险数据（已处理$1B+保费）成为训练信号，持续改进模型准确性。竞争对手需要多年才能积累这样的数据。</p>
+                    <p><strong>工作流护城河：</strong> 已验证的、客户优化过的15+工作流不仅是产品功能，更是行业最佳实践的凝结。复制这些工作流的成本极高。</p>
+                    <p><strong>集成护城河：</strong> 100+系统集成意味着深度的客户粘性。迁移成本高、切换痛苦，这使得进一步的增值服务（如金融建模、预测分析）有广阔的空间。</p>
+                    <div class="quote-block">
+                        技术护城河的强度取决于复制难度。Further AI的护城河不仅来自算法，更来自数据、工作流和集成深度。这是可持续的。
+                        <div class="quote-attr">— 科技战略分析</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="dots-bar" id="dots-4"></div>
+</section>
+
+<!-- ===== CHAPTER 5: MARKET & COMPETITION ===== -->
+<section class="chapter" id="ch-5">
+    <div class="chapter-header">
+        <h2>市场竞争</h2>
+        <span class="ch-sub">📊 市场地位与增长机遇</span>
+        <span class="ch-counter" id="counter-5">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="5">
+        <div class="slide">
+            <div class="card">
+                <h3>市场规模与机遇</h3>
+                <div class="card-body">
+                    <p><strong>全球保险市场总规模：</strong> $1.5T。其中，运营自动化约占5-10%，仍以RPA和手工流程主导，AI渗透率极低。这意味着Further AI面对的是一个万亿级的蓝海市场。</p>
+                    <p><strong>具体机遇：</strong> 北美商业险运营自动化市场约$50B+，进一步聚焦在保单处理、核保、理赔等高频高价值环节。Further AI的当前定位恰好覆盖这些核心场景。</p>
+                    <p><strong>增长路径：</strong> ①水平扩张：从商业险扩展到个人险、特殊险 ②地域扩张：从北美进入EMEA、APAC ③应用深化：从保单处理扩展到金融建模、风险预测</p>
+                    <div class="callout">
+                        <strong>市场洞察：</strong> 保险业的数字化转型才刚开始。Further AI不是在争夺已有的市场份额，而是在创造新的市场。
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="card">
+                <h3>竞争格局</h3>
+                <div class="card-body">
+                    <p><strong>直接竞争：</strong> Humain（前Veriff团队）做通用文档AI，但缺乏保险深度；大型保险商自研LLM方案，但需要庞大ML团队，不适合中小保险机构。</p>
+                    <p><strong>间接竞争：</strong> RPA平台（Blue Prism、UiPath）做规则自动化，但AI-native的Further AI在处理异常、灵活性上远胜；咨询服务商提供定制开发，但成本高、周期长。</p>
+                    <p><strong>Further AI的差异化：</strong> ①唯一同时获得a16z和大型保险商信任的AI创业 ②预构建15+工作流，开箱即用 ③企业级集成成熟，无需RIP&REPLACE ④合规与审计设计，天生符合监管</p>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="card">
+                <h3>中期战略布局</h3>
+                <div class="card-body">
+                    <p><strong>2026年规划：</strong> 产品侧新增15+工作流（政策更新、理赔审查等），集成200+系统，推出多行业模块分化定价。销售侧扩大团队，聚焦大型全国性保险商和MGA。战略侧考虑与大型保险技术供应商合作，作为白标方案。</p>
+                    <p><strong>盈利路径：</strong> SaaS订阅制（按公司规模/处理量分层）+高级功能附加费+定制集成咨询费。5年内达到$100M+ ARR是可现实的目标。</p>
+                    <div class="quote-block">
+                        如果Further AI能够在北美商业险市场占有10%份额，这将是一个$5B+的生意。而从当前的市场渗透来看，这是完全可达的。
+                        <div class="quote-attr">— 投资论证</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="dots-bar" id="dots-5"></div>
+</section>
+
+<!-- ===== CHAPTER 6: KEY INSIGHTS ===== -->
+<section class="chapter" id="ch-6">
+    <div class="chapter-header">
+        <h2>核心洞察</h2>
+        <span class="ch-sub">💡 战略意义与投资启示</span>
+        <span class="ch-counter" id="counter-6">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="6">
+        <div class="slide">
+            <div class="insight-card">
+                <div class="insight-emoji">🎯</div>
+                <h3>洞察 1: 领域特定AI是下一代竞争力</h3>
+                <div class="card-body">
+                    <p>通用AI模型正在商品化，大型科技公司已占据垄断地位。真正的价值不在基础模型，而在于针对特定行业、特定工作流的垂直应用。Further AI选择了保险这个高价值、高复杂度、高规制的领域，结合领域知识与AI能力，构建了难以复制的竞争力。</p>
+                    <p>这启示我们：AI的未来不是"大力出奇迹"，而是"专业致胜"。</p>
+                    <div class="insight-highlight">
+                        下一波AI创业的赢家，会是那些既懂行业、又懂AI的团队。
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="insight-card">
+                <div class="insight-emoji">💰</div>
+                <h3>洞察 2: 规制行业的自动化潜力巨大</h3>
+                <div class="card-body">
+                    <p>保险、金融、医疗等规制行业的操作复杂，源于法律与合规要求。但这种复杂性恰好是重复性的、可结构化的——正是AI最擅长的。Further AI不是在简化保险，而是在自动化合规性的"繁琐部分"，让专业人士专注于风险判断与客户关系。</p>
+                    <p>这类市场往往被忽视，因为看起来"不够性感"，但正是这种"不性感"保证了需求的真实性和付费意愿的强度。</p>
+                    <div class="insight-highlight">
+                        规制行业不是AI创业的禁区，而是金矿。
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="insight-card">
+                <div class="insight-emoji">🚀</div>
+                <h3>洞察 3: 产品-市场契合度决定融资速度</h3>
+                <div class="card-body">
+                    <p>Further AI从成立到A轮融资仅用2年，这在AI创业中是极其罕见的。背后的原因不是融资热潮，而是客户的真实反馈：30倍速度提升、95%准确率、数百万年度节省。这些数字不需要营销包装，直接打动投资人。</p>
+                    <p>对比那些融资困难的AI创业，差异在于：Further AI不是在"证明AI有用"，而是在"证明我们用AI解决了客户的痛点"。</p>
+                    <div class="insight-highlight">
+                        最好的融资，来自最好的产品。Further AI就是证明。
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="dots-bar" id="dots-6"></div>
+</section>
+
+<!-- ===== CHAPTER 7: LATEST NEWS ===== -->
+<section class="chapter" id="ch-7">
+    <div class="chapter-header">
+        <h2>最新动态</h2>
+        <span class="ch-sub">📰 近期要闻与发展方向</span>
+        <span class="ch-counter" id="counter-7">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="7">
+        <div class="slide">
+            <div class="card">
+                <h3>2025年融资与扩张</h3>
+                <div class="card-body">
+                    <div class="news-item">
+                        <div class="news-date">2025年10月</div>
+                        <div class="news-title">
+                            <a href="https://techfundingnews.com/furtherai-25m-series-a-insurance-ai-automation/" target="_blank">Series A 融资: $25M a16z领投</a>
+                        </div>
+                        <div class="news-desc">宣布获得Andreessen Horowitz领投的2500万美元A轮融资，总融资额超3000万。标志进入快速扩张期，将加强产品研发与销售团队建设。</div>
+                    </div>
+                    <div class="news-item">
+                        <div class="news-date">2025年10月</div>
+                        <div class="news-title">
+                            <a href="https://www.furtherai.com" target="_blank">处理保费突破$1B+</a>
+                        </div>
+                        <div class="news-desc">宣布处理全球年度保费超10亿美元，覆盖保单提交、比对、核保、理赔等全流程，彰显客户规模与平台能力。</div>
+                    </div>
+                    <div class="news-item">
+                        <div class="news-date">2025年4月</div>
+                        <div class="news-title">
+                            <a href="https://www.furtherai.com/blog" target="_blank">种子轮融资: $5M完成</a>
+                        </div>
+                        <div class="news-desc">由Nexus Venture Partners和Y Combinator投资，用于快速迭代产品、拓展客户群、建立技术基础。</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="card">
+                <h3>产品路线图（2026年）</h3>
+                <div class="card-body">
+                    <p><strong>工作流扩展：</strong> 新增15+保险流程自动化模板，覆盖政策更新、理赔审查、风险评估等高频业务场景。</p>
+                    <p><strong>集成深化：</strong> 从当前100+扩展到200+系统集成，包括新兴的保险科技平台与ERP系统，确保更广泛的生态适配。</p>
+                    <p><strong>行业分化：</strong> 推出商业险、个人险、特殊险专业版，针对不同险种的特有流程与合规要求定制化。</p>
+                    <p><strong>智能体升级：</strong> 引入自主执行工作流的AI智能体，带有人工审查检查点，进一步提升自动化深度。</p>
+                    <p><strong>分析与ROI追踪：</strong> 建立详细的运营分析仪表板，帮助客户量化Further AI带来的成本节省、速度提升与合规收益。</p>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="card">
+                <h3>为什么关注Further AI</h3>
+                <div class="card-body">
+                    <p><strong>投资角度：</strong> Further AI代表了"领域特定AI"这一大趋势的最佳实践案例。其融资速度、客户反馈、团队阵容都表明这是一家"真正做对了事"的创业公司。在AI创业普遍艰难的当下，Further AI的成功是难得的灯塔。</p>
+                    <p><strong>行业角度：</strong> 保险业的AI数字化才刚开始。Further AI不仅在开创一个新市场，更在重塑保险运营的方式。其成功将激励更多保险机构与AI公司的合作，推动整个行业的现代化。</p>
+                    <p><strong>技术角度：</strong> Further AI展示了如何用"垂直知识+大模型微调"构建可持续的AI竞争力。这个模式可被复制到其他规制行业（金融、医疗、法律）。</p>
+                    <div class="callout">
+                        <strong>最终观点：</strong> Further AI不仅是一家保险科技公司，更是AI创业成功的标杆。它的故事值得所有创业者、投资人、行业人士深思。
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="dots-bar" id="dots-7"></div>
+</section>
+
+</main>
+
+<script>
+// 页面导航与滚动
+function go(chapterIndex) {
+    const element = document.getElementById(`ch-${chapterIndex}`);
+    if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+        updateNavButtons(chapterIndex);
+    }
+}
+
+function updateNavButtons(activeIndex) {
+    document.querySelectorAll('.nav-btn').forEach((btn, idx) => {
+        btn.classList.toggle('active', idx === activeIndex);
+    });
+}
+
+// 初始化导航
+document.querySelectorAll('.nav-btn').forEach((btn, idx) => {
+    btn.addEventListener('click', () => updateNavButtons(idx));
+});
+
+// 统计数字动画
+function animateCounter(element) {
+    const target = parseInt(element.getAttribute('data-count'));
+    const prefix = element.getAttribute('data-prefix') || '';
+    const suffix = element.getAttribute('data-suffix') || '';
+    let current = 0;
+    const increment = Math.ceil(target / 60);
+
+    const timer = setInterval(() => {
+        current += increment;
+        if (current >= target) {
+            current = target;
+            clearInterval(timer);
+        }
+        element.textContent = prefix + current + suffix;
+    }, 30);
+}
+
+// 触发动画（当覆盖部分出现时）
+window.addEventListener('load', () => {
+    document.querySelectorAll('.stat-number').forEach(el => {
+        if (el.getAttribute('data-count')) {
+            animateCounter(el);
+        }
+    });
+});
+
+// 创建点指示器
+function initDots(chapterIndex) {
+    const container = document.getElementById(`dots-${chapterIndex}`);
+    const trackSelector = `.card-track[data-ch="${chapterIndex}"]`;
+    const track = document.querySelector(trackSelector);
+
+    if (!track) return;
+
+    const slideCount = track.querySelectorAll('.slide').length;
+    const dotsContainer = container;
+
+    for (let i = 0; i < slideCount; i++) {
+        const dot = document.createElement('button');
+        dot.className = `dot ${i === 0 ? 'active' : ''}`;
+        dot.addEventListener('click', () => {
+            const targetSlide = track.children[i];
+            targetSlide.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+        });
+        dotsContainer.appendChild(dot);
+    }
+
+    // 监听水平滚动并更新点
+    track.addEventListener('scroll', () => {
+        const scrollLeft = track.scrollLeft;
+        const slideWidth = track.offsetWidth;
+        const activeIndex = Math.round(scrollLeft / slideWidth);
+
+        dotsContainer.querySelectorAll('.dot').forEach((d, idx) => {
+            d.classList.toggle('active', idx === activeIndex);
+        });
+
+        // 更新计数器
+        const counter = document.getElementById(`counter-${chapterIndex}`);
+        if (counter) {
+            counter.textContent = `${activeIndex + 1} / ${slideCount}`;
+        }
+    });
+}
+
+// 初始化所有章节的点指示器
+for (let i = 1; i <= 7; i++) {
+    initDots(i);
+}
+
+// 监听主滚动以更新导航
+let currentChapter = 0;
+document.querySelector('main').addEventListener('scroll', (e) => {
+    const sections = document.querySelectorAll('.cover, .chapter');
+    const scrollPos = e.target.scrollTop + window.innerHeight / 2;
+
+    sections.forEach((section, idx) => {
+        if (section.offsetTop <= scrollPos &&
+            scrollPos < section.offsetTop + section.offsetHeight) {
+            if (idx !== currentChapter) {
+                currentChapter = idx;
+                updateNavButtons(idx);
+            }
+        }
+    });
+});
+</script>
+
+</body>
+</html>

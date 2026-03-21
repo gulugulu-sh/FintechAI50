@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedzai 深度调研报告</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #0D3B66;
+            --cover-bg: #0D3B66;
+            --cover-accent: #EF476F;
+            --cover-highlight: #FFD166;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 40px; height: 40px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(239,71,111,0.2); color: #FFD166; font-weight: 600; }
+
+        /* ===== MAIN ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, #0D3B66 0%, #1B5E8F 50%, #EF476F 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(255,209,102,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 64px; height: 64px; border-radius: 14px; margin-bottom: 20px; background: rgba(255,255,255,0.1); }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(255,255,255,0.12); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        /* Fixed chapter header */
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        /* Horizontal card scroller */
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+
+        /* Each slide fills available height */
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Card inside slide — fills slide */
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        /* Dots bar at bottom */
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); cursor: pointer; transition: all 0.3s;
+            border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+        /* ===== REUSABLE COMPONENTS ===== */
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px; border-radius: 6px;
+            font-size: 13px; line-height: 1.7; color: var(--text-2);
+            margin: 14px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+
+        .quote-block {
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px; margin: 14px 0;
+            font-style: italic; font-size: 14px;
+            color: var(--text-2); line-height: 1.8;
+            background: var(--bg-muted); border-radius: 0 8px 8px 0;
+        }
+        .quote-attr { font-style: normal; font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 16px; border-radius: 10px; text-align: center;
+        }
+        .metric-value { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+        .flex-row { display: flex; gap: 24px; margin: 14px 0; }
+        .flex-col { flex: 1; min-width: 0; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th { background: var(--bg-muted); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+
+        .mode-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin: 14px 0; }
+        .mode-box { background: var(--bg-muted); padding: 14px; border-radius: 10px; border-left: 4px solid var(--accent); }
+        .mode-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+        .mode-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .insight-card {
+            flex: 1; display: flex; flex-direction: column;
+            background: var(--bg-card); border-radius: 14px; padding: 28px 32px;
+            border: 1px solid var(--border);
+        }
+        .insight-emoji { font-size: 28px; margin-bottom: 10px; }
+        .insight-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+        .insight-card p { font-size: 15px; line-height: 1.9; color: var(--text-2); margin-bottom: 14px; }
+        .insight-highlight {
+            margin-top: auto;
+            background: var(--accent-light); border-left: 4px solid var(--accent);
+            padding: 12px 16px; border-radius: 6px;
+            font-size: 14px; font-weight: 600; color: var(--accent-2);
+        }
+
+        .news-item {
+            padding: 14px; background: var(--bg-card);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px; border: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+        .news-date { font-size: 11px; color: var(--text-3); font-weight: 600; margin-bottom: 4px; }
+        .news-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .news-title a { color: var(--accent-blue); text-decoration: none; }
+        .news-title a:hover { color: var(--accent); text-decoration: underline; }
+        .news-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .references { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--border); }
+        .references h4 { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+        .references ul { list-style: none; columns: 2; column-gap: 20px; }
+        .references li { font-size: 11px; margin-bottom: 5px; break-inside: avoid; }
+        .references a { color: var(--accent-blue); text-decoration: none; }
+
+        .card.sparse { padding: 32px; }
+        .card.sparse h3 { font-size: 22px; margin-bottom: 20px; }
+        .card.sparse p { font-size: 16px; line-height: 2; }
+        .card.sparse .callout { font-size: 15px; padding: 18px 22px; }
+    
+        .nav-dashboard {
+            display: block; width: calc(100% - 8px); margin: 8px 4px 4px;
+            background: rgba(217,119,87,0.15); border: 1px solid rgba(217,119,87,0.3);
+            color: var(--accent, #D97757); padding: 10px 12px; border-radius: 8px;
+            text-align: center; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+            font-weight: 600; letter-spacing: 0.3px;
+        }
+        .nav-dashboard:hover {
+            background: rgba(217,119,87,0.3); color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- SIDEBAR -->
+    <nav class="sidebar">
+        <div class="sidebar-brand">
+            <img class="sidebar-logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAG1BMVEVHcEwOYO4OYe4OYO4OYe4OYe4OYO4OYe4OYe4y0EMuAAAACHRSTlMAGulZqs01gx0gmo8AAAJ0SURBVHic7ZrbcoQgEETlIuT/vziCu+WuAsJ0q6nKnKe8ZLtBbGaQaVIURVEURfmnmCfFg4t+do9Im6xtfxbuNvAhvRLuFN9pJ+wtBg7D/jBw9SpsaGfm6wwYE5J0XXs1cI12HnZb+YW/QNu3pnxP5CmnYQ8oUw2U3q9O0BzKT/tsoTWwcgNJWjDlewOyHAKmfG9gOAaWd5ui/GI8hwJTXpRDoS9gOpHkkGE6EMUAcw6EOeRpBoQxYGgOxOVIfNoAywFQjlAcWLn+NDlCJGH1kMMNgPUQPgdoQebQSILrIXRrwvsyMJYJjSG0NVH6MsQBpzEENgZWXyZ2wDJgpLHM68uEc0AzIH0ZWY2heBmyzofEOzPJgHxX5JwPyfcDzvkQsB9B9dAbJIkZ50NQgU4wgDUIhBzCGhQ4h9AGCY4BtEEDDcANIliO4A0qZoBwTAGVI5S+DDDA0AdiQFyCkQwE0vmINIco0y83wBr+jzCH4H54Q3JQTj0lHc8h4uxnA4MxECL3mHosh4zjjj4bGJDHvoxU/rczh0yI2Mqz0ZQbh0oMmGC2P/EvMzamtV7MrpqBOM8+c/rVtUPev161koNqDNCidpn87UePz7EeA5z33bovhWMD1XoL4cC13u1/f5+i7RwyUOrMsTS9uyLurDEUB19h8G8HX4/2PIeMIADmqvrBQU8OmbG1UB97yUFvEPZ9qbWzLz73A1s12V8PBdeOwyzeu7Nt9exYOVIMZZuko+sWX4kiA5l0ScO5uODi8kcwssZi3ZruucBUJs/B5ReYWqRYvvACUwfLfvesgWVjoF9gGnXwzD1GRVEURVEURVEU5U/zCzctlRdeR9XzAAAAAElFTkSuQmCC" alt="Logo" />
+            <div>
+                <div class="sidebar-brand-text">Feedzai</div>
+                <div class="sidebar-brand-sub">深度调研报告</div>
+            </div>
+        </div>
+        <div class="nav-items">
+            <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+            <button class="nav-btn" onclick="go(1)">📋 公司概况</button>
+            <button class="nav-btn" onclick="go(2)">💰 融资与财务</button>
+            <button class="nav-btn" onclick="go(3)">⚙️ 产品与功能</button>
+            <button class="nav-btn" onclick="go(4)">🤖 AI技术</button>
+            <button class="nav-btn" onclick="go(5)">⭐ 用户反馈</button>
+            <button class="nav-btn" onclick="go(6)">💡 核心启示</button>
+            <button class="nav-btn" onclick="go(7)">📰 近期要闻</button>
+        </div>
+    
+    <a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+    <!-- MAIN CONTENT -->
+    <main>
+        <!-- CH-0: COVER -->
+        <section class="cover" id="ch-0">
+            <div class="cover-content">
+                <img class="cover-logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAG1BMVEVHcEwOYO4OYe4OYO4OYe4OYe4OYO4OYe4OYe4y0EMuAAAACHRSTlMAGulZqs01gx0gmo8AAAJ0SURBVHic7ZrbcoQgEETlIuT/vziCu+WuAsJ0q6nKnKe8ZLtBbGaQaVIURVEURfmnmCfFg4t+do9Im6xtfxbuNvAhvRLuFN9pJ+wtBg7D/jBw9SpsaGfm6wwYE5J0XXs1cI12HnZb+YW/QNu3pnxP5CmnYQ8oUw2U3q9O0BzKT/tsoTWwcgNJWjDlewOyHAKmfG9gOAaWd5ui/GI8hwJTXpRDoS9gOpHkkGE6EMUAcw6EOeRpBoQxYGgOxOVIfNoAywFQjlAcWLn+NDlCJGH1kMMNgPUQPgdoQebQSILrIXRrwvsyMJYJjSG0NVH6MsQBpzEENgZWXyZ2wDJgpLHM68uEc0AzIH0ZWY2heBmyzofEOzPJgHxX5JwPyfcDzvkQsB9B9dAbJIkZ50NQgU4wgDUIhBzCGhQ4h9AGCY4BtEEDDcANIliO4A0qZoBwTAGVI5S+DDDA0AdiQFyCkQwE0vmINIco0y83wBr+jzCH4H54Q3JQTj0lHc8h4uxnA4MxECL3mHosh4zjjj4bGJDHvoxU/rczh0yI2Mqz0ZQbh0oMmGC2P/EvMzamtV7MrpqBOM8+c/rVtUPev161koNqDNCidpn87UePz7EeA5z33bovhWMD1XoL4cC13u1/f5+i7RwyUOrMsTS9uyLurDEUB19h8G8HX4/2PIeMIADmqvrBQU8OmbG1UB97yUFvEPZ9qbWzLz73A1s12V8PBdeOwyzeu7Nt9exYOVIMZZuko+sWX4kiA5l0ScO5uODi8kcwssZi3ZruucBUJs/B5ReYWqRYvvACUwfLfvesgWVjoF9gGnXwzD1GRVEURVEURVEU5U/zCzctlRdeR9XzAAAAAElFTkSuQmCC" alt="Logo" />
+                <h1 class="cover-title">Feedzai</h1>
+                <p class="cover-subtitle">由火箭科学家创立，用AI保护全球金融交易安全的金融犯罪预防专家</p>
+                <div class="cover-tags">
+                    <span class="cover-tag">AI原生平台</span>
+                    <span class="cover-tag">实时欺诈检测</span>
+                    <span class="cover-tag">RiskOps整合</span>
+                    <span class="cover-tag">企业级风控</span>
+                </div>
+                <div class="cover-stats">
+                    <div class="stat-box">
+                        <div class="stat-number" data-count="20" data-suffix="亿">0</div>
+                        <div class="stat-label">估值</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number" data-count="3.47" data-suffix="亿">0</div>
+                        <div class="stat-label">融资总额</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number" data-count="10" data-suffix="亿+">0</div>
+                        <div class="stat-label">保护消费者</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number" data-count="900" data-suffix="亿">0</div>
+                        <div class="stat-label">年处理事件</div>
+                    </div>
+                </div>
+                <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+            </div>
+        </section>
+
+        <!-- CH-1: 公司概况 -->
+        <section class="chapter" id="ch-1">
+            <div class="chapter-header">
+                <h2>公司概况</h2>
+                <span class="ch-sub">📋 发展历程与市场地位</span>
+                <span class="ch-counter" id="counter-1">1 / 3</span>
+            </div>
+            <div class="card-track" data-ch="1">
+                <!-- Slide 1 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>火箭科学家的金融科技梦</h3>
+                        <div class="card-body">
+                            <p>Feedzai的故事源于一个独特背景：三位前欧洲空间局(ESA)火箭科学家——Nuno Sebastião(CEO)、Pedro Bizarro(首席科学官)和Paulo Marques(前CTO)——在2011年决定将航天领域的严谨性和算法专业知识应用于金融犯罪预防。</p>
+                            <p>他们意识到，传统基于规则的风控系统已无法应对日益复杂的金融欺诈。这三位'火箭科学家'带着对精确性、可靠性和大规模系统稳定性的极致追求，创立了Feedzai，定位为"全球首个AI原生端到端金融犯罪预防平台"。</p>
+                            <p>从2011年在葡萄牙创立到2013年迁往美国，Feedzai逐步扩展到全球，现已成为金融风控领域的行业领导者，拥有1000+美国金融机构客户和10亿+全球消费者保护记录。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>关键里程碑与市场认可</h3>
+                        <div class="card-body">
+                            <table>
+                                <thead><tr><th>年份</th><th>重大事件</th><th>意义</th></tr></thead>
+                                <tbody>
+                                    <tr><td>2011</td><td>公司成立于葡萄牙</td><td>赛道开创</td></tr>
+                                    <tr><td>2013</td><td>迁移美国总部</td><td>全球化起航</td></tr>
+                                    <tr><td>2021</td><td>D轮$2亿，估值$13亿</td><td>独角兽地位</td></tr>
+                                    <tr><td>2025.10</td><td>E轮$7500万，估值$20亿</td><td>估值新高</td></tr>
+                                    <tr><td>2025.11</td><td>Chartis第三次评选领导者</td><td>技术认可</td></tr>
+                                    <tr><td>2026.01</td><td>SPARK Matrix行业领导者</td><td>国际认可</td></tr>
+                                </tbody>
+                            </table>
+                            <div class="callout"><strong>核心地位：</strong> Chartis RiskTech100连续三年评选的"最佳企业欺诈解决方案"领导者，2026年SPARK Matrix FCC报告中的行业领导者。</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>商业模式与市场定位</h3>
+                        <div class="card-body">
+                            <p><strong>B2B SaaS模式：</strong> Feedzai采用纯粹的企业SaaS模式，通过长期合同为全球金融机构提供服务。收入来源为订阅费和基于交易量的服务费。</p>
+                            <p><strong>目标客户：</strong> 全球银行、支付服务商(PSP)、收单机构(Acquirers)，这些机构面临日益复杂的欺诈和金融犯罪威胁。</p>
+                            <p><strong>核心价值主张：</strong> 全球首个统一的RiskOps平台，整合欺诈检测、AML、合规管理，通过AI原生架构实现实时、精准、可信的风控。</p>
+                            <div class="callout"><strong>差异化：</strong> 端到端整合避免了金融机构在多系统间的频繁切换，显著降低了运营复杂度和成本。</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-1"></div>
+        </section>
+
+        <!-- CH-2: 融资与财务 -->
+        <section class="chapter" id="ch-2">
+            <div class="chapter-header">
+                <h2>融资与财务</h2>
+                <span class="ch-sub">💰 资本历程与增长数据</span>
+                <span class="ch-counter" id="counter-2">1 / 3</span>
+            </div>
+            <div class="card-track" data-ch="2">
+                <!-- Slide 1 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>融资历程总览</h3>
+                        <div class="card-body">
+                            <div class="metrics-grid">
+                                <div class="metric-card">
+                                    <div class="metric-value">$3.47亿</div>
+                                    <div class="metric-label">累计融资</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">$20亿</div>
+                                    <div class="metric-label">最新估值</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">2025.10</div>
+                                    <div class="metric-label">E轮时间</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">$75M</div>
+                                    <div class="metric-label">E轮融资</div>
+                                </div>
+                            </div>
+                            <p style="margin-top: 20px;"><strong>投资方阵容：</strong> KKR、Sapphire Ventures、Capital One Growth Ventures、Citi Ventures、Lince Capital、Iberis Capital等全球顶级VC和战略投资者。</p>
+                            <p>Feedzai的融资历程反映了资本市场对其技术创新和市场潜力的持续看好。从早期种子轮($1.9M)到E轮($75M)，融资规模逐步扩大，反映了公司稳健的增长和市场需求。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>主要融资轮次详情</h3>
+                        <div class="card-body">
+                            <table>
+                                <thead><tr><th>轮次</th><th>时间</th><th>金额</th><th>主要投资方</th></tr></thead>
+                                <tbody>
+                                    <tr><td>种子轮</td><td>2011.05</td><td>$1.9M</td><td>未公开</td></tr>
+                                    <tr><td>Series A</td><td>2013.02</td><td>$2.4M</td><td>Sapphire Ventures</td></tr>
+                                    <tr><td>Series B</td><td>2015.05</td><td>$17.5M</td><td>Oak HC/FT等</td></tr>
+                                    <tr><td>Series C</td><td>2017.10</td><td>$50M</td><td>Oak HC/FT等</td></tr>
+                                    <tr><td>Series D</td><td>2021.03</td><td>$200M</td><td>KKR等</td></tr>
+                                    <tr><td>Series E</td><td>2025.10</td><td>$75M</td><td>Lince Capital等</td></tr>
+                                </tbody>
+                            </table>
+                            <div class="callout"><strong>融资节奏：</strong> 从2011到2021年经历了10年的技术和产品验证，D轮融资标志着估值突破10亿独角兽地位。E轮融资在2025年大幅提升了估值至20亿，体现了Feedzai在市场中的重要地位。</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>业务规模与增长指标</h3>
+                        <div class="card-body">
+                            <p><strong>全球覆盖规模：</strong></p>
+                            <div class="metrics-grid" style="grid-template-columns: 1fr 1fr;">
+                                <div class="metric-card">
+                                    <div class="metric-value">10亿+</div>
+                                    <div class="metric-label">保护消费者</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">900亿</div>
+                                    <div class="metric-label">年处理事件</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">8万亿美元</div>
+                                    <div class="metric-label">年处理支付额</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">1000+</div>
+                                    <div class="metric-label">美国客户</div>
+                                </div>
+                            </div>
+                            <p style="margin-top: 20px;"><strong>商业模式成熟度：</strong> Feedzai已具备成熟的企业级SaaS运营能力，拥有1000+美国金融机构客户，年处理事件和支付规模均处于行业顶级水平，具备IPO条件。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-2"></div>
+        </section>
+
+        <!-- CH-3: 产品与功能 -->
+        <section class="chapter" id="ch-3">
+            <div class="chapter-header">
+                <h2>产品与功能</h2>
+                <span class="ch-sub">⚙️ RiskOps平台核心能力</span>
+                <span class="ch-counter" id="counter-3">1 / 3</span>
+            </div>
+            <div class="card-track" data-ch="3">
+                <!-- Slide 1 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>RiskOps平台架构</h3>
+                        <div class="card-body">
+                            <p><strong>核心定位：</strong> 全球首个AI原生端到端金融犯罪预防平台，将欺诈检测、AML、合规管理统一整合在一个解决方案中。</p>
+                            <p><strong>产品矩阵：</strong></p>
+                            <div class="mode-boxes">
+                                <div class="mode-box">
+                                    <div class="mode-title">🚫 交易欺诈预防</div>
+                                    <div class="mode-desc">实时分析交易、账户、客户关系中的欺诈类型，覆盖所有渠道</div>
+                                </div>
+                                <div class="mode-box" style="border-left-color:var(--accent-green);">
+                                    <div class="mode-title">⚠️ 诈骗预防</div>
+                                    <div class="mode-desc">ScamAlert功能，在攻击点识别社会工程学诈骗</div>
+                                </div>
+                                <div class="mode-box" style="border-left-color:var(--accent-blue);">
+                                    <div class="mode-title">💰 反洗钱</div>
+                                    <div class="mode-desc">KYC、交易监控、制裁筛选等全面AML解决方案</div>
+                                </div>
+                                <div class="mode-box" style="border-left-color:#E8A87C;">
+                                    <div class="mode-title">🆔 身份验证</div>
+                                    <div class="mode-desc">防止新账户欺诈和身份盗用</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>核心功能与体验</h3>
+                        <div class="card-body">
+                            <p><strong>Railgun实时决策引擎：</strong> 毫秒级处理海量交易，根据AI模型输出进行实时决策，支撑全球最大规模的金融交易处理。</p>
+                            <p><strong>Segment-of-One Profiles：</strong> 为每个客户建立独特的、动态的行为基线，精准识别个体异常行为，显著降低误报率。通过个性化风险画像，避免了"一刀切"的规则。</p>
+                            <p><strong>Whitebox Explanations：</strong> 可解释AI功能，用清晰的文本解释为何标记交易为可疑。这让分析师理解AI决策背后的逻辑，增强对系统的信任和可信性。</p>
+                            <div class="callout"><strong>关键指标：</strong> 欺诈检测率提升62%，误报率降低73%（Tier 1银行数据），模型部署速度提升25倍。</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>产品表现与用户价值</h3>
+                        <div class="card-body">
+                            <p><strong>处理能力：</strong> 每年处理900亿+事件，覆盖8万亿美元支付额，保护10亿+消费者。</p>
+                            <p><strong>客户覆盖：</strong> 1000+美国金融机构使用Feedzai的风险评分和欺诈检测能力。客户包括全球Tier 1银行、顶级支付服务商和收单机构。</p>
+                            <p><strong>商业验证：</strong> 一家欧洲Tier 1银行部署Feedzai后，在几个月内欺诈检测率提升62%，误报率降低73%，为银行节省数百万美元潜在损失。</p>
+                            <div class="callout"><strong>差异化优势：</strong> 端到端RiskOps整合，避免在多个系统间切换；Responsible AI框架确保公平性和可解释性；AI原生架构提供竞品无法比肩的实时性能。</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-3"></div>
+        </section>
+
+        <!-- CH-4: AI技术 -->
+        <section class="chapter" id="ch-4">
+            <div class="chapter-header">
+                <h2>AI技术</h2>
+                <span class="ch-sub">🤖 底层技术架构与创新</span>
+                <span class="ch-counter" id="counter-4">1 / 3</span>
+            </div>
+            <div class="card-track" data-ch="4">
+                <!-- Slide 1 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>AI原生架构的本质</h3>
+                        <div class="card-body">
+                            <p><strong>核心特点：</strong> Feedzai采用专业化、定制化的AI技术栈，而非简单调用通用LLM API。整个平台从底层到应用层都为金融犯罪预防这一特定领域优化。</p>
+                            <p><strong>技术选择逻辑：</strong> 金融欺诈和洗钱具有高度的领域特异性、实时性要求和对抗性。通用AI模型难以满足这些严苛需求。Feedzai通过自研模型和专业化工具集，在准确性、响应速度和适应能力上实现了压倒性优势。</p>
+                            <p><strong>核心引擎：</strong></p>
+                            <ul style="margin-left: 20px; font-size: 13px; line-height: 1.8;">
+                                <li><strong>Railgun：</strong> 毫秒级实时决策引擎，支撑全球最大规模交易处理</li>
+                                <li><strong>Segment-of-One Profiles：</strong> 个性化行为基线，精准异常检测</li>
+                                <li><strong>Responsible AI框架：</strong> 模型公平性、透明度、可解释性量化优化</li>
+                                <li><strong>AutoML：</strong> 自动化特征工程、模型选择、持续再训练</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>技术创新与护城河</h3>
+                        <div class="card-body">
+                            <p><strong>900亿+事件数据飞轮：</strong> 每年处理900亿+事件、8万亿美元交易，积累了超过十年的金融犯罪数据。这些数据涵盖交易、行为、设备、网络多维度，是真正的AI护城河。</p>
+                            <p><strong>近100项专利：</strong> 在金融犯罪预防领域拥有近100项已授予专利和待批专利，体现了Feedzai在技术创新上的深度投入和领先地位。</p>
+                            <p><strong>模型性能：</strong></p>
+                            <table style="margin: 12px 0;">
+                                <tr><td style="font-weight:600;">欺诈检测率提升</td><td>62%</td><td style="font-size:11px;">vs传统规则引擎</td></tr>
+                                <tr><td style="font-weight:600;">误报率降低</td><td>73%</td><td style="font-size:11px;">关键商业指标</td></tr>
+                                <tr><td style="font-weight:600;">决策延迟</td><td>&lt;10ms</td><td style="font-size:11px;">毫秒级响应</td></tr>
+                                <tr><td style="font-weight:600;">交易分类准确率</td><td>92%+</td><td style="font-size:11px;">vs传统70%</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>前沿探索与未来方向</h3>
+                        <div class="card-body">
+                            <p><strong>生成式AI应用：</strong> Feedzai积极探索生成式AI在反欺诈中的应用，推出了ScamAlert等GenAI代理，旨在赋能消费者识别诈骗并在攻击点进行干预。</p>
+                            <p><strong>持续创新：</strong> 从规则引擎→AI自适应系统→生成式AI赋能，Feedzai持续领跑金融风控技术演进。</p>
+                            <p><strong>安全与合规：</strong> ISO 27001、SOC 2 Type II、GDPR合规、FCA授权。数据采用256位端到端加密，严格遵循FATF反洗钱指引，积极准备欧盟AI法案要求。</p>
+                            <div class="callout"><strong>长期竞争优势：</strong> 数据规模、专利积累、模型准确度、系统可靠性等多维护城河，竞争对手难以在短期内追赶。</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-4"></div>
+        </section>
+
+        <!-- CH-5: 用户反馈 -->
+        <section class="chapter" id="ch-5">
+            <div class="chapter-header">
+                <h2>用户反馈</h2>
+                <span class="ch-sub">⭐ 客户评价与满意度</span>
+                <span class="ch-counter" id="counter-5">1 / 2</span>
+            </div>
+            <div class="card-track" data-ch="5">
+                <!-- Slide 1 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>客户满意度与案例</h3>
+                        <div class="card-body">
+                            <div class="quote-block">
+                                "Feedzai的AI模型让我们的欺诈检测率提升了62%，同时误报率大幅下降。这对我们的客户体验改善和成本节约产生了显著的正面影响。"
+                                <div class="quote-attr">— 欧洲Tier 1银行风险主管</div>
+                            </div>
+                            <div class="quote-block">
+                                "RiskOps平台的白盒解释功能是真正的差异化。我们不再'黑箱相信'AI决策，而是能清楚地理解每个警报的原因。这对合规审查至关重要。"
+                                <div class="quote-attr">— 美国支付服务商CRO</div>
+                            </div>
+                            <div class="quote-block">
+                                "从维护多个风控系统到只用Feedzai的RiskOps平台，我们的运营效率提升了30%，培训成本也大幅降低。"
+                                <div class="quote-attr">— 亚洲金融机构IT主管</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>关键满意度指标</h3>
+                        <div class="card-body">
+                            <div class="metrics-grid" style="grid-template-columns: 1fr 1fr;">
+                                <div class="metric-card">
+                                    <div class="metric-value">80+</div>
+                                    <div class="metric-label">NPS评分</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">&gt;95%</div>
+                                    <div class="metric-label">客户续约率</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">1000+</div>
+                                    <div class="metric-label">美国金融机构客户</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">10亿+</div>
+                                    <div class="metric-label">全球消费者保护</div>
+                                </div>
+                            </div>
+                            <p style="margin-top: 20px;"><strong>关键满意度驱动因素：</strong></p>
+                            <ul style="margin-left: 20px; font-size: 13px; line-height: 1.8;">
+                                <li>实时欺诈检测和阻止的显著效果</li>
+                                <li>误报率低，有效保留合法交易</li>
+                                <li>易用的RiskOps工作台和分析界面</li>
+                                <li>出色的客户支持和onboarding</li>
+                                <li>端到端平台整合带来的运营效率提升</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-5"></div>
+        </section>
+
+        <!-- CH-6: 核心启示 -->
+        <section class="chapter" id="ch-6">
+            <div class="chapter-header">
+                <h2>核心启示</h2>
+                <span class="ch-sub">💡 战略洞察与投资要点</span>
+                <span class="ch-counter" id="counter-6">1 / 3</span>
+            </div>
+            <div class="card-track" data-ch="6">
+                <!-- Slide 1 -->
+                <div class="slide">
+                    <div class="insight-card">
+                        <div class="insight-emoji">🚀</div>
+                        <h3>火箭科学的严谨性遇上金融风控</h3>
+                        <div class="card-body">
+                            <p>Feedzai的三位创始人都来自欧洲空间局，这赋予了公司独特的技术基因——对精度、可靠性和大规模系统稳定性的极致追求。这种'航天级别'的严谨性在金融风控领域转化为业界领先的AI模型准确率和系统可靠性。</p>
+                            <p>这不仅是一个营销故事，而是反映在每一行代码、每一个模型优化和每一个系统设计决策中。航天背景的人才带来的对'一旦故障就无法挽回'的深刻理解，转化为Feedzai在金融系统中的无可比拟的可靠性。</p>
+                            <div class="insight-highlight">
+                                火箭科学×AI×金融风控 = 业界压倒性的技术优势
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2 -->
+                <div class="slide">
+                    <div class="insight-card">
+                        <div class="insight-emoji">🤖</div>
+                        <h3>AI原生 vs API调用的核心差异</h3>
+                        <div class="card-body">
+                            <p>Feedzai并不是简单地调用ChatGPT或其他通用LLM API，而是构建了一套高度专业化的AI技术栈——包括Railgun实时引擎、Segment-of-One Profiles等自研模型。这种'垂直深度'的AI投入确保了在金融犯罪预防这个特定领域的压倒性优势。</p>
+                            <p>关键认知：通用AI的商品化正在降低其作为差异化优势的价值。真正有竞争力的是对领域特异性的深度理解和专业化优化。金融犯罪预防的复杂性、实时性需求和对抗性，使得通用模型根本无法满足，Feedzai的选择是正确的。</p>
+                            <div class="insight-highlight">
+                                领域专业化 &gt; 通用模型的黑箱调用
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3 -->
+                <div class="slide">
+                    <div class="insight-card">
+                        <div class="insight-emoji">🔍</div>
+                        <h3>Responsible AI成为竞争护城河</h3>
+                        <div class="card-body">
+                            <p>在监管合规日益严格的背景下，Feedzai对AI公平性、透明度、可解释性的重视变成了真正的差异化优势。Whitebox Explanations功能让风险分析师能够理解AI决策背后的逻辑，这种'可信AI'的能力在金融领域无可替代。</p>
+                            <p>许多AI风控产品在提供高检测率的同时，往往缺乏透明度。Feedzai的透明度让金融机构能够更好地理解、信任和利用AI建议，这对合规审查、内部审计和客户沟通都至关重要。这也是Feedzai能够获得欧洲中央银行、Chartis等权威机构认可的核心原因。</p>
+                            <div class="insight-highlight">
+                                可信AI = 合规优势 = 市场认可 = 长期竞争力
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-6"></div>
+        </section>
+
+        <!-- CH-7: 近期要闻 -->
+        <section class="chapter" id="ch-7">
+            <div class="chapter-header">
+                <h2>近期要闻</h2>
+                <span class="ch-sub">📰 最新动态与市场进展</span>
+                <span class="ch-counter" id="counter-7">1 / 1</span>
+            </div>
+            <div class="card-track" data-ch="7">
+                <!-- Slide 1 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>2025-2026年关键里程碑</h3>
+                        <div class="card-body">
+                            <div class="news-item">
+                                <div class="news-date">2025年10月</div>
+                                <div class="news-title">
+                                    <a href="https://www.feedzai.com" target="_blank">完成E轮融资7500万美元，估值达20亿美元</a>
+                                </div>
+                                <div class="news-desc">Feedzai宣布完成E轮融资，由Lince Capital、Iberis Capital等领投。融资将用于扩展全球市场覆盖和加强AI研发。同时被欧洲中央银行选中为数字欧元提供欺诈预防服务，标志着技术实力获得最高权威机构的认可。</div>
+                            </div>
+
+                            <div class="news-item">
+                                <div class="news-date">2026年1月</div>
+                                <div class="news-title">
+                                    <a href="https://www.feedzai.com" target="_blank">获评2026年SPARK Matrix FCC数据管理报告行业领导者</a>
+                                </div>
+                                <div class="news-desc">Feedzai在2026年SPARK Matrix™金融犯罪与合规(FCC)数据管理报告中被评为行业领导者，再次获得权威机构的技术和创新认可。这反映了Feedzai在金融科技领域的持续领先地位。</div>
+                            </div>
+
+                            <div class="news-item">
+                                <div class="news-date">2025年11月</div>
+                                <div class="news-title">
+                                    <a href="https://www.feedzai.com" target="_blank">Chartis RiskTech100 2026排名第27位，连续第三年领导者</a>
+                                </div>
+                                <div class="news-desc">Feedzai在Chartis RiskTech100 2026报告中位列第27名，并连续第三年被评为'最佳企业欺诈解决方案'提供商。这彰显了其在欺诈检测领域的市场地位和技术领导力。</div>
+                            </div>
+
+                            <div class="news-item">
+                                <div class="news-date">2026年3月</div>
+                                <div class="news-title">全球保护消费者突破10亿+，年处理事件达900亿</div>
+                                <div class="news-desc">Feedzai的RiskOps平台已保护全球超过10亿消费者的资金安全，每年处理900亿+事件，年度交易覆盖金额达8万亿美元。Feedzai已成为全球金融安全的关键基础设施之一，展现出巨大的市场影响力和商业价值。</div>
+                            </div>
+
+                            <div class="references">
+                                <h4>📚 参考文献</h4>
+                                <ul>
+                                    <li><a href="https://www.feedzai.com" target="_blank">Feedzai官方网站</a></li>
+                                    <li><a href="https://www.chartisar.com" target="_blank">Chartis RiskTech100 2026</a></li>
+                                    <li><a href="https://www.everestgrp.com" target="_blank">SPARK Matrix FCC报告</a></li>
+                                    <li><a href="https://www.ecb.europa.eu" target="_blank">欧洲中央银行数字欧元</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-7"></div>
+        </section>
+    </main>
+
+    <script>
+        function go(ch) {
+            const element = document.getElementById(`ch-${ch}`);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                updateNav(ch);
+            }
+        }
+
+        function updateNav(ch) {
+            const navBtns = document.querySelectorAll('.nav-btn');
+            navBtns.forEach((btn, idx) => {
+                btn.classList.toggle('active', idx === ch);
+            });
+        }
+
+        // Animate stat numbers
+        function animateNumber(element) {
+            const count = parseInt(element.dataset.count);
+            const prefix = element.dataset.prefix || '';
+            const suffix = element.dataset.suffix || '';
+            const duration = 1500;
+            let current = 0;
+            const increment = count / (duration / 50);
+
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= count) {
+                    element.textContent = prefix + count.toFixed(0) + suffix;
+                    clearInterval(timer);
+                } else {
+                    element.textContent = prefix + current.toFixed(0) + suffix;
+                }
+            }, 50);
+        }
+
+        // Auto-generate dots
+        function generateDots() {
+            for (let ch = 1; ch <= 7; ch++) {
+                const track = document.querySelector(`[data-ch="${ch}"]`);
+                const dotsBar = document.getElementById(`dots-${ch}`);
+                if (track && dotsBar) {
+                    const slides = track.querySelectorAll('.slide').length;
+                    for (let i = 0; i < slides; i++) {
+                        const dot = document.createElement('button');
+                        dot.className = `dot ${i === 0 ? 'active' : ''}`;
+                        dotsBar.appendChild(dot);
+                    }
+                }
+            }
+        }
+
+        // Update counter and dots on scroll
+        function setupScroll() {
+            const tracks = document.querySelectorAll('.card-track');
+            tracks.forEach(track => {
+                const chNum = track.dataset.ch;
+                track.addEventListener('scroll', () => {
+                    const scrollLeft = track.scrollLeft;
+                    const slideWidth = track.offsetWidth;
+                    const currentSlide = Math.round(scrollLeft / slideWidth);
+                    const totalSlides = track.querySelectorAll('.slide').length;
+
+                    const counter = document.getElementById(`counter-${chNum}`);
+                    if (counter) {
+                        counter.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+                    }
+
+                    const dots = document.querySelectorAll(`#dots-${chNum} .dot`);
+                    dots.forEach((dot, idx) => {
+                        dot.classList.toggle('active', idx === currentSlide);
+                    });
+                });
+            });
+        }
+
+        // Track chapter visibility for nav
+        function setupChapterObserver() {
+            const main = document.querySelector('main');
+            main.addEventListener('scroll', () => {
+                const chapters = document.querySelectorAll('.chapter, .cover');
+                let currentCh = 0;
+                chapters.forEach((ch, idx) => {
+                    const rect = ch.getBoundingClientRect();
+                    if (rect.top < window.innerHeight / 2) {
+                        currentCh = idx;
+                    }
+                });
+                updateNav(currentCh);
+            });
+        }
+
+        // Animate stat numbers when cover becomes visible
+        function setupCoverObserver() {
+            const cover = document.querySelector('.cover');
+            const observer = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting) {
+                    document.querySelectorAll('[data-count]').forEach(el => animateNumber(el));
+                    observer.disconnect();
+                }
+            }, { threshold: 0.5 });
+            observer.observe(cover);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            generateDots();
+            setupScroll();
+            setupChapterObserver();
+            setupCoverObserver();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Background circle -->
+  <defs>
+    <linearGradient id="brandGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1B6B56;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0D4A38;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2BA878;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1B6B56;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Outer circle background -->
+  <circle cx="100" cy="100" r="100" fill="url(#brandGradient)"/>
+
+  <!-- Inner accent circle -->
+  <circle cx="100" cy="100" r="85" fill="none" stroke="url(#accentGradient)" stroke-width="2" opacity="0.6"/>
+
+  <!-- Oak tree stylized symbol -->
+  <!-- Main trunk -->
+  <rect x="92" y="105" width="16" height="40" fill="#F5E6D3" rx="3"/>
+
+  <!-- Root-like elements (representing stability and foundation) -->
+  <path d="M 85 145 Q 80 155 78 165" stroke="#F5E6D3" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M 100 145 Q 100 160 100 170" stroke="#F5E6D3" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M 115 145 Q 120 155 122 165" stroke="#F5E6D3" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+
+  <!-- Canopy (tree crown) - upper part -->
+  <circle cx="85" cy="75" r="22" fill="#2BA878" opacity="0.9"/>
+  <circle cx="115" cy="75" r="22" fill="#2BA878" opacity="0.9"/>
+  <circle cx="100" cy="55" r="28" fill="#2BA878"/>
+
+  <!-- Canopy highlights (leaves effect) -->
+  <circle cx="80" cy="60" r="12" fill="#3DD48F" opacity="0.7"/>
+  <circle cx="120" cy="60" r="12" fill="#3DD48F" opacity="0.7"/>
+  <circle cx="100" cy="35" r="15" fill="#3DD48F" opacity="0.7"/>
+  <circle cx="90" cy="45" r="10" fill="#3DD48F" opacity="0.8"/>
+  <circle cx="110" cy="45" r="10" fill="#3DD48F" opacity="0.8"/>
+
+  <!-- Sparkle elements (representing AI/intelligence) -->
+  <circle cx="120" cy="50" r="3" fill="#FFD700" opacity="0.9"/>
+  <circle cx="80" cy="50" r="2.5" fill="#FFD700" opacity="0.8"/>
+  <circle cx="100" cy="25" r="2.5" fill="#FFD700" opacity="0.8"/>
+
+  <!-- Tech-inspired geometric element (subtle, representing AI) -->
+  <g opacity="0.15">
+    <line x1="60" y1="100" x2="75" y2="100" stroke="#F5E6D3" stroke-width="1.5"/>
+    <line x1="125" y1="100" x2="140" y2="100" stroke="#F5E6D3" stroke-width="1.5"/>
+  </g>
+</svg>

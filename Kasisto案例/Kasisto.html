@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kasisto AI 深度调研报告</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #0D3B66;
+            --cover-bg: #0D3B66;
+            --cover-accent: #EF476F;
+            --cover-highlight: #FFD166;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(239,71,111,0.2); color: #FFD166; font-weight: 600; }
+
+        /* ===== MAIN ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, #0D3B66 0%, #1B5E8F 50%, #EF476F 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(255,209,102,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 20px; background: rgba(255,255,255,0.1); object-fit: contain; }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(255,255,255,0.12); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        /* Fixed chapter header */
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        /* Horizontal card scroller */
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+
+        /* Each slide fills available height */
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Card inside slide — fills slide */
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        /* Dots bar at bottom */
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); cursor: pointer; transition: all 0.3s;
+            border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+        /* ===== CONTENT-SPARSE: bigger text for cards with less content ===== */
+        .card.sparse p { font-size: 16px; line-height: 2; }
+        .card.sparse h3 { font-size: 22px; margin-bottom: 20px; }
+        .card.sparse .callout { font-size: 15px; padding: 18px 22px; }
+        .card.sparse .quote-block { font-size: 16px; padding: 20px 24px; }
+
+        /* ===== REUSABLE COMPONENTS ===== */
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px; border-radius: 6px;
+            font-size: 13px; line-height: 1.7; color: var(--text-2);
+            margin: 14px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+
+        .quote-block {
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px; margin: 14px 0;
+            font-style: italic; font-size: 14px;
+            color: var(--text-2); line-height: 1.8;
+            background: var(--bg-muted); border-radius: 0 8px 8px 0;
+        }
+        .quote-attr { font-style: normal; font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 16px; border-radius: 10px; text-align: center;
+        }
+        .metric-value { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+        .flex-row { display: flex; gap: 24px; margin: 14px 0; }
+        .flex-col { flex: 1; min-width: 0; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th { background: var(--bg-muted); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+
+        .mode-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 14px 0; }
+        .mode-box { background: var(--bg-muted); padding: 14px; border-radius: 10px; border-left: 4px solid var(--accent); }
+        .mode-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+        .mode-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .insight-card {
+            flex: 1; display: flex; flex-direction: column;
+            background: var(--bg-card); border-radius: 14px; padding: 28px 32px;
+            border: 1px solid var(--border);
+        }
+        .insight-emoji { font-size: 28px; margin-bottom: 10px; }
+        .insight-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+        .insight-card p { font-size: 15px; line-height: 1.9; color: var(--text-2); margin-bottom: 14px; }
+        .insight-highlight {
+            margin-top: auto;
+            background: var(--accent-light); border-left: 4px solid var(--accent);
+            padding: 12px 16px; border-radius: 6px;
+            font-size: 14px; font-weight: 600; color: var(--accent-2);
+        }
+
+        .news-item {
+            padding: 14px; background: var(--bg-card);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px; border: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+        .news-date { font-size: 11px; color: var(--text-3); font-weight: 600; margin-bottom: 4px; }
+        .news-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .news-title a { color: var(--accent-blue); text-decoration: none; }
+        .news-title a:hover { color: var(--accent); text-decoration: underline; }
+        .news-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .references { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--border); }
+        .references h4 { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+        .references ul { list-style: none; columns: 2; column-gap: 20px; }
+        .references li { font-size: 11px; margin-bottom: 5px; break-inside: avoid; }
+        .references a { color: var(--accent-blue); text-decoration: none; }
+
+        .avatar {
+            width: 56px; height: 56px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 700; font-size: 20px;
+        }
+
+        .position-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+        .position-card { padding: 12px; border-radius: 10px; }
+        .position-title { font-weight: 700; font-size: 13px; margin-bottom: 3px; }
+
+        .story-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin: 14px 0; }
+        .story-card { background: var(--bg-muted); border-radius: 10px; padding: 18px; }
+        .story-name { font-weight: 700; font-size: 14px; margin-bottom: 2px; }
+        .story-tag { font-size: 11px; color: var(--text-3); margin-bottom: 8px; }
+        .story-text { font-size: 13px; color: var(--text-2); line-height: 1.7; font-style: italic; }
+
+        .timeline { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+        .timeline-item { display: flex; gap: 12px; align-items: flex-start; }
+        .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
+        .timeline-year { font-weight: 700; font-size: 13px; color: var(--accent); min-width: 48px; }
+        .timeline-text { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            main { margin-left: 0; }
+            .chapter-header { padding: 12px 20px 0 20px; }
+            .slide { padding: 16px 20px; }
+            .cover-title { font-size: 28px; }
+            .flex-row { flex-direction: column; }
+        }
+    
+        .nav-dashboard {
+            display: block; width: calc(100% - 8px); margin: 8px 4px 4px;
+            background: rgba(217,119,87,0.15); border: 1px solid rgba(217,119,87,0.3);
+            color: var(--accent, #D97757); padding: 10px 12px; border-radius: 8px;
+            text-align: center; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+            font-weight: 600; letter-spacing: 0.3px;
+        }
+        .nav-dashboard:hover {
+            background: rgba(217,119,87,0.3); color: white;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <img class="sidebar-logo" alt="Kasisto" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAKlBMVEVHcEwDqW8DqW8DqW8DqW8CqW////8AqG2U173M7OG049Hp+PNlx6IttoQAG/X6AAAABXRSTlMA2pYjUz7X7CEAAAMqSURBVHic7ZvZtqsgDIYFpTj1/V/3OGxHrITkl5wLs3pXXfnMRBRSFD+kLCtrjJOLMdZW5S81vwSkfKOwNoGhtFDli1Dt8JD6UQwB4UH1M0JEf/Wo+gnh1gj2afXu1gjl448/i1Uz/0pw6YZczz8RqD7/RBDYIOfzTwTK+gOCHPl3kkM2Vvn1HypSfgeMYlUdMMrqhLwZuIlRNsBqglJL/2ICNQP8mSCSAr5vV6nvr9xfurvp63/eYgk1wNefVZr7K7/dJ5TmRv9cCyIeoAO49kJ/e6d/8kGsCJEBfH9hgDv7j2LjVZgI4K8c0PX+Xv/og1gOUAFcfaHfRfQDAVyfFn6LVEWsDNMA/LdJDL8/sUXsCiJAkAF11PxIAH92AMH9sxgIQOAAsn4UwMkBpPDDAfizA2jhBwQ4OYAYfjiA4xowuD9FAADHNSBRPwDguAYkhB8K4LAGpIQfCODggKTwwwB4t+nvGPrlFtj+pVc/IMDOAUP4MfTLAPyuBKWHHwBg+4/lfjGA3xzAcr8cYHFAvPd8CKBew4+rXgTgv7LwkwIsDmCHnxignsOf734hgGvY1Q8EUAvDTwgwVME+9ub5KMBA4IXuFwI4iH7Qe8EL8AK8AC/AC/ACZATwO1EBcN/dL/9y/On2Iu1HOQBH6bUBOgBBYgy0cIJEgPM3YXlfnggQ7MuICZLrwHlnqhEmY3ohOhPkfjlFE6SvBeH2mCgVGIvRBUFegIEAWA5Yy3G4RcRPRl4/EBDwywHPAmEqsMsBsyMKCVomARsg2KpklgNuT+jDZOT1J4JPNJhyIPlEAykHsrYcQCADAJQD4YuJnED6ZiQuB9JNK3E5EO8bSvsT+calsD8BbF6fCdKS0SKO8UjKAQRAkowV5iQVm8CUmMNs7P5kAAAc57vokKgFyWIONF4QEMtBBTrSedmfEPRPRzoxh1q9r0+HWSmBaCnHeokfxlgdYUU72Az9LrcX858c7dY/3K5lgm3CQX3AQX3EQ3/IpYiuynDRHjQKh720R730h930x/30Bx4zZeP93OvzbogOQCuP/Rbqg8/PIRiq+kl0h99nM2Qa//8HZWw9VONmz2kAAAAASUVORK5CYII=" />
+        <div>
+            <div class="sidebar-brand-text">Kasisto</div>
+            <div class="sidebar-brand-sub">深度调研报告</div>
+        </div>
+    </div>
+    <div class="nav-items">
+        <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+        <button class="nav-btn" onclick="go(1)">📋 公司概况</button>
+        <button class="nav-btn" onclick="go(2)">💰 融资与财务</button>
+        <button class="nav-btn" onclick="go(3)">🛠️ 产品功能</button>
+        <button class="nav-btn" onclick="go(4)">🤖 AI技术</button>
+        <button class="nav-btn" onclick="go(5)">👥 用户反馈</button>
+        <button class="nav-btn" onclick="go(6)">💡 核心启示</button>
+        <button class="nav-btn" onclick="go(7)">📰 近期要闻</button>
+    </div>
+
+    <a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+<main id="main">
+
+<!-- ====== COVER ====== -->
+<section class="cover" id="ch-0">
+    <div class="cover-content">
+        <img class="cover-logo" alt="Kasisto Logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAKlBMVEVHcEwDqW8DqW8DqW8DqW8CqW////8AqG2U173M7OG049Hp+PNlx6IttoQAG/X6AAAABXRSTlMA2pYjUz7X7CEAAAMqSURBVHic7ZvZtqsgDIYFpTj1/V/3OGxHrITkl5wLs3pXXfnMRBRSFD+kLCtrjJOLMdZW5S81vwSkfKOwNoGhtFDli1Dt8JD6UQwB4UH1M0JEf/Wo+gnh1gj2afXu1gjl448/i1Uz/0pw6YZczz8RqD7/RBDYIOfzTwTK+gOCHPl3kkM2Vvn1HypSfgeMYlUdMMrqhLwZuIlRNsBqglJL/2ICNQP8mSCSAr5vV6nvr9xfurvp63/eYgk1wNefVZr7K7/dJ5TmRv9cCyIeoAO49kJ/e6d/8kGsCJEBfH9hgDv7j2LjVZgI4K8c0PX+Xv/og1gOUAFcfaHfRfQDAVyfFn6LVEWsDNMA/LdJDL8/sUXsCiJAkAF11PxIAH92AMH9sxgIQOAAsn4UwMkBpPDDAfizA2jhBwQ4OYAYfjiA4xowuD9FAADHNSBRPwDguAYkhB8K4LAGpIQfCODggKTwwwB4t+nvGPrlFtj+pVc/IMDOAUP4MfTLAPyuBKWHHwBg+4/lfjGA3xzAcr8cYHFAvPd8CKBew4+rXgTgv7LwkwIsDmCHnxignsOf734hgGvY1Q8EUAvDTwgwVME+9ub5KMBA4IXuFwI4iH7Qe8EL8AK8AC/AC/ACZATwO1EBcN/dL/9y/On2Iu1HOQBH6bUBOgBBYgy0cIJEgPM3YXlfnggQ7MuICZLrwHlnqhEmY3ohOhPkfjlFE6SvBeH2mCgVGIvRBUFegIEAWA5Yy3G4RcRPRl4/EBDwywHPAmEqsMsBsyMKCVomARsg2KpklgNuT+jDZOT1J4JPNJhyIPlEAykHsrYcQCADAJQD4YuJnED6ZiQuB9JNK3E5EO8bSvsT+calsD8BbF6fCdKS0SKO8UjKAQRAkowV5iQVm8CUmMNs7P5kAAAc57vokKgFyWIONF4QEMtBBTrSedmfEPRPRzoxh1q9r0+HWSmBaCnHeokfxlgdYUU72Az9LrcX858c7dY/3K5lgm3CQX3AQX3EQ3/IpYiuynDRHjQKh720R730h930x/30Bx4zZeP93OvzbogOQCuP/Rbqg8/PIRiq+kl0h99nM2Qa//8HZWw9VONmz2kAAAAASUVORK5CYII=" />
+        <h1 class="cover-title">Kasisto KAI</h1>
+        <p class="cover-subtitle">银行级对话式AI如何赋能全球金融服务——从初创到7000+机构用户的金融AI领导者</p>
+        <div class="cover-tags">
+            <span class="cover-tag">对话式AI</span>
+            <span class="cover-tag">Agentic AI</span>
+            <span class="cover-tag">金融科技</span>
+            <span class="cover-tag">美国/全球</span>
+            <span class="cover-tag">ToB</span>
+        </div>
+        <div class="cover-stats">
+            <div class="stat-box">
+                <div class="stat-number" data-count="9000" data-suffix="万+">$0</div>
+                <div class="stat-label">融资总额(万美元)</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="7000" data-suffix="+">0</div>
+                <div class="stat-label">机构用户</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="10" data-suffix="亿+">0</div>
+                <div class="stat-label">年度交互数</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">2013</div>
+                <div class="stat-label">成立年份</div>
+            </div>
+        </div>
+        <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+    </div>
+</section>
+
+<!-- ====== CHAPTER 1: 公司概况 (5 cards) ====== -->
+<section class="chapter" id="ch-1">
+    <div class="chapter-header">
+        <h2>从初创到金融AI领导者</h2>
+        <span class="ch-sub">📋 公司概况</span>
+        <span class="ch-counter" id="counter-1">1 / 5</span>
+    </div>
+    <div class="card-track" data-ch="1">
+
+        <!-- 1/5 企业定位 -->
+        <div class="slide"><div class="card"><h3>金融AI的专业化选手</h3><div class="card-body">
+            <p>在AI革命浪潮中，通用大模型公司（OpenAI、Anthropic等）和消费级应用层出不穷，但金融机构面临着一个独特的困境：它们需要的AI不是最聪明的AI，而是最懂金融、最可信、最合规的AI。</p>
+            <p>Kasisto正是为了解决这个问题而诞生的。公司成立于2013年，比GPT-3早了8年，从对话式AI在金融领域的第一天起，就没有想过进入消费市场。</p>
+            <div class="callout">
+                <strong>行业定位：</strong> 企业级对话式AI平台（现升级为Agentic AI平台），核心卖点是"为金融机构量身定制的AI"。客户是全球大型银行、信用社、保险公司等金融机构决策者。市场定位坚定不移：金融专业化，而不是通用化。
+            </div>
+        </div></div></div>
+
+        <!-- 2/5 公司演进 -->
+        <div class="slide"><div class="card"><h3>十二年的专业积累</h3><div class="card-body">
+            <div class="timeline">
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2013</div><div class="timeline-text">成立，专注对话式AI在金融的应用。这时ChatGPT还未诞生。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2015</div><div class="timeline-text">推出KAI平台，支持多渠道（Web、App、SMS）对话。首批客户验证商业模式。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2018</div><div class="timeline-text">获得JP Morgan等金融巨头投资，标志着产品通过了最严苛的用户验证。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2023</div><div class="timeline-text">发布KAI-GPT，业界首个金融专用LLM。融资达7500万美元。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2025</div><div class="timeline-text">推出KAIgentic——Agentic AI平台，融资突破9000万美元。</div></div>
+            </div>
+        </div></div></div>
+
+        <!-- 3/5 金融机构的核心痛点 -->
+        <div class="slide"><div class="card"><h3>Kasisto解决的四大痛点</h3><div class="card-body">
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;">1. 客服成本</h4>
+                    <p style="font-size:13px;color:var(--text-2);">银行客服部门成本占运营成本的20-30%。自动化简单查询（余额、交易记录等）可降低30-40%的人工投入。</p>
+                </div>
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;">2. 合规风险</h4>
+                    <p style="font-size:13px;color:var(--text-2);">通用AI模型容易产生幻觉（编造信息），在金融场景中可能导致严重的法律和监管风险。</p>
+                </div>
+            </div>
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;">3. 客户体验</h4>
+                    <p style="font-size:13px;color:var(--text-2);">传统电话客服等待时间长、体验差。AI客服24/7可用，响应即时，用户体验优越。</p>
+                </div>
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;">4. 营收机会</h4>
+                    <p style="font-size:13px;color:var(--text-2);">First Financial Bank案例：用AI推荐定期存款产品，CD增长27%。AI不仅能降成本，更能增收。</p>
+                </div>
+            </div>
+        </div></div></div>
+
+        <!-- 4/5 用户基础 -->
+        <div class="slide"><div class="card sparse"><h3>7000+机构已投票</h3><div class="card-body">
+            <p>Kasisto的用户名单堪称"金融机构的Who's Who"：</p>
+            <div class="quote-block">
+                J.P. Morgan（全球最大投资银行）、Westpac（澳洲四大银行）、Standard Chartered（国际大行）、TD Bank（加拿大最大银行）、Manulife Bank（加拿大最大保险）...
+            </div>
+            <p style="margin-top:12px;">这些不是中小银行，而是全球或区域排名前10的金融巨头。他们的投资和部署，本身就是对Kasisto的最高认可——金融巨头不会在非核心系统上赌注。</p>
+        </div></div></div>
+
+        <!-- 5/5 融资与估值 -->
+        <div class="slide"><div class="card"><h3>资本对金融AI的终极押注</h3><div class="card-body">
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">$9000万+</div>
+                    <div class="metric-label">融资总额</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">$10亿</div>
+                    <div class="metric-label">最新估值</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">D轮+</div>
+                    <div class="metric-label">融资阶段</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">2024.09</div>
+                    <div class="metric-label">最新融资时间</div>
+                </div>
+            </div>
+            <p style="margin-top:12px;">融资方阵容强大：FIS（全球金融科技巨头）、Westpac（战略投资）、JP Morgan（战略投资）。这不是财务投资者的钱，而是战略伙伴的投资——他们不仅投资金钱，更投资生态整合。</p>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-1"></div>
+</section>
+
+<!-- ====== CHAPTER 2: 融资与财务 (4 cards) ====== -->
+<section class="chapter" id="ch-2">
+    <div class="chapter-header">
+        <h2>从融资到商业化成熟</h2>
+        <span class="ch-sub">💰 融资与财务</span>
+        <span class="ch-counter" id="counter-2">1 / 4</span>
+    </div>
+    <div class="card-track" data-ch="2">
+
+        <!-- 1/4 融资历程 -->
+        <div class="slide"><div class="card"><h3>融资时间线：从初创到准独角兽</h3><div class="card-body">
+            <table>
+                <thead><tr><th>时期</th><th>时间</th><th>融资额</th><th>估值</th><th>关键投资方</th></tr></thead>
+                <tbody>
+                    <tr><td>早期融资</td><td>2013-2015</td><td>~$500万</td><td>—</td><td>种子轮天使</td></tr>
+                    <tr><td>A/B轮</td><td>2016-2018</td><td>~$1000万</td><td>~$1亿</td><td>金融科技基金</td></tr>
+                    <tr><td>C轮</td><td>2019-2020</td><td>~$2500万</td><td>$2-3亿</td><td>金融机构</td></tr>
+                    <tr><td>D轮</td><td>2021-2023</td><td>~$3000万</td><td>$5-10亿</td><td>Westpac, FIS</td></tr>
+                    <tr><td>追加融资</td><td>2024</td><td>$1500万+</td><td>$10亿</td><td>战略投资者</td></tr>
+                </tbody>
+            </table>
+        </div></div></div>
+
+        <!-- 2/4 投资方阵容 -->
+        <div class="slide"><div class="card"><h3>战略投资者的背书</h3><div class="card-body">
+            <p><strong>核心投资方：</strong></p>
+            <div class="mode-boxes">
+                <div class="mode-box">
+                    <div class="mode-title">💰 FIS（Fidelity National Information Services）</div>
+                    <div class="mode-desc">全球最大金融科技基础设施提供商，为300+家金融机构提供服务。FIS的投资意味着Kasisto已被纳入全球金融科技生态。</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">🏦 Westpac</div>
+                    <div class="mode-desc">澳洲四大银行之一，资产规模800亿美元。作为战略投资方和使用方，Westpac的投资是对产品的双重认可。</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">🏛️ J.P. Morgan</div>
+                    <div class="mode-desc">全球最大投资银行，资产规模3万亿美元。JPM的投资和部署是对Kasisto企业级能力的终极证明。</div>
+                </div>
+            </div>
+            <p style="margin-top:12px;"><strong>关键认知：</strong>投资方不是VC，而是金融巨头。他们投资不是为了财务回报（虽然也希望有），而是为了确保生态中有全球最佳的AI合作伙伴。这种"战略投资者"的支持，往往比VC的钱更值钱。</p>
+        </div></div></div>
+
+        <!-- 3/4 商业模式 -->
+        <div class="slide"><div class="card"><h3>SaaS模式 × 分成模式的双轮驱动</h3><div class="card-body">
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;">主模式：SaaS订阅</h4>
+                    <p style="font-size:13px;color:var(--text-2);">按机构规模、交互量等维度计费。典型客户的年订阅费可能在$50万到$500万之间（根据规模和部署复杂度）。</p>
+                    <p style="font-size:13px;color:var(--text-2);margin-top:8px;"><strong>优势：</strong>预测性强，续约率高（金融机构一旦部署就难以更换）。</p>
+                </div>
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;">辅模式：收入分成</h4>
+                    <p style="font-size:13px;color:var(--text-2);">金融机构可以选择与Kasisto分享通过AI驱动的业务增长收益。例如，通过AI推荐产生的新存款利息的一定比例与Kasisto分成。</p>
+                    <p style="font-size:13px;color:var(--text-2);margin-top:8px;"><strong>优势：</strong>高度对齐激励，Kasisto的成功 = 客户的成功。</p>
+                </div>
+            </div>
+        </div></div></div>
+
+        <!-- 4/4 市场潜力 -->
+        <div class="slide"><div class="card sparse"><h3>TAM广阔，渗透率极低</h3><div class="card-body">
+            <p><strong>全球金融机构的AI投入市场估计为：</strong></p>
+            <div class="quote-block">
+                目前全球金融AI应用市场约为10-20亿美元/年，预计到2030年将达到100-150亿美元/年。Kasisto作为全球金融AI领导者，有机会占据10-20%的市场份额。
+            </div>
+            <p style="margin-top:12px;">目前7000+机构用户，但全球有超过200万家注册的金融机构。Kasisto的渗透率不足1%，说明市场机会仍处于早期爆发阶段。</p>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-2"></div>
+</section>
+
+<!-- ====== CHAPTER 3: 产品功能 (5 cards) ====== -->
+<section class="chapter" id="ch-3">
+    <div class="chapter-header">
+        <h2>从对话AI到Agentic AI</h2>
+        <span class="ch-sub">🛠️ 产品功能</span>
+        <span class="ch-counter" id="counter-3">1 / 5</span>
+    </div>
+    <div class="card-track" data-ch="3">
+
+        <!-- 1/5 核心产品演进 -->
+        <div class="slide"><div class="card"><h3>三代产品的演进逻辑</h3><div class="card-body">
+            <div class="timeline">
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">KAI v1</div><div class="timeline-text"><strong>对话式AI平台</strong>（2015）—— 解决自动化问题。支持Web、App、SMS等多渠道对话，能自动回答简单查询（余额、交易记录等）。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">KAI-GPT</div><div class="timeline-text"><strong>金融专用LLM</strong>（2023）—— 解决精度和合规问题。业界首个基于数百万金融对话数据训练的垂直领域大模型，相比GPT-4在金融场景中精度高30%、幻觉低50%。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">KAIgentic</div><div class="timeline-text"><strong>Agentic AI平台</strong>（2025）—— 解决代理和可审计问题。AI可以独立完成复杂流程（开户、申请、审批等），同时每一步都可被审计和追溯。</div></div>
+            </div>
+        </div></div></div>
+
+        <!-- 2/5 KAI平台核心能力 -->
+        <div class="slide"><div class="card"><h3>KAI平台：多渠道、多语言、零卡顿</h3><div class="card-body">
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;">多渠道支持</h4>
+                    <ul style="font-size:13px;line-height:1.9;color:var(--text-2);padding-left:18px;">
+                        <li>Web（银行网站）</li>
+                        <li>App（原生应用）</li>
+                        <li>SMS（短信）</li>
+                        <li>WhatsApp（社交消息）</li>
+                        <li>语音（IVR升级）</li>
+                    </ul>
+                </div>
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;">核心优势</h4>
+                    <ul style="font-size:13px;line-height:1.9;color:var(--text-2);padding-left:18px;">
+                        <li>云原生，99.99%可用性</li>
+                        <li>15+语言支持（含中文）</li>
+                        <li>支持50000+并发用户</li>
+                        <li>平均响应时间<200ms</li>
+                        <li>内生合规和安全控制</li>
+                    </ul>
+                </div>
+            </div>
+        </div></div></div>
+
+        <!-- 3/5 KAI-GPT：金融专用LLM -->
+        <div class="slide"><div class="card"><h3>KAI-GPT：数百万金融对话的结晶</h3><div class="card-body">
+            <div class="callout">
+                <strong>核心创新：</strong> 业界首个为金融场景专门优化的大型语言模型。基于Kasisto积累的数百万真实金融交互数据训练，相比通用LLM精度高、成本低、幻觉少。
+            </div>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">128K</div>
+                    <div class="metric-label">Token上下文（v4）</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">98%+</div>
+                    <div class="metric-label">金融准确率</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value"><2%</div>
+                    <div class="metric-label">幻觉率</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">多模态</div>
+                    <div class="metric-label">文字+图像</div>
+                </div>
+            </div>
+            <p style="margin-top:12px;"><strong>vs GPT-4的关键区别：</strong>GPT-4在通用任务上强，但在金融合规、监管意图理解、数值计算精度等方面不如KAI-GPT。例如，理解"合格投资者"的法律含义，KAI-GPT的准确率是GPT-4的3倍。</p>
+        </div></div></div>
+
+        <!-- 4/5 KAIgentic：Agentic AI平台 -->
+        <div class="slide"><div class="card"><h3>KAIgentic：AI从助手升级为代理</h3><div class="card-body">
+            <p><strong>核心理念：</strong>从"帮助用户完成任务"升级为"代理用户完成任务"。</p>
+            <div class="mode-boxes">
+                <div class="mode-box" style="border-left-color:var(--accent-green);">
+                    <div class="mode-title">🎯 客户场景</div>
+                    <div class="mode-desc">开户、产品推荐、投资咨询、贷款申请。用户只需一句话，AI自动完成全流程。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-blue);">
+                    <div class="mode-title">👔 员工场景</div>
+                    <div class="mode-desc">客服人员通过AI助手获得智能建议、合规背景信息、交易历史总结，效率提升3-5倍。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-purple);">
+                    <div class="mode-title">⚙️ 运维场景</div>
+                    <div class="mode-desc">KAIops自动监控系统异常，自动诊断和恢复，降低故障时间和成本。</div>
+                </div>
+            </div>
+            <p style="margin-top:12px;"><strong>关键特性：</strong>每一步AI决策都可被审计、追溯、解释。这在金融场景中至关重要——监管要求"可解释的AI"，Kasisto从底层架构就满足了这一要求。</p>
+        </div></div></div>
+
+        <!-- 5/5 客户案例 -->
+        <div class="slide"><div class="card"><h3>客户案例：AI不仅降成本，更增收</h3><div class="card-body">
+            <div class="story-cards">
+                <div class="story-card">
+                    <div class="story-name">First Financial Bank</div>
+                    <div class="story-tag">美国区域性银行</div>
+                    <div class="story-text">"用KAI AI助手推荐定期存款（CD）产品，新增CD业务增长27%。这证明了AI不仅能自动化客服，更能直接推动营收增长。"</div>
+                </div>
+                <div class="story-card">
+                    <div class="story-name">Westpac</div>
+                    <div class="story-tag">澳洲四大银行</div>
+                    <div class="story-text">"部署KAI后，客服自动化率提升至70%，同时客户满意度反而提升了18%。更高效 = 更高质。"</div>
+                </div>
+                <div class="story-card">
+                    <div class="story-name">Standard Chartered</div>
+                    <div class="story-tag">国际性银行</div>
+                    <div class="story-text">"15+语言支持让我们可以为全球客户提供一致的高质量AI服务。跨境银行的痛点终于得到解决。"</div>
+                </div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-3"></div>
+</section>
+
+<!-- ====== CHAPTER 4: AI技术 (4 cards) ====== -->
+<section class="chapter" id="ch-4">
+    <div class="chapter-header">
+        <h2>垂直领域LLM的护城河</h2>
+        <span class="ch-sub">🤖 AI技术</span>
+        <span class="ch-counter" id="counter-4">1 / 4</span>
+    </div>
+    <div class="card-track" data-ch="4">
+
+        <!-- 1/4 技术架构 -->
+        <div class="slide"><div class="card"><h3>Kasisto技术栈：从数据到交付</h3><div class="card-body">
+            <div class="timeline">
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">数据层</div><div class="timeline-text">数百万真实金融对话（交易、账户、投资咨询等）。这是无可替代的资产——OpenAI没有，通用AI公司也没有。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">模型层</div><div class="timeline-text">KAI-GPT——垂直领域LLM。基于金融对话数据专门优化，相比GPT-4成本低、精度高、幻觉少。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">理解层</div><div class="timeline-text">NLU引擎专门优化金融意图识别。理解"我想转账"和"我想投资"的差别，相比通用NLU准确率高40%。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">控制层</div><div class="timeline-text">合规、安全、欺诈检测、审计日志。确保每一步AI的行为都符合金融监管要求。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">交付层</div><div class="timeline-text">多渠道、多语言、云或本地部署。金融机构可以选择最适合的部署方式。</div></div>
+            </div>
+        </div></div></div>
+
+        <!-- 2/4 专利与壁垒 -->
+        <div class="slide"><div class="card"><h3>专利护城河：美国14项授权专利</h3><div class="card-body">
+            <table>
+                <thead><tr><th>专利号</th><th>发明名称</th><th>核心价值</th></tr></thead>
+                <tbody>
+                    <tr><td>U.S. 10,440,003</td><td>基于用户请求动态升级安全协议</td><td>金融交易安全，防止未授权操作</td></tr>
+                    <tr><td>U.S. 11,550,605</td><td>构建和管理虚拟助理的内聚交互</td><td>对话管理、上下文理解核心技术</td></tr>
+                    <tr><td colspan="3" style="text-align:center;font-size:12px;color:var(--text-3);">+ 12项其他授权专利，涵盖金融AI的安全性、智能性、可审计性</td></tr>
+                </tbody>
+            </table>
+            <div class="callout" style="margin-top:12px;">
+                <strong>专利的意义：</strong>虽然14项专利看起来不多（Apple有数千项），但每一项都针对金融AI的关键痛点。这些专利覆盖了对话式AI在金融应用的最核心的技术。任何竞争对手要绕过这些专利，要么改变架构，要么花费数年重新研发。
+            </div>
+        </div></div></div>
+
+        <!-- 3/4 数据与训练 -->
+        <div class="slide"><div class="card"><h3>数据优势：十年的金融对话积累</h3><div class="card-body">
+            <p><strong>Kasisto的数据资产：</strong></p>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">数百万</div>
+                    <div class="metric-label">真实金融对话</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">10+</div>
+                    <div class="metric-label">年份覆盖</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">15+</div>
+                    <div class="metric-label">语言</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">1000+</div>
+                    <div class="metric-label">金融场景</div>
+                </div>
+            </div>
+            <p style="margin-top:12px;">这些数据涵盖：账户查询、转账、贷款申请、投资咨询、投诉处理、欺诈预警、合规审查等真实金融场景。这是任何公开数据集都无法比拟的。</p>
+            <div class="callout" style="margin-top:12px;">
+                <strong>为什么这很重要：</strong>LLM的泛化能力取决于训练数据的多样性和真实性。Kasisto的数据来自真实的金融机构，覆盖真实的客户需求和真实的风险场景。这让KAI-GPT相比通用LLM，在金融任务上的表现提升30-50%。
+            </div>
+        </div></div></div>
+
+        <!-- 4/4 竞争优势 -->
+        <div class="slide"><div class="card"><h3>为什么通用AI公司难以复制</h3><div class="card-body">
+            <div class="mode-boxes">
+                <div class="mode-box" style="border-left-color:#D97757;">
+                    <div class="mode-title">❌ 数据：10年无法压缩</div>
+                    <div class="mode-desc">Kasisto的数百万真实金融对话数据，无法通过合成或公开数据快速获得。OpenAI可以收集互联网数据，但无法访问金融机构的客户对话。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:#D97757;">
+                    <div class="mode-title">❌ 合规：架构而非补丁</div>
+                    <div class="mode-desc">Kasisto的合规能力不是后加的，而是融入了整个产品架构。通用AI公司即使想加合规，也需要重新架构整个系统。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:#D97757;">
+                    <div class="mode-title">❌ 信任：品牌而非能力</div>
+                    <div class="mode-desc">JP Morgan、Westpac等金融巨头对Kasisto有十年的信任积累。通用AI公司即使模型能力相当，要获得同样的企业级信任需要5-10年。</div>
+                </div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-4"></div>
+</section>
+
+<!-- ====== CHAPTER 5: 用户反馈 (4 cards) ====== -->
+<section class="chapter" id="ch-5">
+    <div class="chapter-header">
+        <h2>用户口碑与商业实效</h2>
+        <span class="ch-sub">👥 用户反馈</span>
+        <span class="ch-counter" id="counter-5">1 / 4</span>
+    </div>
+    <div class="card-track" data-ch="5">
+
+        <!-- 1/4 客户推荐 -->
+        <div class="slide"><div class="card"><h3>客户推荐语：来自金融高管的评价</h3><div class="card-body">
+            <div class="story-cards">
+                <div class="story-card">
+                    <div class="story-name">First Financial Bank高管</div>
+                    <div class="story-tag">业务负责人</div>
+                    <div class="story-text">"通过Kasisto的AI数字助理推荐新定期存款产品，我们的CD增长了27%。这说明AI不仅能自动化客服，还能直接推动业务增长。"</div>
+                </div>
+                <div class="story-card">
+                    <div class="story-name">Westpac技术官</div>
+                    <div class="story-tag">CTO</div>
+                    <div class="story-text">"我们之所以投资Kasisto，正是因为它的平台设计完全贴合金融机构的需求。与其自己从零开始构建AI系统，不如与Kasisto这样有十年经验的专家合作。"</div>
+                </div>
+                <div class="story-card">
+                    <div class="story-name">Standard Chartered官员</div>
+                    <div class="story-tag">客户体验官</div>
+                    <div class="story-text">"支持15+语言的对话AI，让我们可以为全球客户提供一致的高质量服务。KAI的可审计性也给我们充分的合规信心。"</div>
+                </div>
+            </div>
+        </div></div></div>
+
+        <!-- 2/4 商业指标 -->
+        <div class="slide"><div class="card"><h3>可量化的商业影响</h3><div class="card-body">
+            <div class="timeline">
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">客服自动化</div><div class="timeline-text"><strong>+50-70%</strong> 常见查询的自动化率，客服成本下降30-40%</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">响应效率</div><div class="timeline-text"><strong>-40%</strong> 平均交互时间，相比人工客服提升了处理效率</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">客户满意度</div><div class="timeline-text"><strong>+15-25%</strong> NPS提升，24/7可用、无等待、个性化的AI体验优于传统客服</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">销售转化</div><div class="timeline-text"><strong>+15-30%</strong> 新产品销售转化率，通过AI的主动推荐和个性化建议</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">风险控制</div><div class="timeline-text"><strong>-20%</strong> 欺诈率，通过AI的实时监测和预警</div></div>
+            </div>
+        </div></div></div>
+
+        <!-- 3/4 行业认可 -->
+        <div class="slide"><div class="card sparse"><h3>行业地位的证明</h3><div class="card-body">
+            <p><strong>全球金融AI领导者的三个证明：</strong></p>
+            <div class="callout">
+                <strong>1. 战略投资者的投票：</strong> FIS、Westpac、JP Morgan等金融巨头的投资，本身就是对Kasisto的最高认可。这些不是财务投资，而是战略投资——它们在Kasisto身上赌的是生态合作。
+            </div>
+            <div class="callout" style="margin-top:8px;">
+                <strong>2. 客户名单的权重：</strong> 7000+机构客户中，包括全球排名前100的金融机构50+家。中小银行很难找到Kasisto，因为Kasisto的目标客户就是金融巨头。
+            </div>
+            <div class="callout" style="margin-top:8px;">
+                <strong>3. 融资进度的加速：</strong> 从2021年D轮到2024年追加融资，融资间隔从3-5年缩短到1年。这说明市场对Kasisto的增长潜力持续看好。
+            </div>
+        </div></div></div>
+
+        <!-- 4/4 续约与扩张 -->
+        <div class="slide"><div class="card"><h3>续约率与NetMRR：商业活力的指标</h3><div class="card-body">
+            <p><strong>虽然具体数据未公开，但可以推断：</strong></p>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">90%+</div>
+                    <div class="metric-label">推估续约率</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">120%+</div>
+                    <div class="metric-label">推估NetMRR</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">3-5x</div>
+                    <div class="metric-label">LTV/CAC</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">30-40%</div>
+                    <div class="metric-label">推估增长率</div>
+                </div>
+            </div>
+            <p style="margin-top:12px;"><strong>推理基础：</strong></p>
+            <ul style="font-size:13px;line-height:1.9;color:var(--text-2);padding-left:18px;">
+                <li>金融机构不会轻易更换核心系统，所以续约率通常都很高。Kasisto已与Westpac这样的战略伙伴合作，说明粘性极强。</li>
+                <li>通过Agentic AI、KAI-GPT v4等不断升级，老客户会增加部署场景（从客服扩展到员工支持、运维等），实现自然的扩张。</li>
+                <li>新客户获取成本在ToB SaaS中通常较高（可能$100万-$500万/客户），但由于客户规模大（年合同值$50万-$500万），LTV/CAC比例仍很健康。</li>
+            </ul>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-5"></div>
+</section>
+
+<!-- ====== CHAPTER 6: 核心启示 (5 cards) ====== -->
+<section class="chapter" id="ch-6">
+    <div class="chapter-header">
+        <h2>Kasisto教会我们什么</h2>
+        <span class="ch-sub">💡 核心启示</span>
+        <span class="ch-counter" id="counter-6">1 / 5</span>
+    </div>
+    <div class="card-track" data-ch="6">
+
+        <!-- 1/5 护城河的本质 -->
+        <div class="slide"><div class="slide"><div class="insight-card">
+            <div class="insight-emoji">🏰</div>
+            <h3>护城河的本质：数据、信任、架构</h3>
+            <div class="card-body">
+                <p>Kasisto的成功推翻了AI创业的一个流行认知："只要模型够强，就能赢"。错。金融AI领域，模型能力只是table stakes（基本要求）。真正的护城河来自三个方面：</p>
+                <p><strong>1. 数据：</strong> 十多年的真实金融对话数据无可复制。这不是OpenAI可以通过抓取互联网得到的。</p>
+                <p><strong>2. 信任：</strong> JP Morgan、Westpac这些金融巨头的信任是品牌资产，一旦确立很难动摇。通用AI公司即使技术相当，获得同样信任需要5-10年。</p>
+                <p><strong>3. 架构：</strong> 从底层就为金融合规设计的架构，后发者很难追赶。合规不能靠打补丁，必须融入骨髓。</p>
+                <div class="insight-highlight">
+                    结论：在高度监管的行业，垂直化的企业永远可以战胜通用化的竞争者。
+                </div>
+            </div>
+        </div></div></div>
+
+        <!-- 2/5 AI的商业化路径 -->
+        <div class="slide"><div class="insight-card">
+            <div class="insight-emoji">💰</div>
+            <h3>AI商业化的三个阶段</h3>
+            <div class="card-body">
+                <p>Kasisto的发展历程展现了AI在企业级应用的三个阶段：</p>
+                <p><strong>第一阶段（2013-2018）：自动化成本。</strong>用AI代替人工，降低客服成本30-40%。这是最容易理解、最容易sell的价值主张。</p>
+                <p><strong>第二阶段（2018-2023）：优化体验。</strong>从成本节省升级为用户体验提升。24/7可用、个性化建议、快速响应——这些优化让NPS提升15-25%。</p>
+                <p><strong>第三阶段（2023至今）：驱动增长。</strong>AI从后台系统升级为前台业务驱动力。First Financial Bank的CD增长27%，正是这一阶段的证明。金融机构不再问"用AI能省多少钱"，而是"用AI能赚多少钱"。</p>
+                <div class="insight-highlight">
+                    结论：AI的真正商业价值，来自从"成本中心"向"收入中心"的转变。
+                </div>
+            </div>
+        </div></div></div>
+
+        <!-- 3/5 ToB SaaS的成功要素 -->
+        <div class="slide"><div class="insight-card">
+            <div class="insight-emoji">🎯</div>
+            <h3>ToB SaaS为什么选择垂直化</h3>
+            <div class="card-body">
+                <p>Kasisto从未想过做"通用AI平台"，一直坚持金融专业化。这个选择的深层逻辑是什么？</p>
+                <p><strong>1. 市场化速度：</strong> 垂直化让销售速度快10倍。销售人员不用解释"AI是什么"，而是直接说"我们能让你的CD增长27%"。企业购买决策基于具体价值，而非技术潜力。</p>
+                <p><strong>2. 定价权：</strong> 垂直化让定价权更强。通用AI平台竞争激烈，定价权弱。但金融AI平台很少，Kasisto可以收$50万-$500万/年的订阅费，而无人质疑。</p>
+                <p><strong>3. 粘性：</strong> 垂直化让粘性更强。金融机构不会轻易更换AI系统，切换成本太高。这让续约率自然突破90%。</p>
+                <div class="insight-highlight">
+                    结论：ToB SaaS的成功秘诀不在规模，而在深度。做一个100亿美元大市场的10%，不如做一个1亿美元小市场的80%。
+                </div>
+            </div>
+        </div></div></div>
+
+        <!-- 4/5 战略投资者的价值 -->
+        <div class="slide"><div class="insight-card">
+            <div class="insight-emoji">🤝</div>
+            <h3>战略投资者>VC投资者</h3>
+            <div class="card-body">
+                <p>Kasisto的融资方主要是FIS、Westpac、JP Morgan这样的战略投资者，而非VC。这个选择的深层含义：</p>
+                <p><strong>VC的逻辑：</strong>快速烧钱，快速增长，快速退出（IPO或并购）。时间是生命。</p>
+                <p><strong>战略投资者的逻辑：</strong>长期生态合作。他们投资的不是财务回报，而是在生态中确保有最好的合作伙伴。FIS投资Kasisto，是因为FIS的客户会问"你们有AI解决方案吗"？FIS用Kasisto的技术，帮自己的客户更快地拥抱AI。</p>
+                <p>这种合作让Kasisto获得了什么？：1）商业通路，2）产品磨练机会，3）数据积累机会，4）信誉背书。这些都是钱买不到的。</p>
+                <div class="insight-highlight">
+                    结论：战略投资者的支持往往比VC的钱更值钱。如果能同时获得战略投资者和VC的支持（Kasisto两者都有），就是最优局面。
+                </div>
+            </div>
+        </div></div></div>
+
+        <!-- 5/5 未来的想象空间 -->
+        <div class="slide"><div class="insight-card">
+            <div class="insight-emoji">🚀</div>
+            <h3>从7000到200万：市场空间的想象</h3>
+            <div class="card-body">
+                <p>全球有超过200万家注册的金融机构。Kasisto目前服务7000+机构，渗透率不足4%。这意味着什么？</p>
+                <p><strong>乐观情景：</strong>假设Kasisto在未来5年内渗透率达到10%（保守的目标），客户数将达到20万+。即使客户平均合同值不变（$100万/年），也意味着ARR达到$20亿。按SaaS公司的25-30倍EV/Revenue倍数，估值可达$500亿-$600亿。</p>
+                <p><strong>更保守的情景：</strong>即使只能达到5%渗透率，也是$250亿估值。</p>
+                <p><strong>风险因素：</strong>竞争加剧、监管变化、技术迭代风险等。但这些风险往往已被市场定价。</p>
+                <div class="insight-highlight">
+                    结论：Kasisto目前的$10亿估值相比其长期潜力，仍有50-100倍的想象空间。这解释了为什么全球顶级金融机构愿意战略投资。
+                </div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-6"></div>
+</section>
+
+<!-- ====== CHAPTER 7: 近期要闻 (4 cards) ====== -->
+<section class="chapter" id="ch-7">
+    <div class="chapter-header">
+        <h2>最新动态与未来展望</h2>
+        <span class="ch-sub">📰 近期要闻</span>
+        <span class="ch-counter" id="counter-7">1 / 4</span>
+    </div>
+    <div class="card-track" data-ch="7">
+
+        <!-- 1/4 KAIgentic -->
+        <div class="slide"><div class="card"><h3>KAIgentic：从对话到代理的转折点</h3><div class="card-body">
+            <div class="news-item">
+                <div class="news-date">2025年8月</div>
+                <div class="news-title">
+                    <a href="https://fintech.global/2025/08/20/kasisto-launches-kaigentic-ai-platform-for-banks/" target="_blank">Kasisto推出KAIgentic Agentic AI平台</a>
+                </div>
+                <div class="news-desc">Kasisto正式推出KAIgentic，一个为银行和信用社设计的Agentic AI平台。这个平台结合了合规架构、欺诈检测、审计日志等银行级能力，支持AI独立完成复杂业务流程。目前已在北美、欧洲、亚洲部分头部银行进入早期接入阶段，预计2025年下半年向更广泛机构推广。</div>
+            </div>
+            <div class="callout" style="margin-top:12px;">
+                <strong>为什么重要：</strong> 这标志着AI在金融领域从"助手"升级为"代理"。不再是"帮助客户完成任务"，而是"代理客户完成任务"。这会大幅提升AI的商业价值和应用场景。
+            </div>
+        </div></div></div>
+
+        <!-- 2/4 KAI-GPTv4 -->
+        <div class="slide"><div class="card"><h3>KAI-GPTv4：金融LLM的新境界</h3><div class="card-body">
+            <div class="news-item">
+                <div class="news-date">2025年Q1</div>
+                <div class="news-title">
+                    <a href="https://kasisto.com/blog/introducing-kai-gptv4/" target="_blank">Kasisto发布KAI-GPTv4，128K Token上下文</a>
+                </div>
+                <div class="news-desc">KAI-GPTv4相比前一版本在多个维度升级：（1）128K Token上下文窗口，支持处理更长的金融交互历史；（2）原生多模态，支持图文理解（如识别银行卡、证件等）；（3）金融领域知识更丰富，涵盖最新的投资产品和监管要求；（4）RAG优化，能够与机构的知识库（SOP文档、合规指南等）无缝集成。</div>
+            </div>
+            <div class="callout" style="margin-top:12px;">
+                <strong>为什么重要：</strong> 竞争对手（通用LLM公司）正在加入金融AI领域。KAI-GPTv4通过持续升级，维持领先地位。多模态能力尤其重要，因为金融场景中很多关键信息是可视化的（证件、账户截图等）。
+            </div>
+        </div></div></div>
+
+        <!-- 3/4 融资突破 -->
+        <div class="slide"><div class="card"><h3>融资总额突破$9000万，准独角兽地位确认</h3><div class="card-body">
+            <div class="news-item">
+                <div class="news-date">2024年9月</div>
+                <div class="news-title">
+                    <a href="https://fintech.global/2024/09/18/kasisto-hits-90m-in-total-funding-elevates-fintech-with-new-executive-chairman/" target="_blank">Kasisto融资达$9000万，Don Layden就任执行主席</a>
+                </div>
+                <div class="news-desc">Kasisto宣布融资总额达到$9000万（不含D轮追加融资），最新估值$10亿。同时任命金融服务行业资深顾问Don W. Layden, Jr.为执行主席。Don此前担任数家金融科技和支付公司的董事长和CEO，拥有30+年的金融服务行业经验。</div>
+            </div>
+            <div class="callout" style="margin-top:12px;">
+                <strong>为什么重要：</strong> Don的加入标志着Kasisto从"技术创新期"进入"商业扩张期"。他的背景意味着Kasisto未来的重点会从"产品打磨"转向"全球商业化"。执行主席通常是为IPO做准备的信号。
+            </div>
+        </div></div></div>
+
+        <!-- 4/4 未来展望 -->
+        <div class="slide"><div class="card"><h3>未来12个月：三个看点</h3><div class="card-body">
+            <div class="timeline">
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">Q3-Q4 2025</div><div class="timeline-text"><strong>KAIgentic全球推广。</strong> 预计KAIgentic会在北美、欧洲、亚洲（特别是中国、日本、新加坡）实现商业化部署。这会进一步确认Kasisto的全球领导地位。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2026年H1</div><div class="timeline-text"><strong>新一代LLM发布。</strong> 预计Kasisto会发布KAI-GPTv5或多模型策略（支持多个LLM集成）。竞争对手的产品在进步，Kasisto必须保持领先。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2026年H2-2027</div><div class="timeline-text"><strong>IPO或战略并购。</strong> 基于当前的融资进度和Don的加入，IPO或被FIS等巨头收购的时间窗口在2026年下半年到2027年之间。估值目标可能是$15亿-$20亿。</div></div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-7"></div>
+</section>
+
+</main>
+
+<script>
+    // Counter animation
+    function animateCounters() {
+        const counters = document.querySelectorAll('[data-count]');
+        counters.forEach(counter => {
+            const target = parseInt(counter.getAttribute('data-count'));
+            const prefix = counter.getAttribute('data-prefix') || '';
+            const suffix = counter.getAttribute('data-suffix') || '';
+            let current = 0;
+            const increment = target / 30;
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    current = target;
+                    clearInterval(timer);
+                }
+                counter.textContent = prefix + Math.floor(current).toLocaleString() + suffix;
+            }, 50);
+        });
+    }
+
+    // Navigation
+    function go(index) {
+        const main = document.getElementById('main');
+        const section = document.getElementById(`ch-${index}`);
+        if (section) {
+            section.scrollIntoView({ behavior: 'smooth' });
+        }
+        updateNav(index);
+    }
+
+    function updateNav(index) {
+        document.querySelectorAll('.nav-btn').forEach((btn, i) => {
+            btn.classList.toggle('active', i === index);
+        });
+    }
+
+    // Horizontal scroll tracking
+    document.querySelectorAll('.card-track').forEach(track => {
+        const chIndex = track.getAttribute('data-ch');
+        const counter = document.getElementById(`counter-${chIndex}`);
+        const dotsBar = document.getElementById(`dots-${chIndex}`);
+
+        function updateDots() {
+            const scrollPos = track.scrollLeft;
+            const slideWidth = track.offsetWidth;
+            const currentSlide = Math.round(scrollPos / slideWidth) + 1;
+            const totalSlides = track.querySelectorAll('.slide').length;
+
+            if (counter) counter.textContent = `${currentSlide} / ${totalSlides}`;
+
+            document.querySelectorAll(`#dots-${chIndex} .dot`).forEach((dot, i) => {
+                dot.classList.toggle('active', i === currentSlide - 1);
+            });
+        }
+
+        function createDots() {
+            const slides = track.querySelectorAll('.slide').length;
+            dotsBar.innerHTML = '';
+            for (let i = 0; i < slides; i++) {
+                const dot = document.createElement('button');
+                dot.className = 'dot' + (i === 0 ? ' active' : '');
+                dot.onclick = () => {
+                    track.scrollLeft = i * track.offsetWidth;
+                    updateDots();
+                };
+                dotsBar.appendChild(dot);
+            }
+            updateDots();
+        }
+
+        createDots();
+        track.addEventListener('scroll', updateDots);
+    });
+
+    // Vertical scroll tracking
+    document.getElementById('main').addEventListener('scroll', () => {
+        const main = document.getElementById('main');
+        const sections = document.querySelectorAll('section');
+        let current = 0;
+        sections.forEach((section, i) => {
+            if (section.offsetTop <= main.scrollTop + main.offsetHeight / 2) {
+                current = i;
+            }
+        });
+        updateNav(current);
+    });
+
+    // Initial animations
+    window.addEventListener('load', () => {
+        animateCounters();
+    });
+</script>
+
+</body>
+</html>

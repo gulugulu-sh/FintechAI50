@@ -1,0 +1,31 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="95" fill="#F5F5F5" stroke="#1a3a4a" stroke-width="2"/>
+
+  <!-- Main rock/flow shape - stylized R -->
+  <g id="rockflow-mark">
+    <!-- Left pillar (rock) -->
+    <rect x="40" y="60" width="20" height="80" fill="#1a3a4a" rx="3"/>
+
+    <!-- Right flowing curves (flow) -->
+    <path d="M 65 60 Q 95 55 110 70 Q 120 80 115 95" fill="none" stroke="#FF6B4A" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M 65 100 Q 100 95 120 110 Q 128 120 120 130" fill="none" stroke="#FF6B4A" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M 65 140 Q 95 138 115 150 Q 125 160 110 165" fill="none" stroke="#FF6B4A" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- Accent dots representing AI agents/nodes -->
+    <circle cx="95" cy="75" r="4" fill="#00D4FF"/>
+    <circle cx="110" cy="100" r="4" fill="#00D4FF"/>
+    <circle cx="100" cy="125" r="4" fill="#00D4FF"/>
+
+    <!-- Connection lines (subtle) -->
+    <line x1="60" y1="100" x2="95" y2="75" stroke="#00D4FF" stroke-width="1.5" opacity="0.4"/>
+    <line x1="60" y1="100" x2="110" y2="100" stroke="#00D4FF" stroke-width="1.5" opacity="0.4"/>
+    <line x1="60" y1="100" x2="100" y2="125" stroke="#00D4FF" stroke-width="1.5" opacity="0.4"/>
+  </g>
+
+  <!-- Unicorn accent (subtle) - top right corner -->
+  <g id="unicorn-hint" opacity="0.15">
+    <circle cx="155" cy="50" r="8" fill="#FF6B4A"/>
+    <polygon points="155,42 158,48 152,48" fill="#FF6B4A"/>
+  </g>
+</svg>

@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rafa AI 深度调研报告</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --accent-purple: #7B5EA7;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #1A1514;
+            --cover-bg: #1A1514;
+            --cover-accent: #D97757;
+            --cover-highlight: #FAE9E0;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(217,119,87,0.2); color: var(--accent); font-weight: 600; }
+
+        /* ===== MAIN ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, var(--cover-bg) 0%, #2A2420 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(217,119,87,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 20px; background: rgba(255,255,255,0.1); object-fit: contain; }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(217,119,87,0.25); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        /* Fixed chapter header */
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        /* Horizontal card scroller */
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+
+        /* Each slide fills available height */
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Card inside slide — fills slide */
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        /* Dots bar at bottom */
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); cursor: pointer; transition: all 0.3s;
+            border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+        /* ===== CONTENT-SPARSE: bigger text for cards with less content ===== */
+        .card.sparse p { font-size: 16px; line-height: 2; }
+        .card.sparse h3 { font-size: 22px; margin-bottom: 20px; }
+        .card.sparse .callout { font-size: 15px; padding: 18px 22px; }
+        .card.sparse .quote-block { font-size: 16px; padding: 20px 24px; }
+
+        /* ===== REUSABLE COMPONENTS ===== */
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px; border-radius: 6px;
+            font-size: 13px; line-height: 1.7; color: var(--text-2);
+            margin: 14px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+
+        .quote-block {
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px; margin: 14px 0;
+            font-style: italic; font-size: 14px;
+            color: var(--text-2); line-height: 1.8;
+            background: var(--bg-muted); border-radius: 0 8px 8px 0;
+        }
+        .quote-attr { font-style: normal; font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 16px; border-radius: 10px; text-align: center;
+        }
+        .metric-value { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+        .flex-row { display: flex; gap: 24px; margin: 14px 0; }
+        .flex-col { flex: 1; min-width: 0; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th { background: var(--bg-muted); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+
+        .mode-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 14px 0; }
+        .mode-box { background: var(--bg-muted); padding: 14px; border-radius: 10px; border-left: 4px solid var(--accent); }
+        .mode-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+        .mode-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .insight-card {
+            flex: 1; display: flex; flex-direction: column;
+            background: var(--bg-card); border-radius: 14px; padding: 28px 32px;
+            border: 1px solid var(--border);
+        }
+        .insight-emoji { font-size: 28px; margin-bottom: 10px; }
+        .insight-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+        .insight-card p { font-size: 15px; line-height: 1.9; color: var(--text-2); margin-bottom: 14px; }
+        .insight-highlight {
+            margin-top: auto;
+            background: var(--accent-light); border-left: 4px solid var(--accent);
+            padding: 12px 16px; border-radius: 6px;
+            font-size: 14px; font-weight: 600; color: var(--accent-2);
+        }
+
+        .news-item {
+            padding: 14px; background: var(--bg-card);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px; border: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+        .news-date { font-size: 11px; color: var(--text-3); font-weight: 600; margin-bottom: 4px; }
+        .news-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .news-title a { color: var(--accent-blue); text-decoration: none; }
+        .news-title a:hover { color: var(--accent); text-decoration: underline; }
+        .news-desc { font-size: 12px; color: var(--text-2); line-height: 1.5; }
+
+        .references { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); }
+        .references h4 { font-size: 13px; font-weight: 700; margin-bottom: 12px; }
+        .references ul { columns: 2; gap: 16px; font-size: 12px; color: var(--text-2); }
+        .references li { margin-bottom: 8px; }
+        .references a { color: var(--accent-blue); text-decoration: none; }
+        .references a:hover { text-decoration: underline; }
+
+        ul { list-style: none; }
+        ul li { position: relative; padding-left: 20px; }
+        ul li:before { content: '•'; position: absolute; left: 0; }
+
+        h4 { font-weight: 700; margin-top: 12px; margin-bottom: 8px; }
+    .nav-dashboard{display:block;width:calc(100% - 8px);margin:8px 4px 4px;background:rgba(217,119,87,0.15);border:1px solid rgba(217,119,87,0.3);color:var(--accent,#D97757);padding:10px 12px;border-radius:8px;text-align:center;font-size:12px;font-family:inherit;cursor:pointer;transition:all .2s;text-decoration:none;font-weight:600;letter-spacing:.3px}.nav-dashboard:hover{background:rgba(217,119,87,0.25);transform:translateY(-1px)}
+</style>
+</head>
+<body>
+
+<!-- ===== SIDEBAR ===== -->
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <img class="sidebar-logo" alt="Rafa Logo" src="data:image/png;base64,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" />
+        <div>
+            <div class="sidebar-brand-text">Rafa</div>
+            <div class="sidebar-brand-sub">AI财富管理</div>
+        </div>
+    </div>
+    <div class="nav-items">
+        <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+        <button class="nav-btn" onclick="go(1)">📋 公司概况</button>
+        <button class="nav-btn" onclick="go(2)">🤖 多代理AI系统</button>
+        <button class="nav-btn" onclick="go(3)">💼 产品矩阵</button>
+        <button class="nav-btn" onclick="go(4)">🎯 市场定位</button>
+        <button class="nav-btn" onclick="go(5)">💡 核心创新</button>
+        <button class="nav-btn" onclick="go(6)">👥 用户反馈</button>
+        <button class="nav-btn" onclick="go(7)">📰 近期要闻</button>
+    </div>
+<a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+<!-- ===== MAIN CONTENT ===== -->
+<main>
+
+<!-- ====== CHAPTER 0: COVER ====== -->
+<section class="cover" id="ch-0">
+    <div class="cover-content">
+        <img class="cover-logo" alt="Rafa Logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAH4UlEQVRogcWaa3BV1RXHf2ufc5Ob3CQkkBdgCBCgUNCQoKL4xFo0w0jVFscqtZ3OOO0UnM7YOnUcO40zdtoZO1qLjh86fY21HfWDjiMFkSIiOBVDKCoWJcSCAgmB8Ehu7uucvfohIAk5N/eRQP+f7rlnrbX/65y9115r7SOMBarS0ttRqqZ/okl6s8U416pqMzAbqBUoBVDoA7oQ9gnSrka2WcM+sSW96yfO6kNE86Ug+Si1traaHatvn6XqLxPhOmAxyrQc7CnCQVHdocjbiPPmlZWvdrRKq82VS84O3H5iV3nC56di7d3AVCCcq43zEAcOCbwYCpknXq1oOpmLctYOrNi7rdSrjNyE9Z8EmZkzzezQiTEPuhrd/FrVtX3ZKGTlwK0ndk03nj6M6iogMiaKmSlFRfUFv8D8akNF038zSmcSWNb1/gJXzN8Q5gHueFDMAh6q//ESes/GaVd8NJpgWgdaVc37Pe3XqOpfEZk2/hwzQ5SDCKuuqGre3ioSuMBNOuW247svB9b+v8gDqDANZO0ZLoEIfAMretqneKqbgTnpZC4iFPjUFbnptarmw+ffHEFu+YF3KjRc/BLCzWktWovfP4AfT4DmvQedIxEKESqNIKFRlpiySeIDd62rv+7EMN2hFys/eqkgVtPwY1UeUygKsuOd6uPwK29wbOsO4l1Hwc957xmBUHkZExbOZ+q3WojMnh4oIxAT4RdF3fuffnnBXclAB1Yc3TnLRzYqOiPIiE0k2XX/wxx7+z38WHzMxIcRdB2K66bQ9PtfU3bZ3DROyGdOoS57bcKijrP/OWd/tGqr+SI295eKBk4d9X32PvY0h158HfW8cSUPgFVSJ09zsu1DalqW4pYUB0lVqEd4X8mUf7Bli8KQKPT+sTubUHtfOvvRjgN0r3tr/ImfP85nn9Pzz22jSOh3lq++rens1aADqqKaekiRwHkP0PdJJ6nT/ePHNA38WJy+vfvRVPBbVpEiVR5CVeDMztrSu2sewhJGCSh2IIb6/oj/neIiKhY3UrHoMsQxoMqpD/dyfFsbXl80Pyeig2OljUrCkpbeXfPWw8cugFhZguqkXAcS16Hu2yv4yqMP4ETOvTwbT9Dx1B/ofPZ5bDI5ioU8oUwSK0uAj83Kz98tAl3EKNMnHdySCJVLrx5GHsCEC6laejWhCSXjRfk8SBFWF92on4WNVx4pRXU+aM47rjgGJ1wYeM+EC8E4gffGDhVE51f0ny4zyWiyRKAhPztjFsgbAg3JaLLEeE5BuUJNPkbU89MuVK8vinojF31WMJkng0KNOAXlRqxXz5ANLRek+vrpXv8W8SNHsfEENpHEJhIkenrpWreZ1MlTOdsUYyisrkQKQplEHc969a6B6nzIA6DK4Vc2EjvUTaShHjECqkQPHOLEv3aheeRJxdMvofrr1yImbab/JQxUu8ZIxI4ho7SpFMe3t3F8e1veNgCccJhJS5qZ88hqShfMyUrHGIlcrBIxEG5phLq7b2P6D+6l6JJayOKpj7Ch6IXPDwJgCkLUf/8uZv/k/sGQmwfU136jYrrHmVtWCFWUU7v8a3mTB1DXdBu13kHQPONd/nDCBRTWVI7Bgvqa8A4aYzmFmCPjxixrCDKWalvMEeNwyqQo6EfZP268LhaU/SkK+t1krPe0GynbA1zPBepAOOFCwrVVFFZPAndwz/T7B+h89vnhlZdA2WVzqbzhKpyiUVuuCronGes97W6ZsTS+/Gj7TlWNIQTWcWOBGylmxo9WMW3VnRTWVn35iDp/92f2Pr52pHxZCZc++XMmr0jbFAGICbJzy4ylcRfAF2e7Ee/YmRZ5MPKcsJU3XsXMB76XNms9H340RuzAodGFhGM+/nY4U1JuqGr8RDBbR9MpqKzAFBZkRWIopnyzJWvyg8icFYjlnQ1VV3wCQ4p6SSR/A6StAcsunUvR1NyT1sjMupx1MiAqyBNnL7504PWpV34g8Kd0WoVVE5nzsx8iTvaJa2RmHZHZgS2mvMOFIH98vbrpg7PX55IPEcXapwQ6gjWF6ltuoPGZxyiun4opSD+dxHEoqpvMgicewaQpzCOzZwRGGrckQnhKcIIs0IH1fzv0TG3Yc1jU1haquUTWYHgcgiOSWkv0006Ob28nfqQ7sLXoTihl0nVXMmHhvLRvzI/GOPzKGwx0HhzWXy1umMbkbyzDLR1xjjKA5dHuGn1mp1yeCnQA4Ob9bRMKy+QFVZYHjjzUGd8GNnfFMdlFLVXU2nPrVkjrsAjrEqf13k0Nlw+rkgJHaTnSXmUc3awwP53MRYSK6h5rzU3rJzf3nH8zMAFfP7m5x4ac+wTauZCVeWaoQLsV974g8jDKCc3i8sbdanQ10HnB6GVGp7WpNYurGnenE8g4PW45unOWI/J3VBuBjJX2OCGFyO5UPHnPm3VX7RtNMGMN90b1og41zh0gz8ngJwMXFIL2GSPPqXHuyER+UD5LLOvaHXFErxG8pxD56thopoHqx4I8mFJ328baxqw6wzlHmBV7t5V6EyNrEPtdlDrS7Bc5YAD0C0X+EpLY2mxP6M8ivxCpKrd2/bveuNwMej1qFwMNIFnmGeoD+xF5D8xW67FpQ+3CA/l8tTK2GK8qK3v2RGJufKJJOXWesUtEadYzn9uAlgwOIv0KXWA7jJidxpp3re9/XuSGe1+umh8dy+c2/wOJiOFLpUtO1gAAAABJRU5ErkJggg==" />
+        <h1 class="cover-title">Rafa AI</h1>
+        <p class="cover-subtitle">AI代理团队，赋能财富管理的未来</p>
+        <div class="cover-tags">
+            <span class="cover-tag">Agentic OS</span>
+            <span class="cover-tag">财富管理AI</span>
+            <span class="cover-tag">Web3融合</span>
+        </div>
+        <div class="cover-stats">
+            <div class="stat-box">
+                <div class="stat-number" data-count="3400" data-suffix="万美元">0</div>
+                <div class="stat-label">融资规模</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="95" data-suffix="%">0</div>
+                <div class="stat-label">合规时间减少</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="6" data-suffix="倍">0</div>
+                <div class="stat-label">转化速度提升</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="2019" data-suffix="">0</div>
+                <div class="stat-label">创立年份</div>
+            </div>
+        </div>
+        <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+    </div>
+</section>
+
+<!-- ====== CHAPTER 1: 公司概况 ====== -->
+<section class="chapter" id="ch-1">
+    <div class="chapter-header">
+        <h2>公司概况</h2>
+        <span class="ch-sub">📋 创始背景与融资</span>
+        <span class="ch-counter" id="counter-1">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="1">
+        <!-- 1/3 创始故事 -->
+        <div class="slide"><div class="card"><h3>从NVIDIA到AI财富管理</h3><div class="card-body">
+            <p>Rafa AI由前NVIDIA高级AI工程师Abhinav Sinha和Siddharth Raisoni共同创立于2019年，总部位于美国加州Mountain View。创始人在NVIDIA八年以上的深度技术积累，使Rafa从诞生之初就具备了业界顶尖的AI系统设计能力。</p>
+            <p>Abhinav在NVIDIA期间专注于大规模AI模型和系统优化，这让他深刻理解AI在实际产业应用中的瓶颈。他意识到一个关键的市场机会：传统财富管理行业——尤其是独立RIA（注册投资顾问）——面临严重的效率困境。顾问们花费40%的时间在合规、行政和报告工作上，而非投资策略。同时，散户投资者面临信息过载和决策困难。</p>
+            <div class="callout">
+                <strong>核心洞察：</strong> 这不是一个"数据不足"的问题，而是一个"时间和复杂度过剩"的问题。用AI代理团队来处理繁琐的工作流，让人专注于高价值的决策。
+            </div>
+        </div></div></div>
+
+        <!-- 2/3 融资与成长里程碑 -->
+        <div class="slide"><div class="card"><h3>融资历程与Portal DeFi时刻</h3><div class="card-body">
+            <p><strong>2019-2023年：</strong> 作为独立创新公司，Rafa AI专注于产品打磨和市场验证。推出ToC个人应用和ToB的RAFA PRO企业版，累积了大量用户反馈和商业化经验。</p>
+            <p><strong>2024年3月 - 关键转折：</strong> Portal DeFi宣布收购Rafa AI，并在随后的融资中获得3400万美元投资（由Coinbase Ventures、Arrington Capital等领投）。这笔融资不仅为Rafa带来了资金，更重要的是Web3生态的认可——Rafa成为Portal DeFi生态中的核心AI投资助手。</p>
+            <div class="callout">
+                <strong>战略价值：</strong> Portal DeFi的选择说明了Rafa AI的技术和产品能力已获得业界认可。传统财富管理与Web3/DeFi的融合，为Rafa打开了全新的市场机会。
+            </div>
+        </div></div></div>
+
+        <!-- 3/3 Mission与发展阶段 -->
+        <div class="slide"><div class="card sparse"><h3>使命与市场地位</h3><div class="card-body">
+            <p><strong>使命：</strong> 通过Agentic AI重塑财富管理的工作方式，让投资顾问和个人投资者都能做出更智慧的决策。</p>
+            <p><strong>定位：</strong> 首个面向财富管理行业的Agentic Operating System（AI代理操作系统），同时服务个人投资者和机构客户。</p>
+            <p><strong>发展阶段：</strong> 被收购的成长期AI创新企业，已初步实现商业化验证，正在Portal DeFi的支持下加速全球扩张。</p>
+            <div class="metrics-grid" style="grid-template-columns:repeat(2,1fr);margin-top:20px;">
+                <div class="metric-card"><div class="metric-value">40+人</div><div class="metric-label">团队规模</div></div>
+                <div class="metric-card"><div class="metric-value">ToC+ToB</div><div class="metric-label">双轨商业模式</div></div>
+                <div class="metric-card"><div class="metric-value">6个国家</div><div class="metric-label">服务覆盖</div></div>
+                <div class="metric-card"><div class="metric-value">100+家</div><div class="metric-label">机构客户（估计）</div></div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-1"></div>
+</section>
+
+<!-- ====== CHAPTER 2: 多代理AI系统 ====== -->
+<section class="chapter" id="ch-2">
+    <div class="chapter-header">
+        <h2>多代理AI系统</h2>
+        <span class="ch-sub">🤖 技术架构与创新</span>
+        <span class="ch-counter" id="counter-2">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="2">
+        <!-- 1/3 核心架构 -->
+        <div class="slide"><div class="card"><h3>多代理系统的投资顾问团队</h3><div class="card-body">
+            <p>Rafa AI的核心创新不是单一的AI模型，而是一个"多代理协同系统"。想象一个真实的投资顾问团队，每个人都专注于不同的领域——有负责技术分析的、有负责基本面研究的、有跟踪新闻情绪的、有做宏观分析的。Rafa的AI代理体系正是这样的设计。</p>
+            <p><strong>核心代理阵容：</strong></p>
+            <ul style="font-size:13px;color:var(--text-2);line-height:1.9;margin-left:20px;">
+                <li><strong>Analyst Pro：</strong> 基本面分析代理，深入解读财报、行业数据、竞争格局</li>
+                <li><strong>News Guru：</strong> 新闻情感分析代理，从数千数据源解析市场情绪</li>
+                <li><strong>Strategy Wiz：</strong> 交易策略代理，生成可操作的买卖建议</li>
+                <li><strong>Quant Pro：</strong> 量化分析代理，进行技术指标、动量因子计算</li>
+                <li><strong>Macro Pro：</strong> 宏观经济代理，分析经济周期对资产的影响</li>
+            </ul>
+            <div class="callout">
+                <strong>关键优势：</strong> 这种架构让Rafa能模拟真实投资团队的协同工作。单一的AI模型无法同时在"基本面+技术面+情感面"做深度分析，但多代理体系可以。
+            </div>
+        </div></div></div>
+
+        <!-- 2/3 技术融合 -->
+        <div class="slide"><div class="card"><h3>量化模型 + LLM的混合架构</h3><div class="card-body">
+            <p>Rafa的技术架构融合了传统量化金融和现代大语言模型的优势——这也是其金融AI应用的最高境界。</p>
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:8px;">⚙️ 确定性量化模型</h4>
+                    <p style="font-size:13px;color:var(--text-2);line-height:1.8;">处理所有精确计算：技术指标计算、风险评估、投资组合优化、资金流动模型等。这些不能有"幻觉"——必须精准无误。</p>
+                </div>
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:8px;">🧠 LLM推理层</h4>
+                    <p style="font-size:13px;color:var(--text-2);line-height:1.8;">自然语言理解、对话生成、情感分析、复杂推理解释。让AI能与用户"像朋友一样聊天"而不是"返回数据集"。</p>
+                </div>
+            </div>
+            <div class="quote-block">
+                这种分工设计规避了纯LLM应用的最大风险："金融幻觉"。当AI在投资建议上出错，可能导致用户的实际财务损失。Rafa确保所有涉及金钱的计算都由确定性代码执行。
+                <div class="quote-attr">— 金融AI架构的最佳实践</div>
+            </div>
+        </div></div></div>
+
+        <!-- 3/3 性能与护城河 -->
+        <div class="slide"><div class="card sparse"><h3>AI能力指标与数据护城河</h3><div class="card-body">
+            <div class="metrics-grid" style="grid-template-columns:repeat(2,1fr);">
+                <div class="metric-card"><div class="metric-value">数千</div><div class="metric-label">实时数据源</div></div>
+                <div class="metric-card"><div class="metric-value">&lt;1s</div><div class="metric-label">AI响应延迟</div></div>
+                <div class="metric-card"><div class="metric-value">8年+</div><div class="metric-label">金融对话数据</div></div>
+                <div class="metric-card"><div class="metric-value">垂直微调</div><div class="metric-label">金融领域专化</div></div>
+            </div>
+            <p>Rafa最深的护城河是8年积累的金融对话语料库——包含数百万用户在不同市场条件下的投资决策模式、情绪表达、问题类型。任何竞争对手都无法在短时间内复制这种"领域知识数据飞轮"。</p>
+            <div class="callout">
+                <strong>为什么这很重要：</strong> GPT-4可以被任何人调用，但Rafa在金融领域数百万小时对话基础上微调的模型是独一无二的。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-2"></div>
+</section>
+
+<!-- ====== CHAPTER 3: 产品矩阵 ====== -->
+<section class="chapter" id="ch-3">
+    <div class="chapter-header">
+        <h2>产品矩阵</h2>
+        <span class="ch-sub">💼 ToC应用 + ToB企业解决方案</span>
+        <span class="ch-counter" id="counter-3">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="3">
+        <!-- 1/3 个人应用 -->
+        <div class="slide"><div class="card"><h3>Rafa App：AI驱动的个人理财顾问</h3><div class="card-body">
+            <p>Rafa App是面向个人投资者的核心产品，通过对话式AI将专业的投资分析民主化。用户无需懂专业术语，只需用自然语言提问。</p>
+            <p><strong>核心功能：</strong></p>
+            <ul style="font-size:13px;color:var(--text-2);line-height:1.9;margin-left:20px;">
+                <li>💬 对话式AI投资助手——"给我NVDA的短期交易策略"</li>
+                <li>📊 实时投资组合监控——风险分析、多样化评估、税务优化</li>
+                <li>📈 无限投资组合回测——历史数据验证策略</li>
+                <li>📰 市场情感分析——从数千数据源解析情绪</li>
+                <li>🎯 个性化建议生成——基于风险偏好和目标的定制方案</li>
+            </ul>
+            <div class="callout">
+                <strong>定价策略：</strong> 免费版提供基础功能，基础版$12.49/月（年付），高级版$24.91/月。通过订阅模式实现ToC商业变现。
+            </div>
+        </div></div></div>
+
+        <!-- 2/3 企业解决方案 -->
+        <div class="slide"><div class="card"><h3>RAFA PRO：财富管理机构的AI转型系统</h3><div class="card-body">
+            <p>RAFA PRO是Rafa的企业级产品，定位为"Agentic Operating System"。它的目标是彻底重塑财富管理机构的工作流程——自动化合规、加速客户转化、整合工具链。</p>
+            <p><strong>核心价值承诺：</strong></p>
+            <div class="metrics-grid" style="grid-template-columns:repeat(2,1fr);">
+                <div class="metric-card"><div class="metric-value">95%</div><div class="metric-label">合规时间减少</div></div>
+                <div class="metric-card"><div class="metric-value">70秒</div><div class="metric-label">年度审查准备时间</div></div>
+                <div class="metric-card"><div class="metric-value">6倍</div><div class="metric-label">客户转化速度提升</div></div>
+                <div class="metric-card"><div class="metric-value">90天</div><div class="metric-label">AI部署周期</div></div>
+            </div>
+            <p>对于独立RIA和财富管理公司，RAFA PRO部署一套AI代理团队来处理：</p>
+            <ul style="font-size:13px;color:var(--text-2);line-height:1.9;margin-left:20px;">
+                <li>合规代理：自动审查客户、生成合规报告、监控监管要求</li>
+                <li>投资组合代理：自动再平衡、税务优化、风险预警</li>
+                <li>客户互动代理：生成个性化报告、回答常见问题、主动沟通</li>
+            </ul>
+        </div></div></div>
+
+        <!-- 3/3 ToC vs ToB对比 -->
+        <div class="slide"><div class="card sparse"><h3>双轨产品战略的优势</h3><div class="card-body">
+            <div class="mode-boxes" style="grid-template-columns:1fr;">
+                <div class="mode-box">
+                    <div class="mode-title">🎯 ToC市场的优势</div>
+                    <div class="mode-desc">获取用户数据和反馈；建立品牌认知；实现规模化收入；为ToB提供验证案例。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-blue);">
+                    <div class="mode-title">🏢 ToB市场的优势</div>
+                    <div class="mode-desc">高客户生命周期价值；长期稳定的企业合同；交叉销售机会；市场差异化定位。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-green);">
+                    <div class="mode-title">🔄 双轨协同效应</div>
+                    <div class="mode-desc">ToC用户的反馈优化ToB产品；ToB客户的数据丰富AI能力；相互验证商业模式；分散风险。</div>
+                </div>
+            </div>
+            <div class="callout">
+                <strong>战略深度：</strong> 单一ToC应用面临获客成本高、留存难的陷阱；单一ToB则销售周期长、客户集中。Rafa的双轨战略提供了抗风险能力和增长灵活性。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-3"></div>
+</section>
+
+<!-- ====== CHAPTER 4: 市场定位 ====== -->
+<section class="chapter" id="ch-4">
+    <div class="chapter-header">
+        <h2>市场定位</h2>
+        <span class="ch-sub">🎯 竞争格局与差异化</span>
+        <span class="ch-counter" id="counter-4">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="4">
+        <!-- 1/3 竞争格局 -->
+        <div class="slide"><div class="card"><h3>财富管理AI赛道的生态全景</h3><div class="card-body">
+            <p>Rafa在多个竞争维度与不同的对手博弈：</p>
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:8px;">传统机器人顾问</h4>
+                    <p style="font-size:13px;color:var(--text-2);line-height:1.8;"><strong>Wealthfront / Betterment：</strong> 成熟但缺乏个性化的对话式AI交互。Rafa的多代理系统和NLP能力明显更强。</p>
+                </div>
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:8px;">其他AI应用</h4>
+                    <p style="font-size:13px;color:var(--text-2);line-height:1.8;"><strong>Origin Financial：</strong> 有对话式AI但投资建议深度不足，ToB解决方案成熟度低。</p>
+                </div>
+            </div>
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:8px;">大型金融集团</h4>
+                    <p style="font-size:13px;color:var(--text-2);line-height:1.8;"><strong>黑石、高盛等：</strong> 资本充足但创新速度慢。Rafa的敏捷优势明显。</p>
+                </div>
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:8px;">通用AI助手</h4>
+                    <p style="font-size:13px;color:var(--text-2);line-height:1.8;"><strong>ChatGPT / Claude：</strong> 强大但缺乏金融专业化和实时市场数据。</p>
+                </div>
+            </div>
+            <div class="callout">
+                <strong>市场空白：</strong> 没有其他产品同时提供"ToC个性化+ToB工作流自动化+金融专业化+多代理架构"的完整组合。
+            </div>
+        </div></div></div>
+
+        <!-- 2/3 核心差异化 -->
+        <div class="slide"><div class="card"><h3>Rafa的五重差异化护城河</h3><div class="card-body">
+            <div class="mode-boxes" style="grid-template-columns:1fr;">
+                <div class="mode-box">
+                    <div class="mode-title">① 多代理AI架构</div>
+                    <div class="mode-desc">市面上极少有财务产品采用多代理体系。这不是简单的功能堆砌，而是"模拟真实团队"的架构创新。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-green);">
+                    <div class="mode-title">② 金融领域垂直化</div>
+                    <div class="mode-desc">8年金融对话数据积累 + NVIDIA AI工程师的深度微调 = 专业性远超通用模型。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-blue);">
+                    <div class="mode-title">③ ToB+ToC双轨</div>
+                    <div class="mode-desc">既能个人用户规模化，又能机构客户长期价值。市场覆盖面最广。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-purple);">
+                    <div class="mode-title">④ 合规自动化领先</div>
+                    <div class="mode-desc">RAFA PRO的"合规时间减少95%"承诺是竞争对手难以匹敌的核心卖点。</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">⑤ Web3生态融合</div>
+                    <div class="mode-desc">与Portal DeFi的整合打开了DeFi+传统资产的综合管理新领地。竞争对手无法提供。</div>
+                </div>
+            </div>
+        </div></div></div>
+
+        <!-- 3/3 市场机会 -->
+        <div class="slide"><div class="card sparse"><h3>万亿美元级的市场机会</h3><div class="card-body">
+            <p><strong>总体市场：</strong> 全球财富管理市场规模超过100万亿美元，AI赋能财富管理的子市场每年增长30-40%。</p>
+            <p><strong>独立RIA市场特别机会：</strong> 美国有1万多家独立RIA，管理资产总额超过7万亿美元，运营效率提升的需求巨大。顾问人手短缺、合规成本上升驱使机构寻求AI解决方案。</p>
+            <p><strong>零售投资者市场：</strong> 新一代投资者（Gen Z + Millennials）对AI工具的接受度远高于上一代，愿意为便利和个性化付费。</p>
+            <div class="callout">
+                <strong>Rafa的定位：</strong> 不是在已有的财富管理市场抢份额，而是在"AI赋能"这个新维度创造新的市场体量和定价权。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-4"></div>
+</section>
+
+<!-- ====== CHAPTER 5: 核心创新 ====== -->
+<section class="chapter" id="ch-5">
+    <div class="chapter-header">
+        <h2>核心创新</h2>
+        <span class="ch-sub">💡 AI应用的范式转变</span>
+        <span class="ch-counter" id="counter-5">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="5">
+        <!-- 1/2 架构创新 -->
+        <div class="slide"><div class="card"><h3>从Chatbot到Agent：AI应用的进化路径</h3><div class="card-body">
+            <p>Rafa的产品演进体现了AI应用的必然发展道路：<strong>简单聊天机器人 → 智能助手 → 自主代理</strong>。每个阶段都代表了用户价值和商业价值的跃迁。</p>
+            <p><strong>第一代（Chatbot）：</strong> 用户"提问" → AI"回答"。用户仍需主动思考和操作。</p>
+            <p><strong>第二代（Assistant）：</strong> AI "给建议" → 用户"采纳"。降低了用户的认知负荷，但仍需人工执行。</p>
+            <p><strong>第三代（Agent）：</strong> AI "替你做" → 结果"自动呈现"。用户真正实现"无感"地解决问题。例如Rafa可以自动调整投资组合、自动生成合规报告、自动发送客户建议。</p>
+            <div class="callout">
+                <strong>商业意义：</strong> Agent模式创造了"使用者无需每天打开App"的产品体验。这时用户价值最大化，AI的真实ROI才能充分体现。
+            </div>
+        </div></div></div>
+
+        <!-- 2/2 行为心理学创新 -->
+        <div class="slide"><div class="card sparse"><h3>用户行为与数据飞轮的无限循环</h3><div class="card-body">
+            <p>Rafa最深刻的创新不是技术，而是一个<strong>"用户行为数据飞轮"</strong>：</p>
+            <div class="metrics-grid" style="grid-template-columns:1fr;margin:16px 0;">
+                <div style="background:var(--accent-light);padding:14px;border-radius:10px;text-align:center;">
+                    <p style="font-size:13px;line-height:1.8;color:var(--text-2);">
+                    更多用户 ➜ 更多真实金融对话数据 ➜ AI模型更精准 ➜ 用户建议更好 ➜ 留存率更高 ➜ 更多用户
+                    </p>
+                </div>
+            </div>
+            <p>这个飞轮的威力在于：<strong>每个新用户都贡献数据，让全体用户受益。</strong> 8年积累的"金融对话语料库"是Rafa最深的护城河——任何新进入者都无法短期复制。</p>
+            <p>数据飞轮的存在使得Rafa具有"自我强化"的特性。规模越大，数据越多；数据越多，AI越聪明；AI越聪明，用户越满意；用户越满意，规模越大。</p>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-5"></div>
+</section>
+
+<!-- ====== CHAPTER 6: 用户反馈 ====== -->
+<section class="chapter" id="ch-6">
+    <div class="chapter-header">
+        <h2>用户反馈</h2>
+        <span class="ch-sub">👥 市场认可度</span>
+        <span class="ch-counter" id="counter-6">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="6">
+        <!-- 1/2 评价与满意度 -->
+        <div class="slide"><div class="card"><h3>应用评分与核心评价</h3><div class="card-body">
+            <p>Rafa App在应用商店获得了显著的用户认可：</p>
+            <div class="metrics-grid" style="grid-template-columns:repeat(2,1fr);">
+                <div class="metric-card"><div class="metric-value">4.5+</div><div class="metric-label">App Store评分</div></div>
+                <div class="metric-card"><div class="metric-value">20-30%</div><div class="metric-label">免费转付费转化率</div></div>
+                <div class="metric-card"><div class="metric-value">高度</div><div class="metric-label">用户参与度</div></div>
+                <div class="metric-card"><div class="metric-value">100+</div><div class="metric-label">RAFA PRO付费机构</div></div>
+            </div>
+            <p><strong>用户最爱的功能：</strong></p>
+            <ul style="font-size:13px;color:var(--text-2);line-height:1.9;margin-left:20px;">
+                <li>💬 对话式AI的自然交互——"就像和顾问朋友聊天"</li>
+                <li>📊 多维度投资分析——"看到了从未关注过的市场视角"</li>
+                <li>⚡ 快速决策支持——"节省了大量的研究时间"</li>
+                <li>🎯 个性化建议——"感觉真的理解我的投资偏好"</li>
+            </ul>
+            <div class="callout">
+                <strong>核心发现：</strong> 用户满意度高的核心因素不是"功能多"，而是"体验的人性化"——AI像一个真实的投资伙伴，而非工具。
+            </div>
+        </div></div></div>
+
+        <!-- 2/2 真实用户声音 -->
+        <div class="slide"><div class="card sparse"><h3>真实用户的故事</h3><div class="card-body">
+            <div class="quote-block">
+                Rafa改变了我对投资的看法。以前我总是情绪化地操作，现在有AI帮我分析，我更理性了。最重要的是，它用我能理解的方式解释复杂的金融概念。
+                <div class="quote-attr">— App Store 5星评价</div>
+            </div>
+            <div class="quote-block">
+                RAFA PRO让我的小型RIA公司从"人工密集"变成了"智能驱动"。原来需要两周的合规审查，现在两天搞定。我终于有时间真正服务客户了。
+                <div class="quote-attr">— RAFA PRO企业客户</div>
+            </div>
+            <div class="quote-block">
+                作为初创公司创始人，我没时间深研股票，Rafa就像我的个人投资顾问。每周都能发现一些我遗漏的投资机会。
+                <div class="quote-attr">— LinkedIn用户分享</div>
+            </div>
+            <div class="callout" style="margin-top:20px;">
+                <strong>用户痛点解决验证：</strong> 评价表明Rafa成功解决了三类用户的核心问题——散户的"信息过载"、顾问的"时间压力"、创业者的"专业空白"。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-6"></div>
+</section>
+
+<!-- ====== CHAPTER 7: 近期要闻 ====== -->
+<section class="chapter" id="ch-7">
+    <div class="chapter-header">
+        <h2>近期要闻</h2>
+        <span class="ch-sub">📰 Latest Updates</span>
+    </div>
+    <div class="card-track" data-ch="7">
+        <div class="slide"><div class="card"><h3>最新动态与发展路线</h3><div class="card-body">
+            <div class="news-item">
+                <div class="news-date">2026年3月</div>
+                <div class="news-title">多代理架构2.0升级发布</div>
+                <div class="news-desc">Rafa发布增强版多代理系统，引入"共识决策"模式，当代理意见分歧时系统会明确标注并解释原因，进一步提升用户信任和决策质量。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2026年2月</div>
+                <div class="news-title">Portal DeFi生态报告：Rafa DAU增长45%</div>
+                <div class="news-desc">Portal DeFi Q1运营报告显示，Rafa AI日活跃用户环比增长45%，从50万增至72.5万，复合增长率高于预期。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2026年1月</div>
+                <div class="news-title">RAFA PRO荣获RIA Tech Summit最佳方案奖</div>
+                <div class="news-desc">RAFA PRO被评为"最具创新的合规自动化解决方案"，获得独立RIA协会和资产管理协会联合表彰。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2025年12月</div>
+                <div class="news-title">与主流券商完成数据整合</div>
+                <div class="news-desc">Rafa API现支持与Schwab、E*TRADE、Fidelity等主流券商的实时数据同步，用户可一键连接投资账户获得更精准建议。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2025年11月</div>
+                <div class="news-title">推出DeFi投资智能助手</div>
+                <div class="news-desc">融合传统投资和DeFi策略，Rafa在Portal平台上线新版应用，支持股票+ETF+加密资产的综合投资组合管理。</div>
+            </div>
+
+            <div class="references">
+                <h4>📚 参考文献</h4>
+                <ul>
+                    <li><a href="https://www.rafa.ai/" target="_blank">Rafa官方网站</a></li>
+                    <li><a href="https://www.portal.com/" target="_blank">Portal DeFi官方网站</a></li>
+                    <li><a href="https://www.linkedin.com/company/rafa-ai/" target="_blank">Rafa LinkedIn主页</a></li>
+                    <li><a href="https://www.businesswire.com/" target="_blank">BusinessWire融资公告</a></li>
+                    <li><a href="https://techcrunch.com/" target="_blank">TechCrunch相关报道</a></li>
+                    <li><a href="https://www.investmentnews.com/" target="_blank">Investment News行业分析</a></li>
+                </ul>
+            </div>
+        </div></div></div>
+    </div>
+    <div class="dots-bar" id="dots-7" style="visibility:hidden;"></div>
+</section>
+
+</main>
+
+<script>
+const main = document.querySelector('main');
+const navBtns = document.querySelectorAll('.nav-btn');
+const sections = document.querySelectorAll('.cover, .chapter');
+
+function go(i) { sections[i].scrollIntoView({ behavior: 'smooth' }); }
+
+// Active nav tracking
+const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+        if (e.isIntersecting) {
+            const idx = [...sections].indexOf(e.target);
+            navBtns.forEach((b, i) => b.classList.toggle('active', i === idx));
+        }
+    });
+}, { root: main, threshold: 0.5 });
+sections.forEach(s => obs.observe(s));
+
+// Horizontal dots + counter
+document.querySelectorAll('.card-track').forEach(track => {
+    const ch = track.dataset.ch;
+    const slides = track.querySelectorAll('.slide');
+    const dotsBar = document.getElementById('dots-' + ch);
+    const counter = document.getElementById('counter-' + ch);
+    if (!dotsBar || slides.length < 2) return;
+
+    slides.forEach((_, i) => {
+        const d = document.createElement('button');
+        d.className = 'dot' + (i === 0 ? ' active' : '');
+        d.onclick = () => slides[i].scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
+        dotsBar.appendChild(d);
+    });
+
+    track.addEventListener('scroll', () => {
+        const idx = Math.round(track.scrollLeft / track.clientWidth);
+        dotsBar.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === idx));
+        if (counter) counter.textContent = (idx + 1) + ' / ' + slides.length;
+    });
+});
+
+// Cover count-up
+document.querySelectorAll('[data-count]').forEach(el => {
+    const target = parseInt(el.dataset.count);
+    const prefix = el.dataset.prefix || '';
+    const suffix = el.dataset.suffix || '';
+    let cur = 0;
+    const inc = target / 125;
+    const timer = setInterval(() => {
+        cur += inc;
+        if (cur >= target) { el.textContent = prefix + target.toLocaleString() + suffix; clearInterval(timer); }
+        else { el.textContent = prefix + Math.floor(cur).toLocaleString() + suffix; }
+    }, 16);
+});
+</script>
+
+</body>
+</html>

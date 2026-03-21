@@ -1,0 +1,22 @@
+<svg viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
+  <!-- nCino Brand Colors: Primary: Deep Blue (#003B7D), Secondary bars: Teal, Orange, Purple -->
+
+  <!-- Background -->
+  <rect width="200" height="60" fill="transparent"/>
+
+  <!-- Colored bars (nCino signature element) -->
+  <rect x="0" y="0" width="8" height="60" fill="#00A6D6"/>   <!-- Teal bar -->
+  <rect x="8" y="0" width="8" height="60" fill="#FF6B35"/>   <!-- Orange bar -->
+  <rect x="16" y="0" width="8" height="60" fill="#8B5A9E"/>  <!-- Purple bar -->
+  <rect x="24" y="0" width="8" height="60" fill="#003B7D"/>   <!-- Deep blue bar -->
+
+  <!-- Text: nCino -->
+  <text x="42" y="42" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#003B7D" letter-spacing="0.5">
+    nCino
+  </text>
+
+  <!-- Tagline/subtext -->
+  <text x="42" y="55" font-family="Arial, sans-serif" font-size="9" fill="#666" letter-spacing="0.2">
+    CLOUD BANKING
+  </text>
+</svg>

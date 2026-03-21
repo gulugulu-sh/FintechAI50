@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interface AI 深度调研报告</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --accent-purple: #7B5EA7;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #1A1514;
+            --cover-bg: #1B3B7A;
+            --cover-accent: #2A5AC4;
+            --cover-highlight: #FFE36D;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(217,119,87,0.2); color: var(--accent); font-weight: 600; }
+
+        /* ===== MAIN ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, var(--cover-bg) 0%, #144B8E 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(52,28,255,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 20px; background: rgba(255,255,255,0.1); object-fit: contain; }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(255,255,255,0.12); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        /* Fixed chapter header */
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        /* Horizontal card scroller */
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+
+        /* Each slide fills available height */
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Card inside slide — fills slide */
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        /* Dots bar at bottom */
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); cursor: pointer; transition: all 0.3s;
+            border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+        /* ===== CONTENT-SPARSE: bigger text for cards with less content ===== */
+        .card.sparse p { font-size: 16px; line-height: 2; }
+        .card.sparse h3 { font-size: 22px; margin-bottom: 20px; }
+        .card.sparse .callout { font-size: 15px; padding: 18px 22px; }
+        .card.sparse .quote-block { font-size: 16px; padding: 20px 24px; }
+
+        /* ===== REUSABLE COMPONENTS ===== */
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px; border-radius: 6px;
+            font-size: 13px; line-height: 1.7; color: var(--text-2);
+            margin: 14px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+
+        .quote-block {
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px; margin: 14px 0;
+            font-style: italic; font-size: 14px;
+            color: var(--text-2); line-height: 1.8;
+            background: var(--bg-muted); border-radius: 0 8px 8px 0;
+        }
+        .quote-attr { font-style: normal; font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 16px; border-radius: 10px; text-align: center;
+        }
+        .metric-value { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+        .flex-row { display: flex; gap: 24px; margin: 14px 0; }
+        .flex-col { flex: 1; min-width: 0; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th { background: var(--bg-muted); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+
+        .timeline { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+        .timeline-item { display: flex; gap: 12px; align-items: flex-start; }
+        .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
+        .timeline-year { font-weight: 700; font-size: 13px; color: var(--accent); min-width: 48px; }
+        .timeline-text { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+
+        .top-nav { position: absolute; top: 16px; right: 24px; display: flex; gap: 10px; z-index: 100; }
+        .dashboard-btn {
+            background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+            color: white; padding: 6px 14px; border-radius: 6px;
+            font-size: 12px; cursor: pointer; transition: all 0.2s;
+            text-decoration: none; font-family: inherit;
+        }
+        .dashboard-btn:hover { background: rgba(255,255,255,0.25); }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            main { margin-left: 0; }
+            .chapter-header { padding: 12px 20px 0 20px; }
+            .slide { padding: 16px 20px; }
+            .cover-title { font-size: 28px; }
+            .flex-row { flex-direction: column; }
+        }
+    .nav-dashboard{display:block;width:calc(100% - 8px);margin:8px 4px 4px;background:rgba(217,119,87,0.15);border:1px solid rgba(217,119,87,0.3);color:var(--accent,#D97757);padding:10px 12px;border-radius:8px;text-align:center;font-size:12px;font-family:inherit;cursor:pointer;transition:all .2s;text-decoration:none;font-weight:600;letter-spacing:.3px}.nav-dashboard:hover{background:rgba(217,119,87,0.25);transform:translateY(-1px)}
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <img class="sidebar-logo" alt="Interface AI" src="data:image/png;base64,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" />
+        <div>
+            <div class="sidebar-brand-text">Interface AI</div>
+            <div class="sidebar-brand-sub">深度调研报告</div>
+        </div>
+    </div>
+    <div class="nav-items">
+        <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+        <button class="nav-btn" onclick="go(1)">📋 创始背景</button>
+        <button class="nav-btn" onclick="go(2)">🎯 市场契机</button>
+        <button class="nav-btn" onclick="go(3)">🤖 产品架构</button>
+        <button class="nav-btn" onclick="go(4)">💰 商业模式</button>
+        <button class="nav-btn" onclick="go(5)">🚀 增长故事</button>
+        <button class="nav-btn" onclick="go(6)">💡 竞争优势</button>
+        <button class="nav-btn" onclick="go(7)">📈 投资价值</button>
+    </div>
+<a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+<main id="main">
+
+<!-- ====== COVER ====== -->
+<section class="cover" id="ch-0">
+    <div class="top-nav">
+        <a href="https://interface.ai" target="_blank" class="dashboard-btn">官网</a>
+    </div>
+    <div class="cover-content">
+        <img class="cover-logo" alt="Interface AI Logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAV1BMVEUAPrUAPrUAPrYAPrYAPrUAPrYAPrYAPrUAP7YAPrUAPrUAPbX///8AP7YANrISTLv/yg3J1+/j6vfx9Pupv+czZcVLd8uCodtwlNb/10v/+OH/77j/5IZvmc+aAAAAC3RSTlMC1o176VP3wTW3GqHa8CMAAAW5SURBVHic7VuLlqo6DBUQELCi4oMR//87Txr6hNKWa6nnrjPBeaxxjXuzm5amSXY7aXV9iGJ1vTPbdwnUFD6PYgYODDyLZZSFygHw8yxNq3iWZqBDreFX5T7ZR7OkSvNcaID3X+6LhhQNGCHFZi/SjAgkqTIxCoCfVhSfGdnQBAZqgIMw6p9I/C0JNCqDMkUNgECWJoV4J44CYMUeR2EH0y+t4PZJFAIKB1KABPlhl1MHLBRmWxOQDKgj5rssS6vkWwTSLNvB+lNGJaA4QVml6Q6WJVwCNOBmU2MABUyEqgICJZ+DRgKngCYVxp9TAgYFQqILBiqBEgiUywROgSk0mgSLBNSxIqQl7fj67MLX1AmRQLlIAMDb9h7SWiQhGNgVAMEA/vHo+/7Zf25PuB6UgvZAmhPQJgvgw3/egtnzgRpMCeAsIHJ6CvnvgA/wl2B26ykDDkIKVQF9qTo1RMJfw1h3vYwSiD2JroA6/jBhSCvgO2rXD6+uOx6vFzOBckYAFGjvPUWn/xjmOioETk4ChNwfT4A/BrXOrEA5GwLqf4/nLTS+JGBVQIz/5RoY31MBWH/IHfFDC+BWgM+A9r4JvlsBMQM2cECNgFUB6oOP2yU8vLcCMAX7W3AH1AjYFKAbAI1AwKHwUgAfQt9VgD6DOYGwnuinAFsFgyJPCSwrcGIEwq+CGgHrLIhBwOoD/7gCvz7w6wN/tQ+8FJt/9rFzmce23OoDADuMNicAH05DB3tc0nUiMDn9FwUA/j283/BFKcwUAHh7WHaFSw3N1vkA3v5b2JQB3v7FEZnC+8+ehsfNah/g8D/MKAWdA+DDx0MEbrV+FGC9D1B4hn2WFCQBKgDKC/GszbQDihUKwP0D/lkz4KAy4IGv25Stp6cPvBD/PDUQQQ7CSKBlB1FLF275mzkBlwLD/P5HBnI+4gjc2zXHdMTXB0z6i0EY1hIYdZgQcCiwgE+9UUxHdQjwbHHhxW1ZgbkPGB2AS8AcsZME1p10+yjwGhbw1ZnwGQGHDywTOAciYFdg2J6A1QderyUXiKTAsg8ig819wLwKxlPg5VBgex/4tgLIIOosWLMO/IRaiFwr4eIYbLESGvYDtmfBMBxnBHxslQKWx/FbfRyLDYk7a7bKB9iG0OiB4mn82YbEtSNCBhYHOIbcEZnigtfRwMC4KYUPoNnBtp1/57+K+1wXFwwYE5x/BLqyGxoJ8G25f97Q2wdGR9Tikp9pYIJOcHNkFzEuMQUmPrEh7s2V0Gwem0FkCBR88oZWBZbPB5TgcBiGSXDajQxW5Q3XKcAYiPh89q47PL8q4flaHxDDACTMBxTsfOJqzRt2CwcUK86IKDLsEYzvHcdzio/yhn/5GVFAAmHPCf1zCv8HBX594Pes+BQnaWVTQE/bbUTAkTfcPnFpV4B8O3OqEvhC5hQcsd08fW+vHxgLGDaoX/BUgNaw3WkJDacQjsqKGpL+edmyiGVJASRxEmU88ato5Gp4p4U82xUyWRXgU3HLUi53LRmdCf0NK+kCeqG3AugH9JE0FhM6M4J+5lnOx/zgRLCcNGBBo0/eUA4BeygBg+eN5fw+tqs9b8j/JgmwJ/MzUFErTSuqecPGWdjM6kofjmTgCtPyhpJAOastlxSxrtmaC1xlk8JmZ2k3Geu6g5p2f2pVrVEBNhR4YT7qky+eO2Q+2Ijaclt1ffDyfpG2w09fUkATITi8JCAbHEpbh0Uok8e4HIC1eKSV2uRCjEbHbLzEL74XfxlujNAmFyCQYpsPsREIZxqBpARwbHRyKbANgWZsdMrzXO20ikigSFIA39WHQ1bt1U6nGAQIb3Y7YLtfCjORRCXQFMWetfuxhsdkH1cB2vCY8abPA7Y8xvADgVAgPm97rbHncF/Es72GzzRIYUmMY7O2X+y6xrbnNIph5zP4n9Z9HbHzm/Z+17WhAb2O1fy+2H7/le77P0ZuLyih7yn/AAAAAElFTkSuQmCC" />
+        <h1 class="cover-title">Interface AI</h1>
+        <p class="cover-subtitle">Agentic AI驱动的语音与聊天平台，为美国社区银行和信用合作社提供24/7自动化客户服务</p>
+        <div class="cover-tags">
+            <span class="cover-tag">金融AI客服</span>
+            <span class="cover-tag">Agentic AI</span>
+            <span class="cover-tag">社区银行</span>
+            <span class="cover-tag">美国</span>
+            <span class="cover-tag">B2B2C</span>
+        </div>
+        <div class="cover-stats">
+            <div class="stat-box">
+                <div class="stat-number">$3000万</div>
+                <div class="stat-label">总融资额</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">100+</div>
+                <div class="stat-label">金融机构客户</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">90%+</div>
+                <div class="stat-label">自动化率</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">2019</div>
+                <div class="stat-label">创立年份</div>
+            </div>
+        </div>
+        <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+    </div>
+</section>
+
+<!-- ====== CHAPTER 1: 创始背景 (3 cards) ====== -->
+<section class="chapter" id="ch-1">
+    <div class="chapter-header">
+        <h2>创始人的使命</h2>
+        <span class="ch-sub">📋 创始背景</span>
+        <span class="ch-counter" id="counter-1">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="1">
+
+        <!-- 1/3 创始人背景 -->
+        <div class="slide"><div class="card"><h3>Srinivas Njay：金融科技的赋能者</h3><div class="card-body">
+            <p>Srinivas Njay是一位印度裔美国创业者，拥有在微软（Bing广告团队产品经理）和美国艺电（EA，移动游戏高级产品经理）的丰富职业背景。但真正塑造他创业初心的，是他的个人经历——他的父亲是印度一家信用合作社的创始人，这使得Srinivas从小就对金融机构的运营困境和成本压力有深刻的理解。</p>
+            <p>当他看到社区银行和信用合作社在客户服务方面的低效——缺乏AI研发资源、运营成本高企、客户体验落后——Srinivas认识到，这些地方性金融机构急需一个能够赋予它们世界级AI客服能力的平台。这种痛点认知，加上他在科技和金融领域的双重背景，使得他能够洞察这一巨大的市场契机。</p>
+            <div class="callout">
+                <strong>创业动因：</strong> 家族金融背景+科技产品经验 = 面向小型金融机构的AI赋能平台的绝佳切口。
+            </div>
+        </div></div></div>
+
+        <!-- 2/3 联合创始人与技术基础 -->
+        <div class="slide"><div class="card"><h3>Bruce Kim：AI引擎的架构师</h3><div class="card-body">
+            <p>Bruce Kim是Interface AI的联合创始人兼首席技术官，拥有超过25年的企业系统和AI领域经验。他曾创立Inovaware，这是一家专注于客户管理和计费系统的公司，这个经历让他深刻理解企业级系统的复杂性和可靠性需求。</p>
+            <p>在Interface AI中，Bruce负责AI引擎开发和平台架构设计。他的技术远见确保了Interface AI不仅仅是一个聊天机器人，而是一个企业级的、与银行核心系统深度集成的Agentic AI平台。这种技术积累和架构能力，成为了公司可持续竞争优势的基础。</p>
+            <div class="callout">
+                <strong>技术支撑：</strong> 25年企业系统经验 + Agentic AI设计 = 金融级的产品可靠性和系统集成能力。
+            </div>
+        </div></div></div>
+
+        <!-- 3/3 创立与早期引导 -->
+        <div class="slide"><div class="card"><h3>2019年正式起航：自筹资金的前5年</h3><div class="card-body">
+            <p>Interface AI于2019年在美国加州成立，采取了自筹资金（bootstrapped）的运营模式。这个决策看似保守，但实际上给了公司更多的时间去验证市场需求、打磨产品，而不是被融资压力所驱动。这5年的自筹期，Interface AI专注于为社区银行和信用合作社深度定制和部署其AI解决方案。</p>
+            <p>正是这种"深耕而非扩张"的策略，使得Interface AI在客户中建立了强大的口碑和粘性。到2024年10月首轮外部融资时，公司已经服务了超过100家金融机构，并积累了数百万次日交互数据，这使其成为金融AI领域最具实力的玩家之一。</p>
+            <div class="callout">
+                <strong>关键洞察：</strong> 早期自筹而非激进融资，换来了深度市场验证和产品磨练。到融资时已是"市场验证的赢家"而非"融资驱动的初创"。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-1"></div>
+</section>
+
+<!-- ====== CHAPTER 2: 市场契机 (3 cards) ====== -->
+<section class="chapter" id="ch-2">
+    <div class="chapter-header">
+        <h2>美国社区金融的AI赤字</h2>
+        <span class="ch-sub">🎯 市场契机</span>
+        <span class="ch-counter" id="counter-2">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="2">
+
+        <!-- 1/3 行业痛点 -->
+        <div class="slide"><div class="card"><h3>社区银行与信用合作社的客服困境</h3><div class="card-body">
+            <p>美国有超过10,000家银行，其中绝大多数是资产规模在100亿美元以下的社区银行和信用合作社（credit unions）。这些机构具有根深蒂固的区域优势和客户粘性，但在科技投资和研发能力上远不及大银行。他们的客户服务通常依赖于传统的电话中心、邮件和分支行柜台——低效且昂贵。</p>
+            <p>与此同时，客户的期望值在飙升：年轻客户期待24/7全天候服务、多渠道对话、及时问题解决。这一"期望与现实"的巨大鸿沟，对资源受限的社区金融机构造成了致命压力：要么投巨资自建AI团队（对他们来说不现实），要么接受低质量的客服体验（导致客户流失）。</p>
+            <div class="callout">
+                <strong>市场痛点：</strong> 10,000+社区银行需要AI客服，但自建成本过高、第三方解决方案又不适配金融监管与集成需求。
+            </div>
+        </div></div></div>
+
+        <!-- 2/3 竞争真空 -->
+        <div class="slide"><div class="card"><h3>为什么现有解决方案不适配</h3><div class="card-body">
+            <p>市场上存在的通用聊天机器人平台（如Twilio、Zendesk）虽然功能齐全，但缺乏金融行业的深度理解。它们对金融监管（合规性、数据隐私）、业务复杂性（账户管理、交易确认）和系统集成需求（与核心银行系统的无缝连接）的支持都不足。此外，这些通用平台需要客户自己做大量的定制和集成工作，这对缺乏IT资源的社区银行来说是沉重的负担。</p>
+            <p>更为关键的是，这些通用平台采用的是传统的规则+ML模型，而不是Agentic AI。它们能处理预定义的问题，但面对复杂的、多步骤的、需要实时系统交互的金融服务场景时，往往力不从心。社区银行们实际上处于"既得不到大银行级的企业级解决方案，也得不到真正懂金融的AI产品"的困境中。</p>
+            <div class="callout">
+                <strong>竞争真空：</strong> 通用聊天机器人平台 ≠ 金融级Agentic AI平台。Interface AI就是为填补这个真空而生。
+            </div>
+        </div></div></div>
+
+        <!-- 3/3 市场规模 -->
+        <div class="slide"><div class="card"><h3>TAM：数十亿美元的客服自动化市场</h3><div class="card-body">
+            <p>美国共有约10,000家社区银行和5,000家信用合作社，服务约1.5亿消费者。这些机构每年的客户服务成本（电话中心、人工、系统）达数百亿美元。如果仅考虑能将客服成本削减20-40%的AI平台，其市场规模就在数十亿美元量级。</p>
+            <p>更重要的是，这个市场还在高速增长：客户对AI驱动的服务的接受度在上升，监管机构对AI在金融中的应用也在逐步放开（虽然仍有指导规范）。此外，Agentic AI的成熟度提升（OpenAI、Claude等模型的推出）使得更复杂的金融任务自动化成为可能。</p>
+            <div class="callout">
+                <strong>市场机遇：</strong> TAM规模数十亿，且处于从"通用AI"向"垂直AI赋能"的演变期。Interface AI正好卡在这个历史性转折点。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-2"></div>
+</section>
+
+<!-- ====== CHAPTER 3: 产品架构 (3 cards) ====== -->
+<section class="chapter" id="ch-3">
+    <div class="chapter-header">
+        <h2>Agentic AI的金融实践</h2>
+        <span class="ch-sub">🤖 产品架构</span>
+        <span class="ch-counter" id="counter-3">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="3">
+
+        <!-- 1/3 核心架构 -->
+        <div class="slide"><div class="card"><h3>全渠道Agentic AI平台：语音、聊天、集成</h3><div class="card-body">
+            <p>Interface AI的产品不是传统的规则引擎或简单的LLM包装。它是一个Agentic AI架构，意味着AI助理能够自主规划、执行多步骤任务，并与外部系统交互。用户无论通过电话（语音识别+文本转语音）、网页聊天、手机App还是API调用与Interface AI的虚拟助理互动，背后都是同一个AI引擎在理解意图、执行操作、提供个性化响应。</p>
+            <p>关键的架构创新是**深度系统集成**：Interface AI的Agent能够直接与银行的核心系统（Account Management、Transaction History、Compliance Checks）通信，查询实时余额、执行账户操作、验证身份——所有这些都在自动化和安全的框架内进行。这不仅提升了自动化率，更重要的是大大降低了人工干预的必要性。</p>
+            <div class="callout">
+                <strong>产品核心：</strong> Agentic AI + 多渠道接入 + 核心系统集成 = 真正的金融级自动化客服。
+            </div>
+        </div></div></div>
+
+        <!-- 2/3 工作流与智能 -->
+        <div class="slide"><div class="card"><h3>任务自动化工作流：从意图识别到系统执行</h3><div class="card-body">
+            <p>当一位客户致电银行询问"我想冻结我的信用卡"时，Interface AI的处理流程是：1) 语音识别并理解意图；2) 验证客户身份（MFA、安全问答）；3) 查询客户的账户和卡状态；4) 在符合风险和合规政策的前提下，执行冻结操作；5) 实时反馈确认和后续建议。整个过程可在2-3分钟内完成，而传统IVR+人工通常需要10-15分钟。</p>
+            <p>这个能力基于Interface AI多层次的AI系统：多语言NLP理解客户意图，知识图谱存储金融业务规则和流程，推理引擎处理复杂的"如果...则..."逻辑，决策系统在合规和风险之间权衡。更重要的是，这套系统随着每一次交互而改进，Interface AI能从"拒绝"或"误解"的情况中学习。</p>
+            <div class="callout">
+                <strong>智能维度：</strong> 不仅是"理解"客户，而是能"执行"客户的请求，同时保证风险和合规。这是传统聊天机器人做不到的。
+            </div>
+        </div></div></div>
+
+        <!-- 3/3 个性化与合规 -->
+        <div class="slide"><div class="card"><h3>个性化与金融合规的平衡</h3><div class="card-body">
+            <p>Interface AI在提供高度个性化服务的同时，严格遵守金融监管框架。系统能够根据客户的历史交互、账户类型、风险评级等因素调整服务策略。例如，对于信誉良好的长期客户，系统可能会更快地批准某些操作；而对于高风险交易，系统会提升验证级别和人工审核比例。</p>
+            <p>在合规方面，Interface AI内置了对KYC（Know Your Customer）、AML（Anti-Money Laundering）、数据隐私法规（如GLBA、CCPA）的自动化执行。所有的客户交互都被记录、审计且可追溯，符合金融监管审计的需求。这种"合规即系统设计"的方法，使得金融机构可以自信地将大量客服任务委托给AI，而无需担心监管风险。</p>
+            <div class="callout">
+                <strong>关键竞争力：</strong> 不是做到"最聪明的AI"，而是做到"最合规、最可信的金融AI"。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-3"></div>
+</section>
+
+<!-- ====== CHAPTER 4: 商业模式 (2 cards) ====== -->
+<section class="chapter" id="ch-4">
+    <div class="chapter-header">
+        <h2>B2B2C模式的金融AI赋能</h2>
+        <span class="ch-sub">💰 商业模式</span>
+        <span class="ch-counter" id="counter-4">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="4">
+
+        <!-- 1/2 商业模式 -->
+        <div class="slide"><div class="card"><h3>B2B2C：与金融机构的战略合作</h3><div class="card-body">
+            <p>Interface AI采取B2B2C（Business-to-Business-to-Consumer）模式。它不直接服务消费者，而是与社区银行和信用合作社合作，为其消费者提供AI客服。这种模式有多重优势：第一，社区银行作为"分销渠道"，自然带来稳定的客户基数；第二，金融机构的品牌信任能够迁移到Interface AI的服务上，用户更容易接受"我的银行的AI助理"；第三，合作伙伴的反馈和数据帮助Interface AI持续优化产品。</p>
+            <p>收费模式通常是基于使用量（per transaction或per interaction）或基于座位/集成费（subscription-based），加上可选的定制与集成服务费。这种模式使得Interface AI的成本与客户的收益直接关联：客户处理的自动化交互越多、节省的成本越大，Interface AI的收入也就越多。这形成了高度的利益一致。</p>
+            <div class="callout">
+                <strong>模式优势：</strong> 金融机构的信任+消费者的接受 = 高留存率和高CLTV的商业模式。
+            </div>
+        </div></div></div>
+
+        <!-- 2/2 定价与价值 -->
+        <div class="slide"><div class="card"><h3>定价逻辑：替代人工成本的AI赋能费</h3><div class="card-body">
+            <p>一个拥有1,000名员工的社区银行，其客户服务中心通常需要200-300名人工代理，年度成本约1,000-1,500万美元。实施Interface AI后，这个银行可能将自动化率提升到90%，意味着人工代理需求锐减至20-30人，节省成本达1,000万美元。Interface AI的定价通常在这个节省成本的10-20%之间，即年费100-200万美元，这样客户依然有70-80%的收益。</p>
+            <p>这种"分享收益"的定价模式，使得Interface AI能够快速与客户达成一致：实施成本有保障（通常在6-12个月内收回），投资回报显而易见，CEO和CFO都能看到这笔投资的财务价值。不仅如此，这种模式还鼓励Interface AI持续优化产品，以实现更高的自动化率——这是"天然激励对齐"的商业模式。</p>
+            <div class="callout">
+                <strong>关键洞察：</strong> 不是在"AI成本"和"人工成本"之间做替代，而是帮助金融机构实现"成本+质量"的双重突破。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-4"></div>
+</section>
+
+<!-- ====== CHAPTER 5: 增长故事 (2 cards) ====== -->
+<section class="chapter" id="ch-5">
+    <div class="chapter-header">
+        <h2>从100家到1000家的增长轨迹</h2>
+        <span class="ch-sub">🚀 增长故事</span>
+        <span class="ch-counter" id="counter-5">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="5">
+
+        <!-- 1/2 客户增长与产品迭代 -->
+        <div class="slide"><div class="card"><h3>2019-2024：深耕与扩张的双轮驱动</h3><div class="card-body">
+            <p>从2019年创立到2024年获得首轮融资，Interface AI经历了5年的"下沉"阶段。这个过程中，公司并没有急于做广告或激进融资，而是通过口碑和深度客户成功，逐步积累客户。每一个新客户的部署，都伴随着产品的增强和集成的优化。这种"每个客户都是产品研发推动力"的模式，使得Interface AI的产品与市场契合度持续上升。</p>
+            <p>到2024年10月，Interface AI已经服务了100+金融机构，每天处理数百万次客户交互。这些数据和反馈，为公司积累了无价的知识图谱、模型训练数据和最佳实践库。这也就是为什么Interface AI在获得融资时已经是"市场验证的赢家"——不是基于融资故事，而是基于真实的客户数据和商业表现。</p>
+            <div class="callout">
+                <strong>增长特性：</strong> 不是"融资→烧钱→扩张"，而是"客户→数据→产品→客户"的正向循环。
+            </div>
+        </div></div></div>
+
+        <!-- 2/2 融资与规模化 -->
+        <div class="slide"><div class="card"><h3>$3000万融资：规模化的加速器</h3><div class="card-body">
+            <p>2024年10月，Interface AI完成由Avataar Venture Partners领投的$3000万融资，其中包含$2000万股权和$1000万债权。这轮融资的意义不在于"救命钱"（Interface AI当时已经盈利或接近盈利），而在于"规模化的加速器"。融资资金主要用于：扩展销售和营销团队、加速产品研发（尤其是更复杂的金融服务场景自动化）、拓展地域市场（从社区银行向更大型区域银行渗透）。</p>
+            <p>这轮融资对Interface AI的战略意义也在于：验证了投资者对"垂直AI赋能"商业模式的信心，为后续融资和上市创造了良好的叙述。未来的增长预期是：从100+客户扩展到500+，从"社区银行"的专注切口向"中型区域银行"和国际市场延伸，同时在产品功能上从"客服自动化"向"贷款审批"、"合规监控"等更高价值服务拓展。</p>
+            <div class="callout">
+                <strong>融资意义：</strong> 不是改变商业模式，而是加速已经验证的商业模式的规模化。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-5"></div>
+</section>
+
+<!-- ====== CHAPTER 6: 竞争优势 (2 cards) ====== -->
+<section class="chapter" id="ch-6">
+    <div class="chapter-header">
+        <h2>为什么Interface AI难以复制</h2>
+        <span class="ch-sub">💡 竞争优势</span>
+        <span class="ch-counter" id="counter-6">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="6">
+
+        <!-- 1/2 护城河 -->
+        <div class="slide"><div class="card"><h3>三重护城河：数据、关系、技术</h3><div class="card-body">
+            <p>Interface AI的竞争优势基于三个互强化的层面。首先是**数据护城河**：每一次客户交互都被记录和分析，形成了无价的金融AI训练数据库。这些数据包括真实的客户问题、复杂的金融场景、多语言交互、边界情况。竞争对手需要花费数年才能积累相同量级的数据。其次是**关系护城河**：Interface AI与金融机构的深度集成和定制，使得迁移成本极高。更换AI平台意味着重新部署、重新培训员工、重新调试流程——这不是简单的商业决策，而是重大的运营风险。第三是**技术护城河**：Agentic AI在金融场景下的端到端实现，包括意图理解、风险评估、系统集成、合规执行，不是简单地"套用通用LLM"就能做到的。这需要深厚的金融领域知识和系统设计能力。</p>
+            <div class="callout">
+                <strong>护城河深度：</strong> 不是单一维度的竞争优势，而是数据+关系+技术的三角形锁定。
+            </div>
+        </div></div></div>
+
+        <!-- 2/2 对标与差异化 -->
+        <div class="slide"><div class="card"><h3>vs. 通用AI平台，vs. 企业级解决方案</h3><div class="card-body">
+            <p>Interface AI与OpenAI、Anthropic等通用大模型提供商的关系是"建立在其肩膀上"。Interface AI使用最先进的LLM作为推理引擎，但核心价值在于在金融领域的应用——工作流、集成、合规、可靠性。通用AI平台无法提供这些，因为这需要垂直领域的深度。与此同时，Interface AI与传统企业级金融软件供应商（如Temenos、Fiserv）的关系是"互补而非竞争"。传统供应商掌握着核心银行系统，Interface AI是在其之上的对话层。未来，Interface AI甚至可能被整合到这些大型平台内，或者与它们形成战略合作。</p>
+            <p>所以Interface AI的真正竞争对手既不是大模型公司，也不是传统金融IT厂商，而是其他"金融AI赋能平台"初创公司。但鉴于Interface AI的先发优势和三重护城河，这些竞争对手难以在同一条赛道上与其比肩。Interface AI的挑战反而来自"市场本身"——有多少社区金融机构愿意拥抱AI客服？采用率能否达到80%以上？这才是Interface AI增长的真正上限所在。</p>
+            <div class="callout">
+                <strong>竞争格局：</strong> 不在与通用AI或传统软件竞争，而在"垂直化赛道上的市场渗透率"。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-6"></div>
+</section>
+
+<!-- ====== CHAPTER 7: 投资价值 (2 cards) ====== -->
+<section class="chapter" id="ch-7">
+    <div class="chapter-header">
+        <h2>从IPO前夜到十倍回报</h2>
+        <span class="ch-sub">📈 投资价值</span>
+        <span class="ch-counter" id="counter-7">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="7">
+
+        <!-- 1/2 估值与路线图 -->
+        <div class="slide"><div class="card"><h3>路线图：从$3000万融资到IPO的逻辑</h3><div class="card-body">
+            <p>Interface AI的典型财务规律是：每100家新客户约贡献$2000-3000万的ARR（年度经常性收入）。目前100+客户、数千万ARR的基础上，如果达到300-500家客户，ARR可扩展至$6000万-1.5亿。在SaaS垂直应用的估值标准（8-12倍ARR）下，$1亿ARR对应的企业价值约为$8-12亿。这与典型的SaaS/金融科技IPO估值相符。</p>
+            <p>从现金流角度，Agentic AI平台的成本结构是：计算成本随用户量线性增长，但固定研发成本相对稳定。这意味着随着规模扩大，毛利率应该会从目前的50-60%提升至70-75%。加上SaaS业务的天然高LTCV（客户生命周期价值），Interface AI有望在ARR达$1亿时实现盈利，并快速走向高利润。这是典型的"高增长+高利润"的上市候选企业财务曲线。</p>
+            <div class="callout">
+                <strong>IPO时间表：</strong> 如果2026-2027年实现ARR $8000万+，则2028-2029年的IPO是现实的。在此期间，投资者的回报潜力为5-10倍。
+            </div>
+        </div></div></div>
+
+        <!-- 2/2 风险与机遇 -->
+        <div class="slide"><div class="card"><h3>风险与上升空间：监管、竞争、市场</h3><div class="card-body">
+            <p>最大的风险是**监管**：如果美国监管机构对AI在金融中的应用收紧（例如要求更高的人工审查或责任担保），Interface AI的自动化率和经济模型可能会受到冲击。其次是**竞争**：大型科技公司（如Google、Microsoft）或金融IT巨头（如Temenos）可能进入这个垂直领域。第三是**市场饱和**：社区银行和信用合作社的数量有限（约15,000家），市场虽然大但天花板明显。如果Interface AI无法向中型银行、国际市场拓展，增长会遇到瓶颈。</p>
+            <p>另一方面，上升空间来自**产品扩展**：从客服自动化向贷款审批、欺诈检测、合规监控等高价值服务拓展，可以大幅提升单客户价值（ARPU）。此外，**国际化**是重大机遇：欧洲、亚洲的银行面临类似的人力成本压力，Interface AI的模式完全可以复制。一旦成功国际化，市场空间可扩大至全球金融机构的20-30倍。</p>
+            <div class="callout">
+                <strong>投资观点：</strong> 高增长潜力（基于真实客户数据）与真实风险（监管、竞争、市场）并存。这是成长期创业公司的典型风险-回报权衡。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-7"></div>
+</section>
+
+</main>
+
+<script>
+// 导航和滚动逻辑
+const main = document.getElementById('main');
+let currentChapter = 0;
+
+function go(ch) {
+    const section = document.getElementById(`ch-${ch}`);
+    if (section) {
+        section.scrollIntoView({ behavior: 'smooth' });
+        updateNav(ch);
+    }
+}
+
+function updateNav(ch) {
+    document.querySelectorAll('.nav-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', i === ch);
+    });
+    currentChapter = ch;
+}
+
+// 更新计数器和点
+function initChapter(chIndex) {
+    const track = document.querySelector(`.card-track[data-ch="${chIndex}"]`);
+    if (!track) return;
+
+    const slides = track.querySelectorAll('.slide');
+    const dotsId = `dots-${chIndex}`;
+    const dotsBar = document.getElementById(dotsId);
+
+    if (dotsBar) {
+        dotsBar.innerHTML = '';
+        slides.forEach((_, i) => {
+            const dot = document.createElement('button');
+            dot.className = 'dot' + (i === 0 ? ' active' : '');
+            dot.onclick = () => scrollSlide(chIndex, i);
+            dotsBar.appendChild(dot);
+        });
+    }
+
+    track.addEventListener('scroll', () => updateDotsAndCounter(chIndex));
+}
+
+function scrollSlide(chIndex, slideIndex) {
+    const track = document.querySelector(`.card-track[data-ch="${chIndex}"]`);
+    if (track) {
+        const slide = track.querySelectorAll('.slide')[slideIndex];
+        slide.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+    }
+}
+
+function updateDotsAndCounter(chIndex) {
+    const track = document.querySelector(`.card-track[data-ch="${chIndex}"]`);
+    const counter = document.getElementById(`counter-${chIndex}`);
+    if (!track) return;
+
+    const slides = track.querySelectorAll('.slide');
+    const scrollLeft = track.scrollLeft;
+    const slideWidth = track.offsetWidth;
+    const currentSlide = Math.round(scrollLeft / slideWidth);
+
+    const dotsBar = document.getElementById(`dots-${chIndex}`);
+    if (dotsBar) {
+        dotsBar.querySelectorAll('.dot').forEach((dot, i) => {
+            dot.classList.toggle('active', i === currentSlide);
+        });
+    }
+
+    if (counter) {
+        counter.textContent = `${currentSlide + 1} / ${slides.length}`;
+    }
+}
+
+// 初始化所有章节
+for (let i = 1; i <= 7; i++) {
+    initChapter(i);
+}
+
+// 主滚动事件：监听cover之后的第一个章节
+main.addEventListener('scroll', () => {
+    const sections = document.querySelectorAll('section');
+    let activeIdx = 0;
+
+    sections.forEach((section, idx) => {
+        const rect = section.getBoundingClientRect();
+        if (rect.top < window.innerHeight / 2) {
+            activeIdx = idx;
+        }
+    });
+
+    updateNav(activeIdx);
+});
+</script>
+
+</body>
+</html>

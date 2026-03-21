@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rogo AI 深度调研报告</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --accent-purple: #7B5EA7;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #1A1514;
+            --cover-bg: #003D82;
+            --cover-accent: #0052CC;
+            --cover-highlight: #FFD700;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(217,119,87,0.2); color: var(--accent); font-weight: 600; }
+
+        /* ===== MAIN ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, var(--cover-bg) 0%, #004BA6 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(0,82,204,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 20px; background: rgba(255,255,255,0.1); object-fit: contain; }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(255,255,255,0.12); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        /* Fixed chapter header */
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        /* Horizontal card scroller */
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+
+        /* Each slide fills available height */
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Card inside slide — fills slide */
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        /* Dots bar at bottom */
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); cursor: pointer; transition: all 0.3s;
+            border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+        /* ===== CONTENT-SPARSE ===== */
+        .card.sparse p { font-size: 16px; line-height: 2; }
+        .card.sparse h3 { font-size: 22px; margin-bottom: 20px; }
+        .card.sparse .callout { font-size: 15px; padding: 18px 22px; }
+        .card.sparse .quote-block { font-size: 16px; padding: 20px 24px; }
+
+        /* ===== REUSABLE COMPONENTS ===== */
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px; border-radius: 6px;
+            font-size: 13px; line-height: 1.7; color: var(--text-2);
+            margin: 14px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+
+        .quote-block {
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px; margin: 14px 0;
+            font-style: italic; font-size: 14px;
+            color: var(--text-2); line-height: 1.8;
+            background: var(--bg-muted); border-radius: 0 8px 8px 0;
+        }
+        .quote-attr { font-style: normal; font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 16px; border-radius: 10px; text-align: center;
+        }
+        .metric-value { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+        .flex-row { display: flex; gap: 24px; margin: 14px 0; }
+        .flex-col { flex: 1; min-width: 0; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th { background: var(--bg-muted); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+
+        .mode-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 14px 0; }
+        .mode-box { background: var(--bg-muted); padding: 14px; border-radius: 10px; border-left: 4px solid var(--accent); }
+        .mode-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+        .mode-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .insight-card {
+            flex: 1; display: flex; flex-direction: column;
+            background: var(--bg-card); border-radius: 14px; padding: 28px 32px;
+            border: 1px solid var(--border);
+        }
+        .insight-emoji { font-size: 28px; margin-bottom: 10px; }
+        .insight-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+        .insight-card p { font-size: 15px; line-height: 1.9; color: var(--text-2); margin-bottom: 14px; }
+        .insight-highlight {
+            margin-top: auto;
+            background: var(--accent-light); border-left: 4px solid var(--accent);
+            padding: 12px 16px; border-radius: 6px;
+            font-size: 14px; font-weight: 600; color: var(--accent-2);
+        }
+
+        .news-item {
+            padding: 14px; background: var(--bg-card);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px; border: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+        .news-date { font-size: 11px; color: var(--text-3); font-weight: 600; margin-bottom: 4px; }
+        .news-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .news-title a { color: var(--accent-blue); text-decoration: none; }
+        .news-title a:hover { color: var(--accent); text-decoration: underline; }
+        .news-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .timeline { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+        .timeline-item { display: flex; gap: 12px; align-items: flex-start; }
+        .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
+        .timeline-year { font-weight: 700; font-size: 13px; color: var(--accent); min-width: 48px; }
+        .timeline-text { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            main { margin-left: 0; }
+            .chapter-header { padding: 12px 20px 0 20px; }
+            .slide { padding: 16px 20px; }
+            .cover-title { font-size: 28px; }
+            .flex-row { flex-direction: column; }
+        }
+    
+        .nav-dashboard {
+            display: block; width: calc(100% - 8px); margin: 8px 4px 4px;
+            background: rgba(217,119,87,0.15); border: 1px solid rgba(217,119,87,0.3);
+            color: var(--accent, #D97757); padding: 10px 12px; border-radius: 8px;
+            text-align: center; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+            font-weight: 600; letter-spacing: 0.3px;
+        }
+        .nav-dashboard:hover {
+            background: rgba(217,119,87,0.3); color: white;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <img class="sidebar-logo" alt="Rogo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAATlBMVEVHcEwZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRn///8ODg4XFxcSEhIBAQH09PReXl5LS0uHh4fd3d3u7u6ioqK4uLg2NjZ3d3cJS0RRAAAACnRSTlMA8FbVw3Q1oxHmErGoswAAAyJJREFUeJztm22XqiAUhcsUiATUEPX//9ErTY1mchQImXUXuzV9mZf9uJGDazrndFoRIagoMM7z6yjqpfEP5HmOcYEQIWten+Yowxc/U5PyEWMLgmTY85JhXXEGImT4HNJe65xn5ssPb/+DYAgBBVr6T13Qmn9xlL1WseJ/SPwvnT8IDr1+rSLm9Wu9Z4COttea3YnksPt/rsu0G/MY/pTil392+A3wo/OzJpJIAYwRkKgBvCIgOJb/MwIU9PyFdUXONZDN5U6g18B2BRgvhRC8nMRLZwRsvQe44M2gOtXNNVBXgrEYETv7RnWyvS3UOQNQYnMMMEFVtTT3BEAWAKwcVu29AIr9m4DRu8HfD2DvJmBs+Fj7LwDg3QC8Mfr7AezchUwoo78PQL4bgJr9QwM8qq0YwgBcT/BRxLgQj3IrJACgggHwshnuSmtQgNxL8QYA73/rbqdPIJPcD6MRAPgmm+UOpuxxHlMIoGymZb5zHxdHgPnWjwMgYwO0CcAHYOdDazAAVu4rE6EAymb20NrwCAD19LtVUx4OwMq6igpAYwOkBFICKYGUQEogJZASSAmkBFICKYGUQEogJZASSAmkBFICKYH/JQFZvXS72zVqfCcB3kzqLf9Z/hUAqttDuH4bv+z8v5OAj2IDLBJw/LzAR3OAto8CMG3hVgB38BEAUgA/eAQAdA96AbDSrN+Gh6odoADoRgMD6N/XgAYpO/1SNfip3VYHBeTPhla2Uq6/yaZ/iG00F/gA8PvNrFZwzhjbPMKCAXTgwk/a3cazIhBg7+HpAQAmoKDa8w7g3tJqBqgkVHzftL+X7ENAArKGSs8CwL2v3wgg6/2PTxb9hEsZE1C9RV+RTUflUmsAVat6YfP0hOyaWucaK6FcqFMDs7LXTa0+swVNP3/13L6pS0/8eLSW83cx+6YuPWKQuQP4q/gLze3R2/ujDzhEjOA19RZ7yMVrJ/oo/zuDTtFHveIPu8Uf94s/8Bh/5DP+0Kue+Dlm7BebZ5+z8AhnbB58PsUf/dYIqMCBBhAvONscfn9CEIQe4//5N8b/r4/x/8Iw/v8Pr1WHICbfRLIAAAAASUVORK5CYII=" />
+        <div>
+            <div class="sidebar-brand-text">Rogo AI</div>
+            <div class="sidebar-brand-sub">深度调研报告</div>
+        </div>
+    </div>
+    <div class="nav-items">
+        <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+        <button class="nav-btn" onclick="go(1)">📋 公司概况</button>
+        <button class="nav-btn" onclick="go(2)">💰 融资与财务</button>
+        <button class="nav-btn" onclick="go(3)">🛠️ 产品功能</button>
+        <button class="nav-btn" onclick="go(4)">🤖 AI技术</button>
+        <button class="nav-btn" onclick="go(5)">👥 用户反馈</button>
+        <button class="nav-btn" onclick="go(6)">💡 核心启示</button>
+        <button class="nav-btn" onclick="go(7)">📰 近期要闻</button>
+    </div>
+
+    <a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+<main id="main">
+
+<!-- ====== COVER ====== -->
+<section class="cover" id="ch-0">
+    <div class="cover-content">
+        <img class="cover-logo" alt="Rogo Logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAATlBMVEVHcEwZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRn///8ODg4XFxcSEhIBAQH09PReXl5LS0uHh4fd3d3u7u6ioqK4uLg2NjZ3d3cJS0RRAAAACnRSTlMA8FbVw3Q1oxHmErGoswAAAyJJREFUeJztm22XqiAUhcsUiATUEPX//9ErTY1mchQImXUXuzV9mZf9uJGDazrndFoRIagoMM7z6yjqpfEP5HmOcYEQIWten+Yowxc/U5PyEWMLgmTY85JhXXEGImT4HNJe65xn5ssPb/+DYAgBBVr6T13Qmn9xlL1WseJ/SPwvnT8IDr1+rSLm9Wu9Z4COttea3YnksPt/rsu0G/MY/pTil392+A3wo/OzJpJIAYwRkKgBvCIgOJb/MwIU9PyFdUXONZDN5U6g18B2BRgvhRC8nMRLZwRsvQe44M2gOtXNNVBXgrEYETv7RnWyvS3UOQNQYnMMMEFVtTT3BEAWAKwcVu29AIr9m4DRu8HfD2DvJmBs+Fj7LwDg3QC8Mfr7AezchUwoo78PQL4bgJr9QwM8qq0YwgBcT/BRxLgQj3IrJACgggHwshnuSmtQgNxL8QYA73/rbqdPIJPcD6MRAPgmm+UOpuxxHlMIoGymZb5zHxdHgPnWjwMgYwO0CcAHYOdDazAAVu4rE6EAymb20NrwCAD19LtVUx4OwMq6igpAYwOkBFICKYGUQEogJZASSAmkBFICKYGUQEogJZASSAmkBFICKYH/JQFZvXS72zVqfCcB3kzqLf9Z/hUAqttDuH4bv+z8v5OAj2IDLBJw/LzAR3OAto8CMG3hVgB38BEAUgA/eAQAdA96AbDSrN+Gh6odoADoRgMD6N/XgAYpO/1SNfip3VYHBeTPhla2Uq6/yaZ/iG00F/gA8PvNrFZwzhjbPMKCAXTgwk/a3cazIhBg7+HpAQAmoKDa8w7g3tJqBqgkVHzftL+X7ENAArKGSs8CwL2v3wgg6/2PTxb9hEsZE1C9RV+RTUflUmsAVat6YfP0hOyaWucaK6FcqFMDs7LXTa0+swVNP3/13L6pS0/8eLSW83cx+6YuPWKQuQP4q/gLze3R2/ujDzhEjOA19RZ7yMVrJ/oo/zuDTtFHveIPu8Uf94s/8Bh/5DP+0Kue+Dlm7BebZ5+z8AhnbB58PsUf/dYIqMCBBhAvONscfn9CEIQe4//5N8b/r4/x/8Iw/v8Pr1WHICbfRLIAAAAASUVORK5CYII=" />
+        <h1 class="cover-title">Rogo</h1>
+        <p class="cover-subtitle">为华尔街打造的企业级AI分析师——金融推理模型如何重塑投研工作流</p>
+        <div class="cover-tags">
+            <span class="cover-tag">金融AI</span>
+            <span class="cover-tag">AI-Native</span>
+            <span class="cover-tag">企业级SaaS</span>
+            <span class="cover-tag">美国</span>
+            <span class="cover-tag">ToB</span>
+        </div>
+        <div class="cover-stats">
+            <div class="stat-box">
+                <div class="stat-number">7.5亿</div>
+                <div class="stat-label">C轮估值</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">25+</div>
+                <div class="stat-label">机构客户</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">86</div>
+                <div class="stat-label">员工数</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">4.5★</div>
+                <div class="stat-label">综合评分</div>
+            </div>
+        </div>
+        <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+    </div>
+</section>
+
+<!-- ====== CH1: 公司概况 ====== -->
+<section class="chapter" id="ch-1">
+    <div class="chapter-header">
+        <h2>公司概况</h2>
+        <span class="ch-sub">📋 Rogo的身世与发展</span>
+        <span class="ch-counter" id="counter-1">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="1">
+
+        <!-- Slide 1: 核心简介 -->
+        <div class="slide">
+            <div class="card">
+                <h3>从Lazard到华尔街AI</h3>
+                <div class="card-body">
+                    <p>Rogo由Gabriel Stengel（前Lazard投资银行家）和John Willett于2021年创办，以一个简单但深刻的观察切入：通用AI在金融领域"水土不服"。传统AI缺乏金融直觉，容易产生"幻觉"，无法提供机构级的可审计输出。</p>
+                    <p>这个问题启发Gabriel创办Rogo——一个专为金融专业人士设计的AI助手，核心是"金融推理模型"，通过深度定制化将金融专业知识与前沿AI融合，实现端到端的工作流自动化。</p>
+                    <p>在短短5年内，Rogo已获得Moelis、Nomura、Tiger Global等华尔街顶级机构的信任，完成4轮融资总额$12.35亿，估值达7.5亿美元，成为金融AI领域最受关注的独角兽之一。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: 融资历程 -->
+        <div class="slide">
+            <div class="card">
+                <h3>融资里程碑</h3>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-year">2021</div>
+                            <div class="timeline-text"><strong>种子轮 $700万：</strong> 初创验证，产品-市场契合度测试</div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-year">2023</div>
+                            <div class="timeline-text"><strong>A轮 $1,850万：</strong> Khosla Ventures领投，确认金融AI的巨大市场机会</div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-year">2024</div>
+                            <div class="timeline-text"><strong>B轮 $5,000万：</strong> Thrive Capital等参投，估值突破$3.5亿</div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-year">2026</div>
+                            <div class="timeline-text"><strong>C轮 $7,500万：</strong> Sequoia领投，估值达$7.5亿，融资总额$12.35亿</div>
+                        </div>
+                    </div>
+                    <div class="callout"><strong>关键指标：</strong> 融资倍增速度表明投资人对其商业模式和市场机会的极高认可。</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: 团队与市场定位 -->
+        <div class="slide">
+            <div class="card">
+                <h3>黄金团队与市场地位</h3>
+                <div class="card-body">
+                    <p><strong>创始人背景：</strong> Gabriel Stengel（CEO，前Lazard投行家）深刻理解华尔街痛点；John Willett（联合创始人）提供技术支撑。这种"金融+AI"的双重基因，是Rogo产品与市场高度契合的基础。</p>
+                    <p><strong>AI团队：</strong> Joseph Kim（应用AI负责人）曾在MIT Media Lab、NASA研究，并在Google Search部署大规模BERT模型；Curt Janssen领导过Google知识图谱项目。这样的AI人才储备，确保了技术领先力。</p>
+                    <p><strong>市场地位：</strong> 被定位为"华尔街最信任的AI投研助手"。客户名单（Moelis、Nomura、Tiger Global）本身就是最强的品牌背书，使其在高端金融市场获得了无与伦比的市场地位。</p>
+                    <div class="callout"><strong>启示：</strong> 在B端企业级市场，顶级客户背书的价值远超传统营销。</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="dots-bar" id="dots-1"></div>
+</section>
+
+<!-- ====== CH2: 融资与财务 ====== -->
+<section class="chapter" id="ch-2">
+    <div class="chapter-header">
+        <h2>融资与财务</h2>
+        <span class="ch-sub">💰 投资逻辑与商业指标</span>
+        <span class="ch-counter" id="counter-2">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="2">
+
+        <!-- Slide 1: 融资规模与投资方 -->
+        <div class="slide">
+            <div class="card">
+                <h3>融资规模与投资方</h3>
+                <div class="card-body">
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-value">$123.5M</div>
+                            <div class="metric-label">累计融资</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">$7.5B</div>
+                            <div class="metric-label">C轮估值</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">4</div>
+                            <div class="metric-label">融资轮次</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">60x</div>
+                            <div class="metric-label">融资增长倍数</div>
+                        </div>
+                    </div>
+                    <p><strong>投资方阵营：</strong> Sequoia Capital（C轮领投）、Thrive Capital、J.P. Morgan Growth Equity Partners、Tiger Global、Khosla Ventures——这些都是全球顶级的风险投资和增长资本。它们的参与，说明了Rogo在金融AI赛道的战略地位和巨大潜力。</p>
+                    <p><strong>融资特点：</strong> 每轮融资规模倍增，反映了市场对金融AI的极度看好，以及Rogo在产品和市场上的快速突破。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: 商业模式与收入 -->
+        <div class="slide">
+            <div class="card">
+                <h3>商业模式解析</h3>
+                <div class="card-body">
+                    <p><strong>核心收入模式：</strong> 企业级SaaS订阅制，针对投资银行、PE基金、资产管理公司。</p>
+                    <div class="mode-boxes">
+                        <div class="mode-box">
+                            <div class="mode-title">📊 基础订阅费</div>
+                            <div class="mode-desc">根据用户席位、功能模块（Deep Research Agents、Material Creation等）、数据集成需求灵活定价</div>
+                        </div>
+                        <div class="mode-box">
+                            <div class="mode-title">🔧 定制化服务费</div>
+                            <div class="mode-desc">单租户部署、特定模型训练、白手套实施、API集成开发等高端定制服务</div>
+                        </div>
+                        <div class="mode-box" style="border-left-color:var(--accent-green);">
+                            <div class="mode-title">💎 增值服务</div>
+                            <div class="mode-desc">高级行业分析报告、趋势预测、特定领域模型训练等未来可能的增值项</div>
+                        </div>
+                    </div>
+                    <p><strong>客户经济学：</strong> 高LTV（高端客户粘性强，迁移成本高）+ 相对低CAC（通过品牌效应降低获客成本）= 高毛利率和可扩展性。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: 财务健康度与增长信号 -->
+        <div class="slide">
+            <div class="card">
+                <h3>财务健康度指标</h3>
+                <div class="card-body">
+                    <p><strong>ARR与收入增长：</strong> 虽然具体ARR未公开，但从融资规模和客户数量推断，Rogo正处于高速增长期（可能年同比增长超100%）。</p>
+                    <p><strong>客户指标：</strong> 25+顶级机构客户已说明一切。这不是数量游戏，而是质量为王——每个客户都是华尔街的标杆机构。</p>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-value">25+</div>
+                            <div class="metric-label">机构客户</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">高</div>
+                            <div class="metric-label">客户留存率</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">低</div>
+                            <div class="metric-label">相对CAC</div>
+                        </div>
+                    </div>
+                    <div class="callout"><strong>增长信号：</strong> C轮融资后估值7.5亿，如无重大挫折，IPO应在2-3年内启动（目标融资规模$5-10亿+）。伦敦或纽约上市最可能。</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="dots-bar" id="dots-2"></div>
+</section>
+
+<!-- ====== CH3: 产品功能 ====== -->
+<section class="chapter" id="ch-3">
+    <div class="chapter-header">
+        <h2>产品功能</h2>
+        <span class="ch-sub">🛠️ 核心功能与使用场景</span>
+        <span class="ch-counter" id="counter-3">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="3">
+
+        <!-- Slide 1: 核心功能矩阵 -->
+        <div class="slide">
+            <div class="card">
+                <h3>核心功能矩阵</h3>
+                <div class="card-body">
+                    <p><strong>🗣️ 自然语言查询引擎：</strong> 用户用自然语言提问（如"比较2家公司的营收增长率"），Rogo自动理解意图，查询内外部数据，返回数据驱动的洞察。支持复杂多步推理和条件筛选。</p>
+                    <p><strong>🤖 Deep Research Agents：</strong> AI代理自主执行复杂工作流——尽职调查、行业报告撰写、财务模型构建。能进行工具调用、信息整合、逻辑判断和自我修正，模拟人类分析师的思维过程。</p>
+                    <p><strong>📊 自动报告与图表生成：</strong> 自动生成投资报告、PPT内容草稿、Excel财务模型，输出机构级质量，可直接用于演示或内部会议——大幅减少后期修改时间。</p>
+                    <p><strong>🔗 丰富数据集成：</strong> 支持CapIQ、Quartr、SEC文档、Bloomberg、FactSet、LSEG、PitchBook等20+金融数据源。与LSEG战略合作，集成其黄金标准金融内容。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: 高级功能与生态 -->
+        <div class="slide">
+            <div class="card">
+                <h3>高级功能与生态集成</h3>
+                <div class="card-body">
+                    <p><strong>📋 提示库（Prompt Library）：</strong> 预置专业编写的提示库，涵盖常见工作流（"生成行业分析框架"、"对比两家公司财务"等）。用户可直接使用或修改，大幅降低AI工具学习门槛。</p>
+                    <p><strong>🏢 企业级定制：</strong> Firm-Specific Workflows——根据不同金融机构的特定需求和偏好，提供个性化的分析流程和结果。确保深度融入客户的业务流程。</p>
+                    <p><strong>📱 插件生态：</strong> Rogo插件可嵌入Excel、PowerPoint等金融专业人士的日常工具，实现无缝集成。无需切换应用，直接在习惯的工作环境中使用AI能力。</p>
+                    <p><strong>🔐 企业级安全：</strong> SOC2、ISO27001、ISO/IEC 42001认证，符合欧盟AI法案。单租户部署选项，确保敏感金融数据的绝对隐私。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: 典型使用场景 -->
+        <div class="slide">
+            <div class="card">
+                <h3>典型使用场景</h3>
+                <div class="card-body">
+                    <div class="mode-boxes">
+                        <div class="mode-box">
+                            <div class="mode-title">🏦 投资银行</div>
+                            <div class="mode-desc">自动化尽职调查、先例交易查找、估值模型构建、交易报告生成。时间从数周压缩到数天。</div>
+                        </div>
+                        <div class="mode-box">
+                            <div class="mode-title">💼 私募股权（PE）</div>
+                            <div class="mode-desc">快速行业分析、竞争对手研究、投前评估、投后监控报告生成。提升投资决策效率。</div>
+                        </div>
+                        <div class="mode-box">
+                            <div class="mode-title">📈 资产管理</div>
+                            <div class="mode-desc">上市公司深度研究、行业趋势分析、投资组合优化分析、客户报告自动生成。增强投资策略支持。</div>
+                        </div>
+                    </div>
+                    <div class="callout"><strong>效率收益：</strong> 典型场景中，Rogo可将分析工作时间缩短50-80%，使分析师能专注于高价值的战略制定。</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="dots-bar" id="dots-3"></div>
+</section>
+
+<!-- ====== CH4: AI技术 ====== -->
+<section class="chapter" id="ch-4">
+    <div class="chapter-header">
+        <h2>AI技术</h2>
+        <span class="ch-sub">🤖 技术架构与创新</span>
+        <span class="ch-counter" id="counter-4">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="4">
+
+        <!-- Slide 1: 技术架构 -->
+        <div class="slide">
+            <div class="card">
+                <h3>AI-Native架构与金融推理模型</h3>
+                <div class="card-body">
+                    <p><strong>核心创新：金融推理模型（Financial Reasoning Model）</strong> —— 这不是简单调用通用LLM，而是通过使用专业标注的金融数据对LLMs进行深度微调（fine-tune），使其具备金融直觉。模型理解：</p>
+                    <ul style="margin: 12px 0 12px 20px; color: var(--text-2); font-size: 14px;">
+                        <li>不同会计准则对财务报表的影响</li>
+                        <li>宏观经济数据对特定行业的传导机制</li>
+                        <li>复杂的估值模型计算逻辑</li>
+                        <li>金融市场的周期性规律和异常信号</li>
+                    </ul>
+                    <p><strong>生态合作：</strong> 与OpenAI、Google Gemini、Anthropic合作，集成最新LLM能力。与Google Cloud结合，实现高效的基础设施支撑。</p>
+                    <p><strong>幻觉率突破：</strong> 通过Gemini 2.5 Flash的集成，将幻觉率从34.1%降低至3.9%——金融AI领域的最佳实践。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: 核心AI能力 -->
+        <div class="slide">
+            <div class="card">
+                <h3>核心AI能力详解</h3>
+                <div class="card-body">
+                    <p><strong>自然语言处理与意图识别：</strong> 准确理解金融专业人士的复杂查询意图，无论是"分析5年营收增长趋势"还是"找出与行业相关的最新监管变化"。NLP能力将非结构化文本（SEC文件、新闻）转化为可分析的数据。</p>
+                    <p><strong>多模态处理：</strong> 不仅处理文本，还能理解和生成图表、表格等多种格式。可根据用户指令自动生成专业标准的图表，嵌入PPT或Excel。</p>
+                    <p><strong>Deep Research Agents：</strong> 最高级的自动化能力。这些AI代理能自主执行复杂的金融工作流：</p>
+                    <ul style="margin: 12px 0 12px 20px; color: var(--text-2); font-size: 14px;">
+                        <li>进行多步骤的尽职调查</li>
+                        <li>跨网络抓取和合成数据</li>
+                        <li>生成完整的行业分析报告</li>
+                        <li>构建财务模型并推演场景</li>
+                    </ul>
+                    <p><strong>个性化推荐与定制：</strong> 根据不同金融机构的特定需求，提供定制化的工作流和分析结果。持续学习客户偏好，优化分析方向。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: 技术壁垒与风险 -->
+        <div class="slide">
+            <div class="card">
+                <h3>技术壁垒与风险管理</h3>
+                <div class="card-body">
+                    <p><strong>核心壁垒：</strong></p>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-value">定制化</div>
+                            <div class="metric-label">金融推理模型</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">专有</div>
+                            <div class="metric-label">金融标注数据</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">企业级</div>
+                            <div class="metric-label">安全认证</div>
+                        </div>
+                    </div>
+                    <p><strong>技术风险与应对：</strong> 虽然幻觉率已降至3.9%，但在金融领域即使极低的错误率也可能造成严重后果。Rogo持续投入研发并建立人工审核机制。同时密切关注全球AI监管动态（欧盟AI法案、美国各州规定等），确保产品始终符合最新合规要求。</p>
+                    <p><strong>数据隐私：</strong> 处理高度敏感的金融数据，需持续强化安全防护和定期审计。</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="dots-bar" id="dots-4"></div>
+</section>
+
+<!-- ====== CH5: 用户反馈 ====== -->
+<section class="chapter" id="ch-5">
+    <div class="chapter-header">
+        <h2>用户反馈</h2>
+        <span class="ch-sub">👥 市场验证与口碑</span>
+        <span class="ch-counter" id="counter-5">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="5">
+
+        <!-- Slide 1: 用户评价 -->
+        <div class="slide">
+            <div class="card">
+                <h3>核心用户评价与反馈</h3>
+                <div class="card-body">
+                    <p><strong>🌟 广泛赞誉：</strong></p>
+                    <div class="callout"><strong>生产力提升：</strong> 用户普遍反映，Rogo将原本数小时甚至数天的分析工作压缩到分钟级别。分析师得以从重复性工作解放，专注高价值战略制定。</div>
+                    <div class="callout"><strong>输出质量：</strong> 生成的报告、PPT、Excel模型被认为具有机构级质量，可直接用于客户演示或内部会议，极大减少后期修改。</div>
+                    <div class="callout"><strong>易用性：</strong> 自然语言交互界面使非技术背景的金融专业人士快速上手，降低AI工具学习门槛。</div>
+                    <p><strong>⚠️ 理性声音：</strong></p>
+                    <p>定价高：定制化定价对中小机构可能偏高，限制更广泛市场渗透。幻觉风险：虽已大幅降低，但复杂或模糊查询仍需人工核查。功能完善度：部分高度定制化任务还需进一步完善。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: 用户画像与使用场景 -->
+        <div class="slide">
+            <div class="card">
+                <h3>用户画像与高频使用场景</h3>
+                <div class="card-body">
+                    <p><strong>典型用户群体：</strong></p>
+                    <ul style="margin: 12px 0 12px 20px; color: var(--text-2); font-size: 14px;">
+                        <li><strong>年龄/职业：</strong> 25-55岁投资银行家、PE基金经理、资产管理分析师，通常持有MBA或CFA资质</li>
+                        <li><strong>痛点：</strong> 海量数据处理、复杂分析模型构建、尽职调查耗时、报告撰写繁琐、信息过载</li>
+                        <li><strong>期望：</strong> 追求效率、准确性、专业性和安全性，需要可审计且能与现有工作流无缝集成的工具</li>
+                    </ul>
+                    <p><strong>高频使用场景：</strong></p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>场景</th>
+                                <th>投入时间</th>
+                                <th>时间节省</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>先例交易分析</td>
+                                <td>数小时→几分钟</td>
+                                <td>85%+</td>
+                            </tr>
+                            <tr>
+                                <td>行业报告生成</td>
+                                <td>1-2天→1小时</td>
+                                <td>90%+</td>
+                            </tr>
+                            <tr>
+                                <td>财务模型构建</td>
+                                <td>数小时→半小时</td>
+                                <td>80%+</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: 口碑与市场认可 -->
+        <div class="slide">
+            <div class="card">
+                <h3>口碑与市场认可度</h3>
+                <div class="card-body">
+                    <p><strong>🏆 客户背书：</strong> Moelis、Nomura、Tiger Global等华尔街头部机构的采用，是最强的品牌资产。这些顶级机构的选择直接说明了Rogo的产品价值和市场认可度。</p>
+                    <p><strong>📰 媒体报道：</strong> Bloomberg、Financial Times等权威财经媒体对Rogo的融资和业务发展的持续关注，进一步提升了其品牌知名度。</p>
+                    <p><strong>🌐 社区评价：</strong> 在Futurepedia、ProductHunt等工具平台上获得4.5+的综合评分，说明产品的整体满意度相当高。</p>
+                    <div class="callout"><strong>市场评分（1-5分）：</strong> <br/>
+                    • 产品易用性：4.5/5 <br/>
+                    • 生产力提升：4.8/5 <br/>
+                    • 输出质量：4.6/5 <br/>
+                    • 可靠性：4.2/5（幻觉风险仍存）<br/>
+                    • 综合评分：4.5/5</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="dots-bar" id="dots-5"></div>
+</section>
+
+<!-- ====== CH6: 核心启示 ====== -->
+<section class="chapter" id="ch-6">
+    <div class="chapter-header">
+        <h2>核心启示</h2>
+        <span class="ch-sub">💡 从Rogo学到的关键经验</span>
+        <span class="ch-counter" id="counter-6">1 / 5</span>
+    </div>
+    <div class="card-track" data-ch="6">
+
+        <!-- Slide 1 -->
+        <div class="slide">
+            <div class="insight-card">
+                <div class="insight-emoji">🎯</div>
+                <h3>金融AI需要深度定制化</h3>
+                <div class="card-body">
+                    <p>Rogo的成功证明了单纯的通用AI模型无法满足金融领域的专业需求。关键在于将领域知识与AI能力深度融合：构建金融推理模型、获得专业标注数据、实现金融领域深度优化。</p>
+                    <p>这个经验对其他行业也适用：医疗、法律、工程等专业领域的AI应用，都需要相似的"垂直化定制"思路，而不是简单地套用通用AI。</p>
+                    <div class="insight-highlight">AI赋能的关键不在于模型大小，而在于对domain knowledge的深度融合。</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2 -->
+        <div class="slide">
+            <div class="insight-card">
+                <div class="insight-emoji">⚙️</div>
+                <h3>工作流自动化是AI的终极价值</h3>
+                <div class="card-body">
+                    <p>从简单的数据查询到复杂的Deep Research Agents，Rogo通过自动化金融专业人士的核心工作流，获得了华尔街精英机构的信任。证明了端到端自动化能力，而非单点功能，才是AI的终极价值主张。</p>
+                    <p>这改变了AI应用的思维方式：不是"AI能做什么"，而是"AI能如何重构用户的核心工作流"。</p>
+                    <div class="insight-highlight">端到端的工作流自动化，比孤立的功能点更能创造10倍的价值。</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3 -->
+        <div class="slide">
+            <div class="insight-card">
+                <div class="insight-emoji">🔒</div>
+                <h3>安全和合规是高端市场的入场券</h3>
+                <div class="card-body">
+                    <p>Rogo在SOC2、ISO27001、ISO/IEC 42001和欧盟AI法案合规方面的投入，成为其在高端金融市场难以逾越的信任壁垒。对于处理敏感数据的企业级SaaS，安全和合规不是"加分项"而是"生存条件"。</p>
+                    <p>这启示所有ToB企业级产品：合规投入的ROI不是直接的产品功能，而是市场进入和客户信任的基础。</p>
+                    <div class="insight-highlight">在金融、医疗等regulated industries，安全和合规认证本身就是产品卖点。</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4 -->
+        <div class="slide">
+            <div class="insight-card">
+                <div class="insight-emoji">🤝</div>
+                <h3>生态合作放大AI的价值</h3>
+                <div class="card-body">
+                    <p>Rogo与OpenAI、Google、LSEG等巨头的战略合作，使其能快速获得最先进的AI能力和最完整的金融数据生态。在AI时代，单点创新不如生态联动来得高效。</p>
+                    <p>这改变了创新的游戏规则：不是"自己研发所有东西"，而是"在开放生态中快速集成最优方案"。</p>
+                    <div class="insight-highlight">AI时代的成功者，是能有效"站在巨人肩膀上"的公司。</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5 -->
+        <div class="slide">
+            <div class="insight-card">
+                <div class="insight-emoji">⭐</div>
+                <h3>顶级客户背书的ROI被严重低估</h3>
+                <div class="card-body">
+                    <p>Moelis、Nomura、Tiger Global等华尔街顶级机构的采用，为Rogo带来了无法估量的品牌价值和市场口碑。这使其CAC相对低廉，获客渠道高效。</p>
+                    <p>对于ToB企业级产品，建立行业标杆客户的优先级应该远高于传统营销。一个顶级客户背书的价值，等于1000次营销推送。</p>
+                    <div class="insight-highlight">在B端高端市场，1个标杆客户>1000条广告。品牌建设的关键是客户案例，而非公关稿。</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="dots-bar" id="dots-6"></div>
+</section>
+
+<!-- ====== CH7: 近期要闻 ====== -->
+<section class="chapter" id="ch-7">
+    <div class="chapter-header">
+        <h2>近期要闻</h2>
+        <span class="ch-sub">📰 2025-2026年关键新闻</span>
+        <span class="ch-counter" id="counter-7">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="7">
+
+        <!-- Slide 1: 2025年关键动态 -->
+        <div class="slide">
+            <div class="card">
+                <h3>2025年产品与合作突破</h3>
+                <div class="card-body">
+                    <div class="news-item">
+                        <div class="news-date">2025年10月</div>
+                        <div class="news-title">
+                            <a href="https://openai.com/index/rogo/" target="_blank">Rogo与OpenAI宣布战略合作</a>
+                        </div>
+                        <div class="news-desc">推出Deep Research Agents，集成OpenAI o1的深度研究能力。Rogo能够跨网络抓取和合成数据，提供完整的推理过程和来源，大幅提升分析的效率和质量。</div>
+                    </div>
+                    <div class="news-item">
+                        <div class="news-date">2025年9月</div>
+                        <div class="news-title">
+                            <a href="https://rogo.ai" target="_blank">Rogo发布新版本功能迭代</a>
+                        </div>
+                        <div class="news-desc">推出Gemini 3集成，支持Dark Mode。继续增强平台的多模态能力和用户体验。</div>
+                    </div>
+                    <div class="callout"><strong>意义：</strong> 与OpenAI的合作标志着Rogo已成为LLM厂商认可的金融领域最佳实践者，双方在AI技术前沿的深度合作。</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: 2026年融资与收购 -->
+        <div class="slide">
+            <div class="card">
+                <h3>2026年融资与战略收购</h3>
+                <div class="card-body">
+                    <div class="news-item">
+                        <div class="news-date">2026年1月</div>
+                        <div class="news-title">
+                            <a href="https://fintech.global/2026/01/28" target="_blank">Rogo完成C轮融资$7500万</a>
+                        </div>
+                        <div class="news-desc">由Sequoia Capital领投，估值达$7.5亿。融资用于扩展产品能力、加强国际市场拓展。融资总额已达$12.35亿。</div>
+                    </div>
+                    <div class="news-item">
+                        <div class="news-date">2026年1月中旬</div>
+                        <div class="news-title">
+                            <a href="https://cloud.google.com" target="_blank">Rogo幻觉率突破性降低</a>
+                        </div>
+                        <div class="news-desc">通过Google Gemini 2.5 Flash集成，Rogo的幻觉率从34.1%显著降低至3.9%，成为金融AI领域的新标杆。这是可靠性的重大突破。</div>
+                    </div>
+                    <div class="news-item">
+                        <div class="news-date">2026年3月13日</div>
+                        <div class="news-title">
+                            <a href="https://pipelineroad.com/news/20260313-rogo-acquires-offset" target="_blank">Rogo收购AI代理公司Offset</a>
+                        </div>
+                        <div class="news-desc">收购Offset以整合其AI代理能力，特别是在金融模型和财务建模中的优势。Offset创始人Raj Khare和Shiv Shrivastava将加入Rogo领导团队，强化AI代理研发能力。</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: 发展前景与市场机会 -->
+        <div class="slide">
+            <div class="card">
+                <h3>发展前景与市场机会</h3>
+                <div class="card-body">
+                    <p><strong>短期展望（2026-2027）：</strong></p>
+                    <ul style="margin: 12px 0 12px 20px; color: var(--text-2); font-size: 14px;">
+                        <li>继续扩大客户数量，从25+机构向50+甚至100+目标推进</li>
+                        <li>国际化扩展（欧洲、亚洲市场）</li>
+                        <li>产品功能持续迭代，深化AI代理能力</li>
+                        <li>ARR增长有望达$50-100百万+</li>
+                    </ul>
+                    <p><strong>中期目标（2027-2028）：</strong></p>
+                    <ul style="margin: 12px 0 12px 20px; color: var(--text-2); font-size: 14px;">
+                        <li>IPO上市（目标融资$5-10亿），地点可能是伦敦或纽约</li>
+                        <li>市值可能突破$100亿+（基于10-15x ARR倍数）</li>
+                        <li>向更广泛的金融服务领域（保险、基金销售等）扩展</li>
+                    </ul>
+                    <div class="callout"><strong>市场机会规模：</strong> 全球有超100万名金融分析师、基金经理等专业人士，仅美国就有数十万。Rogo当前25+客户仅触及市场冰山一角，增长空间巨大。</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="dots-bar" id="dots-7"></div>
+</section>
+
+</main>
+
+<script>
+    const sections = document.querySelectorAll('.chapter, .cover');
+    const navBtns = document.querySelectorAll('.nav-btn');
+    const main = document.getElementById('main');
+
+    function go(index) {
+        const target = sections[index];
+        target.scrollIntoView({ behavior: 'smooth' });
+        updateNav(index);
+    }
+
+    function updateNav(index) {
+        navBtns.forEach((btn, i) => {
+            btn.classList.toggle('active', i === index);
+        });
+    }
+
+    main.addEventListener('scroll', () => {
+        let current = 0;
+        sections.forEach((section, index) => {
+            if (section.offsetTop <= main.scrollTop + 100) {
+                current = index;
+            }
+        });
+        updateNav(current);
+    });
+
+    // Horizontal scroll within chapters
+    document.querySelectorAll('.card-track').forEach(track => {
+        track.addEventListener('scroll', () => {
+            const chapterIndex = parseInt(track.dataset.ch);
+            const slides = track.querySelectorAll('.slide');
+            const dotsBar = document.getElementById(`dots-${chapterIndex}`);
+            const counter = document.getElementById(`counter-${chapterIndex}`);
+
+            if (!dotsBar) return;
+
+            dotsBar.innerHTML = '';
+            slides.forEach((slide, i) => {
+                const dot = document.createElement('button');
+                dot.className = 'dot';
+                dot.onclick = () => {
+                    slide.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+                };
+                dotsBar.appendChild(dot);
+            });
+
+            const currentSlide = Math.round(track.scrollLeft / track.offsetWidth);
+            const dots = dotsBar.querySelectorAll('.dot');
+            dots.forEach((dot, i) => {
+                dot.classList.toggle('active', i === currentSlide);
+            });
+
+            if (counter) {
+                counter.textContent = `${currentSlide + 1} / ${slides.length}`;
+            }
+        });
+
+        track.dispatchEvent(new Event('scroll'));
+    });
+
+    // Number animation on cover
+    document.querySelectorAll('.stat-number[data-count]').forEach(el => {
+        const target = parseInt(el.getAttribute('data-count'));
+        const prefix = el.getAttribute('data-prefix') || '';
+        const suffix = el.getAttribute('data-suffix') || '';
+        let current = 0;
+        const increment = Math.ceil(target / 50);
+        const interval = setInterval(() => {
+            current = Math.min(current + increment, target);
+            el.textContent = prefix + current + suffix;
+            if (current >= target) clearInterval(interval);
+        }, 20);
+    });
+</script>
+
+</body>
+</html>

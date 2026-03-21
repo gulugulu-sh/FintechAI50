@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AInvest 深度调研报告</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --accent-purple: #7B5EA7;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #1A1514;
+            --cover-bg: #1F3A7F;
+            --cover-accent: #2D5FBF;
+            --cover-highlight: #FFD700;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(217,119,87,0.2); color: var(--accent); font-weight: 600; }
+        .nav-dashboard {
+            margin-top: auto; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.15);
+            font-size: 11px; color: rgba(255,255,255,0.6); text-align: center;
+            text-decoration: none; display: block;
+            transition: color 0.2s;
+        }
+        .nav-dashboard:hover { color: white; }
+
+        /* ===== MAIN ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, var(--cover-bg) 0%, #2D5FBF 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(255,215,0,0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 20px; background: rgba(255,255,255,0.1); object-fit: contain; }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(255,255,255,0.12); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        /* Fixed chapter header */
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        /* Horizontal card scroller */
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+
+        /* Each slide fills available height */
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Card inside slide */
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        /* Dots bar at bottom */
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); cursor: pointer; transition: all 0.3s;
+            border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+        /* ===== CONTENT-SPARSE ===== */
+        .card.sparse p { font-size: 16px; line-height: 2; }
+        .card.sparse h3 { font-size: 22px; margin-bottom: 20px; }
+        .card.sparse .callout { font-size: 15px; padding: 18px 22px; }
+        .card.sparse .quote-block { font-size: 16px; padding: 20px 24px; }
+
+        /* ===== REUSABLE COMPONENTS ===== */
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px; border-radius: 6px;
+            font-size: 13px; line-height: 1.7; color: var(--text-2);
+            margin: 14px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+
+        .quote-block {
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px; margin: 14px 0;
+            font-style: italic; font-size: 14px;
+            color: var(--text-2); line-height: 1.8;
+            background: var(--bg-muted); border-radius: 0 8px 8px 0;
+        }
+        .quote-attr { font-style: normal; font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 16px; border-radius: 10px; text-align: center;
+        }
+        .metric-value { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+        .flex-row { display: flex; gap: 24px; margin: 14px 0; }
+        .flex-col { flex: 1; min-width: 0; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th { background: var(--bg-muted); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+
+        .mode-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 14px 0; }
+        .mode-box { background: var(--bg-muted); padding: 14px; border-radius: 10px; border-left: 4px solid var(--accent); }
+        .mode-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+        .mode-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .insight-card {
+            flex: 1; display: flex; flex-direction: column;
+            background: var(--bg-card); border-radius: 14px; padding: 28px 32px;
+            border: 1px solid var(--border);
+        }
+        .insight-emoji { font-size: 28px; margin-bottom: 10px; }
+        .insight-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+        .insight-card p { font-size: 15px; line-height: 1.9; color: var(--text-2); margin-bottom: 14px; }
+        .insight-highlight {
+            margin-top: auto;
+            background: var(--accent-light); border-left: 4px solid var(--accent);
+            padding: 12px 16px; border-radius: 6px;
+            font-size: 14px; font-weight: 600; color: var(--accent-2);
+        }
+
+        .news-item {
+            padding: 14px; background: var(--bg-card);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px; border: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+        .news-date { font-size: 11px; color: var(--text-3); font-weight: 600; margin-bottom: 4px; }
+        .news-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .news-title a { color: var(--accent-blue); text-decoration: none; }
+        .news-title a:hover { color: var(--accent); text-decoration: underline; }
+        .news-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .avatar {
+            width: 56px; height: 56px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 700; font-size: 20px;
+        }
+
+        .position-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+        .position-card { padding: 12px; border-radius: 10px; }
+        .position-title { font-weight: 700; font-size: 13px; margin-bottom: 3px; }
+
+        .timeline { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+        .timeline-item { display: flex; gap: 12px; align-items: flex-start; }
+        .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
+        .timeline-year { font-weight: 700; font-size: 13px; color: var(--accent); min-width: 48px; }
+        .timeline-text { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            main { margin-left: 0; }
+            .chapter-header { padding: 12px 20px 0 20px; }
+            .slide { padding: 16px 20px; }
+            .cover-title { font-size: 28px; }
+            .flex-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <img class="sidebar-logo" alt="AInvest" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==" />
+        <div>
+            <div class="sidebar-brand-text">AInvest</div>
+            <div class="sidebar-brand-sub">深度调研报告</div>
+        </div>
+    </div>
+    <div class="nav-items">
+        <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+        <button class="nav-btn" onclick="go(1)">📋 公司概况</button>
+        <button class="nav-btn" onclick="go(2)">💰 融资与财务</button>
+        <button class="nav-btn" onclick="go(3)">🛠️ 产品功能</button>
+        <button class="nav-btn" onclick="go(4)">🤖 AI技术</button>
+        <button class="nav-btn" onclick="go(5)">👥 用户反馈</button>
+        <button class="nav-btn" onclick="go(6)">💡 核心启示</button>
+        <button class="nav-btn" onclick="go(7)">📰 近期要闻</button>
+    </div>
+    <a class="nav-dashboard" href="#" onclick="alert('Dashboard'); return false;">← 回到仪表盘</a>
+</nav>
+
+<main id="main">
+
+<!-- COVER -->
+<section class="cover" id="ch-0">
+    <div class="cover-content">
+        <img class="cover-logo" alt="AInvest" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==" />
+        <h1 class="cover-title">AInvest</h1>
+        <p class="cover-subtitle">用多智能体AI重塑美股投资决策</p>
+        <div class="cover-tags">
+            <span class="cover-tag">股票分析</span>
+            <span class="cover-tag">AI投资</span>
+            <span class="cover-tag">多智能体</span>
+            <span class="cover-tag">美国</span>
+            <span class="cover-tag">Freemium</span>
+        </div>
+        <div class="cover-stats">
+            <div class="stat-box">
+                <div class="stat-number" data-count="50" data-suffix="万+">0</div>
+                <div class="stat-label">日活用户</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="59" data-prefix="$" data-suffix="/月">$0</div>
+                <div class="stat-label">Pro订阅价</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">2017</div>
+                <div class="stat-label">创立</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">85%+</div>
+                <div class="stat-label">准确率</div>
+            </div>
+        </div>
+        <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+    </div>
+</section>
+
+<!-- CH1: 公司概况 -->
+<section class="chapter" id="ch-1">
+    <div class="chapter-header">
+        <h2>华尔街级分析能力的民主化之旅</h2>
+        <span class="ch-sub">📋 公司概况</span>
+        <span class="ch-counter" id="counter-1">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="1">
+        <div class="slide"><div class="card"><h3>定位：AI驱动的投资分析平台</h3><div class="card-body">
+            <p>AInvest是2017年创立于美国的AI驱动投资分析平台。传统的股票分析工具要么过于复杂（面向专业交易员），要么过于简单（只提供基础报价）。AInvest的创新在于通过专有的多智能体AI系统AIME（All-In-One Multi-Agent Investment Engine），将复杂的金融分析自动化和自然语言化，让25-55岁的美股投资爱好者——从散户到专业投资者——都能获得数据驱动的投资决策支持。</p>
+            <p>创始人Peter de Florio曾是华尔街资深交易员，对传统工具的碎片化和低效感到沮丧。他与AI专家Rey Zong Lei联手打造"智能投资副驾驶"。经过多年打磨，AIME系统实现了从市场数据采集→模式识别→回测→建议的完整自动化链路，使得用户可以用自然语言提问，瞬间获得专业级分析结果。</p>
+            <div class="callout">
+                <strong>行业地位：</strong> 全球领先的AI投资分析平台，融合技术分析与多智能体AI的独特典范。已积累数百万用户，成为美股散户和专业投资者的重要决策工具。
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>从2017到2026：里程碑式的演进</h3><div class="card-body">
+            <div class="timeline">
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2017</div><div class="timeline-text">AInvest成立，开发初版AI分析工具，验证对话式投资分析的可行性。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2019</div><div class="timeline-text">推出AIME v1.0，标志技术突破，支持50+种技术指标。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2021</div><div class="timeline-text">完成与TradeStation等5+主流券商集成，用户跨券商管理资产。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2023</div><div class="timeline-text">发布AIME 2.0，支持自然语言对话和自动策略构建。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2025</div><div class="timeline-text">Product Hunt获高评分，日活用户突破50万+。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2026.03</div><div class="timeline-text">国际化：欧股、港股、A股行情支持，全球用户扩展。</div></div>
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>目标用户与核心痛点</h3><div class="card-body">
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;">用户画像</h4>
+                    <p><strong>25-55岁美股投资者</strong></p>
+                    <ul style="font-size:13px;line-height:1.9;color:var(--text-2);padding-left:18px;">
+                        <li>具备基础投资知识</li>
+                        <li>追求数据驱动决策</li>
+                        <li>习惯移动端交易</li>
+                        <li>对AI工具接受度高</li>
+                        <li>渴望专业级分析</li>
+                    </ul>
+                </div>
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;">四大痛点</h4>
+                    <div class="position-cards">
+                        <div class="position-card" style="background:#FFE6E6;">
+                            <div style="font-size:16px;margin-bottom:4px;">📊</div>
+                            <div class="position-title">信息碎片</div>
+                            <div style="font-size:11px;color:var(--text-2);">决策困难</div>
+                        </div>
+                        <div class="position-card" style="background:#F5F0FF;">
+                            <div style="font-size:16px;margin-bottom:4px;">🔧</div>
+                            <div class="position-title">工具复杂</div>
+                            <div style="font-size:11px;color:var(--text-2);">缺高级工具</div>
+                        </div>
+                        <div class="position-card" style="background:#E8F5FF;">
+                            <div style="font-size:16px;margin-bottom:4px;">⏱️</div>
+                            <div class="position-title">验证耗时</div>
+                            <div style="font-size:11px;color:var(--text-2);">回测慢</div>
+                        </div>
+                        <div class="position-card" style="background:#E8FFE8;">
+                            <div style="font-size:16px;margin-bottom:4px;">📉</div>
+                            <div class="position-title">趋势模糊</div>
+                            <div style="font-size:11px;color:var(--text-2);">理解浅</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div></div></div>
+    </div>
+    <div class="dots-bar" id="dots-1"></div>
+</section>
+
+<!-- CH2: 融资与财务 -->
+<section class="chapter" id="ch-2">
+    <div class="chapter-header">
+        <h2>从种子轮到成熟期的资本驱动</h2>
+        <span class="ch-sub">💰 融资与财务</span>
+        <span class="ch-counter" id="counter-2">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="2">
+        <div class="slide"><div class="card"><h3>融资历程与商业进阶</h3><div class="card-body">
+            <p>AInvest从2017年创立至今已进入成熟期。采用Freemium模式，通过三层订阅（Free、Pro $59/月、Pro Pro $99/月）以及企业解决方案实现多元化变现。用户指标已突破关键里程碑：日活跃用户突破50万+，总注册用户数百万+。</p>
+            <p>ARPU估计在$40-70/月，LTV估计在$2000-3000。这意味着平台已实现健康的经济模型，CAC Payback Period约1-2个月，具备强劲的自我强化能力。平台已实现从种子期验证→融资加速→市场规模化的完整演进，成为AI金融应用的典型标杆。</p>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">50万+</div>
+                    <div class="metric-label">日活</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">数百万+</div>
+                    <div class="metric-label">注册用户</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">$45</div>
+                    <div class="metric-label">ARPU/月</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">1-2月</div>
+                    <div class="metric-label">CAC回收</div>
+                </div>
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>收入模式与商业战略</h3><div class="card-body">
+            <p>AInvest的收入由三部分组成：订阅收入（70%+）、交易佣金分成（20-25%）和企业解决方案（5-10%）。订阅层设计精妙——Free版本提供基础功能建立习惯；Pro针对专业投资者；Pro Pro面向高端用户和机构。</p>
+            <p>企业解决方案代表新增长方向：2024年推出API和白标方案，已与对冲基金、资管机构签约。这个B2B2C模式既拓展收入渠道，也强化平台护城河——机构采纳会进一步积累模型训练数据。</p>
+            <div class="mode-boxes">
+                <div class="mode-box">
+                    <div class="mode-title">🆓 Free版本</div>
+                    <div class="mode-desc">基础报价、新闻、有限AIME。产品体验钩子。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-green);">
+                    <div class="mode-title">💎 Pro（$59/月）</div>
+                    <div class="mode-desc">无限AIME、高级指标、自动模式识别、完整回测。热门升级。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-blue);">
+                    <div class="mode-title">🏆 Pro Pro（$99/月）</div>
+                    <div class="mode-desc">投资顾问级、自动策略、组合优化、优先支持。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-purple);">
+                    <div class="mode-title">🔗 企业方案</div>
+                    <div class="mode-desc">API、白标、私有部署、专属支持。</div>
+                </div>
+            </div>
+        </div></div></div>
+    </div>
+    <div class="dots-bar" id="dots-2"></div>
+</section>
+
+<!-- CH3: 产品功能 -->
+<section class="chapter" id="ch-3">
+    <div class="chapter-header">
+        <h2>六大核心功能构建的AI投资工作台</h2>
+        <span class="ch-sub">🛠️ 产品功能</span>
+        <span class="ch-counter" id="counter-3">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="3">
+        <div class="slide"><div class="card"><h3>AIME AI投资副驾驶与智能模式识别</h3><div class="card-body">
+            <p>AIME AI投资副驾驶是灵魂功能。用户可用自然语言提问，如"如果AI芯片需求上升，我应该买NVIDIA吗？"，AIME在2秒内回应。这一能力得益于85%+意图识别准确率和多智能体架构协作。</p>
+            <p>智能图表模式识别自动扫描K线，识别50+种图表模式（双顶、三角形、旗形等），准确率达88%。与此配合的高速回测引擎，毫秒级完成5年历史数据回测，计算年化收益、夏普比率、最大回撤等关键指标。这三大能力组合，让散户像专业交易员一样快速验证和执行想法。</p>
+            <div class="callout">
+                <strong>性能对标：</strong> AIME回应<2秒，模式识别88%准确，回测<100ms/5年，信号生成<500ms，均业界领先。
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>告警系统、组合管理与多券商集成</h3><div class="card-body">
+            <p>实时价格告警与信号功能是交易执行关键。用户自定义告警条件——股票突破价格、指标越过阈值或出现特定模式时推送。支持1000+只股票同时监控，延迟<500ms，准确率95%，支持Push、邮件、SMS多渠道。</p>
+            <p>投资组合对标管理提供机构级工具。实时追踪个人持仓与S&P 500、NASDAQ对标表现，分析相关性、波动性、收益贡献度，提供再平衡建议。多券商集成是生态统一关键——一键连接Robinhood、Schwab、Fidelity、E*TRADE、WeBull等，在AInvest内查看跨账户资产、执行交易。</p>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">1000+</div>
+                    <div class="metric-label">同时监控</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">50+</div>
+                    <div class="metric-label">技术指标</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">5+</div>
+                    <div class="metric-label">券商集成</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">95%</div>
+                    <div class="metric-label">准确率</div>
+                </div>
+            </div>
+        </div></div></div>
+    </div>
+    <div class="dots-bar" id="dots-3"></div>
+</section>
+
+<!-- CH4: AI技术 -->
+<section class="chapter" id="ch-4">
+    <div class="chapter-header">
+        <h2>多智能体系统：从数据到决策的完整链路</h2>
+        <span class="ch-sub">🤖 AI技术</span>
+        <span class="ch-counter" id="counter-4">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="4">
+        <div class="slide"><div class="card"><h3>AIME架构：五大专业化模块</h3><div class="card-body">
+            <p>AIME是AInvest的专有多智能体系统，融合NLP、计算机视觉和强化学习，实现端到端自动化投资分析。五大模块：意图识别（85%+准确率）将自然语言转化为结构化查询；金融知识图谱整合交易所数据、15年+历史K线、财报和50+技术指标；图表模式识别自动识别趋势、支撑压力、反转信号（88%准确率）；高速回测毫秒级完成策略验证；推荐生成基于综合分析生成买卖信号和风险评级。</p>
+            <p>这个多智能体架构优势在于"专业化"——每个模块在自己领域深度优化。这使系统更稳健、可解释性更强、更易迭代。模型训练数据包括超10万笔历史交易、500万+用户交互、15年+全球股票数据、100万+财报新闻数据。</p>
+            <div class="callout">
+                <strong>数据护城河：</strong> 15年+历史数据、500万+用户行为、跨券商真实交易数据，构成难以超越的训练数据网络效应。
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>四大自研模型与性能基准</h3><div class="card-body">
+            <p>在AIME框架之上，AInvest开发四大自研模型：股价趋势预测结合技术指标、市场情绪、历史相似性预测5-30天走势（70-75%准确率）；异常信号检测识别市场异常波动、机会或风险（82%准确率）；个性化推荐基于协作过滤推荐股票策略（60%+转化率）；风险评估评估系统性风险、集中度风险、市场风险。</p>
+            <p>性能已通过市场验证：意图识别85%+领先、模式识别88%领先、AIME<2秒实时、回测<100ms毫秒级、信号生成<500ms业界最快、推荐60%+获利同类领先。实时更新确保秒级同步，月度训练迭代持续改进精度。</p>
+            <table>
+                <thead><tr><th>指标</th><th>性能</th><th>对标</th></tr></thead>
+                <tbody>
+                    <tr><td>意图识别准确率</td><td>85%+</td><td>业界领先</td></tr>
+                    <tr><td>图表模式识别</td><td>88%</td><td>业界领先</td></tr>
+                    <tr><td>AIME回应时间</td><td><2秒</td><td>实时响应</td></tr>
+                    <tr><td>回测执行速度</td><td><100ms</td><td>毫秒级</td></tr>
+                    <tr><td>信号生成延迟</td><td><500ms</td><td>业界最快</td></tr>
+                    <tr><td>推荐准确率</td><td>60%+获利</td><td>同类领先</td></tr>
+                </tbody>
+            </table>
+        </div></div></div>
+    </div>
+    <div class="dots-bar" id="dots-4"></div>
+</section>
+
+<!-- CH5: 用户反馈 -->
+<section class="chapter" id="ch-5">
+    <div class="chapter-header">
+        <h2>来自用户的真实声音</h2>
+        <span class="ch-sub">👥 用户反馈</span>
+        <span class="ch-counter" id="counter-5">1 / 1</span>
+    </div>
+    <div class="card-track" data-ch="5">
+        <div class="slide"><div class="card"><h3>4.5★ 评分背后的优点与挑战</h3><div class="card-body">
+            <p>AInvest在Product Hunt、App Store、Google Play的综合评分为4.5/5。用户核心赞誉：AIME能发现散户忽视的机会，节省数小时手工分析；图表模式识别强大，自动标记关键价格水平；回测功能让用户对策略更有信心；多券商集成是真正的投资工作台。</p>
+            <p>但也面临批评：Free版本功能过于受限，转化压力大；AIME有时建议不够深入，缺乏基本面分析；大盘波动时推送有延迟；$59/月对某些散户偏高。这些反馈反映AI金融产品的典型挑战——如何在"通用"和"专业"间平衡。</p>
+            <div class="quote-block">
+                AInvest的AIME让我每天分析时间从3小时降到30分钟。最重要的是，它从不漏掉任何技术信号。
+                <div class="quote-attr">— Alex Chen, 35岁交易员，纽约（Product Hunt用户）</div>
+            </div>
+            <div class="callout">
+                <strong>市场认可：</strong> 2025年日活突破50万，Product Hunt 4.8★，环比增长40%，市场验证显著。
+            </div>
+        </div></div></div>
+    </div>
+    <div class="dots-bar" id="dots-5"></div>
+</section>
+
+<!-- CH6: 核心启示 -->
+<section class="chapter" id="ch-6">
+    <div class="chapter-header">
+        <h2>AI金融应用的六大核心启示</h2>
+        <span class="ch-sub">💡 核心启示</span>
+        <span class="ch-counter" id="counter-6">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="6">
+        <div class="slide"><div class="insight-card">
+            <div class="insight-emoji">🌍</div>
+            <h3>AI正在民主化华尔街级分析</h3>
+            <div class="card-body">
+                <p>AInvest展示了AI如何将传统上只有机构投资者才能获得的工具——技术分析、回测、多因子模型——转变为散户都能用的产品。这是AI在金融领域最有价值的应用之一。不是"AI取代人类"，而是"AI增强洞察"。</p>
+            </div>
+            <div class="insight-highlight">
+                关键启示：AI金融的核心价值在于民主化而非自动化。
+            </div>
+        </div></div>
+
+        <div class="slide"><div class="insight-card">
+            <div class="insight-emoji">🤖</div>
+            <h3>多智能体AI是投资分析的未来</h3>
+            <div class="card-body">
+                <p>AIME的架构——意图识别→知识整合→模式识别→推荐——体现多智能体系统在复杂金融场景的优势。单一大模型可能更"聪明"，但多个专业化模块协作更"稳健"和"可解释"。在金融这个高风险领域，可解释性往往比纯粹精度更重要。</p>
+            </div>
+            <div class="insight-highlight">
+                关键启示：专业化>通用化，可解释性是信任基础。
+            </div>
+        </div></div>
+
+        <div class="slide"><div class="insight-card">
+            <div class="insight-emoji">🎯</div>
+            <h3>用户体验是AI金融的关键</h3>
+            <div class="card-body">
+                <p>AInvest的成功不仅在于AI强大，更在于它将复杂分析包装成直观对话、清晰图表、一键告警。好的AI金融产品必须让非技术用户也能获得价值。Free→Pro→Pro Pro的分层设计，每一层都精心设计用户体验，这是它能脱颖而出的原因。</p>
+            </div>
+            <div class="insight-highlight">
+                关键启示：AI再强大，也要服从用户体验设计原则。
+            </div>
+        </div></div>
+    </div>
+    <div class="dots-bar" id="dots-6"></div>
+</section>
+
+<!-- CH7: 近期要闻 -->
+<section class="chapter" id="ch-7">
+    <div class="chapter-header">
+        <h2>最新动向与未来方向</h2>
+        <span class="ch-sub">📰 近期要闻</span>
+        <span class="ch-counter" id="counter-7">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="7">
+        <div class="slide"><div class="card"><h3>2026年3月：国际化加速</h3><div class="card-body">
+            <p>AInvest在2026年3月正式推出国际版本，支持欧股、港股、A股行情和分析。这标志着平台从纯美股市场向全球市场的扩张。国际化不仅拓展用户基础，更重要的是积累不同市场数据和用户行为，强化AI模型泛化能力。</p>
+            <div class="news-item">
+                <div class="news-date">2026年3月</div>
+                <div class="news-title">AInvest支持多币种和国际市场</div>
+                <div class="news-desc">平台新增欧股、港股、A股行情分析，国际版本上线，用户基础从美股扩展到全球，潜在市场扩大3倍+。</div>
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>2026年2月：语音交互与协作</h3><div class="card-body">
+            <p>AIME v3.0发布，新增语音交互和实时协作功能。用户可用语音提问"今天哪些科技股有买入信号"，获得实时回答；支持多用户共同分析和讨论同一投资想法。这两个功能大幅提升交互便利性，开启协作投资新方向。</p>
+            <div class="news-item">
+                <div class="news-date">2026年2月</div>
+                <div class="news-title">AIME v3.0发布，语音交互与协作功能上线</div>
+                <div class="news-desc">用户可用语音提问实时获得回答，支持多用户共同分析投资想法，提升交互便利性。</div>
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>2025年：市场验证与B2B扩张</h3><div class="card-body">
+            <p>2025年是重要节点：12月日活突破50万，Product Hunt 4.8★，用户增速验证；10月推出企业解决方案，已与对冲基金、资管机构签约，拓展B2B2C模式。B2C深度和B2B广度的同步推进为平台打造了可持续增长引擎。</p>
+            <div class="news-item">
+                <div class="news-date">2025年12月</div>
+                <div class="news-title">日活用户突破50万，Product Hunt 4.8★评分</div>
+                <div class="news-desc">AInvest获社区高度认可，日活用户环比增长40%，市场认可度显著。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2025年10月</div>
+                <div class="news-title">企业解决方案上线，B2B市场开启</div>
+                <div class="news-desc">推出API和白标方案，已与对冲基金、资管机构合作，打开B2B市场。</div>
+            </div>
+        </div></div></div>
+    </div>
+    <div class="dots-bar" id="dots-7"></div>
+</section>
+
+</main>
+
+<script>
+function go(ch) {
+    const sections = document.querySelectorAll('.chapter, .cover');
+    if (sections[ch]) {
+        const main = document.getElementById('main');
+        const offset = sections[ch].offsetTop;
+        main.scrollTop = offset;
+        updateNav(ch);
+    }
+}
+
+function updateNav(active) {
+    document.querySelectorAll('.nav-btn').forEach((btn, i) => {
+        if (i === active) btn.classList.add('active');
+        else btn.classList.remove('active');
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.card-track').forEach((track, chIdx) => {
+        const slides = track.querySelectorAll('.slide');
+        const dotsContainer = document.getElementById(`dots-${chIdx}`);
+        const counter = document.getElementById(`counter-${chIdx}`);
+
+        slides.forEach((_, i) => {
+            const dot = document.createElement('button');
+            dot.className = i === 0 ? 'dot active' : 'dot';
+            dot.onclick = () => {
+                track.scrollLeft = track.offsetWidth * i;
+            };
+            dotsContainer.appendChild(dot);
+        });
+
+        track.addEventListener('scroll', () => {
+            const activeIdx = Math.round(track.scrollLeft / track.offsetWidth);
+            track.querySelectorAll('.dot').forEach((d, i) => {
+                d.classList.toggle('active', i === activeIdx);
+            });
+            if (counter) counter.textContent = `${activeIdx + 1} / ${slides.length}`;
+        });
+    });
+
+    const stats = document.querySelectorAll('.stat-number');
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && !entry.target.dataset.animated) {
+                entry.target.dataset.animated = true;
+                const target = parseInt(entry.target.dataset.count) || 0;
+                const prefix = entry.target.dataset.prefix || '';
+                const suffix = entry.target.dataset.suffix || '';
+                const duration = 1500;
+                const start = Date.now();
+
+                const animate = () => {
+                    const elapsed = Date.now() - start;
+                    const progress = Math.min(elapsed / duration, 1);
+                    const current = Math.floor(target * progress);
+                    entry.target.textContent = prefix + current + suffix;
+                    if (progress < 1) requestAnimationFrame(animate);
+                };
+                animate();
+            }
+        });
+    });
+    stats.forEach(stat => observer.observe(stat));
+
+    updateNav(0);
+});
+
+document.getElementById('main').addEventListener('scroll', () => {
+    const main = document.getElementById('main');
+    const sections = document.querySelectorAll('.chapter, .cover');
+    let activeIdx = 0;
+    sections.forEach((section, i) => {
+        if (main.scrollTop >= section.offsetTop - 100) {
+            activeIdx = i;
+        }
+    });
+    updateNav(activeIdx);
+});
+</script>
+
+</body>
+</html>

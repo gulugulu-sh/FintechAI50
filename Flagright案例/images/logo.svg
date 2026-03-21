@@ -1,0 +1,48 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="200" height="200" fill="#F5F5F5" rx="20"/>
+
+  <!-- Main Icon: Shield + AI Core -->
+  <defs>
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2563EB;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1E40AF;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#F97316;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#EA580C;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Shield Symbol (Compliance/Security) -->
+  <path d="M 100 30 L 140 50 L 140 90 Q 100 130 100 140 Q 100 130 60 90 L 60 50 Z"
+        fill="url(#shieldGrad)" stroke="none"/>
+
+  <!-- AI Core: Interconnected Nodes -->
+  <!-- Center dot -->
+  <circle cx="100" cy="85" r="6" fill="url(#accentGrad)"/>
+
+  <!-- Surrounding nodes -->
+  <circle cx="100" cy="60" r="4" fill="url(#accentGrad)" opacity="0.8"/>
+  <circle cx="115" cy="80" r="4" fill="url(#accentGrad)" opacity="0.8"/>
+  <circle cx="85" cy="80" r="4" fill="url(#accentGrad)" opacity="0.8"/>
+  <circle cx="100" cy="105" r="4" fill="url(#accentGrad)" opacity="0.8"/>
+
+  <!-- Connecting lines (subtle) -->
+  <line x1="100" y1="65" x2="100" y2="80" stroke="url(#accentGrad)" stroke-width="1.5" opacity="0.6"/>
+  <line x1="109" y1="78" x2="111" y2="80" stroke="url(#accentGrad)" stroke-width="1.5" opacity="0.6"/>
+  <line x1="91" y1="78" x2="89" y2="80" stroke="url(#accentGrad)" stroke-width="1.5" opacity="0.6"/>
+  <line x1="100" y1="90" x2="100" y2="102" stroke="url(#accentGrad)" stroke-width="1.5" opacity="0.6"/>
+
+  <!-- Text: "Flagright" -->
+  <text x="100" y="165" font-family="Arial, sans-serif" font-size="18" font-weight="bold"
+        text-anchor="middle" fill="#1E40AF" letter-spacing="1">
+    FLAGRIGHT
+  </text>
+
+  <!-- Subtext: "AI Compliance" -->
+  <text x="100" y="185" font-family="Arial, sans-serif" font-size="10"
+        text-anchor="middle" fill="#666" opacity="0.7">
+    AI COMPLIANCE
+  </text>
+</svg>

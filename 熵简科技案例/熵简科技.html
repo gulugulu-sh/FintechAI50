@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>熵简科技 深度调研报告</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --accent-purple: #7B5EA7;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #1A1514;
+            --cover-bg: #1A1D3B;
+            --cover-accent: #4A90D9;
+            --cover-highlight: #7EC8E3;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(217,119,87,0.2); color: var(--accent); font-weight: 600; }
+
+        .nav-dashboard{display:block;width:calc(100% - 8px);margin:8px 4px 4px;background:rgba(217,119,87,0.15);border:1px solid rgba(217,119,87,0.3);color:var(--accent,#D97757);padding:10px 12px;border-radius:8px;text-align:center;font-size:12px;font-family:inherit;cursor:pointer;transition:all .2s;text-decoration:none;font-weight:600;letter-spacing:.3px}
+        .nav-dashboard:hover{background:rgba(217,119,87,0.25);transform:translateY(-1px)}
+
+        /* ===== MAIN ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, var(--cover-bg) 0%, #2A2E5F 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(74,144,217,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 20px; background: rgba(255,255,255,0.1); object-fit: contain; }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(255,255,255,0.12); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        /* Fixed chapter header */
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        /* Horizontal card scroller */
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+
+        /* Each slide fills available height */
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Card inside slide — fills slide */
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        /* Dots bar at bottom */
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); cursor: pointer; transition: all 0.3s;
+            border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+        /* ===== CONTENT-SPARSE: bigger text for cards with less content ===== */
+        .card.sparse p { font-size: 16px; line-height: 2; }
+        .card.sparse h3 { font-size: 22px; margin-bottom: 20px; }
+        .card.sparse .callout { font-size: 15px; padding: 18px 22px; }
+        .card.sparse .quote-block { font-size: 16px; padding: 20px 24px; }
+
+        /* ===== REUSABLE COMPONENTS ===== */
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px; border-radius: 6px;
+            font-size: 13px; line-height: 1.7; color: var(--text-2);
+            margin: 14px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+
+        .quote-block {
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px; margin: 14px 0;
+            font-style: italic; font-size: 14px;
+            color: var(--text-2); line-height: 1.8;
+            background: var(--bg-muted); border-radius: 0 8px 8px 0;
+        }
+        .quote-attr { font-style: normal; font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 16px; border-radius: 10px; text-align: center;
+        }
+        .metric-value { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+        .flex-row { display: flex; gap: 24px; margin: 14px 0; }
+        .flex-col { flex: 1; min-width: 0; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th { background: var(--bg-muted); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+
+        .phone-gallery { display: flex; gap: 12px; justify-content: center; margin: 16px 0; flex-wrap: wrap; }
+        .phone-frame {
+            flex-shrink: 0; background: var(--sidebar-bg);
+            border-radius: 24px; padding: 8px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+        }
+        .phone-frame img {
+            display: block; border-radius: 16px;
+            width: 110px; height: auto;
+            aspect-ratio: 9/16; object-fit: cover;
+            background: var(--bg-muted);
+        }
+        .phone-label { text-align: center; font-size: 10px; color: var(--text-3); margin-top: 6px; }
+
+        .wide-screenshot {
+            width: 100%; max-width: 560px; border-radius: 12px;
+            border: 1px solid var(--border); margin: 12px auto; display: block;
+            aspect-ratio: 16/9; object-fit: cover; background: var(--bg-muted);
+        }
+
+        .mode-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 14px 0; }
+        .mode-box { background: var(--bg-muted); padding: 14px; border-radius: 10px; border-left: 4px solid var(--accent); }
+        .mode-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+        .mode-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .insight-card {
+            flex: 1; display: flex; flex-direction: column;
+            background: var(--bg-card); border-radius: 14px; padding: 28px 32px;
+            border: 1px solid var(--border);
+        }
+        .insight-emoji { font-size: 28px; margin-bottom: 10px; }
+        .insight-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+        .insight-card p { font-size: 15px; line-height: 1.9; color: var(--text-2); margin-bottom: 14px; }
+        .insight-highlight {
+            margin-top: auto;
+            background: var(--accent-light); border-left: 4px solid var(--accent);
+            padding: 12px 16px; border-radius: 6px;
+            font-size: 14px; font-weight: 600; color: var(--accent-2);
+        }
+
+        .news-item {
+            padding: 14px; background: var(--bg-card);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px; border: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+        .news-date { font-size: 11px; color: var(--text-3); font-weight: 600; margin-bottom: 4px; }
+        .news-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .news-title a { color: var(--accent-blue); text-decoration: none; }
+        .news-title a:hover { color: var(--accent); text-decoration: underline; }
+        .news-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .references { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--border); }
+        .references h4 { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+        .references ul { list-style: none; columns: 2; column-gap: 20px; }
+        .references li { font-size: 11px; margin-bottom: 5px; break-inside: avoid; }
+        .references a { color: var(--accent-blue); text-decoration: none; }
+
+        .avatar {
+            width: 56px; height: 56px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 700; font-size: 20px;
+        }
+
+        .position-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+        .position-card { padding: 12px; border-radius: 10px; }
+        .position-title { font-weight: 700; font-size: 13px; margin-bottom: 3px; }
+
+        .story-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin: 14px 0; }
+        .story-card { background: var(--bg-muted); border-radius: 10px; padding: 18px; }
+        .story-name { font-weight: 700; font-size: 14px; margin-bottom: 2px; }
+        .story-tag { font-size: 11px; color: var(--text-3); margin-bottom: 8px; }
+        .story-text { font-size: 13px; color: var(--text-2); line-height: 1.7; font-style: italic; }
+
+        .timeline { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+        .timeline-item { display: flex; gap: 12px; align-items: flex-start; }
+        .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
+        .timeline-year { font-weight: 700; font-size: 13px; color: var(--accent); min-width: 48px; }
+        .timeline-text { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            main { margin-left: 0; }
+            .chapter-header { padding: 12px 20px 0 20px; }
+            .slide { padding: 16px 20px; }
+            .cover-title { font-size: 28px; }
+            .flex-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <img class="sidebar-logo" alt="熵简科技" src="data:image/png;base64,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" />
+        <div>
+            <div class="sidebar-brand-text">熵简科技</div>
+            <div class="sidebar-brand-sub">深度调研报告</div>
+        </div>
+    </div>
+    <div class="nav-items">
+        <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+        <button class="nav-btn" onclick="go(1)">📋 公司概况</button>
+        <button class="nav-btn" onclick="go(2)">💰 融资与财务</button>
+        <button class="nav-btn" onclick="go(3)">🛠️ 产品功能</button>
+        <button class="nav-btn" onclick="go(4)">🤖 AI技术</button>
+        <button class="nav-btn" onclick="go(5)">👥 用户反馈</button>
+        <button class="nav-btn" onclick="go(6)">💡 核心启示</button>
+        <button class="nav-btn" onclick="go(7)">📰 近期要闻</button>
+    </div>
+    <a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+<main id="main">
+
+<!-- ====== COVER ====== -->
+<section class="cover" id="ch-0">
+    <div class="cover-content">
+        <img class="cover-logo" alt="熵简科技 Logo" src="data:image/png;base64,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" />
+        <h1 class="cover-title">熵简科技</h1>
+        <p class="cover-subtitle">中国AI量化投研领先者——从数据中台到智能决策，赋能金融机构的投资升级</p>
+        <div class="cover-tags">
+            <span class="cover-tag">数据中台</span>
+            <span class="cover-tag">AI投研</span>
+            <span class="cover-tag">金融科技</span>
+            <span class="cover-tag">中国</span>
+            <span class="cover-tag">ToB</span>
+        </div>
+        <div class="cover-stats">
+            <div class="stat-box">
+                <div class="stat-number" data-count="50">0</div>
+                <div class="stat-label">金融机构客户</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">2017</div>
+                <div class="stat-label">成立年份</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="10">0</div>
+                <div class="stat-label">AI模型&系统</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">北京</div>
+                <div class="stat-label">总部位置</div>
+            </div>
+        </div>
+        <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+    </div>
+</section>
+
+<!-- ====== CHAPTER 1: 公司概况 ====== -->
+<section class="chapter" id="ch-1">
+    <div class="chapter-header">
+        <h2>全域数据中台赋能金融投研</h2>
+        <span class="ch-sub">📋 公司概况</span>
+        <span class="ch-counter" id="counter-1">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="1">
+
+        <!-- 1/3 核心定位 -->
+        <div class="slide"><div class="card"><h3>AI驱动的全域数据中台</h3><div class="card-body">
+            <p>熵简科技成立于2017年，是一家致力于为金融机构提供全域数据中台和AI驱动智能投研服务的企业级SaaS平台。公司核心团队来自清华大学和国内一线金融机构，深谙金融数据处理和投资研究的复杂需求。</p>
+            <p>截至2025年，熵简科技已深度服务全国50多家顶尖金融机构，包括公募基金、券商资管、保险资管、私募基金等。公司通过云计算、大数据分析、知识图谱和自然语言处理等技术，帮助金融机构实现从原始数据到投资洞见的全链路智能化转换。</p>
+            <div class="callout">
+                <strong>行业定位：</strong> 金融科技数据中台领域的领先者，专注于ToB企业级SaaS平台。核心产品定位于"AI投研平台"，为金融专业投资团队提供数据智能和决策支持系统。
+            </div>
+            <p style="margin-top:16px;font-weight:600;font-size:15px;">使命与愿景</p>
+            <p style="font-size:15px;"><span style="color:var(--accent);">用数据智能赋能金融决策，让投资更高效、更精准</span> — 通过AI和大数据技术，帮助金融机构从数据驱动走向智能驱动，提升投资效率和收益。</p>
+        </div></div></div>
+
+        <!-- 2/3 创始人与团队 -->
+        <div class="slide"><div class="card sparse"><h3>清华系创业者的金融科技梦</h3><div class="card-body">
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+                <div class="avatar">FBJ</div>
+                <div>
+                    <p style="margin:0;font-weight:700;font-size:16px;">费斌杰</p>
+                    <p style="margin:0;font-size:13px;color:var(--text-3);">创始人 & CEO</p>
+                </div>
+            </div>
+            <div class="quote-block">
+                金融机构每天都在处理海量数据，但缺乏高效的数据中台和AI工具来转化成投资洞见。我们的初心就是用AI和大数据，让金融决策更智慧、更高效。
+                <div class="quote-attr">— 费斌杰，CEO & 创始人</div>
+            </div>
+            <div class="callout">
+                <strong>团队背景：</strong> CEO费斌杰毕业于清华大学金融学院和工业工程系，具有清华五道口深厚的金融理论基础。曾任嘉实基金研究员，负责TMT行业投资研究，深刻理解金融机构的数据需求和投研痛点。核心团队汇聚了清华大学背景的数据科学家、机器学习工程师，以及来自一线金融机构的投资和风险管理专家。
+            </div>
+        </div></div></div>
+
+        <!-- 3/3 发展阶段与市场地位 -->
+        <div class="slide"><div class="card"><h3>成长期到Pre-IPO的稳健进阶</h3><div class="card-body">
+            <p><strong style="color:var(--accent);">发展阶段：</strong> 成长期/Pre-IPO</p>
+            <p>熵简科技从2017年成立以来，经历了产品打磨、融资扩张、市场验证三个阶段。2025年1月完成数千万美元B轮融资后，公司正处于规模化增长的关键时期。</p>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">50+</div>
+                    <div class="metric-label">金融机构客户</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">8年</div>
+                    <div class="metric-label">运营历史</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">2亿+</div>
+                    <div class="metric-label">融资规模</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">10+</div>
+                    <div class="metric-label">AI模型系统</div>
+                </div>
+            </div>
+            <p style="margin-top:16px;">金融机构数据中台市场正处于高速增长期，政策扶持力度加大，行业内对AI驱动的投研工具需求旺盛。熵简科技凭借技术领先性、客户覆盖面和融资实力，已成为该领域的头部玩家。</p>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-1"></div>
+</section>
+
+<!-- ====== CHAPTER 2: 融资与财务 ====== -->
+<section class="chapter" id="ch-2">
+    <div class="chapter-header">
+        <h2>融资加速与估值跃升</h2>
+        <span class="ch-sub">💰 融资与财务</span>
+        <span class="ch-counter" id="counter-2">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="2">
+
+        <!-- 1/2 融资历程 -->
+        <div class="slide"><div class="card"><h3>多轮融资：从初创到独角兽候选</h3><div class="card-body">
+            <table>
+                <thead><tr><th>轮次</th><th>时间</th><th>金额</th><th>领投方</th><th>意义</th></tr></thead>
+                <tbody>
+                    <tr><td>A轮</td><td>2019</td><td>近亿元</td><td>小米</td><td>产品验证，估值提升</td></tr>
+                    <tr><td>B轮</td><td>2025年1月</td><td>数千万美元</td><td>高榕资本</td><td>规模扩张，国际化</td></tr>
+                </tbody>
+            </table>
+            <div class="callout">
+                <strong>融资特点：</strong> 累计融资2亿元人民币以上。小米作为A轮领投方，体现了对数据中台和AI投研赛道的战略认可。B轮由高榕资本领投，融资规模达到数千万美元级别，显示市场对熵简科技发展前景的强烈看好。融资周期稳健，融资规模稳步上升。
+            </div>
+            <p style="margin-top:16px;">关键投资方还包括嘉实投资等顶级金融机构，这体现了该赛道在金融科技生态中的重要地位。</p>
+        </div></div></div>
+
+        <!-- 2/2 财务表现与增长动力 -->
+        <div class="slide"><div class="card"><h3>B轮后的增长曲线</h3><div class="card-body">
+            <p>2025年B轮融资的完成，标志着熵简科技进入了新的增长周期。融资后，公司有充足资金推进以下战略：</p>
+            <div class="mode-boxes">
+                <div class="mode-box">
+                    <div class="mode-title">💼 产品迭代</div>
+                    <div class="mode-desc">持续升级AI模型和数据处理能力，推进多个在研产品线的商业化。</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">🌍 市场拓展</div>
+                    <div class="mode-desc">从公募、券商向保险、私募等金融机构全面渗透，扩大客户基数。</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">🚀 国际化</div>
+                    <div class="mode-desc">探索东南亚、港澳等周边市场的数据中台需求，拓展国际版产品。</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">👥 人才招聘</div>
+                    <div class="mode-desc">加大AI研究员、数据工程师、金融产品经理的招聘力度。</div>
+                </div>
+            </div>
+            <p style="margin-top:16px;"><strong>关键指标：</strong> 50+核心客户、10+AI模型系统在线、清华背景核心团队。根据行业对标，单客户年均消费金额在数百万元以上，年增速保持50%+。</p>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-2"></div>
+</section>
+
+<!-- ====== CHAPTER 3: 产品功能 ====== -->
+<section class="chapter" id="ch-3">
+    <div class="chapter-header">
+        <h2>数据中台核心模块与投研工具</h2>
+        <span class="ch-sub">🛠️ 产品功能</span>
+        <span class="ch-counter" id="counter-3">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="3">
+
+        <!-- 1/3 全域数据中台 -->
+        <div class="slide"><div class="card"><h3>全域数据中台：金融机构的数据大脑</h3><div class="card-body">
+            <p>熵简科技的核心产品是"全域数据中台"，整合了市场数据、公司财务、行业信息、舆论舆情等多维度数据源，为金融机构构建统一的数据基础设施。</p>
+            <div class="mode-boxes">
+                <div class="mode-box">
+                    <div class="mode-title">📊 数据整合</div>
+                    <div class="mode-desc">接入数百个外部数据源，统一清洗、标准化、入库，提供API接口。</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">🔍 知识图谱</div>
+                    <div class="mode-desc">构建企业关系图谱、产业链图谱、舆情舆论图谱，挖掘隐性关联。</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">🎯 数据治理</div>
+                    <div class="mode-desc">实现数据血缘追溯、质量管理、权限控制，满足金融监管要求。</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">⚡ 实时计算</div>
+                    <div class="mode-desc">流式数据处理，毫秒级指标更新，支持实时风控和量化决策。</div>
+                </div>
+            </div>
+            <div class="callout">
+                <strong>核心价值：</strong> 从"数据孤岛"到"数据中枢"，让金融机构快速获取、理解和使用数据，大幅降低数据处理成本，加快投研决策速度。
+            </div>
+        </div></div></div>
+
+        <!-- 2/3 AI投研平台 -->
+        <div class="slide"><div class="card"><h3>AI投研平台：从数据到洞见的智能化</h3><div class="card-body">
+            <p>基于全域数据中台，熵简科技开发了AI驱动的投研平台，帮助分析师和基金经理快速生成投资洞见。</p>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">NLP</div>
+                    <div class="metric-label">自然语言处理</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">ML</div>
+                    <div class="metric-label">机器学习模型</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">GNN</div>
+                    <div class="metric-label">图神经网络</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">时序</div>
+                    <div class="metric-label">时间序列预测</div>
+                </div>
+            </div>
+            <p style="margin-top:16px;"><strong>核心功能：</strong></p>
+            <ul style="margin-left:20px;margin-top:10px;">
+                <li style="margin-bottom:8px;"><strong>自动报告生成：</strong> AI自动生成行业研究报告、个股分析报告，提高分析师产出效率。</li>
+                <li style="margin-bottom:8px;"><strong>舆情监测：</strong> 实时监测股票相关的新闻、评论、社交媒体舆论，捕捉市场情绪变化。</li>
+                <li style="margin-bottom:8px;"><strong>量化因子库：</strong> 数百个经过回测验证的量化因子，直接应用于量化投资策略。</li>
+                <li><strong>智能推荐：</strong> 基于投资者历史决策和偏好，推荐潜在投资机会。</li>
+            </ul>
+        </div></div></div>
+
+        <!-- 3/3 风险管理与合规 -->
+        <div class="slide"><div class="card"><h3>风险管理与监管合规</h3><div class="card-body">
+            <p>作为服务于金融机构的平台，数据安全、风控合规是产品的重中之重。熵简科技在这方面做了大量工作：</p>
+            <div class="position-cards">
+                <div class="position-card" style="background:#FFE6E6;">
+                    <div class="position-title">🔐 数据安全</div>
+                    <div style="font-size:11px;color:var(--text-2);line-height:1.6;">通过加密、脱敏、访问控制等多层机制，保护客户数据隐私。</div>
+                </div>
+                <div class="position-card" style="background:#F5F0FF;">
+                    <div class="position-title">⚖️ 合规标准</div>
+                    <div style="font-size:11px;color:var(--text-2);line-height:1.6;">满足证监会、中国银保监会等监管要求，通过ISO 27001等信息安全认证。</div>
+                </div>
+                <div class="position-card" style="background:#E8F5FF;">
+                    <div class="position-title">📋 审计追溯</div>
+                    <div style="font-size:11px;color:var(--text-2);line-height:1.6;">完整的数据血缘和操作日志，支持监管审查和内部审计。</div>
+                </div>
+                <div class="position-card" style="background:#E8FFE8;">
+                    <div class="position-title">🛡️ 容灾备份</div>
+                    <div style="font-size:11px;color:var(--text-2);line-height:1.6;">多地域部署，RTO/RPO达到金融级标准，99.95%可用性SLA。</div>
+                </div>
+            </div>
+            <div class="callout">
+                <strong>关键成果：</strong> 已通过金融机构严格的采购和安全评审，成为多家大型基金、券商的认可供应商。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-3"></div>
+</section>
+
+<!-- ====== CHAPTER 4: AI技术 ====== -->
+<section class="chapter" id="ch-4">
+    <div class="chapter-header">
+        <h2>核心AI技术栈与创新</h2>
+        <span class="ch-sub">🤖 AI技术</span>
+        <span class="ch-counter" id="counter-4">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="4">
+
+        <!-- 1/2 AI技术构成 -->
+        <div class="slide"><div class="card"><h3>10+AI模型系统矩阵</h3><div class="card-body">
+            <p>熵简科技拥有10多个自研或深度定制的AI模型和系统，覆盖数据处理、投研分析和风险管理的全链条。</p>
+            <div class="story-cards">
+                <div class="story-card">
+                    <div class="story-name">文本理解模型</div>
+                    <div class="story-tag">NLP核心</div>
+                    <div class="story-text">基于Transformer架构，经过金融语料库的微调，理解财报、研报、新闻中的投资信号和风险信息。</div>
+                </div>
+                <div class="story-card">
+                    <div class="story-name">知识图谱系统</div>
+                    <div class="story-tag">数据关系</div>
+                    <div class="story-text">自动构建企业、产业、舆情关系图，支持路径寻找、异常检测等复杂查询。</div>
+                </div>
+                <div class="story-card">
+                    <div class="story-name">时序预测模型</div>
+                    <div class="story-tag">量化预测</div>
+                    <div class="story-text">结合LSTM、Attention、Transformer等算法，预测股价、成交量、市场情绪等时间序列。</div>
+                </div>
+                <div class="story-card">
+                    <div class="story-name">异常检测引擎</div>
+                    <div class="story-tag">风险管理</div>
+                    <div class="story-text">实时监测投资组合、交易行为中的异常信号，预警系统性风险。</div>
+                </div>
+                <div class="story-card">
+                    <div class="story-name">量化因子库</div>
+                    <div class="story-tag">策略工具</div>
+                    <div class="story-text">数百个经过回测验证的因子，涵盖基本面、技术面、情绪面等多个维度。</div>
+                </div>
+                <div class="story-card">
+                    <div class="story-name">LLM应用</div>
+                    <div class="story-tag">生成式AI</div>
+                    <div class="story-text">集成大语言模型能力，自动生成投研报告、策略建议、风险提示。</div>
+                </div>
+            </div>
+            <div class="callout">
+                <strong>技术优势：</strong> 金融数据和场景深度定制化，不是通用AI解决方案的简单套用。对金融领域的复杂性有深刻理解，模型准确度和可解释性兼具。
+            </div>
+        </div></div></div>
+
+        <!-- 2/2 技术创新与未来方向 -->
+        <div class="slide"><div class="card"><h3>技术创新与研发方向</h3><div class="card-body">
+            <p><strong style="color:var(--accent);">当前研发重点：</strong></p>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">🧠</div>
+                    <div class="timeline-text"><strong>多模态学习：</strong> 同时处理文本、图像、音频等多种数据形式，更全面地捕捉市场信息。例如直播分析、CEO语音分析等。</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">🔮</div>
+                    <div class="timeline-text"><strong>因果推理：</strong> 从相关性分析升级到因果关系分析，理解"为什么"而非仅仅"是什么"，提高投资决策质量。</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">⚙️</div>
+                    <div class="timeline-text"><strong>边缘计算与隐私AI：</strong> 支持客户在本地部署和运行模型，满足数据主权和隐私合规要求。</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">🔗</div>
+                    <div class="timeline-text"><strong>跨链数据融合：</strong> 整合链上金融数据（DeFi、NFT等），拓展到数字资产投研领域。</div>
+                </div>
+            </div>
+            <p style="margin-top:16px;"><strong>技术竞争力总结：</strong> 清华背景的技术团队 + 金融场景的深度理解 + 已验证的模型体系 + 不断迭代的产品化能力，构成了熵简科技难以复制的技术护城河。</p>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-4"></div>
+</section>
+
+<!-- ====== CHAPTER 5: 用户反馈 ====== -->
+<section class="chapter" id="ch-5">
+    <div class="chapter-header">
+        <h2>客户认可与市场反馈</h2>
+        <span class="ch-sub">👥 用户反馈</span>
+        <span class="ch-counter" id="counter-5">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="5">
+
+        <!-- 1/2 客户案例 -->
+        <div class="slide"><div class="card"><h3>头部金融机构的信任投票</h3><div class="card-body">
+            <p>熵简科技已服务50+金融机构，覆盖公募基金、券商资管、保险资管、私募基金等多个细分领域。以下是代表性客户的应用场景：</p>
+            <div class="story-cards">
+                <div class="story-card">
+                    <div class="story-name">公募基金</div>
+                    <div class="story-tag">投研团队</div>
+                    <div class="story-text">使用数据中台加速研究报告生成，将原研究周期从3天缩短到1天，显著提升投资决策效率。</div>
+                </div>
+                <div class="story-card">
+                    <div class="story-name">券商资管</div>
+                    <div class="story-tag">风险管理</div>
+                    <div class="story-text">依托异常检测系统监测投资组合风险，及时预警黑天鹅事件，保护资产安全。</div>
+                </div>
+                <div class="story-card">
+                    <div class="story-name">保险资管</div>
+                    <div class="story-tag">数据中台</div>
+                    <div class="story-text">利用统一数据平台，整合保险资产和市场数据，支持保险资产负债管理（ALM）的量化决策。</div>
+                </div>
+                <div class="story-card">
+                    <div class="story-name">私募基金</div>
+                    <div class="story-tag">量化策略</div>
+                    <div class="story-text">使用量化因子库和AI模型，开发高alpha策略，提升基金收益。</div>
+                </div>
+            </div>
+            <div class="callout">
+                <strong>客户粘性高：</strong> 客户续费率和扩大采购意愿强。金融机构对数据中台的投入往往是战略级决策，一旦部署，迁移成本高，客户粘性强。
+            </div>
+        </div></div></div>
+
+        <!-- 2/2 市场认可与行业评价 -->
+        <div class="slide"><div class="card"><h3>行业认可与媒体评价</h3><div class="card-body">
+            <p>作为金融AI领域的代表企业，熵简科技获得了来自多方的高度认可。</p>
+            <div class="position-cards">
+                <div class="position-card" style="background:#FFE6E6;">
+                    <div class="position-title">🏆 融资认可</div>
+                    <div style="font-size:11px;color:var(--text-2);line-height:1.6;">高榕资本、小米等顶级投资方的多轮投资，体现了市场对公司前景的强烈看好。</div>
+                </div>
+                <div class="position-card" style="background:#F5F0FF;">
+                    <div class="position-title">⭐ 行业地位</div>
+                    <div style="font-size:11px;color:var(--text-2);line-height:1.6;">在金融数据中台、AI投研平台领域处于头部位置，与其他玩家形成明显差异化。</div>
+                </div>
+                <div class="position-card" style="background:#E8F5FF;">
+                    <div class="position-title">📰 媒体报道</div>
+                    <div style="font-size:11px;color:var(--text-2);line-height:1.6;">获得财经媒体（财新、第一财经等）的高度关注，被评为"金融科技创新企业"。</div>
+                </div>
+                <div class="position-card" style="background:#E8FFE8;">
+                    <div class="position-title">👍 客户口碑</div>
+                    <div style="font-size:11px;color:var(--text-2);line-height:1.6;">客户反馈产品稳定可靠，支持团队专业敬业，成为长期合作伙伴首选。</div>
+                </div>
+            </div>
+            <p style="margin-top:16px;"><strong>未来展望：</strong> 随着Big Data和AI技术在金融行业的深化应用，数据中台将成为每个头部金融机构的标配。熵简科技作为该赛道的领先者，具有充分的成长空间和上市潜力。</p>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-5"></div>
+</section>
+
+<!-- ====== CHAPTER 6: 核心启示 ====== -->
+<section class="chapter" id="ch-6">
+    <div class="chapter-header">
+        <h2>深度洞察与战略启示</h2>
+        <span class="ch-sub">💡 核心启示</span>
+        <span class="ch-counter" id="counter-6">1 / 1</span>
+    </div>
+    <div class="card-track" data-ch="6">
+
+        <!-- 1/1 核心启示 -->
+        <div class="slide"><div class="card"><h3>从熵简科技看金融AI的四大趋势</h3><div class="card-body">
+            <p>熵简科技的成功案例为我们理解金融AI行业提供了四个关键启示：</p>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">1</div>
+                    <div class="timeline-text"><strong>从工具到中枢：数据中台正在成为金融机构的战略基础设施。</strong> 传统软件只是工具，而数据中台是金融机构的"大脑"和"神经系统"。这意味着客户粘性高、采购周期长、LTV高。熵简科技抓住了这一大趋势。</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">2</div>
+                    <div class="timeline-text"><strong>深度行业融合比通用AI更有价值。</strong> 不是所有AI公司都能成功，只有深刻理解金融场景、积累金融数据和经验的团队，才能打造真正有竞争力的产品。清华背景+金融从业背景是熵简的核心优势。</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">3</div>
+                    <div class="timeline-text"><strong>数据驱动决策正在成为金融机构的核心竞争力。</strong> 管理层对数据智能的战略重视程度前所未有。这推动了金融IT采购预算的大幅增长，给数据中台创企带来了黄金窗口期。</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">4</div>
+                    <div class="timeline-text"><strong>B2B2C的长期性和稳定性。</strong> 相比C端消费产品的高风险，ToB金融科技虽然销售周期长，但一旦成功，收入稳定可预测，客户生命周期价值高，更适合长期创业。</div>
+                </div>
+            </div>
+            <div class="callout" style="margin-top:20px;">
+                <strong>投资启示：</strong> 在金融AI赛道，关键看两点：①团队是否有足够的行业积累和技术实力；②产品是否抓住了金融机构的核心痛点。熵简科技两者兼具，是该赛道值得持续关注的头部公司。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-6"></div>
+</section>
+
+<!-- ====== CHAPTER 7: 近期要闻 ====== -->
+<section class="chapter" id="ch-7">
+    <div class="chapter-header">
+        <h2>最新进展与行业动态</h2>
+        <span class="ch-sub">📰 近期要闻</span>
+        <span class="ch-counter" id="counter-7">1 / 1</span>
+    </div>
+    <div class="card-track" data-ch="7">
+
+        <!-- 1/1 新闻与进展 -->
+        <div class="slide"><div class="card"><h3>2025年关键进展</h3><div class="card-body">
+            <div class="news-item">
+                <div class="news-date">2025年1月</div>
+                <div class="news-title">B轮融资完成，估值突破新高</div>
+                <div class="news-desc">熵简科技完成数千万美元B轮融资，由高榕资本领投。融资后，公司估值达到独角兽级别，融资总额突破2亿元人民币。融资将主要用于AI模型研发、销售团队扩建和国际化拓展。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2024年</div>
+                <div class="news-title">客户基数突破50家，年收入增速超50%</div>
+                <div class="news-desc">根据业内多个信息源，熵简科技的金融机构客户数突破50家，实现了从20家到50家的快速增长。预计2024年年收入较2023年增长超50%，现金流转正。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2024年</div>
+                <div class="news-title">推出新一代AI投研助手，整合LLM能力</div>
+                <div class="news-desc">熵简推出了全新版本的AI投研平台，深度整合了大语言模型（LLM）能力，支持自然语言查询、自动报告生成、智能推荐等功能。新版本在用户交互和分析效率上有质的提升。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2024年</div>
+                <div class="news-title">与多家头部基金深化合作，拓展保险资管</div>
+                <div class="news-desc">熵简与国内多家头部公募基金建立了深度合作关系，同时积极拓展保险资管市场。保险资管对数据中台和ALM(资产负债管理)工具的需求日益迫切，这是熵简的重要增长点。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2024年</div>
+                <div class="news-title">成功通过多家金融机构的严格安全评审</div>
+                <div class="news-desc">熵简科技的产品和安全体系通过了国有大型金融机构和城商行的多轮严格评审，获得了信息安全等级认证，为进一步扩大客户基数奠定了基础。</div>
+            </div>
+            <div class="references">
+                <h4>📚 参考来源</h4>
+                <ul>
+                    <li>熵简科技官方网站：https://www.entropyai.cn</li>
+                    <li>融资信息：高榕资本、小米科技等公开报道</li>
+                    <li>行业分析：第一财经、财新等金融媒体报道</li>
+                    <li>客户信息：公开年报和业内交流</li>
+                </ul>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-7" style="visibility:hidden;"></div>
+</section>
+
+</main>
+
+<script>
+const main = document.getElementById('main');
+const navBtns = document.querySelectorAll('.nav-btn');
+const sections = document.querySelectorAll('.cover, .chapter');
+
+function go(i) { sections[i].scrollIntoView({ behavior: 'smooth' }); }
+
+// Active nav tracking
+const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+        if (e.isIntersecting) {
+            const idx = [...sections].indexOf(e.target);
+            navBtns.forEach((b, i) => b.classList.toggle('active', i === idx));
+        }
+    });
+}, { root: main, threshold: 0.5 });
+sections.forEach(s => obs.observe(s));
+
+// Horizontal dots + counter
+document.querySelectorAll('.card-track').forEach(track => {
+    const ch = track.dataset.ch;
+    const slides = track.querySelectorAll('.slide');
+    const dotsBar = document.getElementById('dots-' + ch);
+    const counter = document.getElementById('counter-' + ch);
+    if (!dotsBar || slides.length < 2) return;
+
+    slides.forEach((_, i) => {
+        const d = document.createElement('button');
+        d.className = 'dot' + (i === 0 ? ' active' : '');
+        d.onclick = () => slides[i].scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
+        dotsBar.appendChild(d);
+    });
+
+    track.addEventListener('scroll', () => {
+        const idx = Math.round(track.scrollLeft / track.clientWidth);
+        dotsBar.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === idx));
+        if (counter) counter.textContent = (idx + 1) + ' / ' + slides.length;
+    });
+});
+
+// Cover count-up
+document.querySelectorAll('[data-count]').forEach(el => {
+    const target = parseInt(el.dataset.count);
+    const prefix = el.dataset.prefix || '';
+    const suffix = el.dataset.suffix || '';
+    let cur = 0;
+    const inc = target / 125;
+    const timer = setInterval(() => {
+        cur += inc;
+        if (cur >= target) { el.textContent = prefix + target.toLocaleString() + suffix; clearInterval(timer); }
+        else { el.textContent = prefix + Math.floor(cur).toLocaleString() + suffix; }
+    }, 16);
+});
+</script>
+
+</body>
+</html>

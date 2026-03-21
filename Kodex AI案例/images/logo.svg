@@ -1,0 +1,48 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="95" fill="#FFFFFF" stroke="#E8E8E8" stroke-width="1"/>
+
+  <!-- Primary color palette for Kodex AI: Deep Teal/Blue + Tech Gold -->
+  <defs>
+    <linearGradient id="kodexGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00A8A8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#004B7A;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFB800;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FF9500;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Main mark: stylized "K" + checkmark (compliance verified) -->
+  <!-- Left vertical bar of "K" -->
+  <rect x="45" y="50" width="12" height="100" rx="3" fill="url(#kodexGradient)"/>
+
+  <!-- Diagonal top of "K" -->
+  <path d="M 57 60 L 85 85" stroke="url(#kodexGradient)" stroke-width="12" stroke-linecap="round" fill="none"/>
+
+  <!-- Diagonal bottom of "K" -->
+  <path d="M 57 110 L 85 140" stroke="url(#kodexGradient)" stroke-width="12" stroke-linecap="round" fill="none"/>
+
+  <!-- Checkmark overlay (compliance symbol) - positioned on right side -->
+  <!-- Checkmark vertical part -->
+  <path d="M 95 110 L 105 125" stroke="url(#accentGradient)" stroke-width="10" stroke-linecap="round" fill="none"/>
+
+  <!-- Checkmark diagonal part -->
+  <path d="M 105 125 L 135 90" stroke="url(#accentGradient)" stroke-width="10" stroke-linecap="round" fill="none"/>
+
+  <!-- Small decorative dots representing AI/automation -->
+  <circle cx="120" cy="70" r="3" fill="#FFB800" opacity="0.8"/>
+  <circle cx="135" cy="75" r="2.5" fill="#00A8A8" opacity="0.6"/>
+  <circle cx="128" cy="55" r="2" fill="#004B7A" opacity="0.7"/>
+
+  <!-- Company name below logo -->
+  <text x="100" y="165" font-family="Arial, sans-serif" font-size="18" font-weight="600" text-anchor="middle" fill="#004B7A">
+    KODEX AI
+  </text>
+
+  <!-- Tagline -->
+  <text x="100" y="183" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#00A8A8" letter-spacing="1">
+    AGENTIC COMPLIANCE
+  </text>
+</svg>

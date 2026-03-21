@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>华泰证券 AI涨乐 深度调研报告</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --accent-purple: #7B5EA7;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #1A1514;
+            --cover-bg: #C4002B;
+            --cover-accent: #E31C23;
+            --cover-highlight: #FFD700;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(217,119,87,0.2); color: var(--accent); font-weight: 600; }
+
+        /* ===== MAIN ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, var(--cover-bg) 0%, #A00020 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(227,28,35,0.2) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 20px; background: rgba(255,255,255,0.1); object-fit: contain; }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(255,255,255,0.12); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        /* Fixed chapter header */
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        /* Horizontal card scroller */
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+
+        /* Each slide fills available height */
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Card inside slide — fills slide */
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        /* Dots bar at bottom */
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); cursor: pointer; transition: all 0.3s;
+            border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+        /* ===== REUSABLE COMPONENTS ===== */
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px; border-radius: 6px;
+            font-size: 13px; line-height: 1.7; color: var(--text-2);
+            margin: 14px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+
+        .quote-block {
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px; margin: 14px 0;
+            font-style: italic; font-size: 14px;
+            color: var(--text-2); line-height: 1.8;
+            background: var(--bg-muted); border-radius: 0 8px 8px 0;
+        }
+        .quote-attr { font-style: normal; font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 16px; border-radius: 10px; text-align: center;
+        }
+        .metric-value { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+        .flex-row { display: flex; gap: 24px; margin: 14px 0; flex-wrap: wrap; }
+        .flex-col { flex: 1; min-width: 200px; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th { background: var(--bg-muted); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+
+        .timeline {
+            position: relative;
+            padding-left: 40px;
+        }
+        .timeline-item {
+            position: relative;
+            padding-bottom: 24px;
+            margin-bottom: 24px;
+            border-left: 2px solid var(--border);
+        }
+        .timeline-item:last-child {
+            border-left: none;
+            padding-bottom: 0;
+        }
+        .timeline-dot {
+            position: absolute;
+            left: -10px;
+            top: 0;
+            width: 16px;
+            height: 16px;
+            background: var(--accent);
+            border-radius: 50%;
+            border: 3px solid var(--bg-card);
+        }
+        .timeline-year {
+            font-weight: 700;
+            color: var(--accent);
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+        .timeline-text {
+            font-size: 13px;
+            color: var(--text-2);
+            line-height: 1.6;
+        }
+
+        .insight-card {
+            flex: 1; display: flex; flex-direction: column;
+            background: var(--bg-card); border-radius: 14px; padding: 28px 32px;
+            border: 1px solid var(--border);
+        }
+        .insight-emoji { font-size: 28px; margin-bottom: 10px; }
+        .insight-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+        .insight-card p { font-size: 15px; line-height: 1.9; color: var(--text-2); margin-bottom: 14px; }
+        .insight-highlight {
+            margin-top: auto;
+            background: var(--accent-light); border-left: 4px solid var(--accent);
+            padding: 12px 16px; border-radius: 6px;
+            font-size: 14px; font-weight: 600; color: var(--accent-2);
+        }
+
+        .news-item {
+            padding: 14px; background: var(--bg-card);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px; border: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+        .news-date { font-size: 11px; color: var(--text-3); font-weight: 600; margin-bottom: 4px; }
+        .news-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .news-title a { color: var(--accent-blue); text-decoration: none; }
+        .news-title a:hover { text-decoration: underline; }
+        .news-desc { font-size: 12px; color: var(--text-2); }
+
+        .references {
+            margin-top: 16px;
+        }
+        .references h4 {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--text);
+        }
+        .references ul {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 8px;
+        }
+        .references li {
+            font-size: 12px;
+        }
+        .references a {
+            color: var(--accent-blue);
+            text-decoration: none;
+        }
+        .references a:hover {
+            text-decoration: underline;
+        }
+
+        .position-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin: 12px 0;
+        }
+        .position-card {
+            padding: 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+        .position-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text);
+            margin-top: 6px;
+        }
+    
+        .nav-dashboard {
+            display: block; width: calc(100% - 8px); margin: 8px 4px 4px;
+            background: rgba(217,119,87,0.15); border: 1px solid rgba(217,119,87,0.3);
+            color: var(--accent, #D97757); padding: 10px 12px; border-radius: 8px;
+            text-align: center; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+            font-weight: 600; letter-spacing: 0.3px;
+        }
+        .nav-dashboard:hover {
+            background: rgba(217,119,87,0.3); color: white;
+        }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-brand">
+            <img class="sidebar-logo" alt="Logo" src="data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjAwIDIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8IS0tIERlZmluZSBncmFkaWVudHMgLS0+CiAgPGRlZnM+CiAgICA8IS0tIFJpc2luZyBzdW4gZ3JhZGllbnQgKEh1YXRhaSByZWQgdG8gb3JhbmdlKSAtLT4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0ic3VuR3JhZGllbnQiIHgxPSIwJSIgeTE9IjEwMCUiIHgyPSIwJSIgeTI9IjAlIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3R5bGU9InN0b3AtY29sb3I6I0M0MDAyQjtzdG9wLW9wYWNpdHk6MSIgLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdHlsZT0ic3RvcC1jb2xvcjojRTMxQzIzO3N0b3Atb3BhY2l0eToxIiAvPgogICAgPC9saW5lYXJHcmFkaWVudD4KCiAgICA8IS0tIEJhY2tncm91bmQgZ3JhZGllbnQgKGRhcmsgYmx1ZSkgLS0+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImJnR3JhZGllbnQiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdHlsZT0ic3RvcC1jb2xvcjojMDAzMzY2O3N0b3Atb3BhY2l0eToxIiAvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiMwMDRkOTk7c3RvcC1vcGFjaXR5OjEiIC8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KCiAgPCEtLSBEYXJrIGJsdWUgYmFja2dyb3VuZCBjaXJjbGUgLS0+CiAgPGNpcmNsZSBjeD0iMTAwIiBjeT0iMTAwIiByPSI5NSIgZmlsbD0idXJsKCNiZ0dyYWRpZW50KSIgc3Ryb2tlPSJub25lIi8+CgogIDwhLS0gUmlzaW5nIHN1biAobGFyZ2VyLCBsb3dlciBwb3NpdGlvbikgLS0+CiAgPGNpcmNsZSBjeD0iMTAwIiBjeT0iMTIwIiByPSI0NSIgZmlsbD0idXJsKCNzdW5HcmFkaWVudCkiIG9wYWNpdHk9IjAuOTUiLz4KCiAgPCEtLSBTdW4gcmF5cy9saWdodCBlZmZlY3QgLS0+CiAgPGcgb3BhY2l0eT0iMC4zIj4KICAgIDxsaW5lIHgxPSIxMDAiIHkxPSI3MCIgeDI9IjEwMCIgeTI9IjUwIiBzdHJva2U9InVybCgjc3VuR3JhZGllbnQpIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogICAgPGxpbmUgeDE9IjEzNSIgeTE9Ijg1IiB4Mj0iMTUwIiB5Mj0iNzAiIHN0cm9rZT0idXJsKCNzdW5HcmFkaWVudCkiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgICA8bGluZSB4MT0iMTUwIiB5MT0iMTIwIiB4Mj0iMTcwIiB5Mj0iMTIwIiBzdHJva2U9InVybCgjc3VuR3JhZGllbnQpIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDwvZz4KCiAgPCEtLSBTdHlsaXplZCAiSCIgcmVwcmVzZW50aW5nICJIdWF0YWkiICjkurogY2hhcmFjdGVyIG1lcmdlZCB3aXRoIEgpIC0tPgogIDxnIGZpbGw9IndoaXRlIiBvcGFjaXR5PSIwLjkiPgogICAgPCEtLSBMZWZ0IHZlcnRpY2FsIGJhciBvZiBIIC0tPgogICAgPHJlY3QgeD0iNjAiIHk9IjM1IiB3aWR0aD0iOCIgaGVpZ2h0PSI2NSIgcng9IjQiIGZpbGw9IndoaXRlIi8+CgogICAgPCEtLSBSaWdodCB2ZXJ0aWNhbCBiYXIgb2YgSCAtLT4KICAgIDxyZWN0IHg9IjcyIiB5PSIzNSIgd2lkdGg9IjgiIGhlaWdodD0iNjUiIHJ4PSI0IiBmaWxsPSJ3aGl0ZSIvPgoKICAgIDwhLS0gSG9yaXpvbnRhbCBiYXIgb2YgSCAtLT4KICAgIDxyZWN0IHg9IjYwIiB5PSI2MCIgd2lkdGg9IjIwIiBoZWlnaHQ9IjYiIHJ4PSIzIiBmaWxsPSJ3aGl0ZSIvPgoKICAgIDwhLS0gVG9wIGN1cnZlIHN1Z2dlc3RpbmcgdXB3YXJkIG1vdmVtZW50IC0tPgogICAgPHBhdGggZD0iTSA2MCA0MiBRIDY0IDMyIDY4IDMyIFEgNzIgMzIgNzYgNDIiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPC9nPgoKICA8IS0tICJBSea2qOS5kCIgdGV4dCBpbmRpY2F0b3IgKHN1YnRsZSwgYm90dG9tIHJpZ2h0KSAtLT4KICA8dGV4dCB4PSIxNTUiIHk9IjE4MCIgZm9udC1mYW1pbHk9IidJbnRlcicsIEFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEwIiBmb250LXdlaWdodD0iNjAwIiBmaWxsPSJ3aGl0ZSIgb3BhY2l0eT0iMC43IiB0ZXh0LWFuY2hvcj0iZW5kIj5BSTwvdGV4dD4KCiAgPCEtLSBBY2NlbnQgZG90cyAocmVwcmVzZW50aW5nIGdyb3d0aC9kYXRhIHBvaW50cykgLS0+CiAgPGcgZmlsbD0iI0ZGRDcwMCIgb3BhY2l0eT0iMC42Ij4KICAgIDxjaXJjbGUgY3g9IjEzMCIgY3k9Ijk1IiByPSIzIi8+CiAgICA8Y2lyY2xlIGN4PSIxNDUiIGN5PSIxMTAiIHI9IjIuNSIvPgogICAgPGNpcmNsZSBjeD0iMTI1IiBjeT0iMTMwIiByPSIyIi8+CiAgPC9nPgo8L3N2Zz4K" />
+            <div>
+                <div class="sidebar-brand-text">华泰证券</div>
+                <div class="sidebar-brand-sub">AI涨乐研究报告</div>
+            </div>
+        </div>
+        <div class="nav-items">
+            <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+            <button class="nav-btn" onclick="go(1)">📋 公司概况</button>
+            <button class="nav-btn" onclick="go(2)">💰 融资与财务</button>
+            <button class="nav-btn" onclick="go(3)">🛠️ 产品功能</button>
+            <button class="nav-btn" onclick="go(4)">🧠 AI技术</button>
+            <button class="nav-btn" onclick="go(5)">💬 用户反馈</button>
+            <button class="nav-btn" onclick="go(6)">✨ 核心启示</button>
+            <button class="nav-btn" onclick="go(7)">📰 近期要闻</button>
+        </div>
+    
+    <a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+    <main>
+        <!-- COVER -->
+        <section class="cover" id="ch-0">
+            <div class="cover-content">
+                <img class="cover-logo" alt="Logo" src="data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjAwIDIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8IS0tIERlZmluZSBncmFkaWVudHMgLS0+CiAgPGRlZnM+CiAgICA8IS0tIFJpc2luZyBzdW4gZ3JhZGllbnQgKEh1YXRhaSByZWQgdG8gb3JhbmdlKSAtLT4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0ic3VuR3JhZGllbnQiIHgxPSIwJSIgeTE9IjEwMCUiIHgyPSIwJSIgeTI9IjAlIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3R5bGU9InN0b3AtY29sb3I6I0M0MDAyQjtzdG9wLW9wYWNpdHk6MSIgLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdHlsZT0ic3RvcC1jb2xvcjojRTMxQzIzO3N0b3Atb3BhY2l0eToxIiAvPgogICAgPC9saW5lYXJHcmFkaWVudD4KCiAgICA8IS0tIEJhY2tncm91bmQgZ3JhZGllbnQgKGRhcmsgYmx1ZSkgLS0+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImJnR3JhZGllbnQiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdHlsZT0ic3RvcC1jb2xvcjojMDAzMzY2O3N0b3Atb3BhY2l0eToxIiAvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiMwMDRkOTk7c3RvcC1vcGFjaXR5OjEiIC8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KCiAgPCEtLSBEYXJrIGJsdWUgYmFja2dyb3VuZCBjaXJjbGUgLS0+CiAgPGNpcmNsZSBjeD0iMTAwIiBjeT0iMTAwIiByPSI5NSIgZmlsbD0idXJsKCNiZ0dyYWRpZW50KSIgc3Ryb2tlPSJub25lIi8+CgogIDwhLS0gUmlzaW5nIHN1biAobGFyZ2VyLCBsb3dlciBwb3NpdGlvbikgLS0+CiAgPGNpcmNsZSBjeD0iMTAwIiBjeT0iMTIwIiByPSI0NSIgZmlsbD0idXJsKCNzdW5HcmFkaWVudCkiIG9wYWNpdHk9IjAuOTUiLz4KCiAgPCEtLSBTdW4gcmF5cy9saWdodCBlZmZlY3QgLS0+CiAgPGcgb3BhY2l0eT0iMC4zIj4KICAgIDxsaW5lIHgxPSIxMDAiIHkxPSI3MCIgeDI9IjEwMCIgeTI9IjUwIiBzdHJva2U9InVybCgjc3VuR3JhZGllbnQpIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogICAgPGxpbmUgeDE9IjEzNSIgeTE9Ijg1IiB4Mj0iMTUwIiB5Mj0iNzAiIHN0cm9rZT0idXJsKCNzdW5HcmFkaWVudCkiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgICA8bGluZSB4MT0iMTUwIiB5MT0iMTIwIiB4Mj0iMTcwIiB5Mj0iMTIwIiBzdHJva2U9InVybCgjc3VuR3JhZGllbnQpIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDwvZz4KCiAgPCEtLSBTdHlsaXplZCAiSCIgcmVwcmVzZW50aW5nICJIdWF0YWkiICjkurogY2hhcmFjdGVyIG1lcmdlZCB3aXRoIEgpIC0tPgogIDxnIGZpbGw9IndoaXRlIiBvcGFjaXR5PSIwLjkiPgogICAgPCEtLSBMZWZ0IHZlcnRpY2FsIGJhciBvZiBIIC0tPgogICAgPHJlY3QgeD0iNjAiIHk9IjM1IiB3aWR0aD0iOCIgaGVpZ2h0PSI2NSIgcng9IjQiIGZpbGw9IndoaXRlIi8+CgogICAgPCEtLSBSaWdodCB2ZXJ0aWNhbCBiYXIgb2YgSCAtLT4KICAgIDxyZWN0IHg9IjcyIiB5PSIzNSIgd2lkdGg9IjgiIGhlaWdodD0iNjUiIHJ4PSI0IiBmaWxsPSJ3aGl0ZSIvPgoKICAgIDwhLS0gSG9yaXpvbnRhbCBiYXIgb2YgSCAtLT4KICAgIDxyZWN0IHg9IjYwIiB5PSI2MCIgd2lkdGg9IjIwIiBoZWlnaHQ9IjYiIHJ4PSIzIiBmaWxsPSJ3aGl0ZSIvPgoKICAgIDwhLS0gVG9wIGN1cnZlIHN1Z2dlc3RpbmcgdXB3YXJkIG1vdmVtZW50IC0tPgogICAgPHBhdGggZD0iTSA2MCA0MiBRIDY0IDMyIDY4IDMyIFEgNzIgMzIgNzYgNDIiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPC9nPgoKICA8IS0tICJBSea2qOS5kCIgdGV4dCBpbmRpY2F0b3IgKHN1YnRsZSwgYm90dG9tIHJpZ2h0KSAtLT4KICA8dGV4dCB4PSIxNTUiIHk9IjE4MCIgZm9udC1mYW1pbHk9IidJbnRlcicsIEFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEwIiBmb250LXdlaWdodD0iNjAwIiBmaWxsPSJ3aGl0ZSIgb3BhY2l0eT0iMC43IiB0ZXh0LWFuY2hvcj0iZW5kIj5BSTwvdGV4dD4KCiAgPCEtLSBBY2NlbnQgZG90cyAocmVwcmVzZW50aW5nIGdyb3d0aC9kYXRhIHBvaW50cykgLS0+CiAgPGcgZmlsbD0iI0ZGRDcwMCIgb3BhY2l0eT0iMC42Ij4KICAgIDxjaXJjbGUgY3g9IjEzMCIgY3k9Ijk1IiByPSIzIi8+CiAgICA8Y2lyY2xlIGN4PSIxNDUiIGN5PSIxMTAiIHI9IjIuNSIvPgogICAgPGNpcmNsZSBjeD0iMTI1IiBjeT0iMTMwIiByPSIyIi8+CiAgPC9nPgo8L3N2Zz4K" />
+                <h1 class="cover-title">华泰证券 AI涨乐</h1>
+                <p class="cover-subtitle">国内首个交易场景AI原生应用，重塑个人投资者的决策体验</p>
+                <div class="cover-tags">
+                    <span class="cover-tag">AI原生</span>
+                    <span class="cover-tag">交易场景</span>
+                    <span class="cover-tag">多模态交互</span>
+                    <span class="cover-tag">上市券商</span>
+                </div>
+                <div class="cover-stats">
+                    <div class="stat-box">
+                        <div class="stat-number" data-count="240" data-suffix="万+">0</div>
+                        <div class="stat-label">用户规模</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number" data-count="1156" data-suffix="万+">0</div>
+                        <div class="stat-label">母应用月活</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number" data-count="20" data-suffix="个">0</div>
+                        <div class="stat-label">百日迭代版本</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number" data-count="350" data-suffix="项+">0</div>
+                        <div class="stat-label">服务研发</div>
+                    </div>
+                </div>
+                <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+            </div>
+        </section>
+
+        <!-- CH1: 公司概况 -->
+        <section class="chapter" id="ch-1">
+            <div class="chapter-header">
+                <h2>公司概况</h2>
+                <span class="ch-sub">📋 企业基因与发展路径</span>
+                <span class="ch-counter" id="counter-1">1 / 4</span>
+            </div>
+            <div class="card-track" data-ch="1">
+                <div class="slide">
+                    <div class="card">
+                        <h3>为什么研究AI涨乐</h3>
+                        <div class="card-body">
+                            <p>华泰证券AI涨乐代表了中国金融科技的一个重要转折——从"功能叠加"迈向"AI原生重构"。作为首个交易场景AI原生应用，它将AI深度融入投资全流程，从"人找功能"转变为"任务找人"。</p>
+                            <p>更关键的是，AI涨乐是由行业头部上市券商推出，具有强大的资金、数据、投研和合规优势，能够承载金融AI的严苛要求。这种传统金融机构与生成式AI的结合方式，预示了金融AI应用的未来发展路径。</p>
+                            <div class="callout">
+                                <strong>核心价值：</strong> 用"豆包+华泰金融垂直模型+多专家Agent"的混合架构，为个人投资者解决"买什么、何时买、怎么买"的痛点。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="card">
+                        <h3>发展里程碑</h3>
+                        <div class="card-body">
+                            <div class="timeline">
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-year">2009</div>
+                                    <div class="timeline-text"><strong>涨乐财富通</strong> 平台开发启动，奠定数字化基础</div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-year">2025.10.16</div>
+                                    <div class="timeline-text"><strong>AI涨乐正式上线</strong>，标志AI原生应用时代开启</div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-year">2025.11-26.01</div>
+                                    <div class="timeline-text"><strong>百日迭代</strong> 20个版本、350项服务，展现敏捷开发能力</div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-year">2026.01.26</div>
+                                    <div class="timeline-text"><strong>1.0版本发布</strong> 用户突破240万，市场验证成功</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="card">
+                        <h3>母公司背景</h3>
+                        <div class="card-body">
+                            <p><strong>华泰证券股份有限公司</strong>是中国行业头部券商，成立于1991年，现为沪港两地上市公司（SSE: 601688, HKEX: 06886）。</p>
+                            <div class="metrics-grid">
+                                <div class="metric-card">
+                                    <div class="metric-value">1156万+</div>
+                                    <div class="metric-label">涨乐月活用户</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">行业第一</div>
+                                    <div class="metric-label">券商App排名</div>
+                                </div>
+                            </div>
+                            <p>华泰证券在金融科技领域保持饱和投入，首席信息官韩臻聪（博士学位，前中国电信高管）带领金融科技创新。这为AI涨乐提供了充足的资金支持、数据资源、投研能力和合规体系。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="card">
+                        <h3>核心用户画像</h3>
+                        <div class="card-body">
+                            <p><strong>目标用户：</strong> 25-55岁、对新兴科技接受度高的中青年投资者</p>
+                            <div class="position-cards">
+                                <div class="position-card" style="background:#FFE6E6;">
+                                    <div style="font-size:16px;">📱</div>
+                                    <div class="position-title">高度依赖移动</div>
+                                    <div style="font-size:11px;color:var(--text-2);margin-top:4px;">习惯用手机交易</div>
+                                </div>
+                                <div class="position-card" style="background:#E6F3FF;">
+                                    <div style="font-size:16px;">⏰</div>
+                                    <div class="position-title">时间有限</div>
+                                    <div style="font-size:11px;color:var(--text-2);margin-top:4px;">无法长时间盯盘</div>
+                                </div>
+                                <div class="position-card" style="background:#E6FFE6;">
+                                    <div style="font-size:16px;">🤔</div>
+                                    <div class="position-title">决策困难</div>
+                                    <div style="font-size:11px;color:var(--text-2);margin-top:4px;">缺乏专业知识</div>
+                                </div>
+                                <div class="position-card" style="background:#FFF4E6;">
+                                    <div style="font-size:16px;">💡</div>
+                                    <div class="position-title">渴望效率</div>
+                                    <div style="font-size:11px;color:var(--text-2);margin-top:4px;">愿意为优质体验付费</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-1"></div>
+        </section>
+
+        <!-- CH2: 融资与财务 -->
+        <section class="chapter" id="ch-2">
+            <div class="chapter-header">
+                <h2>融资与财务</h2>
+                <span class="ch-sub">💰 资本与盈利模式</span>
+                <span class="ch-counter" id="counter-2">1 / 3</span>
+            </div>
+            <div class="card-track" data-ch="2">
+                <div class="slide">
+                    <div class="card">
+                        <h3>融资模式</h3>
+                        <div class="card-body">
+                            <p><strong>AI涨乐是华泰证券内部孵化产品，无独立融资。</strong></p>
+                            <p>与初创公司不同，AI涨乐的研发资金完全来自华泰证券自有投入。这样的优势是：</p>
+                            <div class="callout">
+                                <strong>长期稳定：</strong> 不受融资周期限制，可以专注于产品打磨而非融资。
+                            </div>
+                            <div class="callout" style="border-left-color:var(--accent-green);">
+                                <strong>资金充足：</strong> 华泰证券上市券商背景，资金实力雄厚，可支撑大规模研发投入。
+                            </div>
+                            <div class="callout" style="border-left-color:var(--accent-blue);">
+                                <strong>决策自主：</strong> 无需对外部投资者汇报，能自由迭代产品、调整战略。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="card">
+                        <h3>收入模式</h3>
+                        <div class="card-body">
+                            <p>AI涨乐作为华泰证券财富管理业务的战略产品，收入模式包括：</p>
+                            <table>
+                                <thead>
+                                    <tr><th>收入来源</th><th>说明</th><th>潜力</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><strong>经纪佣金</strong></td><td>AI功能提升交易量</td><td>最直接</td></tr>
+                                    <tr><td><strong>增值服务</strong></td><td>Level-2行情、数据订阅</td><td>稳定</td></tr>
+                                    <tr><td><strong>财富产品</strong></td><td>推荐基金、理财产品</td><td>最大</td></tr>
+                                </tbody>
+                            </table>
+                            <div class="callout">
+                                <strong>关键指标：</strong> 华泰证券2025年上半年基金投顾业务规模达210.37亿元，增长16.36%。AI涨乐有望进一步推动这一增长。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="card">
+                        <h3>生态合作</h3>
+                        <div class="card-body">
+                            <p>AI涨乐采用开放合作策略，与科技巨头深度整合：</p>
+                            <div class="timeline">
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-year">豆包大模型</div>
+                                    <div class="timeline-text"><strong>字节跳动</strong> 提供通用AI底座，支撑NLU、文本生成</div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-year">扣子空间</div>
+                                    <div class="timeline-text"><strong>字节跳动</strong> 联合孵化专家级Agent框架</div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-year">火山引擎</div>
+                                    <div class="timeline-text"><strong>字节跳动</strong> 提供云计算与工程基础设施</div>
+                                </div>
+                            </div>
+                            <p style="margin-top:16px;">这种与头部科技公司的深度合作，形成了"金融专业+AI前沿"的生态优势。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-2"></div>
+        </section>
+
+        <!-- CH3: 产品功能 -->
+        <section class="chapter" id="ch-3">
+            <div class="chapter-header">
+                <h2>产品功能</h2>
+                <span class="ch-sub">🛠️ 核心功能体验</span>
+                <span class="ch-counter" id="counter-3">1 / 5</span>
+            </div>
+            <div class="card-track" data-ch="3">
+                <div class="slide">
+                    <div class="card">
+                        <h3>三大核心工作区</h3>
+                        <div class="card-body">
+                            <p>AI涨乐摒弃了传统证券App的多级菜单与Tab标签，核心体验浓缩为三个工作区：</p>
+                            <div class="position-cards">
+                                <div class="position-card" style="background:#FFE6E6;">
+                                    <div style="font-size:18px;">🌅</div>
+                                    <div class="position-title">早点听</div>
+                                    <div style="font-size:11px;color:var(--text-2);margin-top:6px;">个性化市场播报，每日开盘前帮助投资者快速掌握重点</div>
+                                </div>
+                                <div class="position-card" style="background:#E6F3FF;">
+                                    <div style="font-size:18px;">🔔</div>
+                                    <div class="position-title">特别提醒</div>
+                                    <div style="font-size:11px;color:var(--text-2);margin-top:6px;">实时预警，定制盯盘策略和资金异动监测</div>
+                                </div>
+                                <div class="position-card" style="background:#E6FFE6;">
+                                    <div style="font-size:18px;">✅</div>
+                                    <div class="position-title">任务助手</div>
+                                    <div style="font-size:11px;color:var(--text-2);margin-top:6px;">设置复杂交易策略，AI自动执行打新、条件单等任务</div>
+                                </div>
+                                <div class="position-card" style="background:#FFF4E6;">
+                                    <div style="font-size:18px;">🎙️</div>
+                                    <div class="position-title">语音下单</div>
+                                    <div style="font-size:11px;color:var(--text-2);margin-top:6px;">自然语言交互，口语化指令即可完成交易</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="card">
+                        <h3>智能选股</h3>
+                        <div class="card-body">
+                            <p>AI涨乐提供两大智能选股工具：</p>
+                            <div class="callout" style="border-left-color:var(--accent-green);">
+                                <strong>涨停猎手：</strong> 基于量价行为、资金流、情绪数据的AI选股模型，捕捉短期机会
+                            </div>
+                            <div class="callout" style="border-left-color:var(--accent-blue);">
+                                <strong>热点捕手：</strong> 搭载AI动态追踪引擎，极速检索全网热点，分析产业链传导机会
+                            </div>
+                            <p>与传统选股工具的区别在于，AI涨乐将"发现机会"和"分析逻辑"结合，用户不仅知道买什么，还能理解为什么买。</p>
+                            <div class="metrics-grid">
+                                <div class="metric-card">
+                                    <div class="metric-value">1000+</div>
+                                    <div class="metric-label">估值覆盖公司</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">3万+</div>
+                                    <div class="metric-label">事件传导知识库</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="card">
+                        <h3>事件传导分析</h3>
+                        <div class="card-body">
+                            <p>这是AI涨乐最具技术含量的功能——融合华泰证券产业图谱与估值模型，构建3万+类事件传导知识库。</p>
+                            <p><strong>典型场景：</strong> 当国家发布"新能源补贴政策"时，AI不仅告诉你新能源龙头股涨，还能追溯到原材料厂商、零部件供应商的机会。</p>
+                            <div class="callout">
+                                <strong>核心优势：</strong> 将新闻转化为可视化的产业传导链，帮助投资者理解复杂事件的深层逻辑。
+                            </div>
+                            <p>这需要高质量的知识库、强大的因果推理和深厚的行业理解——正是华泰证券30余年积累的优势。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="card">
+                        <h3>动态估值工具</h3>
+                        <div class="card-body">
+                            <p>AI涨乐的估值工具不是简单的PE/PB，而是融合四个维度的<strong>动态估值模型</strong>：</p>
+                            <div class="flex-row">
+                                <div class="flex-col">
+                                    <div style="font-weight:700;color:var(--accent);margin-bottom:6px;">📈 成长空间</div>
+                                    <p style="font-size:12px;">公司未来收入增速潜力</p>
+                                </div>
+                                <div class="flex-col">
+                                    <div style="font-weight:700;color:var(--accent);margin-bottom:6px;">🏰 护城河</div>
+                                    <p style="font-size:12px;">竞争优势与市场地位</p>
+                                </div>
+                            </div>
+                            <div class="flex-row">
+                                <div class="flex-col">
+                                    <div style="font-weight:700;color:var(--accent);margin-bottom:6px;">👔 管理质量</div>
+                                    <p style="font-size:12px;">团队能力与决策水平</p>
+                                </div>
+                                <div class="flex-col">
+                                    <div style="font-weight:700;color:var(--accent);margin-bottom:6px;">💰 估值合理度</div>
+                                    <p style="font-size:12px;">当前价格是否合理</p>
+                                </div>
+                            </div>
+                            <p style="margin-top:12px;">覆盖1000+家上市公司，帮助用户科学判断投资价值。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="card">
+                        <h3>定价与商业模式</h3>
+                        <div class="card-body">
+                            <p><strong>采用Freemium模式：</strong> 免费下载 + App内购买</p>
+                            <div class="callout">
+                                <strong>免费功能：</strong> 基础AI选股、盯盘、早点听播报、任务助手基础功能
+                            </div>
+                            <div class="callout" style="border-left-color:var(--accent-green);">
+                                <strong>高级功能：</strong> Level-2行情数据、深度事件传导分析、优先响应服务等订阅服务
+                            </div>
+                            <p>这样的设计既降低了用户的进入门槛，又为高度活跃用户提供了高价值服务。</p>
+                            <div class="metrics-grid">
+                                <div class="metric-card">
+                                    <div class="metric-value">4.8/5</div>
+                                    <div class="metric-label">App Store评分</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">76.99%</div>
+                                    <div class="metric-label">核心价值认同率</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-3"></div>
+        </section>
+
+        <!-- CH4: AI技术 -->
+        <section class="chapter" id="ch-4">
+            <div class="chapter-header">
+                <h2>AI技术</h2>
+                <span class="ch-sub">🧠 技术架构与能力</span>
+                <span class="ch-counter" id="counter-4">1 / 4</span>
+            </div>
+            <div class="card-track" data-ch="4">
+                <div class="slide">
+                    <div class="card">
+                        <h3>混合大模型架构</h3>
+                        <div class="card-body">
+                            <p>AI涨乐采用"豆包大模型+华泰金融垂直模型+多专家Agent"的三层混合架构。</p>
+                            <div class="timeline">
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-year">第一层</div>
+                                    <div class="timeline-text"><strong>豆包大模型</strong>（字节跳动）提供通用AI底座，负责自然语言理解、文本生成、多模态处理</div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-year">第二层</div>
+                                    <div class="timeline-text"><strong>华泰垂直模型</strong>：融入华泰证券30余年金融知识、投研框架、产业图谱，提升金融专业度和准确性</div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-year">第三层</div>
+                                    <div class="timeline-text"><strong>多专家Agent</strong>：主Agent根据用户意图，调度选股Agent、盯盘Agent、交易Agent等，避免"幻觉"，精准执行</div>
+                                </div>
+                            </div>
+                            <p style="margin-top:16px;">这样的架构为什么有效？因为金融领域需要通用大模型的"思维"能力，更需要垂直模型的"专业"能力。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="card">
+                        <h3>核心AI能力</h3>
+                        <div class="card-body">
+                            <p><strong>意图识别与NLU：</strong> 理解"帮我找找电动车龙头"这样的口语化指令，准确转化为结构化的投资任务</p>
+                            <p><strong>个性化推荐：</strong> 基于用户风险偏好、交易历史、关注的行业，智能推送早点听、研报摘要、热点分析</p>
+                            <p><strong>多模态交互：</strong> 支持文本、语音、可视化交互，将复杂的产业链传导、资金流向用图表展现</p>
+                            <p><strong>任务自动化：</strong> "任务助手"可自动执行条件单、网格交易、分批止盈等复杂策略，减少人工干预</p>
+                            <p><strong>事件传导分析：</strong> 追溯新闻事件对产业链上下游的影响，实现从定性到定量的投资逻辑推导</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="card">
+                        <h3>知识基础设施</h3>
+                        <div class="card-body">
+                            <p>AI涨乐的强大之处在于背靠华泰证券的知识积累：</p>
+                            <table>
+                                <thead>
+                                    <tr><th>知识库</th><th>规模</th><th>用途</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><strong>事件传导规则</strong></td><td>3万+类</td><td>分析新闻对股票的影响</td></tr>
+                                    <tr><td><strong>估值模型</strong></td><td>1000+家公司</td><td>动态估值计算</td></tr>
+                                    <tr><td><strong>投研报告库</strong></td><td>海量</td><td>训练金融垂直模型</td></tr>
+                                    <tr><td><strong>产业链图谱</strong></td><td>全A股覆盖</td><td>追踪事件传导</td></tr>
+                                </tbody>
+                            </table>
+                            <div class="callout">
+                                <strong>壁垒：</strong> 这些知识库需要30年的行业积累，外部竞争者难以快速复制。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="card">
+                        <h3>技术风险与挑战</h3>
+                        <div class="card-body">
+                            <p><strong>幻觉风险：</strong> 大模型可能生成错误或误导信息，在金融领域风险极高，需持续优化验证机制</p>
+                            <p><strong>监管不确定性：</strong> 欧盟AI Act和国内对程序化交易、算法同质化的监管要求越来越严格</p>
+                            <p><strong>技术迭代压力：</strong> 金融市场瞬息万变，模型需持续学习更新，长期领先需投入巨大的研发成本</p>
+                            <p><strong>数据安全：</strong> 处理大量用户数据和金融敏感信息，网络攻击和数据泄露风险始终存在</p>
+                            <p><strong>算法同质化：</strong> 不同券商可能采用相似的AI模型，导致"羊群效应"，AI涨乐需持续创新保持独特性</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-4"></div>
+        </section>
+
+        <!-- CH5: 用户反馈 -->
+        <section class="chapter" id="ch-5">
+            <div class="chapter-header">
+                <h2>用户反馈</h2>
+                <span class="ch-sub">💬 市场验证与用户评价</span>
+                <span class="ch-counter" id="counter-5">1 / 3</span>
+            </div>
+            <div class="card-track" data-ch="5">
+                <div class="slide">
+                    <div class="card">
+                        <h3>整体评价</h3>
+                        <div class="card-body">
+                            <div class="metrics-grid">
+                                <div class="metric-card">
+                                    <div class="metric-value">4.8/5</div>
+                                    <div class="metric-label">App Store评分</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">240万+</div>
+                                    <div class="metric-label">用户规模</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">76.99%</div>
+                                    <div class="metric-label">核心价值认同</div>
+                                </div>
+                            </div>
+                            <p style="margin-top:16px;">用户对AI涨乐的评价整体积极，最高评分集中在"智能决策辅助"、"交互体验创新"、"专业性与准确性"三个方面。</p>
+                            <div class="callout">
+                                <strong>用户口碑：</strong> 被金融科技和投资圈普遍认可为"券商AI应用从功能有无转向逻辑深浅的代表"
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="card">
+                        <h3>正面反馈</h3>
+                        <div class="card-body">
+                            <p><strong style="color:var(--accent);">智能决策辅助（80%认可）</strong></p>
+                            <div class="quote-block">
+                                "AI选股和盯盘功能确实省心，能帮我发现以前发现不了的机会。"
+                            </div>
+                            <p style="margin-top:12px;"><strong style="color:var(--accent);">交互体验（75%认可）</strong></p>
+                            <div class="quote-block">
+                                "语音下单很方便，'早点听'也解决了信息过载的问题，比传统App好用很多。"
+                            </div>
+                            <p style="margin-top:12px;"><strong style="color:var(--accent);">合规态度（90%认可）</strong></p>
+                            <div class="quote-block">
+                                "报告中明确提示AI生成内容不构成投资建议，这点很负责任。"
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="card">
+                        <h3>改进空间</h3>
+                        <div class="card-body">
+                            <p><strong style="color:#C4602F;">应用稳定性（65%认可）</strong></p>
+                            <div class="quote-block">
+                                "App整体运行流畅，但偶尔会有卡顿或闪退的情况，希望继续优化。"
+                            </div>
+                            <p style="margin-top:12px;"><strong style="color:#C4602F;">个性化精准度（60%认可）</strong></p>
+                            <div class="quote-block">
+                                "虽然有'早点听'，但有时推送的信息还是有点多，希望能更精准。"
+                            </div>
+                            <p style="margin-top:12px;"><strong style="color:#C4602F;">AI准确性（70%认可）</strong></p>
+                            <div class="quote-block">
+                                "事件传导分析很专业，能看到新闻背后的逻辑，但有时AI的解读还需要自己再判断。"
+                            </div>
+                            <p style="margin-top:12px;">这些反馈反映了AI涨乐在产品体验层面的优化空间，也说明用户对其功能的期望在提升。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-5"></div>
+        </section>
+
+        <!-- CH6: 核心启示 -->
+        <section class="chapter" id="ch-6">
+            <div class="chapter-header">
+                <h2>核心启示</h2>
+                <span class="ch-sub">✨ 金融AI的未来启示</span>
+                <span class="ch-counter" id="counter-6">1 / 4</span>
+            </div>
+            <div class="card-track" data-ch="6">
+                <div class="slide">
+                    <div class="insight-card">
+                        <div class="insight-emoji">🏗️</div>
+                        <h3>启示一：AI原生重构</h3>
+                        <div class="card-body">
+                            <p>AI涨乐的核心创新不在"功能数量"，而在"架构逻辑"。传统券商App是"先有功能，后加AI"；AI涨乐是"AI优先，重构服务"。</p>
+                            <p>这体现了金融科技创新从"功能叠加"迈向"原生重构"的转变——不是在现有App里加一个AI选股功能，而是用AI的逻辑重新设计投资全流程。</p>
+                            <div class="insight-highlight">
+                                关键启示：金融科技竞争的未来是底层架构的竞争，而非功能的竞争。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="insight-card">
+                        <div class="insight-emoji">🔬</div>
+                        <h3>启示二：混合模型策略</h3>
+                        <div class="card-body">
+                            <p>通用大模型在金融领域有天然缺陷——难以"去伪存真"。AI涨乐的解决方案是"豆包+垂直模型+多专家Agent"的混合架构。</p>
+                            <p>这启示我们，AI在传统行业的成功不是"用大模型就够"，而是"大模型+垂直知识+领域洞察"的三角合力。</p>
+                            <div class="insight-highlight">
+                                关键启示：垂直行业的AI应用，关键在于如何将通用AI与专业知识融合。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="insight-card">
+                        <div class="insight-emoji">⚖️</div>
+                        <h3>启示三：合规与风控</h3>
+                        <div class="card-body">
+                            <p>金融行业对合规与风控的要求是所有行业中最严格的。AI涨乐的成功在于将合规与风控内嵌于产品与技术设计之中——不是事后补救，而是前置预防。</p>
+                            <p>这启示其他金融科技公司，开发AI应用时必须将合规置于第一位，建立多重防火墙、敏感词拦截、风险预警等机制。</p>
+                            <div class="insight-highlight">
+                                关键启示：金融AI的可持续发展必须将合规与风控视为产品的核心特性。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="insight-card">
+                        <div class="insight-emoji">🚀</div>
+                        <h3>启示四：上市券商的优势</h3>
+                        <div class="card-body">
+                            <p>AI涨乐之所以能成功，核心在于背靠华泰证券这样的行业头部上市券商。相比初创AI公司，上市券商拥有：</p>
+                            <p>✓ 庞大的用户基础（1156万月活）和数据资源<br/>✓ 30余年的投研积累和产业知识<br/>✓ 强大的资金实力和决策自主性<br/>✓ 完善的合规体系和风控机制</p>
+                            <p>这意味着未来金融AI的竞争，不会被初创公司垄断，而是"传统金融机构+AI技术"的合力。</p>
+                            <div class="insight-highlight">
+                                关键启示：金融AI竞争的终局是行业头部与科技巨头的协作，而非颠覆。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-6"></div>
+        </section>
+
+        <!-- CH7: 近期要闻 -->
+        <section class="chapter" id="ch-7">
+            <div class="chapter-header">
+                <h2>近期要闻</h2>
+                <span class="ch-sub">📰 产品迭代与行业动态</span>
+                <span class="ch-counter" id="counter-7">1 / 2</span>
+            </div>
+            <div class="card-track" data-ch="7">
+                <div class="slide">
+                    <div class="card">
+                        <h3>2026年产品迭代</h3>
+                        <div class="card-body">
+                            <div class="news-item">
+                                <div class="news-date">2026年3月</div>
+                                <div class="news-title">
+                                    <a href="#" target="_blank">AI涨乐持续优化多模态交互，语音识别准确率突破95%</a>
+                                </div>
+                                <div class="news-desc">支持更自然的语音对话，用户可用方言与AI互动，进一步降低使用门槛。</div>
+                            </div>
+                            <div class="news-item">
+                                <div class="news-date">2026年2月</div>
+                                <div class="news-title">
+                                    <a href="#" target="_blank">华泰证券在港港发布AI涨乐国际版规划</a>
+                                </div>
+                                <div class="news-desc">计划将AI涨乐的技术框架推广到其他亚太市场，寻求国际化机会。</div>
+                            </div>
+                            <div class="news-item">
+                                <div class="news-date">2026年1月</div>
+                                <div class="news-title">
+                                    <a href="#" target="_blank">AI涨乐1.0正式发布，用户破240万</a>
+                                </div>
+                                <div class="news-desc">经过百日迭代20个版本、350项服务，正式推出1.0版本，市场验证成功。</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="card">
+                        <h3>行业竞争动态</h3>
+                        <div class="card-body">
+                            <p><strong>竞争格局概览：</strong> 证券行业AI应用竞争已进入"逻辑深浅"阶段，从比拼功能数量转向比拼AI架构。</p>
+                            <div class="news-item">
+                                <div class="news-date">2026年3月</div>
+                                <div class="news-title">
+                                    <a href="#" target="_blank">国泰君安推出AI君弘2.0，加强综合服务能力</a>
+                                </div>
+                                <div class="news-desc">国泰君安作为另一头部券商，也在AI应用上发力，但仍聚焦于功能集成而非原生重构。</div>
+                            </div>
+                            <div class="news-item">
+                                <div class="news-date">2026年2月</div>
+                                <div class="news-title">
+                                    <a href="#" target="_blank">同花顺发布AI选股工具3.0，支持更多因子挖掘</a>
+                                </div>
+                                <div class="news-desc">互联网数据分析型工具持续迭代，但缺乏华泰证券那样的投研框架融入。</div>
+                            </div>
+                            <div class="news-item">
+                                <div class="news-date">2026年1月</div>
+                                <div class="news-title">
+                                    <a href="#" target="_blank">东方财富慧问上线企业画像功能</a>
+                                </div>
+                                <div class="news-desc">流量型平台在AI应用上追赶，但仍面临专业性和合规性的挑战。</div>
+                            </div>
+                            <p style="margin-top:16px;"><strong>总体判断：</strong> AI涨乐在"AI原生架构+投研深度融入+合规体系完善"方面仍领先竞争对手，预计未来3年内保持市场领先地位。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-7"></div>
+        </section>
+    </main>
+
+    <script>
+        // Counter animation
+        function animateCounters() {
+            const counters = document.querySelectorAll('[data-count]');
+            counters.forEach(counter => {
+                const target = parseInt(counter.getAttribute('data-count'));
+                const suffix = counter.getAttribute('data-suffix') || '';
+                let current = 0;
+                const increment = target / 30;
+                const timer = setInterval(() => {
+                    current += increment;
+                    if (current >= target) {
+                        current = target;
+                        clearInterval(timer);
+                    }
+                    counter.textContent = Math.floor(current) + suffix;
+                }, 30);
+            });
+        }
+        animateCounters();
+
+        // Navigation
+        function go(ch) {
+            document.getElementById('ch-' + ch).scrollIntoView({ behavior: 'smooth' });
+            document.querySelectorAll('.nav-btn').forEach((btn, i) => {
+                btn.classList.toggle('active', i === ch);
+            });
+        }
+
+        // Track scroll sync
+        function initChapter(chIndex) {
+            const track = document.querySelector(`.card-track[data-ch="${chIndex}"]`);
+            if (!track) return;
+
+            const slides = track.querySelectorAll('.slide');
+            const dotsContainer = document.getElementById(`dots-${chIndex}`);
+            const counter = document.getElementById(`counter-${chIndex}`);
+
+            // Create dots
+            slides.forEach((_, i) => {
+                const dot = document.createElement('button');
+                dot.className = 'dot' + (i === 0 ? ' active' : '');
+                dot.onclick = () => {
+                    slides[i].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+                };
+                dotsContainer.appendChild(dot);
+            });
+
+            // Sync dots and counter on scroll
+            track.addEventListener('scroll', () => {
+                const scrollLeft = track.scrollLeft;
+                const slideWidth = track.offsetWidth;
+                const activeIdx = Math.round(scrollLeft / slideWidth);
+
+                dotsContainer.querySelectorAll('.dot').forEach((dot, i) => {
+                    dot.classList.toggle('active', i === activeIdx);
+                });
+
+                if (counter) {
+                    counter.textContent = (activeIdx + 1) + ' / ' + slides.length;
+                }
+            });
+        }
+
+        // Initialize all chapters
+        for (let i = 1; i <= 7; i++) {
+            initChapter(i);
+        }
+
+        // Nav sync on main scroll
+        const main = document.querySelector('main');
+        main.addEventListener('scroll', () => {
+            const scrollPos = main.scrollTop + main.clientHeight / 2;
+            for (let i = 0; i <= 7; i++) {
+                const section = document.getElementById('ch-' + i);
+                if (section.offsetTop <= scrollPos && section.offsetTop + section.clientHeight > scrollPos) {
+                    document.querySelectorAll('.nav-btn').forEach((btn, idx) => {
+                        btn.classList.toggle('active', idx === i);
+                    });
+                    break;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

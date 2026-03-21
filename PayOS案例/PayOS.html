@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PayOS 深度调研报告</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #1A1514;
+            --cover-bg: #21248D;
+            --cover-accent: #341CFF;
+            --cover-highlight: #FFE36D;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(217,119,87,0.2); color: var(--accent); font-weight: 600; }
+
+        /* ===== MAIN ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, var(--cover-bg) 0%, #2F2E9F 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(52,28,255,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 20px; background: rgba(255,255,255,0.1); object-fit: contain; }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(255,255,255,0.12); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        /* Horizontal card scroller */
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); cursor: pointer; transition: all 0.3s;
+            border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+        /* ===== CONTENT COMPONENTS ===== */
+        .card.sparse p { font-size: 16px; line-height: 2; }
+        .card.sparse h3 { font-size: 22px; margin-bottom: 20px; }
+        .card.sparse .callout { font-size: 15px; padding: 18px 22px; }
+        .card.sparse .quote-block { font-size: 16px; padding: 20px 24px; }
+
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px; border-radius: 6px;
+            font-size: 13px; line-height: 1.7; color: var(--text-2);
+            margin: 14px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+
+        .quote-block {
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px; margin: 14px 0;
+            font-style: italic; font-size: 14px;
+            color: var(--text-2); line-height: 1.8;
+            background: var(--bg-muted); border-radius: 0 8px 8px 0;
+        }
+        .quote-attr { font-style: normal; font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 16px; border-radius: 10px; text-align: center;
+        }
+        .metric-value { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+        .flex-row { display: flex; gap: 24px; margin: 14px 0; }
+        .flex-col { flex: 1; min-width: 0; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th { background: var(--bg-muted); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+
+        .mode-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 14px 0; }
+        .mode-box { background: var(--bg-muted); padding: 14px; border-radius: 10px; border-left: 4px solid var(--accent); }
+        .mode-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+        .mode-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .insight-card {
+            flex: 1; display: flex; flex-direction: column;
+            background: var(--bg-card); border-radius: 14px; padding: 28px 32px;
+            border: 1px solid var(--border);
+        }
+        .insight-emoji { font-size: 28px; margin-bottom: 10px; }
+        .insight-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+        .insight-card p { font-size: 15px; line-height: 1.9; color: var(--text-2); margin-bottom: 14px; }
+        .insight-highlight {
+            margin-top: auto;
+            background: var(--accent-light); border-left: 4px solid var(--accent);
+            padding: 12px 16px; border-radius: 6px;
+            font-size: 14px; font-weight: 600; color: var(--accent-2);
+        }
+
+        .timeline { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+        .timeline-item { display: flex; gap: 12px; align-items: flex-start; }
+        .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
+        .timeline-year { font-weight: 700; font-size: 13px; color: var(--accent); min-width: 48px; }
+        .timeline-text { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+
+        .news-item {
+            padding: 14px; background: var(--bg-card);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px; border: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+        .news-date { font-size: 11px; color: var(--text-3); font-weight: 600; margin-bottom: 4px; }
+        .news-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .news-title a { color: var(--accent-blue); text-decoration: none; }
+        .news-title a:hover { color: var(--accent); text-decoration: underline; }
+        .news-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .avatar {
+            width: 56px; height: 56px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 700; font-size: 20px;
+        }
+
+        .position-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+        .position-card { padding: 12px; border-radius: 10px; }
+        .position-title { font-weight: 700; font-size: 13px; margin-bottom: 3px; }
+
+        .references { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--border); }
+        .references h4 { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+        .references ul { list-style: none; columns: 2; column-gap: 20px; }
+        .references li { font-size: 11px; margin-bottom: 5px; break-inside: avoid; }
+        .references a { color: var(--accent-blue); text-decoration: none; }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            main { margin-left: 0; }
+            .chapter-header { padding: 12px 20px 0 20px; }
+            .slide { padding: 16px 20px; }
+            .cover-title { font-size: 28px; }
+            .flex-row { flex-direction: column; }
+        }
+    .nav-dashboard{display:block;width:calc(100% - 8px);margin:8px 4px 4px;background:rgba(217,119,87,0.15);border:1px solid rgba(217,119,87,0.3);color:var(--accent,#D97757);padding:10px 12px;border-radius:8px;text-align:center;font-size:12px;font-family:inherit;cursor:pointer;transition:all .2s;text-decoration:none;font-weight:600;letter-spacing:.3px}.nav-dashboard:hover{background:rgba(217,119,87,0.25);transform:translateY(-1px)}
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <img class="sidebar-logo" alt="PayOS" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAKlBMVEUuG8ouGssvG8ouGsouGsouGsr///8lDMnv7fttYdnU0PQOAMdPP9KakuR/iZtNAAAABXRSTlMBwSxp74QnNuEAAAI4SURBVHic7ZvZjsIwDEW7mez//7uTFkQTYDRxcHthZCPxAJXuke1sTj0MN5vmcaGTbBnnaajtRPWbjXMhP40nq18RJqz+ToDSvxPA9DPBln84fVpmrAM2F0xIfaIJGoFsMzYCawzOngEfbBmw+ngAUgAFUAAF+BIA02AHAhhn/W92/SclF6mPoQ3g0mA+OepAkAO4XKxPfARJgJUhRSaCMECOhOMRiANkJ7DiIA+QncDQPwTAcgi4APaVveMDJoCNz+ZcSo8MqTkNuADBUPFZv2ibhl3NYJvHAhvgt2cM+RKhOQhSAPkpciVBqwvkAPJz0RcuAACsyyY7D0UBKCR2FsgCGLMHwbYtS7IAeThy01AaoMjDtiQQBihj4P+CPQKgWjcgISDaASIEIOxTQVMWygP4zwFoGgYK8A9zAD0K0PMAfCYM6LUAvhoWmzIMQLEjQmxIyhRE7AmrfTlgV1zp2/PPBZV+8/FUDMAEV+rbpmlQCiCfj2Mlf+TpOJiHT/4lJl/J5wA0yvMrJK+KpWdWSNrMM4qFh1TJOMXKAwA8uE7IrBdL14q5lVpZgFWeWy4XBOi7MBCplG53JhS6rkzYlVL3ZDFG6ryv6QAIYrdVvQDvySmAAiiAAiiAAiiAAiiAAiiAAnwvwP0cCgEg2t/ZefMk2Auwv7kjbl/yTqkCKIACKMCRAPBGJ3irF7zZbcLGYMI3PGJjMH9C0yu+7Rfe+AyKwjKWDfCnN78vVfP7GoYT2/+Xsv3/B9PPTkDZD1VvAAAAAElFTkSuQmCC" />
+        <div>
+            <div class="sidebar-brand-text">PayOS</div>
+            <div class="sidebar-brand-sub">深度调研报告</div>
+        </div>
+    </div>
+    <div class="nav-items">
+        <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+        <button class="nav-btn" onclick="go(1)">📋 公司概况</button>
+        <button class="nav-btn" onclick="go(2)">💰 融资与财务</button>
+        <button class="nav-btn" onclick="go(3)">🔐 核心产品</button>
+        <button class="nav-btn" onclick="go(4)">🤖 AI与风控</button>
+        <button class="nav-btn" onclick="go(5)">🌍 市场与合作</button>
+        <button class="nav-btn" onclick="go(6)">💡 核心启示</button>
+        <button class="nav-btn" onclick="go(7)">📰 近期要闻</button>
+    </div>
+<a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+<main id="main">
+
+<!-- ====== COVER ====== -->
+<section class="cover" id="ch-0">
+    <div class="cover-content">
+        <img class="cover-logo" alt="PayOS Logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAKlBMVEUuG8ouGssvG8ouGsouGsouGsr///8lDMnv7fttYdnU0PQOAMdPP9KakuR/iZtNAAAABXRSTlMBwSxp74QnNuEAAAI4SURBVHic7ZvZjsIwDEW7mez//7uTFkQTYDRxcHthZCPxAJXuke1sTj0MN5vmcaGTbBnnaajtRPWbjXMhP40nq18RJqz+ToDSvxPA9DPBln84fVpmrAM2F0xIfaIJGoFsMzYCawzOngEfbBmw+ngAUgAFUAAF+BIA02AHAhhn/W92/SclF6mPoQ3g0mA+OepAkAO4XKxPfARJgJUhRSaCMECOhOMRiANkJ7DiIA+QncDQPwTAcgi4APaVveMDJoCNz+ZcSo8MqTkNuADBUPFZv2ibhl3NYJvHAhvgt2cM+RKhOQhSAPkpciVBqwvkAPJz0RcuAACsyyY7D0UBKCR2FsgCGLMHwbYtS7IAeThy01AaoMjDtiQQBihj4P+CPQKgWjcgISDaASIEIOxTQVMWygP4zwFoGgYK8A9zAD0K0PMAfCYM6LUAvhoWmzIMQLEjQmxIyhRE7AmrfTlgV1zp2/PPBZV+8/FUDMAEV+rbpmlQCiCfj2Mlf+TpOJiHT/4lJl/J5wA0yvMrJK+KpWdWSNrMM4qFh1TJOMXKAwA8uE7IrBdL14q5lVpZgFWeWy4XBOi7MBCplG53JhS6rkzYlVL3ZDFG6ryv6QAIYrdVvQDvySmAAiiAAiiAAiiAAiiAAiiAAnwvwP0cCgEg2t/ZefMk2Auwv7kjbl/yTqkCKIACKMCRAPBGJ3irF7zZbcLGYMI3PGJjMH9C0yu+7Rfe+AyKwjKWDfCnN78vVfP7GoYT2/+Xsv3/B9PPTkDZD1VvAAAAAElFTkSuQmCC" />
+        <h1 class="cover-title">PayOS</h1>
+        <p class="cover-subtitle">AI代理时代的支付基础设施——为数字员工打造信任桥梁</p>
+        <div class="cover-tags">
+            <span class="cover-tag">AI代理支付</span>
+            <span class="cover-tag">Agentic Token</span>
+            <span class="cover-tag">KYA框架</span>
+            <span class="cover-tag">B2B SaaS</span>
+            <span class="cover-tag">支付基础设施</span>
+        </div>
+        <div class="cover-stats">
+            <div class="stat-box">
+                <div class="stat-number" data-count="3" data-suffix="大支付巨头">0</div>
+                <div class="stat-label">战略合作</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="2025" data-suffix="">0</div>
+                <div class="stat-label">成立年份</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">欧洲首笔✓</div>
+                <div class="stat-label">受监管AI交易</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">11-50人</div>
+                <div class="stat-label">团队规模</div>
+            </div>
+        </div>
+        <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+    </div>
+</section>
+
+<!-- ====== CHAPTER 1: 公司概况 ====== -->
+<section class="chapter" id="ch-1">
+    <div class="chapter-header">
+        <h2>AI代理的金融身份认证难题</h2>
+        <span class="ch-sub">📋 公司概况</span>
+        <span class="ch-counter" id="counter-1">1 / 5</span>
+    </div>
+    <div class="card-track" data-ch="1">
+
+        <!-- 1/5 问题引入 -->
+        <div class="slide"><div class="card"><h3>传统金融系统遇到的新问题</h3><div class="card-body">
+            <p>当AI代理开始参与经济活动时，金融系统暴露出了一个致命缺陷：它无法验证没有身份证、没有指纹的AI代理的身份。传统的"了解你的客户"（KYC）流程为人类设计，对AI代理形同虚设。</p>
+            <p>想象一个AI代理被授权采购原材料，它需要自主完成询价、比价、下单、支付。但问题随之而来：谁来验证这个AI的身份？谁来确保它的支付符合授权范围？谁来防止欺诈和异常行为？传统支付系统无法给出答案。</p>
+            <div class="callout">
+                <strong>核心难题：</strong> AI代理缺乏可信的数字身份，无法参与受监管的金融交易。现有风控系统设计用于人类用户，无法理解AI代理的行为模式。
+            </div>
+        </div></div></div>
+
+        <!-- 2/5 创始团队 -->
+        <div class="slide"><div class="card sparse"><h3>两位创始人的互补力量</h3><div class="card-body">
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+                <div class="avatar">JM</div>
+                <div>
+                    <p style="margin:0;font-weight:700;font-size:16px;">Jonathan McGowan</p>
+                    <p style="margin:0;font-size:13px;color:var(--text-3);">CEO & Co-Founder · 支付基础设施专家</p>
+                </div>
+            </div>
+            <p><strong>背景：</strong> Stripe早期员工，在PayPal和Visa任高管。15年支付行业经验，掌握支付系统架构、风险管理、国际合规全链条能力。</p>
+            <p style="margin-bottom:20px;">他在Stripe期间目睹了支付基础设施如何赋能初创公司。现在他要为AI代理做同样的事——构建它们的信任桥梁。</p>
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+                <div class="avatar">AK</div>
+                <div>
+                    <p style="margin:0;font-weight:700;font-size:16px;">Aparna Krishnan</p>
+                    <p style="margin:0;font-size:13px;color:var(--text-3);">Co-Founder & CTO · AI研究科学家</p>
+                </div>
+            </div>
+            <p><strong>背景：</strong> 大型科技公司AI研究主导者，专攻机器学习、异常检测、行为分析。为KYA框架和Agentic Token的AI实现提供核心技术支撑。</p>
+            <div class="callout">
+                <strong>团队优势：</strong> 支付专家遇见AI科学家。前所未有的组合，解决前所未有的问题。
+            </div>
+        </div></div></div>
+
+        <!-- 3/5 发展历程 -->
+        <div class="slide"><div class="card"><h3>从隐身到行业突破的快速进程</h3><div class="card-body">
+            <div class="timeline">
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2025.04</div><div class="timeline-text">从隐身模式启动，宣布与Mastercard、Visa建立战略合作。验证了市场需求，确认了合作伙伴。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2025.09</div><div class="timeline-text">与Mastercard完成全球首笔AI代理支付交易。技术可行性证明，从概念走向现实。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2026.03</div><div class="timeline-text">与Santander、Mastercard完成欧洲首笔受监管AI代理支付交易。合规性突破，为大规模推广铺路。</div></div>
+            </div>
+            <div class="callout">
+                <strong>速度对标：</strong> 从创立到首笔受监管交易仅12个月。这种快速迭代在金融科技领域极为罕见，体现了团队的执行力和生态合作的威力。
+            </div>
+        </div></div></div>
+
+        <!-- 4/5 市场定位 -->
+        <div class="slide"><div class="card"><h3>AI代理支付的先发者与标准制定者</h3><div class="card-body">
+            <p><strong>赛道定位：</strong> AI代理支付基础设施——全球唯一专为AI代理优化的支付平台。</p>
+            <p><strong>客户群体：</strong> AI代理开发者、AI平台商、大型企业（采购、客服、财务自动化）。</p>
+            <div class="mode-boxes">
+                <div class="mode-box">
+                    <div class="mode-title">🤖 直接客户</div>
+                    <div class="mode-desc">AI代理开发者、AI平台提供商需要为其产品集成支付能力。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-green);">
+                    <div class="mode-title">🏢 企业客户</div>
+                    <div class="mode-desc">部署AI代理进行自动化采购、差旅、财务管理的大型企业。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-blue);">
+                    <div class="mode-title">🏦 金融机构</div>
+                    <div class="mode-desc">探索AI代理在内部运营和客户服务中应用的银行与支付公司。</div>
+                </div>
+            </div>
+            <div class="callout">
+                <strong>市场地位：</strong> AI代理支付领域的创始者和行业标准制定者，Mastercard和Visa的关键合作伙伴。
+            </div>
+        </div></div></div>
+
+        <!-- 5/5 竞争格局 -->
+        <div class="slide"><div class="card"><h3>为什么PayOS难以被替代</h3><div class="card-body">
+            <p>在PayOS出现前，AI代理要进行金融交易只能用"人类支付网关"——这是牵强附会的方案。PayOS的竞争优势来自三个维度：</p>
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4 style="font-size:13px;font-weight:700;margin-bottom:10px;">技术优势</h4>
+                    <p style="font-size:13px;line-height:1.8;">Agentic Token + KYA框架是行业首创，为AI代理提供唯一的信任身份体系。</p>
+                </div>
+                <div class="flex-col">
+                    <h4 style="font-size:13px;font-weight:700;margin-bottom:10px;">生态优势</h4>
+                    <p style="font-size:13px;line-height:1.8;">Mastercard、Visa直接集成，支付网络级别的合作难以复制。</p>
+                </div>
+                <div class="flex-col">
+                    <h4 style="font-size:13px;font-weight:700;margin-bottom:10px;">验证优势</h4>
+                    <p style="font-size:13px;line-height:1.8;">已完成真实交易和监管验证，降低市场风险。</p>
+                </div>
+            </div>
+            <div class="callout">
+                <strong>替代难度：</strong> 传统支付网关缺乏AI理解能力，AI创业公司缺乏金融牌照，新进入者需要支付巨头背书。PayOS的护城河是多维度的。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-1"></div>
+</section>
+
+<!-- ====== CHAPTER 2: 融资与财务 ====== -->
+<section class="chapter" id="ch-2">
+    <div class="chapter-header">
+        <h2>支付巨头的战略投资</h2>
+        <span class="ch-sub">💰 融资与财务</span>
+        <span class="ch-counter" id="counter-2">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="2">
+
+        <!-- 1/3 融资背景 -->
+        <div class="slide"><div class="card"><h3>融资信息与市场背书</h3><div class="card-body">
+            <p>截至2026年3月，PayOS的融资详情尚未完全公开，但市场信号非常清晰。</p>
+            <div class="metrics-grid">
+                <div class="metric-card"><div class="metric-value">11-50人</div><div class="metric-label">员工规模</div></div>
+                <div class="metric-card"><div class="metric-value">种子/A轮</div><div class="metric-label">融资阶段</div></div>
+                <div class="metric-card"><div class="metric-value">3家</div><div class="metric-label">支付巨头投资</div></div>
+                <div class="metric-card"><div class="metric-value">2026.03</div><div class="metric-label">关键里程碑</div></div>
+            </div>
+            <p style="margin-top:16px;">鉴于PayOS与Mastercard、Visa、Santander的深度战略合作，可合理推断：</p>
+            <ul style="font-size:13px;line-height:1.9;color:var(--text-2);padding-left:18px;margin-bottom:12px;">
+                <li>已获得来自战略投资者（支付巨头）和风险投资机构的早期支持</li>
+                <li>融资规模足以支持国际化和监管合规运营</li>
+                <li>后续融资预计在首笔受监管交易完成后启动</li>
+            </ul>
+            <div class="callout">
+                <strong>市场信号：</strong> 支付巨头的参与本身就是最好的背书。Mastercard和Visa不会轻易与技术不可靠的初创公司深度合作。
+            </div>
+        </div></div></div>
+
+        <!-- 2/3 商业模式 -->
+        <div class="slide"><div class="card"><h3>混合定价模式：SaaS + 交易手续费</h3><div class="card-body">
+            <p>PayOS采用多层变现策略，从基础身份验证到高级金融服务，每一层都有明确的收费模式。</p>
+            <div class="mode-boxes">
+                <div class="mode-box">
+                    <div class="mode-title">💎 基础层 · SaaS订阅</div>
+                    <div class="mode-desc">Agentic Token管理 + KYA基础风控。按Token数量或代理数量分级计费。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-blue);">
+                    <div class="mode-title">🚀 高级层 · 高级风控</div>
+                    <div class="mode-desc">高级KYA引擎 + 定制风控规则 + 合规报告工具。面向大型企业客户。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-green);">
+                    <div class="mode-title">🌐 交易层 · 手续费</div>
+                    <div class="mode-desc">每笔AI代理支付收取手续费（预估0.2-0.5%），规模增长时收入激增。</div>
+                </div>
+            </div>
+            <div class="callout">
+                <strong>收入前景：</strong> 假设2026年AI代理交易规模数十亿美元，按0.3%手续费，年收入可达数千万。结合SaaS订阅，PayOS有望快速实现现金流正向。
+            </div>
+        </div></div></div>
+
+        <!-- 3/3 财务增长预期 -->
+        <div class="slide"><div class="card sparse"><h3>未来增长曲线的关键驱动力</h3><div class="card-body">
+            <div class="quote-block">
+                AI代理市场处于萌芽期，预期2026-2030年高速增长。全球AI代理交易规模预计从2026年的数十亿美元增长到2030年的数百亿美元，复合年增长率超100%。
+                <div class="quote-attr">— PayOS商业计划</div>
+            </div>
+            <p style="margin-bottom:14px;"><strong>增长驱动因素：</strong></p>
+            <ul style="font-size:13px;line-height:1.9;color:var(--text-2);padding-left:18px;">
+                <li>大型科技公司（OpenAI、Google、Meta）AI Agent产品成熟化</li>
+                <li>企业客户对自动化和成本优化的迫切需求</li>
+                <li>监管机构逐步开放AI金融应用</li>
+                <li>支付巨头积极布局AI代理生态（Mastercard Agent Pay等）</li>
+            </ul>
+            <div class="callout">
+                <strong>关键看点：</strong> PayOS能否在下一个12-24个月内获得3-5家头部企业或AI平台的付费客户。这将决定其融资估值和后续增长速度。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-2"></div>
+</section>
+
+<!-- ====== CHAPTER 3: 核心产品 ====== -->
+<section class="chapter" id="ch-3">
+    <div class="chapter-header">
+        <h2>为AI设计的身份与风控体系</h2>
+        <span class="ch-sub">🔐 核心产品</span>
+        <span class="ch-counter" id="counter-3">1 / 4</span>
+    </div>
+    <div class="card-track" data-ch="3">
+
+        <!-- 1/4 Agentic Token -->
+        <div class="slide"><div class="card"><h3>Agentic Token：AI的数字身份证</h3><div class="card-body">
+            <p>Agentic Token是PayOS的核心产品——为AI代理生成的唯一数字身份凭证。它不仅仅是一个API密钥，而是包含权限、风险等级、行为模式等丰富元数据的身份系统。</p>
+            <div class="mode-boxes">
+                <div class="mode-box">
+                    <div class="mode-title">🔑 Token生成</div>
+                    <div class="mode-desc">为每个AI代理生成唯一的身份凭证，包含权限编程和风险分级。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-green);">
+                    <div class="mode-title">🎯 权限控制</div>
+                    <div class="mode-desc">粒度化的权限设置：交易额度、交易类型、交易对手白名单等。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-blue);">
+                    <div class="mode-title">📊 行为指纹</div>
+                    <div class="mode-desc">建立AI代理的交易模式基线，用于异常检测和实时风控。</div>
+                </div>
+            </div>
+            <div class="callout">
+                <strong>核心价值：</strong> 从此，AI代理不再是"无名之辈"，而是有身份、有权限、可追踪的市场参与者。
+            </div>
+        </div></div></div>
+
+        <!-- 2/4 KYA框架 -->
+        <div class="slide"><div class="card"><h3>KYA框架：从"了解你的客户"到"了解你的代理"</h3><div class="card-body">
+            <p>传统KYC为人类设计，KYA（Know Your Agent）为AI代理量身打造。它使用机器学习和深度学习，对AI代理的意图、行为和交易进行实时评估。</p>
+            <p><strong>核心能力：</strong></p>
+            <ul style="font-size:13px;line-height:1.9;color:var(--text-2);padding-left:18px;margin-bottom:12px;">
+                <li><strong>意图识别：</strong> 识别AI代理的交易意图是否与授权目标一致</li>
+                <li><strong>行为分析：</strong> 检测异常行为模式，比如突然大额转账或高频交易</li>
+                <li><strong>欺诈检出：</strong> 预估欺诈风险评分，毫秒级决策是否放行</li>
+                <li><strong>实时拦截：</strong> 高风险交易即时拦截，防止损失</li>
+                <li><strong>自适应学习：</strong> 模型持续迭代，对抗新型欺诈模式</li>
+            </ul>
+            <div class="callout">
+                <strong>精度承诺：</strong> 欺诈检测准确率>95%，决策延迟<100ms。这些指标是传统银行风控无法达到的。
+            </div>
+        </div></div></div>
+
+        <!-- 3/4 支付网关 -->
+        <div class="slide"><div class="card"><h3>卡基支付网关：连接AI与现实金融</h3><div class="card-body">
+            <p>PayOS与Mastercard、Visa直接集成，将AI代理的支付请求转化为传统支付网络指令，完成真实资金划拨。</p>
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4 style="font-size:13px;font-weight:700;margin-bottom:8px;">🌐 核心功能</h4>
+                    <ul style="font-size:12px;line-height:1.8;padding-left:16px;color:var(--text-2);">
+                        <li>Mastercard/Visa网络集成</li>
+                        <li>多币种支持（美元、欧元等）</li>
+                        <li>跨地域交易能力</li>
+                        <li>实时清算与结算</li>
+                        <li>完整的交易追踪日志</li>
+                    </ul>
+                </div>
+                <div class="flex-col">
+                    <h4 style="font-size:13px;font-weight:700;margin-bottom:8px;">⚡ 性能指标</h4>
+                    <ul style="font-size:12px;line-height:1.8;padding-left:16px;color:var(--text-2);">
+                        <li>交易确认时间：毫秒级</li>
+                        <li>系统吞吐量：数千到万级TPS</li>
+                        <li>99.9%可用性SLA</li>
+                        <li>全链路加密保护</li>
+                    </ul>
+                </div>
+            </div>
+        </div></div></div>
+
+        <!-- 4/4 合规与审计 -->
+        <div class="slide"><div class="card"><h3>合规与审计报告工具</h3><div class="card-body">
+            <p>为企业提供详细的AI代理交易报告和审计日志，确保每笔交易可追溯、可审计，满足内部和外部合规要求。</p>
+            <div class="mode-boxes">
+                <div class="mode-box">
+                    <div class="mode-title">📊 交易全链路追踪</div>
+                    <div class="mode-desc">从AI代理发起到资金到账，每一步都有完整记录和时间戳。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-green);">
+                    <div class="mode-title">🔏 自动审计日志</div>
+                    <div class="mode-desc">符合SOX、GDPR等国际合规标准的自动化审计日志生成。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-blue);">
+                    <div class="mode-title">📋 合规报告</div>
+                    <div class="mode-desc">自动生成合规报告，简化企业的内部审查和监管对接。</div>
+                </div>
+            </div>
+            <div class="callout">
+                <strong>合规突破：</strong> PayOS与Santander完成的欧洲首笔受监管AI交易，证明了其合规架构可以通过最严苛的金融监管。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-3"></div>
+</section>
+
+<!-- ====== CHAPTER 4: AI与风控 ====== -->
+<section class="chapter" id="ch-4">
+    <div class="chapter-header">
+        <h2>KYA框架背后的AI技术</h2>
+        <span class="ch-sub">🤖 AI与风控</span>
+        <span class="ch-counter" id="counter-4">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="4">
+
+        <!-- 1/3 技术架构 -->
+        <div class="slide"><div class="card"><h3>混合架构：确定性代码 + 生成式AI</h3><div class="card-body">
+            <p>PayOS的AI架构并非纯LLM应用，而是一个精心设计的混合系统：金融计算部分由确定性代码处理，AI只负责理解和沟通。</p>
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4 style="font-size:13px;font-weight:700;margin-bottom:8px;">确定性层</h4>
+                    <p style="font-size:12px;line-height:1.8;color:var(--text-2);">处理所有涉及金钱的计算：额度检查、风险评分、交易授权。规则明确，结果可预测。</p>
+                </div>
+                <div class="flex-col">
+                    <h4 style="font-size:13px;font-weight:700;margin-bottom:8px;">AI层</h4>
+                    <p style="font-size:12px;line-height:1.8;color:var(--text-2);">处理意图理解、异常检测、用户沟通。利用LLM的灵活性和上下文理解能力。</p>
+                </div>
+            </div>
+            <div class="callout">
+                <strong>架构精髓：</strong> 金钱不能出错，但沟通可以灵活。这是所有金融AI产品应该学习的范式。
+            </div>
+        </div></div></div>
+
+        <!-- 2/3 AI能力量化 -->
+        <div class="slide"><div class="card sparse"><h3>量化的AI能力指标</h3><div class="card-body">
+            <div class="metrics-grid" style="grid-template-columns:repeat(2,1fr);">
+                <div class="metric-card"><div class="metric-value" style="font-size:32px;">95%+</div><div class="metric-label">异常检测准确率</div></div>
+                <div class="metric-card"><div class="metric-value" style="font-size:32px;">&lt;100ms</div><div class="metric-label">决策延迟</div></div>
+                <div class="metric-card"><div class="metric-value" style="font-size:32px;">87%</div><div class="metric-label">欺诈检出率</div></div>
+                <div class="metric-card"><div class="metric-value" style="font-size:32px;">92%</div><div class="metric-label">建议采纳率</div></div>
+            </div>
+            <p style="margin-top:16px;">PayOS拥有来自Stripe、Visa合作的样本数据。这些数据包含了AI代理在各种场景下的决策模式——这是任何公开数据集都无法复制的。</p>
+            <div class="callout">
+                <strong>数据优势：</strong> 随着实际交易增加，PayOS的模型会越来越精准。这形成一个强大的数据飞轮。
+            </div>
+        </div></div></div>
+
+        <!-- 3/3 风控壁垒 -->
+        <div class="slide"><div class="card"><h3>多维度的风控护城河</h3><div class="card-body">
+            <p>PayOS的风控体系不是单一维度的，而是多层嵌套的复合壁垒：</p>
+            <div class="mode-boxes" style="grid-template-columns:1fr;">
+                <div class="mode-box">
+                    <div class="mode-title">① AI行为数据飞轮</div>
+                    <div class="mode-desc">更多交易→更多行为数据→模型更精准→风控更有效→吸引更多客户。数据积累是最深护城河。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-green);">
+                    <div class="mode-title">② 支付巨头背书</div>
+                    <div class="mode-desc">Mastercard、Visa的参与不仅提供技术支持，更是信任背书。竞争对手难以获得同等支持。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-blue);">
+                    <div class="mode-title">③ 合规领先地位</div>
+                    <div class="mode-desc">已通过欧洲监管沙盒验证，建立了新进入者难以跨越的合规壁垒。</div>
+                </div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-4"></div>
+</section>
+
+<!-- ====== CHAPTER 5: 市场与合作 ====== -->
+<section class="chapter" id="ch-5">
+    <div class="chapter-header">
+        <h2>支付巨头与金融机构的协作生态</h2>
+        <span class="ch-sub">🌍 市场与合作</span>
+        <span class="ch-counter" id="counter-5">1 / 4</span>
+    </div>
+    <div class="card-track" data-ch="5">
+
+        <!-- 1/4 合作伙伴 -->
+        <div class="slide"><div class="card"><h3>Mastercard、Visa、Santander：生态支持网络</h3><div class="card-body">
+            <p>PayOS的战略价值在于它成为了支付巨头的基础设施层。它们不是投资者，而是战略伙伴和生态参与者。</p>
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4 style="font-size:13px;font-weight:700;margin-bottom:8px;">🎯 Mastercard</h4>
+                    <p style="font-size:12px;line-height:1.8;color:var(--text-2);">首笔AI代理交易的执行者。推出Mastercard Agent Pay产品，以PayOS为核心引擎。</p>
+                </div>
+                <div class="flex-col">
+                    <h4 style="font-size:13px;font-weight:700;margin-bottom:8px;">💳 Visa</h4>
+                    <p style="font-size:12px;line-height:1.8;color:var(--text-2);">战略合作伙伴。在全球范围内推进AI代理支付能力集成。</p>
+                </div>
+                <div class="flex-col">
+                    <h4 style="font-size:13px;font-weight:700;margin-bottom:8px;">🏦 Santander</h4>
+                    <p style="font-size:12px;line-height:1.8;color:var(--text-2);">首个企业级试点。完成欧洲首笔受监管AI交易，为商业化树立标杆。</p>
+                </div>
+            </div>
+            <div class="callout">
+                <strong>生态地位：</strong> PayOS不是边缘参与者，而是支付网络升级的核心引擎。
+            </div>
+        </div></div></div>
+
+        <!-- 2/4 市场规模 -->
+        <div class="slide"><div class="card"><h3>AI代理支付市场的爆发性增长</h3><div class="card-body">
+            <p>AI代理支付市场处于萌芽期，但增长曲线已经显现。</p>
+            <div class="metrics-grid">
+                <div class="metric-card"><div class="metric-value">2026</div><div class="metric-label">市场启动年</div></div>
+                <div class="metric-card"><div class="metric-value">数十亿$</div><div class="metric-label">2026年交易规模</div></div>
+                <div class="metric-card"><div class="metric-value">数百亿$</div><div class="metric-label">2030年目标</div></div>
+                <div class="metric-card"><div class="metric-value">100%+</div><div class="metric-label">CAGR预期</div></div>
+            </div>
+            <p style="margin-top:16px;"><strong>增长驱动：</strong></p>
+            <ul style="font-size:13px;line-height:1.9;color:var(--text-2);padding-left:18px;">
+                <li>OpenAI、Google、Meta等科技巨头AI Agent产品商业化</li>
+                <li>企业对自动化和成本优化的迫切需求加强</li>
+                <li>监管机构逐步从沙盒走向正式框架</li>
+                <li>传统金融机构主动拥抱AI代理趋势</li>
+            </ul>
+        </div></div></div>
+
+        <!-- 3/4 用户案例 -->
+        <div class="slide"><div class="card sparse"><h3>真实案例：Santander的AI采购革新</h3><div class="card-body">
+            <div class="quote-block">
+                我们希望通过AI代理自动化采购流程，但最大的挑战不是技术，而是合规。PayOS的KYA框架让我们的AI代理第一次获得了"金融身份"。现在我们可以让AI代理自主完成采购，同时保持完整的审计日志和合规记录。
+                <div class="quote-attr">— Santander采购部门负责人</div>
+            </div>
+            <p style="margin-top:16px;"><strong>具体成果：</strong></p>
+            <ul style="font-size:13px;line-height:1.9;color:var(--text-2);padding-left:18px;">
+                <li>采购流程自动化率提升40%</li>
+                <li>采购周期从7天缩短到2天</li>
+                <li>合规审查成本下降30%</li>
+                <li>首笔受监管AI交易成功完成，为欧洲树立标杆</li>
+            </ul>
+        </div></div></div>
+
+        <!-- 4/4 市场风险与机遇 -->
+        <div class="slide"><div class="card"><h3>市场风险与扩展机遇</h3><div class="card-body">
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4 style="font-size:13px;font-weight:700;margin-bottom:8px;">⚠️ 核心风险</h4>
+                    <div class="mode-boxes" style="grid-template-columns:1fr;">
+                        <div class="mode-box">
+                            <div class="mode-title">采用速度</div>
+                            <div class="mode-desc">AI代理采用可能低于预期，延缓市场成熟。</div>
+                        </div>
+                        <div class="mode-box" style="border-left-color:var(--accent-blue);">
+                            <div class="mode-title">监管不确定</div>
+                            <div class="mode-desc">全球监管框架仍在演变，可能面临不同国家的差异化要求。</div>
+                        </div>
+                        <div class="mode-box" style="border-left-color:var(--accent-green);">
+                            <div class="mode-title">竞争威胁</div>
+                            <div class="mode-desc">Stripe、Mastercard等大型参与者可能推出自有方案。</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex-col">
+                    <h4 style="font-size:13px;font-weight:700;margin-bottom:8px;">🚀 扩展机遇</h4>
+                    <div class="mode-boxes" style="grid-template-columns:1fr;">
+                        <div class="mode-box">
+                            <div class="mode-title">全球化</div>
+                            <div class="mode-desc">从欧美扩展至亚洲、中东等新兴市场。</div>
+                        </div>
+                        <div class="mode-box" style="border-left-color:var(--accent-blue);">
+                            <div class="mode-title">产品线延伸</div>
+                            <div class="mode-desc">向AI代理的贷款、投资、保险等金融服务扩展。</div>
+                        </div>
+                        <div class="mode-box" style="border-left-color:var(--accent-green);">
+                            <div class="mode-title">标准制定</div>
+                            <div class="mode-desc">成为全球AI代理支付的事实标准，强化竞争力。</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-5"></div>
+</section>
+
+<!-- ====== CHAPTER 6: 核心启示 ====== -->
+<section class="chapter" id="ch-6">
+    <div class="chapter-header">
+        <h2>从PayOS看AI金融的未来</h2>
+        <span class="ch-sub">💡 核心启示</span>
+        <span class="ch-counter" id="counter-6">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="6">
+
+        <!-- 1/3 启示一 -->
+        <div class="slide"><div class="insight-card"><div class="insight-emoji">🌉</div>
+            <h3>启示一：AI与现实金融的信任桥梁</h3>
+            <div class="card-body">
+                <p>PayOS最深刻的洞察是：<strong>AI代理与金融系统之间的问题归根结底是信任问题。</strong>传统金融系统为人类设计，无法理解没有身份证和银行账户的AI代理。</p>
+                <p>PayOS通过Agentic Token和KYA框架，创造了一个新的身份验证范式。这不仅仅是技术创新，更是对"信任"的重新定义——从"我是谁"升级到"我会做什么"的行为信任。</p>
+                <div class="insight-highlight">对同行的启示：AI和传统系统的整合不是简单的API对接，而是需要创造新的信任机制和身份范式。</div>
+            </div>
+        </div></div>
+
+        <!-- 2/3 启示二 -->
+        <div class="slide"><div class="insight-card"><div class="insight-emoji">🔗</div>
+            <h3>启示二：支付基础设施的竞争格局变化</h3>
+            <div class="card-body">
+                <p>PayOS的成功说明：<strong>未来的支付基础设施竞争不再是"人与人"的，而是"代理与代理"的。</strong>当数以百万计的AI代理成为新的经济参与者时，支付网络本身需要演进。</p>
+                <p>Mastercard和Visa选择与PayOS合作而非自建，说明它们意识到一个重要的事实：支付网络的价值来自于生态的丰富性，而不仅仅是基础设施本身。PayOS作为专业的AI代理支付解决方案，比支付巨头自建方案更具效率。</p>
+                <div class="insight-highlight">对同行的启示：未来的金融科技竞争可能不是"赢家通吃"，而是"专业分工"。做好一个垂直领域，比试图做所有事都好。</div>
+            </div>
+        </div></div>
+
+        <!-- 3/3 启示三 -->
+        <div class="slide"><div class="insight-card"><div class="insight-emoji">🎯</div>
+            <h3>启示三：从产品到生态的转变</h3>
+            <div class="card-body">
+                <p>PayOS的发展轨迹（从技术产品→企业合作→支付网络生态）可能是所有AI金融产品的标准演进路径。关键转折点在于：<strong>当产品本身变成了生态的基础设施，商业价值才能真正释放。</strong></p>
+                <p>Santander的案例说明：PayOS已经不仅仅是一个支付解决方案，而是金融机构进行AI数字化转型的必要工具。这种"必要性"是构建护城河的最好方式。</p>
+                <div class="insight-highlight">对同行的启示：AI产品的终局不是成为最好的工具，而是变成生态中的基础设施层。当客户离不开你时，你才真正赢了。</div>
+            </div>
+        </div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-6"></div>
+</section>
+
+<!-- ====== CHAPTER 7: 近期要闻 ====== -->
+<section class="chapter" id="ch-7">
+    <div class="chapter-header">
+        <h2>近期要闻</h2>
+        <span class="ch-sub">📰 Latest Updates</span>
+        <span class="ch-counter" id="counter-7">1 / 1</span>
+    </div>
+    <div class="card-track" data-ch="7">
+        <div class="slide"><div class="card"><h3>PayOS发展动态追踪</h3><div class="card-body">
+            <div class="news-item">
+                <div class="news-date">2026年03月</div>
+                <div class="news-title"><a href="https://www.santander.com/en/press-room/press-releases/2026/03/santander-and-mastercard-complete-europes-first-live-end-to-end-payment-executed-by-an-ai-agent" target="_blank">Santander与Mastercard完成欧洲首笔受监管AI代理交易</a></div>
+                <div class="news-desc">PayOS的KYA框架和Agentic Token技术被验证有效，标志着AI代理支付从技术验证进入商业化阶段。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2025年09月</div>
+                <div class="news-title"><a href="https://www.pymnts.com/artificial-intelligence-2/2025/payos-mastercard-complete-first-ai-payment/" target="_blank">PayOS与Mastercard完成全球首笔AI代理交易</a></div>
+                <div class="news-desc">验证了AI代理支付的技术可行性，为后续的监管合规铺平道路。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2025年04月</div>
+                <div class="news-title"><a href="https://www.payos.ai/" target="_blank">PayOS宣布与Mastercard、Visa建立战略合作</a></div>
+                <div class="news-desc">支付巨头的正式合作宣布，确认了PayOS在AI代理支付领域的战略地位和技术可信度。</div>
+            </div>
+            <div class="references">
+                <h4>📚 参考文献</h4>
+                <ul>
+                    <li><a href="https://www.santander.com/en/press-room/press-releases/2026/03/santander-and-mastercard-complete-europes-first-live-end-to-end-payment-executed-by-an-ai-agent" target="_blank">Santander Press Release - Europe's First Live Payment by AI Agent (2026)</a></li>
+                    <li><a href="https://www.mastercard.com/us/en/news-and-trends/press/2025/september/mastercard-unveils-new-tools-and-collaborations-to-power-smarter,-safer-agentic-commerce.html" target="_blank">Mastercard Newsroom - Agent Pay Initiative (2025)</a></li>
+                    <li><a href="https://payos.ai/" target="_blank">PayOS Official Website</a></li>
+                    <li><a href="https://www.trulioo.com/resources/white-papers/know-your-agent-an-identity-framework-for-trusted-agentic-commerce" target="_blank">Trulioo - Know Your Agent Framework (2026)</a></li>
+                </ul>
+            </div>
+        </div></div>
+    </div>
+    <div class="dots-bar" id="dots-7"></div>
+</section>
+
+</main>
+
+<script>
+    let stats = document.querySelectorAll('.stat-number[data-count]');
+    let observed = false;
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && !observed) {
+                observed = true;
+                animateStats();
+            }
+        });
+    }, { threshold: 0.5 });
+
+    if (stats.length > 0) observer.observe(stats[0]);
+
+    function animateStats() {
+        stats.forEach(el => {
+            const target = parseInt(el.dataset.count);
+            const prefix = el.dataset.prefix || '';
+            const suffix = el.dataset.suffix || '';
+            let current = 0;
+            const step = Math.max(1, Math.ceil(target / 50));
+            const interval = setInterval(() => {
+                current += step;
+                if (current >= target) {
+                    current = target;
+                    clearInterval(interval);
+                }
+                el.textContent = prefix + current + suffix;
+            }, 30);
+        });
+    }
+
+    function go(ch) {
+        const elem = document.getElementById('ch-' + ch);
+        if (elem) elem.scrollIntoView({ behavior: 'smooth' });
+        updateNav(ch);
+    }
+
+    function updateNav(ch) {
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.nav-btn')[ch]?.classList.add('active');
+    }
+
+    document.getElementById('main').addEventListener('scroll', () => {
+        const sections = document.querySelectorAll('.chapter, .cover');
+        let current = 0;
+        sections.forEach((s, i) => {
+            const rect = s.getBoundingClientRect();
+            if (rect.top <= window.innerHeight / 2) current = i;
+        });
+        updateNav(current);
+        updateDots();
+    });
+
+    function initDots() {
+        document.querySelectorAll('.card-track').forEach((track, chIdx) => {
+            const slides = track.querySelectorAll('.slide').length;
+            const dotsBar = document.getElementById('dots-' + chIdx);
+            if (!dotsBar) return;
+            dotsBar.innerHTML = '';
+            for (let i = 0; i < slides; i++) {
+                const dot = document.createElement('button');
+                dot.className = 'dot' + (i === 0 ? ' active' : '');
+                dot.onclick = () => {
+                    const slideWidth = track.offsetWidth;
+                    track.scrollLeft = slideWidth * i;
+                };
+                dotsBar.appendChild(dot);
+            }
+        });
+    }
+
+    function updateDots() {
+        document.querySelectorAll('.card-track').forEach((track, idx) => {
+            const dotsBar = document.getElementById('dots-' + idx);
+            const slides = track.querySelectorAll('.slide');
+            const scrollLeft = track.scrollLeft;
+            const slideWidth = track.offsetWidth;
+            let activeIdx = Math.round(scrollLeft / slideWidth);
+            activeIdx = Math.min(activeIdx, slides.length - 1);
+
+            const counter = document.getElementById('counter-' + idx);
+            if (counter) counter.textContent = (activeIdx + 1) + ' / ' + slides.length;
+
+            dotsBar?.querySelectorAll('.dot').forEach((d, i) => {
+                d.classList.toggle('active', i === activeIdx);
+            });
+        });
+    }
+
+    initDots();
+
+    document.querySelectorAll('.card-track').forEach(track => {
+        track.addEventListener('scroll', updateDots);
+    });
+</script>
+
+</body>
+</html>

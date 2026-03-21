@@ -1,0 +1,1796 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ComplyAdvantage 深度调研报告</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --accent-purple: #7B5EA7;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #1A1514;
+            --cover-bg: #2D3142;
+            --cover-accent: #D97757;
+            --cover-highlight: #FFE36D;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(217,119,87,0.2); color: var(--accent); font-weight: 600; }
+
+        .nav-dashboard {
+            display: block; width: calc(100% - 8px); margin: 8px 4px 4px;
+            background: rgba(217,119,87,0.15); border: 1px solid rgba(217,119,87,0.3);
+            color: var(--accent); padding: 10px 12px; border-radius: 8px;
+            text-align: center; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+            font-weight: 600; letter-spacing: 0.3px;
+        }
+        .nav-dashboard:hover {
+            background: rgba(217,119,87,0.3); color: white;
+        }
+
+        /* ===== MAIN ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, var(--cover-bg) 0%, #3D4557 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(217,119,87,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 64px; height: 64px; border-radius: 12px; margin-bottom: 20px; background: rgba(255,255,255,0.1); object-fit: contain; }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 6px 14px; background: rgba(217,119,87,0.2); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        /* Fixed chapter header */
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        /* Horizontal card scroller */
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+
+        /* Each slide fills available height */
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Card inside slide — fills slide */
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        /* Dots bar at bottom */
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); cursor: pointer; transition: all 0.3s;
+            border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+        /* ===== CONTENT-SPARSE: bigger text for cards with less content ===== */
+        .card.sparse p { font-size: 16px; line-height: 2; }
+        .card.sparse h3 { font-size: 22px; margin-bottom: 20px; }
+        .card.sparse .callout { font-size: 15px; padding: 18px 22px; }
+        .card.sparse .quote-block { font-size: 16px; padding: 20px 24px; }
+
+        /* ===== REUSABLE COMPONENTS ===== */
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px; border-radius: 6px;
+            font-size: 13px; line-height: 1.7; color: var(--text-2);
+            margin: 14px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+
+        .quote-block {
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px; margin: 14px 0;
+            font-style: italic; font-size: 14px;
+            color: var(--text-2); line-height: 1.8;
+            background: var(--bg-muted); border-radius: 0 8px 8px 0;
+        }
+        .quote-attr { font-style: normal; font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 16px; border-radius: 10px; text-align: center;
+        }
+        .metric-value { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+        .flex-row { display: flex; gap: 24px; margin: 14px 0; }
+        .flex-col { flex: 1; min-width: 0; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th { background: var(--bg-muted); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+
+        .timeline {
+            margin: 14px 0;
+        }
+        .timeline-item {
+            display: flex; gap: 16px; margin-bottom: 20px;
+            padding-bottom: 20px; border-bottom: 1px solid var(--border);
+        }
+        .timeline-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .timeline-dot {
+            flex-shrink: 0; width: 12px; height: 12px; border-radius: 50%;
+            background: var(--accent); margin-top: 6px;
+        }
+        .timeline-year { font-size: 13px; font-weight: 700; color: var(--accent); min-width: 60px; }
+        .timeline-text { font-size: 13px; color: var(--text-2); line-height: 1.7; flex: 1; }
+
+        .mode-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 14px 0; }
+        .mode-box { background: var(--bg-muted); padding: 14px; border-radius: 10px; border-left: 4px solid var(--accent); }
+        .mode-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+        .mode-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        @media (max-width: 768px) {
+            .sidebar { width: 180px; }
+            main { margin-left: 180px; }
+            .chapter-header { padding: 12px 24px 0; }
+            .slide { padding: 16px 24px; }
+            .card { padding: 20px 24px; }
+            .cover { padding: 24px; }
+            .cover-title { font-size: 32px; }
+            .cover-subtitle { font-size: 14px; }
+            .cover-stats { gap: 16px; }
+            .stat-number { font-size: 24px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- SIDEBAR NAVIGATION -->
+    <nav class="sidebar">
+        <div class="sidebar-brand">
+            <img class="sidebar-logo" alt="ComplyAdvantage Logo" src="data:image/jpeg;base64,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" />
+            <div>
+                <div class="sidebar-brand-text">ComplyAdvantage</div>
+                <div class="sidebar-brand-sub">深度调研报告</div>
+            </div>
+        </div>
+        <div class="nav-items">
+            <button class="nav-btn active" onclick="scrollToChapter(0)">🏠 案例首页</button>
+            <button class="nav-btn" onclick="scrollToChapter(1)">📖 创业故事</button>
+            <button class="nav-btn" onclick="scrollToChapter(2)">💰 融资与财务</button>
+            <button class="nav-btn" onclick="scrollToChapter(3)">🔧 产品与功能</button>
+            <button class="nav-btn" onclick="scrollToChapter(4)">🤖 AI技术核心</button>
+            <button class="nav-btn" onclick="scrollToChapter(5)">📊 市场与竞争</button>
+            <button class="nav-btn" onclick="scrollToChapter(6)">🎯 客户成功案例</button>
+            <button class="nav-btn" onclick="scrollToChapter(7)">🚀 未来展望</button>
+        </div>
+        <a class="nav-dashboard" href="https://complyadvantage.com" target="_blank">访问官网</a>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main>
+        <!-- COVER SECTION -->
+        <section class="cover" id="ch-0">
+            <div class="cover-content">
+                <img class="cover-logo" alt="ComplyAdvantage Logo" src="data:image/jpeg;base64,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" />
+                <h1 class="cover-title">ComplyAdvantage</h1>
+                <p class="cover-subtitle">AI如何重塑全球金融合规的未来</p>
+                <div class="cover-tags">
+                    <span class="cover-tag">Agentic AI</span>
+                    <span class="cover-tag">金融合规</span>
+                    <span class="cover-tag">风险检测</span>
+                    <span class="cover-tag">FinTech</span>
+                </div>
+                <div class="cover-stats">
+                    <div class="stat-box">
+                        <div class="stat-number">1.67</div>
+                        <div class="stat-label">亿美元融资</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">363</div>
+                        <div class="stat-label">发明专利</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">90+</div>
+                        <div class="stat-label">国家覆盖</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">2014</div>
+                        <div class="stat-label">成立年份</div>
+                    </div>
+                </div>
+                <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+            </div>
+        </section>
+
+        <!-- CHAPTER 1: ORIGIN STORY -->
+        <section class="chapter" id="ch-1">
+            <div class="chapter-header">
+                <h2>创业故事</h2>
+                <span class="ch-sub">📖 从痛点到创新</span>
+                <span class="ch-counter" id="counter-1">1 / 2</span>
+            </div>
+            <div class="card-track" data-ch="1">
+                <!-- Card 1.1: The Origin -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>反洗钱困局与创始人洞见</h3>
+                        <div class="card-body">
+                            <p>ComplyAdvantage的创立源于创始人Charles Delingpole对全球金融合规痛点的深刻认识。Delingpole曾在J.P. Morgan Cazenove担任投资银行家，目睹了金融机构在反洗钱（AML）和KYC审查中面临的巨大挑战——数百万笔交易需要手动审核，高昂的误报成本困扰合规团队，大量人工流程导致效率低下。</p>
+                            <p>更关键的转折点来自于他担任反洗钱合规官（MLRO）的亲身经历。在这个角色中，他每天需要处理数千个新客户申请和数百万笔交易，任何疏漏都可能导致巨额监管罚款和声誉损失。这些经历让他深刻认识到，金融合规不仅仅是技术问题，更是社会责任——打击金融犯罪需要更智能、高效的方式。</p>
+                            <div class="callout">
+                                <strong>核心洞见：</strong> 合规从成本中心变竞争优势需要AI的力量。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 1.2: Market Opportunity -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>融资市场与商业验证</h3>
+                        <div class="card-body">
+                            <p>2014年，Delingpole创立ComplyAdvantage，决心用AI和数据技术革新金融犯罪风险检测。初期获得天使投资的支持，证明了这一方向的可行性。随后的融资历程验证了市场对该解决方案的强烈需求：2015年种子轮787万美元、2016年A轮820万美元（Balderton Capital领投）、2019年B轮3000万美元、2020年C轮5000万美元，最终2021年高盛增长股权追加投资，C轮总额达7000万美元。</p>
+                            <p>这一融资曲线反映了ComplyAdvantage快速成长的市场轨迹。从2014年的初创团队，到如今成为全球领先的AI驱动合规平台，公司已服务全球数百家金融机构，包括顶级银行和支付服务商。当前年度ARR估算达5000万-1亿美元，代表50-100%+的年度增速。</p>
+                            <div class="callout">
+                                <strong>商业验证：</strong> 高盛、Index Ventures等顶级机构的持续投资，证明了Agentic AI在金融合规的广泛应用前景。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-1"></div>
+        </section>
+
+        <!-- CHAPTER 2: FUNDING & FINANCIALS -->
+        <section class="chapter" id="ch-2">
+            <div class="chapter-header">
+                <h2>融资与财务</h2>
+                <span class="ch-sub">💰 资本力量驱动的成长</span>
+                <span class="ch-counter" id="counter-2">1 / 2</span>
+            </div>
+            <div class="card-track" data-ch="2">
+                <!-- Card 2.1: Funding Timeline -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>多轮融资历程与投资方认可</h3>
+                        <div class="card-body">
+                            <div class="timeline">
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-year">2015.05</div>
+                                    <div class="timeline-text"><strong>种子轮：</strong> 0.787百万美元，早期天使投资验证产品市场匹配度。</div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-year">2016.10</div>
+                                    <div class="timeline-text"><strong>A轮：</strong> 8.2百万美元，Balderton Capital领投，欧洲扩张启动。</div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-year">2019.01</div>
+                                    <div class="timeline-text"><strong>B轮：</strong> 30百万美元，Index Ventures和Balderton Capital，全球扩张加速。</div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-year">2020.07</div>
+                                    <div class="timeline-text"><strong>C轮：</strong> 50百万美元，Index、Balderton、Ontario Teachers'，AI平台深化。</div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-year">2021.05</div>
+                                    <div class="timeline-text"><strong>C轮扩展：</strong> 20百万美元（总计70），高盛增长股权追加，顶级机构信任。</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 2.2: Unit Economics -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>单位经济学与商业健康度</h3>
+                        <div class="card-body">
+                            <p>ComplyAdvantage的单位经济学非常健康，代表了典型的高效SaaS模式。大多数客户的年度ARR为5000美元至50000美元不等，企业级客户可达数百万美元。CAC（Customer Acquisition Cost）估算在5000-15000美元之间，回本周期12-18个月。</p>
+                            <div class="metrics-grid">
+                                <div class="metric-card">
+                                    <div class="metric-value">70-75%</div>
+                                    <div class="metric-label">毛利率</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">>3</div>
+                                    <div class="metric-label">LTV/CAC比例</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">50-100%+</div>
+                                    <div class="metric-label">年度增速</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">95%+</div>
+                                    <div class="metric-label">订阅收入占比</div>
+                                </div>
+                            </div>
+                            <p>公司当前处于成长投资阶段，专注于研发和市场扩展。根据市场估计，2025年ARR已达5000万-1亿美元范围，展现了快速的商业扩展能力。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-2"></div>
+        </section>
+
+        <!-- CHAPTER 3: PRODUCT & FEATURES -->
+        <section class="chapter" id="ch-3">
+            <div class="chapter-header">
+                <h2>产品与功能</h2>
+                <span class="ch-sub">🔧 Mesh平台的全景</span>
+                <span class="ch-counter" id="counter-3">1 / 2</span>
+            </div>
+            <div class="card-track" data-ch="3">
+                <!-- Card 3.1: Core Modules -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>12大核心模块体系</h3>
+                        <div class="card-body">
+                            <p>ComplyAdvantage Mesh平台通过12个深度集成的模块，提供全面的金融犯罪风险管理解决方案。<strong>客户筛查和公司筛查</strong>模块针对个人和企业进行实时背景调查，包括制裁名单、政治公众人物（PEPs）、不良媒体及负面新闻筛查。<strong>持续监控和交易监控</strong>对已入网客户和实时交易进行持续性风险检测，一旦出现新风险事件立即发出警报。</p>
+                            <p><strong>支付筛查</strong>在支付流程中对交易对手进行实时筛查，<strong>不良媒体识别</strong>利用AI从海量新闻中自动识别金融犯罪相关信息，<strong>制裁与观察名单</strong>整合全球主要制裁数据。<strong>PEPs与关联人筛查</strong>识别政治人物及亲密关联人。<strong>Agentic Workflows</strong>实现合规流程的自动化决策，<strong>案例管理</strong>提供统一的调查和团队协作平台，<strong>风险评分</strong>基于多维数据自动生成客户风险等级，<strong>洞察报告</strong>通过交互式仪表板展示关键指标。</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 3.2: Key Features -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>差异化竞争能力</h3>
+                        <div class="card-body">
+                            <p>ComplyAdvantage的核心优势体现在几个关键维度。首先是<strong>Agentic AI驱动的自动化</strong>——自主AI代理能够自动执行客户筛查、交易审查、风险评分等常规任务，显著降低人工干预和误报，误报率降低50%+，合规效率提升5-10倍。</p>
+                            <p>其次是<strong>全球实时风险数据网络</strong>，覆盖90+国家，整合了制裁名单、观察名单、PEP数据、执法记录、负面新闻等多源数据，实时更新延迟<1小时。第三是<strong>超低误报率</strong>——通过持续的AI优化和反馈循环，达到业界领先的准确性水平。</p>
+                            <div class="callout">
+                                <strong>竞争优势总结：</strong> 363项发明专利（其中250项基于AI）、多模态风险信号融合、灵活的API集成、完整审计追踪。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-3"></div>
+        </section>
+
+        <!-- CHAPTER 4: AI TECHNOLOGY -->
+        <section class="chapter" id="ch-4">
+            <div class="chapter-header">
+                <h2>AI技术核心</h2>
+                <span class="ch-sub">🤖 AI-Native的深度创新</span>
+                <span class="ch-counter" id="counter-4">1 / 2</span>
+            </div>
+            <div class="card-track" data-ch="4">
+                <!-- Card 4.1: Core AI Capabilities -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>五大AI核心能力</h3>
+                        <div class="card-body">
+                            <p><strong>Agentic AI（自主AI代理）</strong>是ComplyAdvantage最核心的创新，专为合规官设计的自主代理能自动执行常规审查任务。技术基础为LLM+强化学习+决策树，实现误报率降低50%+、效率提升5-10倍的业界领先效果。</p>
+                            <p><strong>不良媒体识别</strong>利用NLP和机器学习从全球新闻、社交媒体、法律数据库中自动识别与金融犯罪相关的负面信息，日均处理数百万新闻事件，准确性>95%。<strong>异常检测与交易监控</strong>实时分析交易流，利用无监督机器学习（隔离森林、聚类）识别异常模式，漏检率<5%。</p>
+                            <p><strong>客户风险评分</strong>整合多维数据利用XGBoost等算法自动计算风险分数，准确性>90%。<strong>全球实时风险数据网络</strong>聚合全球数据通过图数据库进行关联分析，覆盖90+国家，实时更新延迟<1小时。</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 4.2: Patent Portfolio & Innovation -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>363项发明专利与创新亮点</h3>
+                        <div class="card-body">
+                            <p>ComplyAdvantage拥有363项发明专利，其中250项基于AI技术，涵盖不良媒体识别、交易监控、风险评分、数据融合等领域。这一强大的专利组合形成了高耸的技术壁垒，保护了公司的核心创新。</p>
+                            <p>公司的AI创新亮点包括：<strong>Agentic AI在合规领域的规模化商业应用</strong>，自动化程度业界领先；<strong>多源数据的智能融合</strong>，通过AI关联分析发现传统方法无法发现的风险信号；<strong>自适应风险评分</strong>，根据客户行为和市场变化动态调整评分模型；<strong>误报优化引擎</strong>，通过反馈循环和强化学习持续降低误报率。</p>
+                            <div class="callout">
+                                <strong>研发投入：</strong> ComplyAdvantage在AI研发方面投入巨大，专注于Agentic AI能力增强和多源数据融合技术，是公司持续竞争优势的源泉。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-4"></div>
+        </section>
+
+        <!-- CHAPTER 5: MARKET & COMPETITION -->
+        <section class="chapter" id="ch-5">
+            <div class="chapter-header">
+                <h2>市场与竞争</h2>
+                <span class="ch-sub">📊 竞争地位与护城河</span>
+                <span class="ch-counter" id="counter-5">1 / 2</span>
+            </div>
+            <div class="card-track" data-ch="5">
+                <!-- Card 5.1: Competitive Landscape -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>竞争格局与差异化定位</h3>
+                        <div class="card-body">
+                            <p>ComplyAdvantage在全球金融合规市场中面临来自Refinitiv（LSEG）、TradingScreen、Accuity（LexisNexis）等传统玩家的竞争。然而，ComplyAdvantage的差异化竞争优势明显。相比综合金融数据服务商Refinitiv，ComplyAdvantage更专注于AI自动化，产品更轻量化易部署。相比TradingScreen和Accuity，ComplyAdvantage的Agentic AI和全球实时数据差异化突出，误报优化和自动化程度更强。</p>
+                            <p>市场地位上，ComplyAdvantage被业界评为全球领先的AI驱动金融犯罪风险检测SaaS平台，市场地位评分4.5/5。公司已成为该细分市场的创新先锋，特别是在Agentic AI应用上已建立显著领先优势。</p>
+                            <div class="callout">
+                                <strong>市场认可：</strong> 高盛、Index Ventures等顶级机构的持续投资，是对ComplyAdvantage竞争地位的最好印证。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 5.2: Competitive Moats -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>护城河与可持续竞争优势</h3>
+                        <div class="card-body">
+                            <p>ComplyAdvantage构建了多层次的护城河，确保长期竞争优势。首先是<strong>技术壁垒</strong>——363项发明专利（其中250项基于AI），形成了高耸的技术门槛。其次是<strong>数据护城河</strong>——全球实时风险数据网络覆盖90+国家，数据的深度和广度难以复制。</p>
+                            <p><strong>Agentic AI能力</strong>的业界领先地位体现在自动化程度和误报率的综合优势，持续的AI研发投入确保这一领先位置。<strong>SaaS架构</strong>易于扩展和定制，提供了高度的灵活性。<strong>顶级投资方支持</strong>确保了资本和战略资源的充足供给。</p>
+                            <p>最后是<strong>客户粘性</strong>——一旦客户将ComplyAdvantage的金融犯罪数据和工作流深度集成到内部系统，替换成本巨大。同时，ComplyAdvantage在金融犯罪领域的深度理解和多年数据积累也难以被竞争者快速复制。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-5"></div>
+        </section>
+
+        <!-- CHAPTER 6: CUSTOMER SUCCESS -->
+        <section class="chapter" id="ch-6">
+            <div class="chapter-header">
+                <h2>客户成功案例</h2>
+                <span class="ch-sub">🎯 市场验证与商业价值</span>
+                <span class="ch-counter" id="counter-6">1 / 2</span>
+            </div>
+            <div class="card-track" data-ch="6">
+                <!-- Card 6.1: Customer Highlights -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>全球客户基础与应用场景</h3>
+                        <div class="card-body">
+                            <p>ComplyAdvantage已成功服务全球数百家金融机构和受规制企业。客户群体包括顶级国际银行、支付服务商、保险公司、加密货币企业等。其中，Al Jazeera（国际新闻媒体集团）是一个标志性客户，代表了ComplyAdvantage在非传统金融领域的应用拓展。Recap（英国嵌入式金融平台）是典型的FinTech应用场景代表。</p>
+                            <p>全球范围内，ComplyAdvantage的客户地理分布体现了北美和欧洲市场的强势地位——北美占45%、欧洲占35%、APAC占15%、其他地区占5%。这反映了ComplyAdvantage在发达金融市场的深度渗透，同时也揭示了亚太地区的增长潜力。</p>
+                            <div class="callout">
+                                <strong>市场覆盖：</strong> 跨越银行、支付、保险、加密等多个行业垂直，验证了平台的通用性和适应性。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 6.2: Success Stories -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>核心客户案例与业务影响</h3>
+                        <div class="card-body">
+                            <p><strong>Recap案例：</strong> 这家快速扩张的英国嵌入式金融公司需要灵活高效的AML解决方案，但传统方案成本高、部署慢。Recap采用ComplyAdvantage Starter Plan，集成客户筛查、制裁名单、PEP筛查、持续监控等功能。结果是快速部署、AML合规能力完善、误报率低于3%，支持了业务的快速增长。</p>
+                            <p><strong>某全球金融机构案例：</strong> 日均处理百万级交易，传统系统漏检率高、误报成本大、人力资源紧张。该机构部署ComplyAdvantage交易监控和Agentic工作流，实现了自动化异常检测和审查。结果显著：误报率从25%降至<5%、处理时间减少70%、合规团队工作量减少60%。</p>
+                            <div class="callout">
+                                <strong>商业价值证明：</strong> 这些案例清晰展示了ComplyAdvantage通过Agentic AI和数据融合为客户创造的切实价值——效率倍增、成本大幅下降、风险防控能力飙升。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-6"></div>
+        </section>
+
+        <!-- CHAPTER 7: FUTURE OUTLOOK -->
+        <section class="chapter" id="ch-7">
+            <div class="chapter-header">
+                <h2>未来展望</h2>
+                <span class="ch-sub">🚀 长期愿景与成长路径</span>
+                <span class="ch-counter" id="counter-7">1 / 1</span>
+            </div>
+            <div class="card-track" data-ch="7">
+                <!-- Card 7.1: Future Strategy -->
+                <div class="slide">
+                    <div class="card sparse">
+                        <h3>近期、中期与长期战略</h3>
+                        <div class="card-body">
+                            <p><strong>未来12个月：</strong> ComplyAdvantage将深化Agentic AI能力，扩展至更多金融机构流程；进军新地理市场，特别是APAC地区；推出针对加密和Web3领域的专用解决方案；继续并购和生态合作战略。</p>
+                            <p><strong>2-3年展望：</strong> Agentic AI成熟度显著提升，实现5-10倍生产力提升目标；客户数和ARR保持50-100%+的强劲增速；建立行业级AI合规管理标准；可能在2026-2028年间考虑IPO。</p>
+                            <p><strong>长期愿景：</strong> ComplyAdvantage的终极目标是成为全球金融系统的合规大脑。通过AI和实时数据网络，让每一个金融机构都能以最高效率和最低误报率来管理金融犯罪风险。长期来看，ComplyAdvantage有望成为全球金融基础设施的关键一环，连接全球风险数据，赋能每一个金融机构的合规决策。</p>
+                            <div class="callout">
+                                <strong>战略核心：</strong> 从产品创新到生态赋能，从垂直深化到水平扩张，ComplyAdvantage正在构建一个全球金融合规的AI中枢。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-7"></div>
+        </section>
+    </main>
+
+    <script>
+        // Navigation and scroll snap functionality
+        const chapters = document.querySelectorAll('.chapter');
+        const navBtns = document.querySelectorAll('.nav-btn');
+        const main = document.querySelector('main');
+
+        function scrollToChapter(index) {
+            const target = document.getElementById(`ch-${index}`);
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        // Update active nav button on scroll
+        main.addEventListener('scroll', () => {
+            let currentChapter = 0;
+            chapters.forEach((ch, idx) => {
+                if (ch.offsetTop <= main.scrollTop + 100) {
+                    currentChapter = idx;
+                }
+            });
+            navBtns.forEach(btn => btn.classList.remove('active'));
+            navBtns[currentChapter]?.classList.add('active');
+        });
+
+        // Initialize dots bars for each chapter
+        function initDotsBars() {
+            document.querySelectorAll('.chapter').forEach((chapter, chIdx) => {
+                const track = chapter.querySelector('.card-track');
+                const dotsBar = chapter.querySelector('.dots-bar');
+                const counter = chapter.querySelector('.ch-counter');
+
+                if (!track || !dotsBar) return;
+
+                const slides = track.querySelectorAll('.slide');
+                const slideCount = slides.length;
+
+                // Create dots
+                for (let i = 0; i < slideCount; i++) {
+                    const dot = document.createElement('button');
+                    dot.className = 'dot' + (i === 0 ? ' active' : '');
+                    dot.onclick = () => {
+                        slides[i].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                    };
+                    dotsBar.appendChild(dot);
+                }
+
+                // Update counter and dots on scroll
+                track.addEventListener('scroll', () => {
+                    const scrollPos = track.scrollLeft;
+                    const slideWidth = track.offsetWidth;
+                    const activeIdx = Math.round(scrollPos / slideWidth);
+
+                    dotsBar.querySelectorAll('.dot').forEach((d, i) => {
+                        d.classList.toggle('active', i === activeIdx);
+                    });
+
+                    if (counter) {
+                        counter.textContent = `${activeIdx + 1} / ${slideCount}`;
+                    }
+                });
+            });
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', initDotsBars);
+
+        // Expose scrollToChapter globally
+        window.scrollToChapter = scrollToChapter;
+    </script>
+</body>
+</html>
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; text-align: center; }
+        .cover-logo {
+            width: 80px; height: 80px; border-radius: 16px; margin: 0 auto 24px;
+            background: rgba(255,255,255,0.15); object-fit: contain;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 40px; color: white; border: 2px solid rgba(255,255,255,0.3);
+        }
+        .cover-title {
+            font-size: 48px; font-weight: 800; line-height: 1.15; margin-bottom: 16px;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .cover-subtitle {
+            font-size: 18px; opacity: 0.9; margin-bottom: 32px; line-height: 1.6;
+        }
+        .cover-tags {
+            display: flex; gap: 10px; justify-content: center; margin-bottom: 40px; flex-wrap: wrap;
+        }
+        .cover-tag {
+            padding: 6px 16px; background: rgba(255,255,255,0.15); border-radius: 20px;
+            font-size: 12px; font-weight: 500; backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .cover-stats {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 24px; margin-bottom: 32px;
+        }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 36px; font-weight: 800; margin-bottom: 4px; }
+        .stat-label { font-size: 12px; opacity: 0.8; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 32px; font-size: 13px; opacity: 0.7;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh; scroll-snap-align: start;
+            display: flex; flex-direction: column; overflow: hidden;
+            background: var(--bg);
+        }
+
+        .chapter-header {
+            flex-shrink: 0; height: var(--header-h); padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border); background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 24px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3);
+        }
+
+        .card-track {
+            flex: 1; display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+
+        .slide {
+            flex: 0 0 100%; width: 100%; scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px; overflow-y: auto; display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        .card {
+            flex: 1; background: var(--bg-card); border-radius: 14px; padding: 32px 36px;
+            border: 1px solid var(--border); display: flex; flex-direction: column;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .card h3 {
+            font-size: 20px; font-weight: 700; margin-bottom: 16px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 14px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        .dots-bar {
+            flex-shrink: 0; height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%; background: var(--border);
+            cursor: pointer; transition: all 0.3s; border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+        /* ===== COMPONENT STYLES ===== */
+        .callout {
+            background: var(--accent-light); border-left: 4px solid var(--accent);
+            padding: 16px 20px; border-radius: 6px; font-size: 13px;
+            line-height: 1.7; color: var(--text-2); margin: 16px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+
+        .quote-block {
+            border-left: 3px solid var(--accent); padding: 18px 22px; margin: 16px 0;
+            font-style: italic; font-size: 14px; color: var(--text-2);
+            line-height: 1.8; background: var(--bg-muted); border-radius: 0 8px 8px 0;
+        }
+
+        .metrics-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 14px; margin: 18px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted); padding: 18px; border-radius: 10px;
+            text-align: center; border: 1px solid var(--border);
+        }
+        .metric-value { font-size: 26px; font-weight: 800; color: var(--accent); margin-bottom: 6px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+        table {
+            width: 100%; border-collapse: collapse; font-size: 13px; margin: 14px 0;
+        }
+        th {
+            background: var(--bg-muted); padding: 12px; text-align: left;
+            font-weight: 600; border-bottom: 1px solid var(--border);
+        }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+
+        .mode-boxes {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .mode-box {
+            background: var(--bg-muted); padding: 16px; border-radius: 10px;
+            border-left: 4px solid var(--accent);
+        }
+        .mode-title { font-weight: 700; font-size: 13px; margin-bottom: 6px; }
+        .mode-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .insight-card {
+            flex: 1; display: flex; flex-direction: column;
+            background: var(--bg-card); border-radius: 14px; padding: 32px;
+            border: 1px solid var(--border);
+        }
+        .insight-emoji { font-size: 32px; margin-bottom: 12px; }
+        .insight-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
+        .insight-card p { font-size: 14px; line-height: 1.8; color: var(--text-2); }
+
+        .news-item {
+            padding: 16px; background: var(--bg-card); border-left: 4px solid var(--accent);
+            border-radius: 8px; border: 1px solid var(--border); margin-bottom: 12px;
+        }
+        .news-date { font-size: 11px; color: var(--text-3); font-weight: 600; margin-bottom: 4px; }
+        .news-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .news-title a { color: var(--accent-blue); text-decoration: none; }
+        .news-title a:hover { text-decoration: underline; }
+        .news-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .flex-row { display: flex; gap: 24px; margin: 16px 0; flex-wrap: wrap; }
+        .flex-col { flex: 1; min-width: 200px; }
+
+        /* ===== FOOTER ===== */
+        footer {
+            margin-left: 280px; padding: 40px 48px; background: var(--bg-muted);
+            border-top: 1px solid var(--border); text-align: center;
+        }
+        footer p { font-size: 13px; color: var(--text-2); margin-bottom: 12px; }
+        footer a { color: var(--accent-blue); text-decoration: none; }
+        footer a:hover { text-decoration: underline; }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 900px) {
+            nav.sidebar { width: 240px; }
+            main#main { margin-left: 240px; }
+            footer { margin-left: 240px; }
+            .chapter-header { padding: 12px 32px 0 32px; }
+            .slide { padding: 16px 32px; }
+        }
+
+        @media (max-width: 768px) {
+            nav.sidebar { width: 100%; height: auto; position: relative; }
+            main#main { margin-left: 0; }
+            footer { margin-left: 0; }
+            .logo-section { margin-bottom: 16px; }
+            .nav-menu { display: flex; gap: 8px; flex-wrap: wrap; }
+            .nav-item { margin-bottom: 0; }
+            .cover { padding: 40px 24px; }
+            .cover-title { font-size: 32px; }
+            .cover-subtitle { font-size: 14px; }
+        }
+    
+        .nav-dashboard {
+            display: block; width: calc(100% - 8px); margin: 8px 4px 4px;
+            background: rgba(217,119,87,0.15); border: 1px solid rgba(217,119,87,0.3);
+            color: var(--accent, #D97757); padding: 10px 12px; border-radius: 8px;
+            text-align: center; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+            font-weight: 600; letter-spacing: 0.3px;
+        }
+        .nav-dashboard:hover {
+            background: rgba(217,119,87,0.3); color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- ===== NAVIGATION SIDEBAR ===== -->
+    <nav class="sidebar">
+        <div class="logo-section">
+            <div class="logo-icon">🛡️</div>
+            <div class="logo-text">
+                <h1>ComplyAdvantage</h1>
+                <p>AI金融合规平台</p>
+            </div>
+        </div>
+        <ul class="nav-menu" id="nav-menu">
+            <li class="nav-item">
+                <a class="nav-link active" onclick="scrollToChapter(0)" href="#ch-0">
+                    <span class="nav-icon">📊</span>
+                    <span>案例首页</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" onclick="scrollToChapter(1)" href="#ch-1">
+                    <span class="nav-icon">🏢</span>
+                    <span>公司概况</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" onclick="scrollToChapter(2)" href="#ch-2">
+                    <span class="nav-icon">💰</span>
+                    <span>融资与财务</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" onclick="scrollToChapter(3)" href="#ch-3">
+                    <span class="nav-icon">🔧</span>
+                    <span>产品功能</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" onclick="scrollToChapter(4)" href="#ch-4">
+                    <span class="nav-icon">⚙️</span>
+                    <span>AI技术</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" onclick="scrollToChapter(5)" href="#ch-5">
+                    <span class="nav-icon">🎯</span>
+                    <span>市场与竞争</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" onclick="scrollToChapter(6)" href="#ch-6">
+                    <span class="nav-icon">📈</span>
+                    <span>商业模式</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" onclick="scrollToChapter(7)" href="#ch-7">
+                    <span class="nav-icon">🔮</span>
+                    <span>未来展望</span>
+                </a>
+            </li>
+        </ul>
+    
+    <a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main id="main">
+        <!-- ===== COVER SECTION ===== -->
+        <section class="cover" id="ch-0">
+            <div class="cover-content">
+                <img class="cover-logo" src="data:image/png;base64,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" alt="Logo" />
+                <h1 class="cover-title">ComplyAdvantage</h1>
+                <p class="cover-subtitle">
+                    AI驱动的全球金融犯罪风险检测领导者
+                </p>
+                <div class="cover-tags">
+                    <span class="cover-tag">Agentic AI</span>
+                    <span class="cover-tag">金融合规</span>
+                    <span class="cover-tag">反洗钱</span>
+                    <span class="cover-tag">风险检测</span>
+                    <span class="cover-tag">SaaS平台</span>
+                </div>
+                <div class="cover-stats">
+                    <div class="stat-box">
+                        <div class="stat-number">1.67亿</div>
+                        <div class="stat-label">总融资(美元)</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">363项</div>
+                        <div class="stat-label">发明专利</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">4.5/5</div>
+                        <div class="stat-label">市场评分</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">2014</div>
+                        <div class="stat-label">成立年份</div>
+                    </div>
+                </div>
+            </div>
+            <div class="cover-scroll-hint">↓ 向下滑动浏览案例</div>
+        </section>
+
+        <!-- ===== CHAPTER 1: 公司概况 ===== -->
+        <section class="chapter" id="ch-1">
+            <div class="chapter-header">
+                <h2>创新者的故事：12年深耕金融合规</h2>
+                <span class="ch-counter">1 / 3</span>
+            </div>
+            <div class="card-track" id="track-1">
+                <!-- Slide 1 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>Charles Delingpole的创业之路</h3>
+                        <div class="card-body">
+                            <p><strong>背景：</strong>Charles Delingpole是一位经验丰富的连续创业者。他曾在J.P. Morgan Cazenove担任投资银行家，16岁时创立了全球最大学生论坛The Student Room Group，后来创立了MarketFinance(融资5900万美元)。</p>
+                            <p><strong>痛点发现：</strong>在担任反洗钱合规官(MLRO)期间，Delingpole深刻体验到传统合规流程的低效——需要手动审查数百万笔交易，高昂的误报成本，合规团队人手不足。</p>
+                            <p><strong>创立使命：</strong>2014年，他创立ComplyAdvantage，决心利用AI和数据技术革新金融犯罪风险检测，将合规从成本中心转变为竞争优势的源泉。</p>
+                            <p>这个初心指导了公司从初创到全球领导者的整个发展历程，也反映了Delingpole对金融安全和社会责任的承诺。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>发展里程碑与融资历程</h3>
+                        <div class="card-body">
+                            <table>
+                                <tr>
+                                    <th>时间</th>
+                                    <th>融资轮次</th>
+                                    <th>金额(百万$)</th>
+                                    <th>主要投资方</th>
+                                </tr>
+                                <tr>
+                                    <td>2015.05</td>
+                                    <td>种子轮</td>
+                                    <td>0.787</td>
+                                    <td>早期天使</td>
+                                </tr>
+                                <tr>
+                                    <td>2016.10</td>
+                                    <td>A轮</td>
+                                    <td>8.2</td>
+                                    <td>Balderton Capital</td>
+                                </tr>
+                                <tr>
+                                    <td>2019.01</td>
+                                    <td>B轮</td>
+                                    <td>30</td>
+                                    <td>Index, Balderton</td>
+                                </tr>
+                                <tr>
+                                    <td>2020.07</td>
+                                    <td>C轮</td>
+                                    <td>50</td>
+                                    <td>Index, Balderton, Ontario Teachers'</td>
+                                </tr>
+                                <tr>
+                                    <td>2021.05</td>
+                                    <td>C轮扩展</td>
+                                    <td>20</td>
+                                    <td>Goldman Sachs Growth</td>
+                                </tr>
+                            </table>
+                            <div class="callout">
+                                <strong>关键成就：</strong>12年间完成从初创到独角兽级融资，累计融资1.67亿美元，投资方包括顶级机构如高盛。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>核心竞争力与市场定位</h3>
+                        <div class="card-body">
+                            <div class="metrics-grid">
+                                <div class="metric-card">
+                                    <div class="metric-value">363</div>
+                                    <div class="metric-label">发明专利</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">250+</div>
+                                    <div class="metric-label">AI相关专利</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">90+</div>
+                                    <div class="metric-label">国家覆盖</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">4.5/5</div>
+                                    <div class="metric-label">市场评分</div>
+                                </div>
+                            </div>
+                            <p><strong>市场定位：</strong>全球领先的AI驱动金融犯罪风险检测SaaS平台，专注于反洗钱(AML)、了解你的客户(KYC)和反欺诈。</p>
+                            <p><strong>核心优势：</strong></p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>✓ Agentic AI能力业界领先，自动化程度深</li>
+                                <li>✓ 全球实时风险数据网络，覆盖90+国家</li>
+                                <li>✓ 363项专利保护，技术壁垒高</li>
+                                <li>✓ SaaS模式易于部署和扩展</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-1"></div>
+        </section>
+
+        <!-- ===== CHAPTER 2: 融资与财务 ===== -->
+        <section class="chapter" id="ch-2">
+            <div class="chapter-header">
+                <h2>资本势能：从初创到独角兽</h2>
+                <span class="ch-counter">1 / 3</span>
+            </div>
+            <div class="card-track" id="track-2">
+                <!-- Slide 1 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>融资金额与投资方</h3>
+                        <div class="card-body">
+                            <div class="metrics-grid">
+                                <div class="metric-card">
+                                    <div class="metric-value">1.67亿</div>
+                                    <div class="metric-label">总融资(美元)</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">C轮+</div>
+                                    <div class="metric-label">融资阶段</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">独角兽</div>
+                                    <div class="metric-label">估值级别</div>
+                                </div>
+                            </div>
+                            <p><strong>核心投资方：</strong></p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>Index Ventures - 欧洲顶级VC</li>
+                                <li>Balderton Capital - 伦敦知名投资方</li>
+                                <li>Ontario Teachers' Pension Plan - 加拿大养老金</li>
+                                <li>Goldman Sachs Growth Equity - 全球金融巨头</li>
+                            </ul>
+                            <div class="callout">
+                                <strong>意义：</strong>高盛等顶级金融机构的投资，是对ComplyAdvantage技术创新和市场潜力的最高认可。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>收入指标与增长动力</h3>
+                        <div class="card-body">
+                            <p><strong>ARR(年经常性收入)：</strong>估算5000万-1亿美元，增速50-100%+</p>
+                            <p><strong>客户规模：</strong>数百家全球金融机构，包括Al Jazeera等标杆客户</p>
+                            <p><strong>日均交易处理：</strong>数千万笔交易监控</p>
+                            <p><strong>单位经济学：</strong></p>
+                            <div class="mode-boxes">
+                                <div class="mode-box">
+                                    <div class="mode-title">CAC(获客成本)</div>
+                                    <div class="mode-desc">$5000-15000</div>
+                                </div>
+                                <div class="mode-box">
+                                    <div class="mode-title">ARPU(客户均值收入)</div>
+                                    <div class="mode-desc">$5000-50000/年</div>
+                                </div>
+                                <div class="mode-box">
+                                    <div class="mode-title">回本周期</div>
+                                    <div class="mode-desc">12-18个月</div>
+                                </div>
+                                <div class="mode-box">
+                                    <div class="mode-title">毛利率</div>
+                                    <div class="mode-desc">~70-75%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>商业化成熟度与前景</h3>
+                        <div class="card-body">
+                            <p><strong>商业化成熟度评分：</strong>4/5 (5分制)</p>
+                            <p><strong>核心评估：</strong></p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>✓ SaaS订阅模式成熟，收入稳定可预测</li>
+                                <li>✓ 主要收入来自订阅(85-90%)</li>
+                                <li>✓ 高粘性客户，替换成本大</li>
+                                <li>✓ 毛利率70%+，典型SaaS水平</li>
+                                <li>✓ LTV/CAC > 3，单位经济健康</li>
+                            </ul>
+                            <p><strong>IPO展望：</strong>作为C轮后期公司，IPO可能在2026-2028年间考虑，当前专注于AI创新和市场扩展。</p>
+                            <div class="callout">
+                                <strong>关键指标：</strong>融资阶段、财务指标和增长速度都表明ComplyAdvantage商业模式已成熟，已具备上市潜力。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-2"></div>
+        </section>
+
+        <!-- ===== CHAPTER 3: 产品功能 ===== -->
+        <section class="chapter" id="ch-3">
+            <div class="chapter-header">
+                <h2>Mesh平台：金融合规的一站式解决方案</h2>
+                <span class="ch-counter">1 / 3</span>
+            </div>
+            <div class="card-track" id="track-3">
+                <!-- Slide 1 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>核心功能模块(1/2)</h3>
+                        <div class="card-body">
+                            <div class="mode-boxes">
+                                <div class="mode-box">
+                                    <div class="mode-title">客户筛查</div>
+                                    <div class="mode-desc">实时背景调查，制裁、PEP、不良媒体筛查</div>
+                                </div>
+                                <div class="mode-box">
+                                    <div class="mode-title">公司筛查</div>
+                                    <div class="mode-desc">尽职调查，识别公司结构和风险</div>
+                                </div>
+                                <div class="mode-box">
+                                    <div class="mode-title">持续监控</div>
+                                    <div class="mode-desc">对已入网客户的风险监控</div>
+                                </div>
+                                <div class="mode-box">
+                                    <div class="mode-title">交易监控</div>
+                                    <div class="mode-desc">实时分析，识别可疑交易模式</div>
+                                </div>
+                                <div class="mode-box">
+                                    <div class="mode-title">支付筛查</div>
+                                    <div class="mode-desc">支付流程中的实时合规检查</div>
+                                </div>
+                                <div class="mode-box">
+                                    <div class="mode-title">不良媒体</div>
+                                    <div class="mode-desc">AI识别金融犯罪相关负面新闻</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>核心功能模块(2/2)</h3>
+                        <div class="card-body">
+                            <div class="mode-boxes">
+                                <div class="mode-box">
+                                    <div class="mode-title">制裁与观察名单</div>
+                                    <div class="mode-desc">全球制裁数据整合与检查</div>
+                                </div>
+                                <div class="mode-box">
+                                    <div class="mode-title">PEPs筛查</div>
+                                    <div class="mode-desc">政治公众人物识别和风险评估</div>
+                                </div>
+                                <div class="mode-box">
+                                    <div class="mode-title">Agentic工作流</div>
+                                    <div class="mode-desc">AI自动化执行审查、评分、管理</div>
+                                </div>
+                                <div class="mode-box">
+                                    <div class="mode-title">案例管理</div>
+                                    <div class="mode-desc">统一平台管理和调查可疑警报</div>
+                                </div>
+                                <div class="mode-box">
+                                    <div class="mode-title">风险评分</div>
+                                    <div class="mode-desc">多维数据自动生成风险分数</div>
+                                </div>
+                                <div class="mode-box">
+                                    <div class="mode-title">洞察报告</div>
+                                    <div class="mode-desc">交互式仪表板与关键指标展示</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>产品定价与客户成功</h3>
+                        <div class="card-body">
+                            <p><strong>定价模式：</strong>分层SaaS订阅制</p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>Starter Plan: $99/月起(监控2000个实体)</li>
+                                <li>Mid-tier: 按交易量和用户数定价</li>
+                                <li>企业级: 完全定制，支持专属功能</li>
+                            </ul>
+                            <p><strong>客户案例：Recap(英国fintech)</strong></p>
+                            <p>一家快速扩张的嵌入式金融平台，需要灵活高效的AML方案。采用ComplyAdvantage后：</p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>✓ 快速部署，AML能力完善</li>
+                                <li>✓ 误报率<3%，业界最低</li>
+                                <li>✓ 支持业务快速增长无阻碍</li>
+                            </ul>
+                            <div class="callout">
+                                <strong>关键价值：</strong>ComplyAdvantage让初创企业能以低成本获得企业级合规能力，加速其市场扩张。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-3"></div>
+        </section>
+
+        <!-- ===== CHAPTER 4: AI技术 ===== -->
+        <section class="chapter" id="ch-4">
+            <div class="chapter-header">
+                <h2>AI核心：250+项专利背后的创新</h2>
+                <span class="ch-counter">1 / 3</span>
+            </div>
+            <div class="card-track" id="track-4">
+                <!-- Slide 1 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>Agentic AI：自主决策与自动化</h3>
+                        <div class="card-body">
+                            <p><strong>核心能力：</strong>专为合规官和风险团队设计的自主AI代理，能够自动执行：</p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>• 客户和交易的自动筛查与审查</li>
+                                <li>• 风险评分和决策建议生成</li>
+                                <li>• 合规流程的端到端自动化</li>
+                                <li>• 误报优化和自我学习</li>
+                            </ul>
+                            <p><strong>技术基础：</strong>大语言模型 + 强化学习 + 决策树 + 工作流自动化</p>
+                            <p><strong>业务影响：</strong></p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>→ 误报率降低50%+</li>
+                                <li>→ 合规效率提升5-10倍</li>
+                                <li>→ 人工干预减少80%+</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>多源数据融合与风险检测</h3>
+                        <div class="card-body">
+                            <p><strong>不良媒体识别：</strong></p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>从全球新闻、社交媒体、法律数据库识别金融犯罪信息</li>
+                                <li>日均处理数百万新闻事件，准确性>95%</li>
+                            </ul>
+                            <p><strong>异常检测：</strong></p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>利用隔离森林、聚类等算法识别可疑交易</li>
+                                <li>实时检测，漏检率<5%</li>
+                            </ul>
+                            <p><strong>风险评分：</strong></p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>多维度信息整合(客户属性、交易历史、不良媒体、制裁等)</li>
+                                <li>XGBoost算法实现90%+分类准确性</li>
+                            </ul>
+                            <p><strong>全球数据网络：</strong></p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>聚合90+国家的制裁、PEP、执法数据</li>
+                                <li>实时更新，延迟<1小时</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>专利与技术壁垒</h3>
+                        <div class="card-body">
+                            <div class="metrics-grid">
+                                <div class="metric-card">
+                                    <div class="metric-value">363</div>
+                                    <div class="metric-label">总发明专利</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">250+</div>
+                                    <div class="metric-label">AI相关专利</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">69%</div>
+                                    <div class="metric-label">AI占比</div>
+                                </div>
+                            </div>
+                            <p><strong>专利覆盖领域：</strong></p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>✓ 不良媒体识别与NLP技术</li>
+                                <li>✓ 交易监控与异常检测</li>
+                                <li>✓ 风险评分模型</li>
+                                <li>✓ 多源数据融合与整合</li>
+                                <li>✓ Agentic AI工作流</li>
+                            </ul>
+                            <p><strong>技术壁垒：</strong>250+项AI专利构建了深厚的技术护城河，竞争对手难以复制。</p>
+                            <div class="callout">
+                                <strong>核心创新：</strong>ComplyAdvantage是将Agentic AI规模化应用于金融合规领域的先行者。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-4"></div>
+        </section>
+
+        <!-- ===== CHAPTER 5: 市场与竞争 ===== -->
+        <section class="chapter" id="ch-5">
+            <div class="chapter-header">
+                <h2>竞争格局：领导力与差异化</h2>
+                <span class="ch-counter">1 / 3</span>
+            </div>
+            <div class="card-track" id="track-5">
+                <!-- Slide 1 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>主要竞争对手分析</h3>
+                        <div class="card-body">
+                            <p><strong>Refinitiv (LSEG)</strong></p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>定位：综合金融数据和合规工具</li>
+                                <li>差异：ComplyAdvantage更轻量化、易部署、AI自动化程度高</li>
+                            </ul>
+                            <p><strong>TradingScreen</strong></p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>定位：金融犯罪合规平台</li>
+                                <li>差异：ComplyAdvantage的Agentic AI和实时全球数据差异明显</li>
+                            </ul>
+                            <p><strong>Accuity (LexisNexis)</strong></p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>定位：AML和KYC解决方案</li>
+                                <li>差异：ComplyAdvantage的误报优化和自动化程度业界领先</li>
+                            </ul>
+                            <p><strong>整体评估：</strong>ComplyAdvantage在AI创新、自动化深度、用户体验等维度领先。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>竞争优势与护城河</h3>
+                        <div class="card-body">
+                            <p><strong>技术壁垒：</strong></p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>✓ 363项发明专利(250+基于AI)</li>
+                                <li>✓ Agentic AI业界最先进</li>
+                                <li>✓ 误报优化算法独家拥有</li>
+                            </ul>
+                            <p><strong>数据壁垒：</strong></p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>✓ 全球实时风险数据网络(90+国家)</li>
+                                <li>✓ 日均处理数千万笔交易</li>
+                                <li>✓ 数百家客户反馈循环</li>
+                            </ul>
+                            <p><strong>客户粘性：</strong></p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>✓ 合规数据深度集成，替换成本大</li>
+                                <li>✓ 高粘性客户(Al Jazeera等标杆)</li>
+                                <li>✓ 服务金融系统关键节点</li>
+                            </ul>
+                            <p><strong>资本优势：</strong></p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>✓ 顶级投资方(高盛等)支持</li>
+                                <li>✓ 融资充足，研发投入持续</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>市场机遇与挑战</h3>
+                        <div class="card-body">
+                            <p><strong>市场机遇：</strong></p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>→ 全球金融犯罪防范投入持续增长</li>
+                                <li>→ 监管要求不断提高(FATF等)</li>
+                                <li>→ 传统方案效率低，替代需求强</li>
+                                <li>→ 加密/Web3领域监管需求爆发</li>
+                            </ul>
+                            <p><strong>主要挑战：</strong></p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>⚠ 大型金融数据商(如Refinitiv)的竞争</li>
+                                <li>⚠ 银行自建系统的威胁</li>
+                                <li>⚠ 监管环境和标准的变化</li>
+                                <li>⚠ AI模型的准确性和公平性</li>
+                            </ul>
+                            <p><strong>市场定位评分：4.5/5</strong> - 全球领先的合规SaaS平台，竞争优势显著。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-5"></div>
+        </section>
+
+        <!-- ===== CHAPTER 6: 商业模式 ===== -->
+        <section class="chapter" id="ch-6">
+            <div class="chapter-header">
+                <h2>商业模式：SaaS的规模化增长</h2>
+                <span class="ch-counter">1 / 3</span>
+            </div>
+            <div class="card-track" id="track-6">
+                <!-- Slide 1 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>收入模型与增长引擎</h3>
+                        <div class="card-body">
+                            <p><strong>收入来源构成：</strong></p>
+                            <div class="mode-boxes">
+                                <div class="mode-box">
+                                    <div class="mode-title">SaaS订阅(85-90%)</div>
+                                    <div class="mode-desc">基于交易量、客户数、功能模块</div>
+                                </div>
+                                <div class="mode-box">
+                                    <div class="mode-title">专业服务(5-10%)</div>
+                                    <div class="mode-desc">定制集成、咨询、配置</div>
+                                </div>
+                                <div class="mode-box">
+                                    <div class="mode-title">数据服务(3-5%)</div>
+                                    <div class="mode-desc">风险数据、情报报告</div>
+                                </div>
+                            </div>
+                            <p><strong>单位经济学：</strong></p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>CAC: $5000-15000(按客户规模)</li>
+                                <li>年ARPU: $5000-50000(按企业规模)</li>
+                                <li>LTV/CAC: >3 (高于SaaS中位数2.5)</li>
+                                <li>回本周期: 12-18个月</li>
+                                <li>毛利率: 70%+(典型SaaS水平)</li>
+                            </ul>
+                            <p><strong>增长动力：</strong>市场扩张 + 产品拓展 + AI创新 + 生态合作</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>增长战略与未来方向</h3>
+                        <div class="card-body">
+                            <p><strong>纵向深化：</strong></p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>→ 增强Agentic AI能力，覆盖更多流程</li>
+                                <li>→ 从风险检测扩展到决策自动化</li>
+                            </ul>
+                            <p><strong>横向拓展：</strong></p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>→ 新地理市场(APAC、中东等)</li>
+                                <li>→ 新企业规模段(SMB、大型企业)</li>
+                                <li>→ 新行业垂直(保险、加密、电商)</li>
+                            </ul>
+                            <p><strong>产品创新：</strong></p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>→ 针对Web3/加密的专用方案</li>
+                                <li>→ 行业特定的定制化解决方案</li>
+                            </ul>
+                            <p><strong>生态构建：</strong></p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>→ 与支付商、银行深度集成</li>
+                                <li>→ 并购战略(如收购Golden)</li>
+                            </ul>
+                            <p><strong>估计增速：</strong>ARR年增长50-100%+，5年内有望达到数十亿ARR。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>商业化成熟度评估</h3>
+                        <div class="card-body">
+                            <div class="metrics-grid">
+                                <div class="metric-card">
+                                    <div class="metric-value">4/5</div>
+                                    <div class="metric-label">商业化成熟度</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">4.5/5</div>
+                                    <div class="metric-label">市场地位</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">4.5/5</div>
+                                    <div class="metric-label">技术创新</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">4/5</div>
+                                    <div class="metric-label">团队实力</div>
+                                </div>
+                            </div>
+                            <p><strong>成熟度体现：</strong></p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>✓ SaaS订阅模式成熟，收入可预测</li>
+                                <li>✓ 高粘性客户群体已形成</li>
+                                <li>✓ 毛利率健康，盈利能力强</li>
+                                <li>✓ 单位经济学优异</li>
+                                <li>✓ 已具备IPO条件</li>
+                            </ul>
+                            <div class="callout">
+                                <strong>综合评价：</strong>ComplyAdvantage已达到成长期后期，商业模式成熟，资本充足，已具备上市潜力。2026-2028年IPO是合理的时间窗口。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-6"></div>
+        </section>
+
+        <!-- ===== CHAPTER 7: 风险与机遇 ===== -->
+        <section class="chapter" id="ch-7">
+            <div class="chapter-header">
+                <h2>风险评估与未来展望</h2>
+                <span class="ch-counter">1 / 2</span>
+            </div>
+            <div class="card-track" id="track-7">
+                <!-- Slide 1 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>主要风险因素</h3>
+                        <div class="card-body">
+                            <p><strong>运营风险：</strong></p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>⚠ 全球扩展的本地化和合规挑战</li>
+                                <li>⚠ AI模型准确性持续改进的需求</li>
+                                <li>⚠ 高端人才(AI、合规)的竞争压力</li>
+                            </ul>
+                            <p><strong>市场风险：</strong></p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>⚠ 大型金融数据商(Refinitiv)的竞争</li>
+                                <li>⚠ 银行自建系统的威胁</li>
+                                <li>⚠ 经济衰退影响合规投入</li>
+                            </ul>
+                            <p><strong>技术风险：</strong></p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>⚠ AI模型的偏见和公平性</li>
+                                <li>⚠ 对抗性攻击和规避风险</li>
+                                <li>⚠ 数据隐私和安全(敏感财务数据)</li>
+                            </ul>
+                            <p><strong>监管风险：</strong></p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>⚠ 合规标准和要求的变化</li>
+                                <li>⚠ 数据隐私法规(GDPR、CCPA)的约束</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>长期愿景与市场机遇</h3>
+                        <div class="card-body">
+                            <p><strong>短期(12个月)：</strong></p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>→ 深化Agentic AI，覆盖更多流程</li>
+                                <li>→ 进军新地理市场(APAC重点)</li>
+                                <li>→ 推出Web3/加密专用方案</li>
+                                <li>→ 继续生态并购(Golden后续)</li>
+                            </ul>
+                            <p><strong>中期(2-3年)：</strong></p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>→ Agentic AI成熟度大幅提升</li>
+                                <li>→ 客户数和ARR保持50-100%+增速</li>
+                                <li>→ 建立行业级AI合规管理标准</li>
+                                <li>→ 可能IPO上市</li>
+                            </ul>
+                            <p><strong>长期愿景：</strong></p>
+                            <p><em>"成为全球金融系统的合规大脑"</em> — 通过AI和实时全球数据网络，让每个金融机构都能以最高效率、最低误报率来管理金融犯罪风险。</p>
+                            <div class="callout">
+                                <strong>机遇评估：</strong>ComplyAdvantage处于高速增长期，技术、市场、资本等多维度优势显著，是值得长期关注的金融AI领导者。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-7"></div>
+        </section>
+    </main>
+
+    <!-- ===== FOOTER ===== -->
+    <footer>
+        <p><strong>案例研究生成时间：</strong>2026年3月</p>
+        <p><strong>分析师：</strong>金融科技商业分析师</p>
+        <p><strong>数据来源：</strong>ComplyAdvantage官网、融资数据、专利信息、客户案例</p>
+        <p>本案例研究仅供学习和分析之用。更多信息请访问 <a href="https://complyadvantage.com/" target="_blank">ComplyAdvantage官网</a></p>
+    </footer>
+
+    <script>
+        // Track and dots initialization
+        const chapters = [0, 1, 2, 3, 4, 5, 6, 7];
+        const slideCounts = [0, 3, 3, 3, 3, 3, 3, 2]; // 0 for cover, then slides per chapter
+
+        // Initialize dots for each chapter
+        chapters.forEach(ch => {
+            if (ch === 0) return; // Skip cover
+            const dotsContainer = document.getElementById(`dots-${ch}`);
+            const track = document.getElementById(`track-${ch}`);
+            const slideCount = slideCounts[ch];
+
+            for (let i = 0; i < slideCount; i++) {
+                const dot = document.createElement('button');
+                dot.className = 'dot' + (i === 0 ? ' active' : '');
+                dot.onclick = () => {
+                    const offset = i * (track.clientWidth);
+                    track.scrollLeft = offset;
+                    updateDots(ch);
+                };
+                dotsContainer.appendChild(dot);
+            }
+
+            // Update counter and dots on scroll
+            track.addEventListener('scroll', () => {
+                updateDots(ch);
+                updateCounter(ch);
+            });
+        });
+
+        function updateDots(ch) {
+            const track = document.getElementById(`track-${ch}`);
+            const dotsContainer = document.getElementById(`dots-${ch}`);
+            const dots = dotsContainer.querySelectorAll('.dot');
+            const slideWidth = track.clientWidth;
+            const activeIndex = Math.round(track.scrollLeft / slideWidth);
+
+            dots.forEach((dot, i) => {
+                dot.classList.toggle('active', i === activeIndex);
+            });
+        }
+
+        function updateCounter(ch) {
+            const track = document.getElementById(`track-${ch}`);
+            const counter = document.getElementById(`counter-${ch}`);
+            const slideWidth = track.clientWidth;
+            const activeIndex = Math.round(track.scrollLeft / slideWidth) + 1;
+            const totalSlides = slideCounts[ch];
+            counter.textContent = `${activeIndex} / ${totalSlides}`;
+        }
+
+        // Navigation click handling
+        function scrollToChapter(chNum) {
+            const section = document.getElementById(`ch-${chNum}`);
+            section.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Update nav active state on scroll
+        window.addEventListener('scroll', () => {
+            const chapters = document.querySelectorAll('[id^="ch-"]');
+            const navLinks = document.querySelectorAll('.nav-link');
+
+            let current = 0;
+            chapters.forEach((section, index) => {
+                const rect = section.getBoundingClientRect();
+                if (rect.top <= window.innerHeight / 2) {
+                    current = index;
+                }
+            });
+
+            navLinks.forEach((link, index) => {
+                link.classList.toggle('active', index === current);
+            });
+        });
+
+        // Initialize counters
+        chapters.forEach(ch => {
+            if (ch > 0) updateCounter(ch);
+        });
+    </script>
+</body>
+</html>

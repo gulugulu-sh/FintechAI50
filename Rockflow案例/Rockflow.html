@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rockflow 深度调研报告</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #1A1514;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s; white-space: nowrap; overflow: hidden;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(217,119,87,0.2); color: var(--accent); font-weight: 600; }
+
+        /* ===== MAIN ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, #1F1F1F 0%, #2D2D2D 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(217,119,87,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 20px; background: rgba(217,119,87,0.15); object-fit: contain; }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(217,119,87,0.2); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+        .cover-cta {
+            margin-top: 28px;
+            padding: 12px 24px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .cover-cta:hover {
+            background: var(--accent-2);
+            transform: translateY(-2px);
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        /* Fixed chapter header */
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        /* Horizontal card scroller */
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+
+        /* Each slide fills available height */
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Card inside slide */
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        /* Dots bar at bottom */
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); cursor: pointer; transition: all 0.3s;
+            border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+        /* ===== REUSABLE COMPONENTS ===== */
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px; border-radius: 6px;
+            font-size: 13px; line-height: 1.7; color: var(--text-2);
+            margin: 14px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+
+        .quote-block {
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px; margin: 14px 0;
+            font-style: italic; font-size: 14px;
+            color: var(--text-2); line-height: 1.8;
+            background: var(--bg-muted); border-radius: 0 8px 8px 0;
+        }
+        .quote-attr { font-style: normal; font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 16px; border-radius: 10px; text-align: center;
+        }
+        .metric-value { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+        .flex-row { display: flex; gap: 24px; margin: 14px 0; }
+        .flex-col { flex: 1; min-width: 0; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th { background: var(--bg-muted); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+
+        .mode-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 14px 0; }
+        .mode-box { background: var(--bg-muted); padding: 14px; border-radius: 10px; border-left: 4px solid var(--accent); }
+        .mode-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+        .mode-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .insight-card {
+            flex: 1; display: flex; flex-direction: column;
+            background: var(--bg-card); border-radius: 14px; padding: 28px 32px;
+            border: 1px solid var(--border);
+        }
+        .insight-emoji { font-size: 28px; margin-bottom: 10px; }
+        .insight-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+        .insight-card p { font-size: 15px; line-height: 1.9; color: var(--text-2); margin-bottom: 14px; }
+        .insight-highlight {
+            margin-top: auto;
+            background: var(--accent-light); border-left: 4px solid var(--accent);
+            padding: 12px 16px; border-radius: 6px;
+            font-size: 14px; font-weight: 600; color: var(--accent-2);
+        }
+
+        .news-item {
+            padding: 14px; background: var(--bg-card);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px; border: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+        .news-date { font-size: 11px; color: var(--text-3); font-weight: 600; margin-bottom: 4px; }
+        .news-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .news-title a { color: var(--accent-blue); text-decoration: none; }
+        .news-title a:hover { color: var(--accent); text-decoration: underline; }
+        .news-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .avatar {
+            width: 56px; height: 56px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 700; font-size: 20px;
+        }
+
+        .position-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+        .position-card { padding: 12px; border-radius: 10px; }
+        .position-title { font-weight: 700; font-size: 13px; margin-bottom: 3px; }
+
+        .timeline { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+        .timeline-item { display: flex; gap: 12px; align-items: flex-start; }
+        .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
+        .timeline-year { font-weight: 700; font-size: 13px; color: var(--accent); min-width: 48px; }
+        .timeline-text { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+
+        ul { padding-left: 18px; }
+        ul li { font-size: 13px; color: var(--text-2); line-height: 1.9; margin-bottom: 4px; }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            main { margin-left: 0; }
+            .chapter-header { padding: 12px 20px 0 20px; }
+            .slide { padding: 16px 20px; }
+            .cover-title { font-size: 28px; }
+            .flex-row { flex-direction: column; }
+        }
+    .nav-dashboard{display:block;width:calc(100% - 8px);margin:8px 4px 4px;background:rgba(217,119,87,0.15);border:1px solid rgba(217,119,87,0.3);color:var(--accent,#D97757);padding:10px 12px;border-radius:8px;text-align:center;font-size:12px;font-family:inherit;cursor:pointer;transition:all .2s;text-decoration:none;font-weight:600;letter-spacing:.3px}.nav-dashboard:hover{background:rgba(217,119,87,0.25);transform:translateY(-1px)}
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <img class="sidebar-logo" alt="Rockflow" src="data:image/png;base64,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" />
+        <div>
+            <div class="sidebar-brand-text">Rockflow</div>
+            <div class="sidebar-brand-sub">深度调研报告</div>
+        </div>
+    </div>
+    <div class="nav-items">
+        <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+        <button class="nav-btn" onclick="go(1)">📋 公司概况</button>
+        <button class="nav-btn" onclick="go(2)">💰 融资与商业模式</button>
+        <button class="nav-btn" onclick="go(3)">🤖 AI技术能力</button>
+        <button class="nav-btn" onclick="go(4)">🎯 核心产品 Bobby</button>
+        <button class="nav-btn" onclick="go(5)">👥 用户与增长</button>
+        <button class="nav-btn" onclick="go(6)">🌟 核心洞察</button>
+        <button class="nav-btn" onclick="go(7)">📰 近期动向</button>
+    </div>
+<a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+<main id="main">
+
+<!-- ====== COVER ====== -->
+<section class="cover" id="ch-0">
+    <div class="cover-content">
+        <img class="cover-logo" alt="Rockflow Logo" src="data:image/png;base64,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" />
+        <h1 class="cover-title">Rockflow</h1>
+        <p class="cover-subtitle">AI原生投资平台，用自然语言让亚洲Gen Z智能交易</p>
+        <div class="cover-tags">
+            <span class="cover-tag">AI Agent</span>
+            <span class="cover-tag">投资平台</span>
+            <span class="cover-tag">Gen Z</span>
+            <span class="cover-tag">新加坡</span>
+            <span class="cover-tag">ToC</span>
+        </div>
+        <div class="cover-stats">
+            <div class="stat-box">
+                <div class="stat-number" data-count="2000" data-suffix="万+">0</div>
+                <div class="stat-label">注册用户</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="2000" data-suffix="万+">0</div>
+                <div class="stat-label">总融资</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="50" data-suffix="+">0</div>
+                <div class="stat-label">资产类型</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">4.7★</div>
+                <div class="stat-label">应用评分</div>
+            </div>
+        </div>
+        <button class="cover-cta" onclick="window.open('https://rockflow.ai', '_blank')">📱 访问 Rockflow Dashboard</button>
+        <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+    </div>
+</section>
+
+<!-- ====== CHAPTER 1: 公司概况 ====== -->
+<section class="chapter" id="ch-1">
+    <div class="chapter-header">
+        <h2>从东南亚金融痛点到全球AI交易革命</h2>
+        <span class="ch-sub">📋 公司概况</span>
+        <span class="ch-counter" id="counter-1">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="1">
+
+        <div class="slide"><div class="card"><h3>一个关于投资民主化的故事</h3><div class="card-body">
+            <p>2021年，Kris Nuan在新加坡创立Rockflow，一个看似简单的观察激发了他的创意：数百万亚洲年轻投资者渴望进入全球资本市场，却被复杂的交易界面、外文文献和高额费用挡在门外。他们有手机、有互联网、有热情，却缺少一个真正"为他们而生"的工具。Rockflow的使命就是打破这个壁垒——利用AI技术，把投资变成一场自然语言的对话，就像聊天一样简单。</p>
+            <div class="callout">
+                <strong>定位：</strong> AI原生投资平台（AI Trading Copilot），专注于18-35岁亚太地区Gen Z投资者，目标是成为"亚洲Robinhood"。
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>创始人背景：从高盛到AI交易</h3><div class="card-body">
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
+                <div class="avatar">KN</div>
+                <div>
+                    <p style="margin:0;font-weight:700;font-size:15px;">Kris Nuan · CEO & Co-Founder</p>
+                    <p style="margin:0;font-size:12px;color:var(--text-3);">宾夕法尼亚大学MBA，前高盛定量分析师</p>
+                </div>
+            </div>
+            <p><strong>背景：</strong> Kris Nuan拥有深厚的算法交易和AI驱动投资背景，在高盛期间专注量化分析。他的核心愿景是"民主化投资"——让普通年轻人也能像对冲基金一样交易。</p>
+            <div class="quote-block">
+                亚洲年轻投资者有天赋、有热情，但缺少真正理解他们的工具。Rockflow就是为他们而生的AI交易伙伴。
+                <div class="quote-attr">— Kris Nuan</div>
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>早期里程碑与市场验证</h3><div class="card-body">
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">2021</div>
+                    <div class="timeline-text"><strong>创立：</strong> Rockflow在新加坡成立，定位AI投资平台。</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">2022</div>
+                    <div class="timeline-text"><strong>融资：</strong> 获得BlueRun Ventures领投的1000万美元天使轮融资。</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">2025.1</div>
+                    <div class="timeline-text"><strong>里程碑：</strong> Bobby AI正式发布，首个金融AI Agent。</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">2025.11</div>
+                    <div class="timeline-text"><strong>融资：</strong> 蚂蚁集团等领投数千万美元Series A。</div>
+                </div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-1"></div>
+</section>
+
+<!-- ====== CHAPTER 2: 融资与商业模式 ====== -->
+<section class="chapter" id="ch-2">
+    <div class="chapter-header">
+        <h2>资本青睐与可持续的商业逻辑</h2>
+        <span class="ch-sub">💰 融资与商业模式</span>
+        <span class="ch-counter" id="counter-2">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="2">
+
+        <div class="slide"><div class="card"><h3>融资历程：资本市场的认可</h3><div class="card-body">
+            <p>Rockflow的融资历程反映了资本对AI原生金融科技和亚洲年轻投资者市场潜力的强烈看好。从创立初期获得千万美元融资，到蚂蚁集团的参与，体现了其商业模式的可行性和市场吸引力。</p>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">$1000万</div>
+                    <div class="metric-label">天使轮 (2022)</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">$2000万+</div>
+                    <div class="metric-label">总融资</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">蚂蚁集团</div>
+                    <div class="metric-label">主要投资方</div>
+                </div>
+            </div>
+            <p style="margin-top:12px;">BlueRun Ventures、蚂蚁集团、Monolith Management等国际顶级投资方的参与，足以证明Rockflow在AI金融和亚洲市场中的战略价值。</p>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>商业模式：多维收入流</h3><div class="card-body">
+            <p>Rockflow采用ToC / SaaS混合模式，通过多个收入渠道实现可持续增长：</p>
+            <div class="mode-boxes">
+                <div class="mode-box">
+                    <div class="mode-title">💳 交易佣金</div>
+                    <div class="mode-desc">低佣金或零佣金策略吸引用户，通过交易量和用户基数实现收入。</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">💎 增值服务</div>
+                    <div class="mode-desc">Bobby AI高级功能、专业分析报告、深度研究等付费服务。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-green);">
+                    <div class="mode-title">📊 资产管理费</div>
+                    <div class="mode-desc">AI辅助资产管理服务，收取AUM的一定比例费用。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-blue);">
+                    <div class="mode-title">📈 利息与数据</div>
+                    <div class="mode-desc">用户闲置资金利息收入和匿名化市场数据服务。</div>
+                </div>
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>市场定位与目标用户</h3><div class="card-body">
+            <p><strong>赛道定位：</strong> AI投资平台 / AI Trading Copilot</p>
+            <p><strong>核心用户画像：</strong> 18-35岁亚太地区Gen Z投资者，是"懒人投资者"——渴望简化交易、缺乏专业知识、追求AI辅助决策。</p>
+            <div class="callout">
+                <strong>市场机遇：</strong> 亚洲拥有全球最多年轻人口。他们对数字产品接受度高，但全球投资工具多为欧美设计。Rockflow填补了这个空白。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-2"></div>
+</section>
+
+<!-- ====== CHAPTER 3: AI技术能力 ====== -->
+<section class="chapter" id="ch-3">
+    <div class="chapter-header">
+        <h2>千级数据流与机构级量化模型</h2>
+        <span class="ch-sub">🤖 AI技术能力</span>
+        <span class="ch-counter" id="counter-3">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="3">
+
+        <div class="slide"><div class="card"><h3>核心技术架构</h3><div class="card-body">
+            <p>Rockflow的AI能力基于混合技术路线：</p>
+            <p><strong>自研量化模型：</strong> 基于机构级算法，涵盖市场预测、风险管理、投资组合优化。这些模型是Rockflow的核心竞争力，直接影响Bobby的决策质量。</p>
+            <p><strong>通用大模型API：</strong> 集成GPT、Claude等主流LLM，针对金融领域进行Fine-tune微调，实现自然语言交互、语音下单、意图识别等高级功能。</p>
+            <div class="callout">
+                <strong>技术壁垒：</strong> 自研量化模型 + 微调的大模型 = 既有独特交易策略，又能提供人性化交互体验。
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>Bobby的四大核心能力</h3><div class="card-body">
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">1</div>
+                    <div class="timeline-text"><strong>意图识别：</strong> 理解复杂自然语言投资指令，从"投资高增长科技股"到"买入100股苹果"都能精准捕捉。</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">2</div>
+                    <div class="timeline-text"><strong>个性化推荐：</strong> 基于风险偏好、历史数据和实时市场，生成高度定制投资组合建议。</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">3</div>
+                    <div class="timeline-text"><strong>自动化执行：</strong> 支持AI辅助交易执行、智能订单优化，降低用户操作负担。</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">4</div>
+                    <div class="timeline-text"><strong>社交情绪监控：</strong> 实时追踪社交媒体热点，帮助用户捕捉市场情绪和机会。</div>
+                </div>
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>技术壁垒与风险评估</h3><div class="card-body">
+            <p><strong>构建的护城河：</strong></p>
+            <ul>
+                <li><strong>数据护城河：</strong> "千级数据流"意味着多维数据来源，持续积累用户数据成为模型优化的燃料。</li>
+                <li><strong>模型独特性：</strong> 机构级量化模型是自主知识产权，难以短期复制。</li>
+                <li><strong>人才壁垒：</strong> Kris Nuan等高盛出身的量化人才是公司的核心资产。</li>
+            </ul>
+            <p style="margin-top:12px;"><strong>技术风险：</strong> AI幻觉、市场极端情况下预测失效、监管合规压力等仍需关注。</p>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-3"></div>
+</section>
+
+<!-- ====== CHAPTER 4: 核心产品 Bobby ====== -->
+<section class="chapter" id="ch-4">
+    <div class="chapter-header">
+        <h2>Bobby：首个金融AI Agent的完整拆解</h2>
+        <span class="ch-sub">🎯 核心产品 Bobby</span>
+        <span class="ch-counter" id="counter-4">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="4">
+
+        <div class="slide"><div class="card"><h3>Bobby的功能矩阵</h3><div class="card-body">
+            <p>Bobby是Rockflow的核心产品，2025年1月正式发布的首个金融AI Agent。集合了多个功能模块：</p>
+            <div class="flex-row">
+                <div class="flex-col">
+                    <p style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:8px;">📊 投资组合</p>
+                    <p>根据风险偏好智能生成个性化投资组合，涵盖美股、港股、期权、ETF等50+资产类型。</p>
+                </div>
+                <div class="flex-col">
+                    <p style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:8px;">🎤 语音下单</p>
+                    <p>说出投资指令即刻执行，"Buy 100 shares of AAPL"一句话搞定。</p>
+                </div>
+            </div>
+            <div class="flex-row">
+                <div class="flex-col">
+                    <p style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:8px;">🌐 社交热点</p>
+                    <p>实时监控社交媒体讨论，捕捉市场情绪和投资热点。</p>
+                </div>
+                <div class="flex-col">
+                    <p style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:8px;">⚡ 智能执行</p>
+                    <p>AI优化交易时机和策略，最大化交易效率，降低滑点。</p>
+                </div>
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>用户场景：AI驱动的投资组合生成</h3><div class="card-body">
+            <p><strong>场景：</strong> 一位25岁程序员，想投资美股科技股，但缺乏选股经验。</p>
+            <p><strong>传统方式：</strong> 花费数小时研究，查看多个网站，仍然不确定如何构建组合。</p>
+            <p><strong>Bobby方式：</strong> 打开Rockflow，告诉Bobby "我想投资科技股，中等风险"，Bobby立即基于千级数据流和量化模型，生成一个包含5只科技龙头股和3只科技ETF的组合，并解释配置逻辑和历史表现。点击"一键买入"，投资完成。</p>
+            <div class="callout">
+                <strong>价值：</strong> 从数小时降低到5分钟，从不确定到高信心。Bobby让投资变得可及、可理解、可信赖。
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>用户场景：社交热点 + 语音下单</h3><div class="card-body">
+            <p><strong>场景：</strong> 用户在刷TikTok时，看到关于某新兴电动汽车股票的热烈讨论，Twitter上也有几万条提及。</p>
+            <p><strong>Bobby的作用：</strong> 推送该股票的实时新闻、分析报告和社交情绪指数。用户对机会感兴趣，说"Bobby，买入50股XYZ"。Bobby识别语音指令，迅速执行交易，并实时监控社媒情绪，在异常波动时提醒。</p>
+            <p><strong>差异化：</strong> 既连接社交媒体趋势，又能自动执行，传统券商APP完全做不到。这是Bobby的独特价值。</p>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-4"></div>
+</section>
+
+<!-- ====== CHAPTER 5: 用户与增长 ====== -->
+<section class="chapter" id="ch-5">
+    <div class="chapter-header">
+        <h2>2000万注册用户与高粘性增长</h2>
+        <span class="ch-sub">👥 用户与增长</span>
+        <span class="ch-counter" id="counter-5">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="5">
+
+        <div class="slide"><div class="card"><h3>用户规模与地理分布</h3><div class="card-body">
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">2000万+</div>
+                    <div class="metric-label">注册用户</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">6大洲</div>
+                    <div class="metric-label">全球覆盖</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">4.7/5</div>
+                    <div class="metric-label">App评分</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">50万+</div>
+                    <div class="metric-label">评价数</div>
+                </div>
+            </div>
+            <p style="margin-top:12px;"><strong>地域特征：</strong> 亚太地区为主（东南亚、南亚、中国港澳），北美和欧洲为次，体现了Rockflow对亚洲市场的深度聚焦。</p>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>用户画像与痛点</h3><div class="card-body">
+            <p><strong>核心用户：</strong> 18-35岁Gen Z投资者，对科技接受度高，渴望简化的投资体验。</p>
+            <div class="position-cards">
+                <div class="position-card" style="background:#FFE6E6;">
+                    <div style="font-size:16px;margin-bottom:6px;">🔥</div>
+                    <div class="position-title">信息过载</div>
+                    <div style="font-size:11px;color:var(--text-2);">海量数据无处下手</div>
+                </div>
+                <div class="position-card" style="background:#E6F4FF;">
+                    <div style="font-size:16px;margin-bottom:6px;">😵</div>
+                    <div class="position-title">决策困难</div>
+                    <div style="font-size:11px;color:var(--text-2);">缺乏专业知识</div>
+                </div>
+                <div class="position-card" style="background:#E6FFE6;">
+                    <div style="font-size:16px;margin-bottom:6px;">😴</div>
+                    <div class="position-title">体验枯燥</div>
+                    <div style="font-size:11px;color:var(--text-2);">传统工具不够有趣</div>
+                </div>
+                <div class="position-card" style="background:#FFF0E6;">
+                    <div style="font-size:16px;margin-bottom:6px;">🚀</div>
+                    <div class="position-title">高效需求</div>
+                    <div style="font-size:11px;color:var(--text-2);">利用碎片化时间</div>
+                </div>
+            </div>
+            <p style="margin-top:12px;">Rockflow通过Bobby直接解决这四大痛点。</p>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>增长动力与市场潜力</h3><div class="card-body">
+            <p><strong>增长驱动：</strong></p>
+            <ul>
+                <li><strong>产品创新：</strong> Bobby发布推动新一轮用户增长和活跃度提升。</li>
+                <li><strong>口碑传播：</strong> 4.7/5的App评分和50万+评价说明用户满意度高，自然推荐强劲。</li>
+                <li><strong>融资支持：</strong> 蚂蚁集团等融资支持市场推广和产品迭代加速。</li>
+                <li><strong>市场机遇：</strong> 亚洲年轻投资者群体持续增长，全球化投资需求未被充分满足。</li>
+            </ul>
+            <div class="callout">
+                <strong>增长空间：</strong> 2000万用户仅占亚洲18-35岁人口很小比例。未来3-5年有望达到5000万+用户。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-5"></div>
+</section>
+
+<!-- ====== CHAPTER 6: 核心洞察 ====== -->
+<section class="chapter" id="ch-6">
+    <div class="chapter-header">
+        <h2>为什么Rockflow值得关注</h2>
+        <span class="ch-sub">🌟 核心洞察</span>
+        <span class="ch-counter" id="counter-6">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="6">
+
+        <div class="slide"><div class="insight-card">
+            <div class="insight-emoji">🤖</div>
+            <h3>AI原生是金融科技的未来</h3>
+            <div class="card-body">
+                <p>Rockflow不是"AI辅助"的投资平台，而是"AI原生"——从底层架构到用户界面，AI都是核心。Bobby不是"推荐引擎"，而是真正的"交易伙伴"。这种原生AI设计，使得Rockflow能提供传统金融科技永远无法复制的产品体验和效率提升。</p>
+                <div class="insight-highlight">
+                    金融科技的下一个十年属于那些能将AI融入骨髓、而非表面装饰的企业。
+                </div>
+            </div>
+        </div></div>
+
+        <div class="slide"><div class="insight-card">
+            <div class="insight-emoji">🌏</div>
+            <h3>亚洲市场的颠覆式机遇</h3>
+            <div class="card-body">
+                <p>美国有Robinhood，欧洲有Revolut，但亚洲的2亿年轻投资者却长期缺乏真正为他们设计的全球投资平台。Rockflow填补了这个空白。亚洲的支付基础设施和用户对数字产品的接受度，为Rockflow的快速扩张提供了土壤。</p>
+                <div class="insight-highlight">
+                    谁能提供真正理解亚洲Gen Z的全球投资服务，谁就掌握了未来十年财富管理的钥匙。
+                </div>
+            </div>
+        </div></div>
+
+        <div class="slide"><div class="insight-card">
+            <div class="insight-emoji">💡</div>
+            <h3>用户体验与技术壁垒的完美融合</h3>
+            <div class="card-body">
+                <p>Rockflow的成功在于它同时具备两个难以复制的要素：(1) 技术壁垒——自研量化模型、千级数据流、机构级AI；(2) 体验优势——简洁的界面、自然的交互、真正有趣的产品。这正是独角兽企业的标志。</p>
+                <div class="insight-highlight">
+                    财富管理的终极竞争力，不是追求最强大的数据或最华丽的界面，而是能否让普通人在5分钟内完成曾经需要5小时的投资决策。
+                </div>
+            </div>
+        </div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-6"></div>
+</section>
+
+<!-- ====== CHAPTER 7: 近期动向与展望 ====== -->
+<section class="chapter" id="ch-7">
+    <div class="chapter-header">
+        <h2>2025年的关键进展与未来方向</h2>
+        <span class="ch-sub">📰 近期动向</span>
+        <span class="ch-counter" id="counter-7">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="7">
+
+        <div class="slide"><div class="card"><h3>2025年重要事件</h3><div class="card-body">
+            <div class="news-item">
+                <div class="news-date">2025年1月</div>
+                <div class="news-title">Bobby AI正式发布——首个金融AI Agent</div>
+                <div class="news-desc">Rockflow推出业界首个真正的金融AI Agent，集自然语言、智能决策、社交情绪监控于一体。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2025年3月</div>
+                <div class="news-title">Series A融资公告</div>
+                <div class="news-desc">获得来自蚂蚁集团、Monolith Management等机构的数千万美元Series A融资，总融资额超$2000万。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2025年</div>
+                <div class="news-title">用户突破2000万</div>
+                <div class="news-desc">注册用户突破2000万大关，覆盖6大洲，Bobby发布后活跃度显著提升，App评分稳定在4.7/5。</div>
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>竞争格局与市场定位</h3><div class="card-body">
+            <p><strong>直接竞争对手：</strong> 富途证券、老虎证券等传统港美股平台，以及新兴的AI投顾工具。</p>
+            <table>
+                <thead><tr><th style="text-align:left;">维度</th><th style="text-align:left;">Rockflow</th><th style="text-align:left;">传统券商</th></tr></thead>
+                <tbody>
+                    <tr><td>核心定位</td><td>AI原生交易平台</td><td>交易渠道</td></tr>
+                    <tr><td>目标用户</td><td>Gen Z亚洲投资者</td><td>广泛投资者</td></tr>
+                    <tr><td>产品体验</td><td>AI对话式、极简</td><td>传统功能式</td></tr>
+                    <tr><td>数据基础</td><td>千级数据流</td><td>有限数据</td></tr>
+                </tbody>
+            </table>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>未来3年展望</h3><div class="card-body">
+            <div class="quote-block">
+                Rockflow的短期目标是巩固亚洲市场领导地位，中期目标是实现全球化，长期目标是成为"Gen Z全球财富管理的首选伙伴"。
+                <div class="quote-attr">— 基于市场定位推测</div>
+            </div>
+            <p><strong>乐观情景：</strong> Bobby持续迭代，用户达5000万+，实现盈利，成为全球AI金融科技独角兽。</p>
+            <p><strong>中性情景：</strong> 保持稳健增长，在亚太和北美市场获得显著份额，但面临竞争压力。</p>
+            <p><strong>谨慎情景：</strong> 市场竞争加剧，用户增长放缓，需要寻找新的增长突破口。</p>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-7"></div>
+</section>
+
+</main>
+
+<script>
+    function go(ch) {
+        const main = document.getElementById('main');
+        const el = document.getElementById('ch-' + ch);
+        if (el) {
+            const offset = el.offsetTop;
+            main.scrollTop = offset;
+            updateNav(ch);
+        }
+    }
+
+    function updateNav(ch) {
+        document.querySelectorAll('.nav-btn').forEach((btn, i) => {
+            btn.classList.toggle('active', i === ch);
+        });
+    }
+
+    function animateCounter(el) {
+        const count = parseInt(el.dataset.count);
+        const prefix = el.dataset.prefix || '';
+        const suffix = el.dataset.suffix || '';
+        let curr = 0;
+        const inc = Math.ceil(count / 60);
+        const timer = setInterval(() => {
+            curr += inc;
+            if (curr >= count) {
+                curr = count;
+                clearInterval(timer);
+            }
+            el.textContent = prefix + curr.toLocaleString('zh-CN') + suffix;
+        }, 20);
+    }
+
+    function syncChapter(ch) {
+        const dotsBar = document.getElementById('dots-' + ch);
+        const counter = document.getElementById('counter-' + ch);
+        const track = document.querySelector(`[data-ch="${ch}"]`);
+        if (!track || !dotsBar) return;
+
+        const slides = track.querySelectorAll('.slide').length;
+        dotsBar.innerHTML = '';
+        for (let i = 0; i < slides; i++) {
+            const dot = document.createElement('button');
+            dot.className = 'dot' + (i === 0 ? ' active' : '');
+            dot.onclick = () => scrollSlideIntoView(track, i);
+            dotsBar.appendChild(dot);
+        }
+
+        track.addEventListener('scroll', () => {
+            const rect = track.getBoundingClientRect();
+            let active = 0;
+            track.querySelectorAll('.slide').forEach((slide, i) => {
+                const slideRect = slide.getBoundingClientRect();
+                if (slideRect.left < rect.width / 2 && slideRect.right > 0) active = i;
+            });
+            dotsBar.querySelectorAll('.dot').forEach((dot, i) => {
+                dot.classList.toggle('active', i === active);
+            });
+            if (counter) counter.textContent = (active + 1) + ' / ' + slides;
+        });
+    }
+
+    function scrollSlideIntoView(track, index) {
+        const slides = track.querySelectorAll('.slide');
+        if (slides[index]) slides[index].scrollIntoView({ behavior: 'smooth', inline: 'center' });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.stat-number[data-count]').forEach(el => {
+            setTimeout(() => animateCounter(el), 100);
+        });
+
+        for (let ch = 1; ch <= 7; ch++) {
+            syncChapter(ch);
+        }
+
+        const main = document.getElementById('main');
+        main.addEventListener('scroll', () => {
+            let ch = 0;
+            document.querySelectorAll('.chapter, .cover').forEach((section, i) => {
+                const rect = section.getBoundingClientRect();
+                if (rect.top <= window.innerHeight / 2) ch = i;
+            });
+            updateNav(ch);
+        });
+    });
+</script>
+
+</body>
+</html>

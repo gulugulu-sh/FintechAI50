@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>nCino 深度调研报告</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --accent-purple: #7B5EA7;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #1A1514;
+            --cover-bg: #003366;
+            --cover-accent: #0066CC;
+            --cover-highlight: #66B2FF;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(217,119,87,0.2); color: var(--accent); font-weight: 600; }
+        .nav-dashboard {
+            display: block; width: calc(100% - 8px); margin: 8px 4px 4px;
+            background: rgba(217,119,87,0.15);
+            border: 1px solid rgba(217,119,87,0.3);
+            color: var(--accent);
+            padding: 10px 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 12px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all .2s;
+            text-decoration: none;
+            font-weight: 600;
+            letter-spacing: .3px;
+        }
+        .nav-dashboard:hover { background: rgba(217,119,87,0.25); transform: translateY(-1px); }
+
+        /* ===== MAIN ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, var(--cover-bg) 0%, #004d99 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(102,178,255,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 20px; background: rgba(255,255,255,0.1); object-fit: contain; }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(255,255,255,0.12); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        /* Fixed chapter header */
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        /* Horizontal card scroller */
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+
+        /* Each slide fills available height */
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Card inside slide — fills slide */
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        /* Dots bar at bottom */
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); cursor: pointer; transition: all 0.3s;
+            border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+        /* ===== REUSABLE COMPONENTS ===== */
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px; border-radius: 6px;
+            font-size: 13px; line-height: 1.7; color: var(--text-2);
+            margin: 14px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+
+        .quote-block {
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px; margin: 14px 0;
+            font-style: italic; font-size: 14px;
+            color: var(--text-2); line-height: 1.8;
+            background: var(--bg-muted); border-radius: 0 8px 8px 0;
+        }
+        .quote-attr { font-style: normal; font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 16px; border-radius: 10px; text-align: center;
+        }
+        .metric-value { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+        .flex-row { display: flex; gap: 24px; margin: 14px 0; }
+        .flex-col { flex: 1; min-width: 0; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th { background: var(--bg-muted); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+
+        .mode-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 14px 0; }
+        .mode-box { background: var(--bg-muted); padding: 14px; border-radius: 10px; border-left: 4px solid var(--accent); }
+        .mode-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+        .mode-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .news-item {
+            padding: 14px; background: var(--bg-card);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px; border: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+        .news-date { font-size: 11px; color: var(--text-3); font-weight: 600; margin-bottom: 4px; }
+        .news-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .news-title a { color: var(--accent-blue); text-decoration: none; }
+        .news-title a:hover { color: var(--accent); text-decoration: underline; }
+        .news-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .timeline { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+        .timeline-item { display: flex; gap: 12px; align-items: flex-start; }
+        .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
+        .timeline-year { font-weight: 700; font-size: 13px; color: var(--accent); min-width: 48px; }
+        .timeline-text { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            main { margin-left: 0; }
+            .chapter-header { padding: 12px 20px 0 20px; }
+            .slide { padding: 16px 20px; }
+            .cover-title { font-size: 28px; }
+            .flex-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <img class="sidebar-logo" alt="nCino" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAOVBMVEVHcEz6ugAXp9oXp9pctU0Xp9r6ugDynwRctU3NEBLNEBJctU1ctU1ctU36ugDNEBL6ugBctU0Xp9oBXBqMAAAAD3RSTlMA86o8ouKfPjvikPfvmpdp+2opAAAArElEQVR4nO3aQQ6CMBBA0aIialHB+x/WnbLopBiTasL7s+0kbz9NSZKkjXSJagU434MAAAAAAAAAAAAAAADWLJ+CWgEOcx4Lk+dPBN8BggAAAAAAAP4IMEQ1AgxTV2y6NQMEHQEAAABWAHZRrQCPoB4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAoBmgL88bcM1jsVy9nHbLy2kwaR/12o1+ci1u1/Xbcf2FJEm/6gnOu7e1eSwJ4wAAAABJRU5ErkJggg==" />
+        <div>
+            <div class="sidebar-brand-text">nCino</div>
+            <div class="sidebar-brand-sub">深度调研报告</div>
+        </div>
+    </div>
+    <div class="nav-items">
+        <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+        <button class="nav-btn" onclick="go(1)">📋 公司概况</button>
+        <button class="nav-btn" onclick="go(2)">💰 融资与财务</button>
+        <button class="nav-btn" onclick="go(3)">🛠️ 产品功能</button>
+        <button class="nav-btn" onclick="go(4)">🤖 AI战略</button>
+        <button class="nav-btn" onclick="go(5)">🌍 竞争格局</button>
+        <button class="nav-btn" onclick="go(6)">💡 核心启示</button>
+        <button class="nav-btn" onclick="go(7)">📰 近期要闻</button>
+    </div>
+    <a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+<main id="main">
+
+<!-- ====== COVER ====== -->
+<section class="cover" id="ch-0">
+    <div class="cover-content">
+        <img class="cover-logo" alt="nCino Logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAOVBMVEVHcEz6ugAXp9oXp9pctU0Xp9r6ugDynwRctU3NEBLNEBJctU1ctU1ctU36ugDNEBL6ugBctU0Xp9oBXBqMAAAAD3RSTlMA86o8ouKfPjvikPfvmpdp+2opAAAArElEQVR4nO3aQQ6CMBBA0aIialHB+x/WnbLopBiTasL7s+0kbz9NSZKkjXSJagU434MAAAAAAAAAAAAAAADWLJ+CWgEOcx4Lk+dPBN8BggAAAAAAAP4IMEQ1AgxTV2y6NQMEHQEAAABWAHZRrQCPoB4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAoBmgL88bcM1jsVy9nHbLy2kwaR/12o1+ci1u1/Xbcf2FJEm/6gnOu7e1eSwJ4wAAAABJRU5ErkJggg==" />
+        <h1 class="cover-title">nCino</h1>
+        <p class="cover-subtitle">云银行操作系统：让全球金融机构数字化转型——从贷款自动化到AI驱动决策的进化之路</p>
+        <div class="cover-tags">
+            <span class="cover-tag">云银行平台</span>
+            <span class="cover-tag">贷款发放系统</span>
+            <span class="cover-tag">生成式AI</span>
+            <span class="cover-tag">美国 NASDAQ</span>
+            <span class="cover-tag">ToB SaaS</span>
+        </div>
+        <div class="cover-stats">
+            <div class="stat-box">
+                <div class="stat-number">$476.5M</div>
+                <div class="stat-label">2024财年收入</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">2700+</div>
+                <div class="stat-label">全球金融机构</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">1200+</div>
+                <div class="stat-label">全球员工</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">NCNO</div>
+                <div class="stat-label">上市代码</div>
+            </div>
+        </div>
+        <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+    </div>
+</section>
+
+<!-- ====== CHAPTER 1: 公司概况 ====== -->
+<section class="chapter" id="ch-1">
+    <div class="chapter-header">
+        <h2>从贷款自动化到云银行领导者</h2>
+        <span class="ch-sub">📋 公司概况</span>
+        <span class="ch-counter" id="counter-1">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="1">
+
+        <!-- 1/2 创办背景与发展历程 -->
+        <div class="slide"><div class="card"><h3>一个贷款官的创业梦</h3><div class="card-body">
+            <p>2011年，拥有30年金融科技经验的Pierre Naudé在美国北卡罗来纳州威尔明顿创办nCino。Naudé曾在S1 Corporation和Unisys担任高管，他深刻理解金融机构面临的复杂性——传统银行的贷款系统、CRM、文档管理、合规工具散落在不同供应商，导致流程繁琐、效率低下、跨部门协作困难。</p>
+            <p>nCino的早期产品聚焦商业银行的贷款发放工作流自动化。通过将申请、审批、文件生成、合规检查纳入单一数字流程，nCino帮助银行压缩贷款周期、降低成本、改善客户体验。2015-2020年，nCino逐步拓展至信用社、社区银行、抵押贷款机构等细分市场，推出消费银行和存款账户开立模块，建立了开放的API生态。</p>
+            <div class="callout">
+                <strong>核心定位：</strong> 全球云银行操作系统领导者。为2700+金融机构提供端到端的贷款发放、账户开立、合规管理和AI智能决策方案。
+            </div>
+        </div></div></div>
+
+        <!-- 2/2 关键里程碑 -->
+        <div class="slide"><div class="card"><h3>13年进化：从初创到独角兽</h3><div class="card-body">
+            <div class="timeline">
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2011</div><div class="timeline-text">Pierre Naudé创办nCino，总部威尔明顿。产品初期聚焦商业银行贷款发放工作流自动化。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2015-17</div><div class="timeline-text">扩展至信用社、抵押贷款机构市场。推出存款账户开立功能，建立开放API生态。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2020-22</div><div class="timeline-text">全球客户突破2000+，进入欧洲、亚太市场。获Gartner领导者象限认可。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2023</div><div class="timeline-text">推出nSight客户大会，宣布AI战略。AI成为产品研发核心驱动力。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2024.06</div><div class="timeline-text">发布Banking Advisor生成式AI助手，18大AI能力上线。从自动化向AI决策转变。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2024.10</div><div class="timeline-text">NASDAQ上市（NCNO），估值$1B+。收购DocFox和FullCircl补齐AI能力。</div></div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar">
+        <button class="dot active" onclick="scrollToSlide(1, 0)"></button>
+        <button class="dot" onclick="scrollToSlide(1, 1)"></button>
+    </div>
+</section>
+
+<!-- ====== CHAPTER 2: 融资与财务 ====== -->
+<section class="chapter" id="ch-2">
+    <div class="chapter-header">
+        <h2>资本加速：从融资到上市的蜕变</h2>
+        <span class="ch-sub">💰 融资与财务</span>
+        <span class="ch-counter" id="counter-2">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="2">
+
+        <!-- 1/2 融资历程 -->
+        <div class="slide"><div class="card"><h3>融资里程碑与估值演变</h3><div class="card-body">
+            <table>
+                <thead><tr><th>轮次</th><th>时间</th><th>金额</th><th>领投方</th><th>意义</th></tr></thead>
+                <tbody>
+                    <tr><td>A轮</td><td>2016-17</td><td>未公开</td><td>风险基金</td><td>产品验证</td></tr>
+                    <tr><td>B轮</td><td>2018-19</td><td>未公开</td><td>美国主流VC</td><td>市场扩展</td></tr>
+                    <tr><td>C+轮</td><td>2020-23</td><td>$5亿+</td><td>Sapphire、KKR</td><td>全球化与AI</td></tr>
+                    <tr><td>IPO</td><td>2024.10</td><td>$100M+</td><td>NASDAQ</td><td>公众融资</td></tr>
+                </tbody>
+            </table>
+            <div class="callout">
+                <strong>上市估值：</strong> 2024年10月NASDAQ上市（NCNO），融资$100M+，估值$1B+。$476.5M收入 × 4.5倍收入倍数（低于SaaS均值6-8倍），市场对nCino的云银行+AI战略充满信心。
+            </div>
+        </div></div></div>
+
+        <!-- 2/2 财务表现 -->
+        <div class="slide"><div class="card"><h3>强劲增长：订阅驱动的利润机器</h3><div class="card-body">
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">$476.5M</div>
+                    <div class="metric-label">FY2024总收入</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">+17%</div>
+                    <div class="metric-label">YoY增长</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">$409.5M</div>
+                    <div class="metric-label">订阅收入</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">+19%</div>
+                    <div class="metric-label">订阅增速</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">~70%</div>
+                    <div class="metric-label">毛利率</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">$23.8M</div>
+                    <div class="metric-label">Q4非GAAP净利</div>
+                </div>
+            </div>
+            <p>订阅收入的19%增速超过总收入17%增速，展现核心SaaS业务的强劲势头。毛利率70%+彰显云平台的盈利能力。IPO后nCino正在加速国际扩张和AI能力整合。</p>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar">
+        <button class="dot active" onclick="scrollToSlide(2, 0)"></button>
+        <button class="dot" onclick="scrollToSlide(2, 1)"></button>
+    </div>
+</section>
+
+<!-- ====== CHAPTER 3: 产品功能 ====== -->
+<section class="chapter" id="ch-3">
+    <div class="chapter-header">
+        <h2>一体化平台架构：消除系统孤岛</h2>
+        <span class="ch-sub">🛠️ 产品功能</span>
+        <span class="ch-counter" id="counter-3">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="3">
+
+        <!-- 1/2 核心模块 -->
+        <div class="slide"><div class="card"><h3>六大核心产品模块</h3><div class="card-body">
+            <div class="mode-boxes">
+                <div class="mode-box">
+                    <div class="mode-title">贷款发放系统（LOS）</div>
+                    <div class="mode-desc">端到端工作流自动化。申请、审批、文件生成、合规检查、资金结算全流程数字化。支持商业、小企业、消费、抵押贷。</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">存款账户开立</div>
+                    <div class="mode-desc">数字化KYC、身份验证、AML检查、反欺诈。多渠道无缝开户，简化合规流程。</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">Banking Advisor AI</div>
+                    <div class="mode-desc">2024推出的生成式AI助手。贷款报价、投资组合管理、文档处理、入职智能化、抵押贷款顾问。</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">商业银行解决方案</div>
+                    <div class="mode-desc">完整数字金融服务。贷款、账户管理、CRM、投资组合分析、实时商业智能报表。</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">消费银行解决方案</div>
+                    <div class="mode-desc">消费贷申请、账户开立、支付集成、反欺诈、消费者风险评估、移动优先体验。</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">抵押贷款解决方案</div>
+                    <div class="mode-desc">Mortgage Advisor AI助手。借款人与贷款官个性化洞察、自动化建议、多语言支持、24/7指导。</div>
+                </div>
+            </div>
+        </div></div></div>
+
+        <!-- 2/2 竞争优势 -->
+        <div class="slide"><div class="card"><h3>护城河：云原生 + 开放生态 + AI优先</h3><div class="card-body">
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:8px;">架构优势</h4>
+                    <ul style="font-size:13px;color:var(--text-2);line-height:2;">
+                        <li><strong>云原生</strong> — 从设计初期就基于云，无传统包袱</li>
+                        <li><strong>一体化</strong> — 贷款、账户、合规、CRM集成</li>
+                        <li><strong>灵活API</strong> — 与CBS、CICS等预建连接</li>
+                    </ul>
+                </div>
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:8px;">市场聚焦</h4>
+                    <ul style="font-size:13px;color:var(--text-2);line-height:2;">
+                        <li><strong>社区银行</strong> — $1B-$10B资产规模</li>
+                        <li><strong>信用社</strong> — 深度定制与合规优化</li>
+                        <li><strong>2700+客户</strong> — 全球覆盖</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="callout">
+                <strong>AI战略：</strong> Banking Advisor、嵌入式AI、agentic workflows是核心差异化因素。DocFox和FullCircl收购补齐AI与客户生命周期智能能力。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar">
+        <button class="dot active" onclick="scrollToSlide(3, 0)"></button>
+        <button class="dot" onclick="scrollToSlide(3, 1)"></button>
+    </div>
+</section>
+
+<!-- ====== CHAPTER 4: AI战略 ====== -->
+<section class="chapter" id="ch-4">
+    <div class="chapter-header">
+        <h2>从自动化到AI决策：三代产品进化</h2>
+        <span class="ch-sub">🤖 AI战略</span>
+        <span class="ch-counter" id="counter-4">1 / 1</span>
+    </div>
+    <div class="card-track" data-ch="4">
+
+        <!-- 1/1 AI三部曲 -->
+        <div class="slide"><div class="card"><h3>nCino的AI进化之路</h3><div class="card-body">
+            <p><strong>第一代（2011-2018）：工作流自动化</strong> — 贷款发放的手工流程数字化。规则引擎与检查清单是核心。减少人工干预，提升流程效率。</p>
+            <p><strong>第二代（2019-2023）：一体化云平台 + 生态</strong> — 从单点自动化扩展到端到端平台。API优先战略降低集成成本。金融数据的集中化为AI奠定基础。</p>
+            <p><strong>第三代（2024+）：AI优先 & 生成式AI</strong> — Banking Advisor推出标志着从工作流自动化向AI数据智能的转变。18大AI能力涵盖贷款报价、投资组合管理、文档处理、入职智能化、合规追踪和100+个AI驱动场景。80+客户已采用，一笔商业贷款的审批周期从12-16周压缩至2-4周，节约$100-500成本/笔。</p>
+            <div class="callout">
+                <strong>市场现状：</strong> AI不再是"未来趋势"，而是"现在进行式"。美国社区银行面临30年来最严重的人手短缺（贷款官流失率15%+/年），这个痛点不是营销概念，而是实实在在的运营危机。nCino的自动化与AI正好戳中这个痛点。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar">
+        <button class="dot active" onclick="scrollToSlide(4, 0)"></button>
+    </div>
+</section>
+
+<!-- ====== CHAPTER 5: 竞争格局 ====== -->
+<section class="chapter" id="ch-5">
+    <div class="chapter-header">
+        <h2>与全球金融软件巨头的竞争</h2>
+        <span class="ch-sub">🌍 竞争格局</span>
+        <span class="ch-counter" id="counter-5">1 / 1</span>
+    </div>
+    <div class="card-track" data-ch="5">
+
+        <!-- 1/1 竞争对手 -->
+        <div class="slide"><div class="card"><h3>主要对手与nCino的差异化</h3><div class="card-body">
+            <p><strong>Finastra</strong> — 全球金融软件巨头，贷款、支付、风险管理全栈覆盖。企业级复杂度高，实施周期长，云迁移滞后于nCino。</p>
+            <p><strong>Fiserv</strong> — 全球金融服务平台与支付处理商。规模庞大但产品线分散，云原生程度不如nCino。</p>
+            <p><strong>FIS</strong> — 传统金融软件巨头。云与AI战略不如新兴竞争者，市场覆盖面广但转型缓慢。</p>
+            <p><strong>Q2 Software</strong> — 数字银行与移动应用平台。消费端优势强，但商业银行与贷款发放深度不足。</p>
+            <p><strong>Blend</strong> — 数字贷款与按揭平台。抵押贷款细分强势，缺乏全栈银行操作系统。</p>
+            <p><strong>Mambu</strong> — 云原生贷款引擎，API优先。客户多为小型金融科技，企业金融机构覆盖不足。</p>
+            <div class="callout">
+                <strong>nCino的差异化组合：</strong> 云原生架构 + 一体化平台 + AI优先战略 + 社区银行深度聚焦 + 2700+全球客户 + 生态整合（DocFox、FullCircl）。这个组合拳形成了强劲的竞争护城河。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar">
+        <button class="dot active" onclick="scrollToSlide(5, 0)"></button>
+    </div>
+</section>
+
+<!-- ====== CHAPTER 6: 核心启示 ====== -->
+<section class="chapter" id="ch-6">
+    <div class="chapter-header">
+        <h2>五大核心洞察</h2>
+        <span class="ch-sub">💡 核心启示</span>
+        <span class="ch-counter" id="counter-6">1 / 1</span>
+    </div>
+    <div class="card-track" data-ch="6">
+
+        <!-- 1/1 核心洞察 -->
+        <div class="slide"><div class="card"><h3>nCino案例的五个启示</h3><div class="card-body">
+            <p><strong>1. 垂直化聚焦的力量</strong> — nCino深度聚焦社区银行与信用社这个"被忽视"的细分市场。传统巨头的通用解决方案反而成了包袱，nCino的深度定制能力成了护城河。</p>
+            <p><strong>2. 云原生的代际优势</strong> — 从设计初期就基于云而非"把传统系统搬上云"，这个根本差异在产品灵活性、成本结构、扩展性上产生了长期优势。Finastra等传统巨头难以追赶。</p>
+            <p><strong>3. 人手短缺驱动的市场需求</strong> — 美国社区银行面临30年来最严重的人才短缺。这个痛点不是营销概念，而是实实在在的运营危机。nCino的自动化与AI正好戳中痛点。</p>
+            <p><strong>4. AI的现实阶段</strong> — Banking Advisor的80+采用与100+AI场景展示了AI不再是"未来趋势"。未来的赛道竞争是"谁能用AI最有效地增强决策"而非"谁的系统最自动化"。</p>
+            <p><strong>5. 开放生态的价值</strong> — API优先与预建集成相比传统的"一体机"，大幅降低了采购与实施成本。这种生态化战略正在成为云银行赛道的新标准。</p>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar">
+        <button class="dot active" onclick="scrollToSlide(6, 0)"></button>
+    </div>
+</section>
+
+<!-- ====== CHAPTER 7: 近期要闻 ====== -->
+<section class="chapter" id="ch-7">
+    <div class="chapter-header">
+        <h2>2024-2025：加速转向</h2>
+        <span class="ch-sub">📰 近期要闻</span>
+        <span class="ch-counter" id="counter-7">1 / 1</span>
+    </div>
+    <div class="card-track" data-ch="7">
+
+        <!-- 1/1 最近新闻 -->
+        <div class="slide"><div class="card"><h3>关键事件与发展方向</h3><div class="card-body">
+            <div class="news-item">
+                <div class="news-date">2025-05</div>
+                <div class="news-title">nSight 2025：新AI产品路线图</div>
+                <div class="news-desc">发布Operations Analytics、嵌入式AI、agentic workflows等新能力。标志AI战略全面升级。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2025-02</div>
+                <div class="news-title">领导层变更</div>
+                <div class="news-desc">Pierre Naudé升任Executive Chairman，Sean Desmond任新CEO。为IPO后的全球扩张做准备。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2024-11</div>
+                <div class="news-title">Q4 FY2024财务成绩</div>
+                <div class="news-desc">收入$476.5M（+17%），订阅收入+19%，全年利润强劲。展现IPO后的业务稳健性。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2024-10</div>
+                <div class="news-title">NASDAQ上市（NCNO）</div>
+                <div class="news-desc">融资$100M+，估值$1B+。美国金融科技IPO市场复苏的重要信号。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2024-09</div>
+                <div class="news-title">战略性并购</div>
+                <div class="news-desc">收购DocFox和FullCircl。快速补齐文档自动化与客户生命周期智能能力。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2024-06</div>
+                <div class="news-title">Banking Advisor全球发布</div>
+                <div class="news-desc">推出18大AI能力的生成式AI助手。80+客户采用，从自动化向AI决策转变。</div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar">
+        <button class="dot active" onclick="scrollToSlide(7, 0)"></button>
+    </div>
+</section>
+
+</main>
+
+<script>
+    const main = document.getElementById('main');
+    const chapters = document.querySelectorAll('.chapter');
+    const navBtns = document.querySelectorAll('.nav-btn');
+
+    function go(chIdx) {
+        const section = document.getElementById(`ch-${chIdx}`);
+        section.scrollIntoView({ behavior: 'smooth' });
+        updateNav();
+    }
+
+    function scrollToSlide(chIdx, slideIdx) {
+        const track = document.querySelector(`[data-ch="${chIdx}"]`);
+        if (track) {
+            const slide = track.children[slideIdx];
+            if (slide) {
+                track.scrollLeft = slide.offsetLeft;
+                updateDots(chIdx);
+            }
+        }
+    }
+
+    function updateNav() {
+        navBtns.forEach(btn => btn.classList.remove('active'));
+        const rect = main.getBoundingClientRect();
+        for (let i = 0; i < chapters.length; i++) {
+            const chRect = chapters[i].getBoundingClientRect();
+            if (chRect.top >= 0 && chRect.top < rect.height) {
+                if (i < navBtns.length) navBtns[i].classList.add('active');
+                break;
+            }
+        }
+    }
+
+    function updateDots(chIdx) {
+        const track = document.querySelector(`[data-ch="${chIdx}"]`);
+        const parentSection = document.getElementById(`ch-${chIdx}`);
+        const dotsBar = parentSection.querySelector('.dots-bar');
+        const counter = document.getElementById(`counter-${chIdx}`);
+
+        if (track && dotsBar) {
+            const scrollLeft = track.scrollLeft;
+            const slideWidth = track.children[0].offsetWidth;
+            const activeIdx = Math.round(scrollLeft / slideWidth);
+            const dots = dotsBar.querySelectorAll('.dot');
+
+            dots.forEach((d, i) => d.classList.toggle('active', i === activeIdx));
+            if (counter) counter.textContent = `${activeIdx + 1} / ${track.children.length}`;
+        }
+    }
+
+    main.addEventListener('scroll', updateNav);
+    document.querySelectorAll('.card-track').forEach(track => {
+        track.addEventListener('scroll', () => {
+            const chIdx = track.getAttribute('data-ch');
+            updateDots(chIdx);
+        });
+    });
+
+    updateNav();
+</script>
+
+</body>
+</html>

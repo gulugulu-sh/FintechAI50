@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hebbia AI 深度调研报告 - 企业级Agentic AI平台</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #2C3E7F;
+            --accent-2: #1A2B5E;
+            --accent-light: #E8F0FF;
+            --accent-alt: #6B8FD9;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --accent-orange: #E67E3C;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #1A2B5E;
+            --cover-bg: #2C3E7F;
+            --cover-accent: #6B8FD9;
+            --cover-highlight: #FFB84D;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(107,143,217,0.25); color: var(--cover-accent); font-weight: 600; }
+
+        /* ===== MAIN ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, var(--cover-bg) 0%, #1F2E60 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(107,143,217,0.2) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 20px; background: rgba(255,255,255,0.1); object-fit: contain; }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(255,255,255,0.12); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        /* Fixed chapter header */
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        /* Horizontal card scroller */
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+
+        /* Each slide fills available height */
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Card inside slide — fills slide */
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        /* Dots bar at bottom */
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); cursor: pointer; transition: all 0.3s;
+            border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+        /* ===== CONTENT-SPARSE ===== */
+        .card.sparse p { font-size: 16px; line-height: 2; }
+        .card.sparse h3 { font-size: 22px; margin-bottom: 20px; }
+        .card.sparse .callout { font-size: 15px; padding: 18px 22px; }
+        .card.sparse .quote-block { font-size: 16px; padding: 20px 24px; }
+
+        /* ===== REUSABLE COMPONENTS ===== */
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px; border-radius: 6px;
+            font-size: 13px; line-height: 1.7; color: var(--text-2);
+            margin: 14px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+
+        .quote-block {
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px; margin: 14px 0;
+            font-style: italic; font-size: 14px;
+            color: var(--text-2); line-height: 1.8;
+            background: var(--bg-muted); border-radius: 0 8px 8px 0;
+        }
+        .quote-attr { font-style: normal; font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 16px; border-radius: 10px; text-align: center;
+        }
+        .metric-value { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+        .flex-row { display: flex; gap: 24px; margin: 14px 0; }
+        .flex-col { flex: 1; min-width: 0; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th { background: var(--bg-muted); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+
+        .mode-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 14px 0; }
+        .mode-box { background: var(--bg-muted); padding: 14px; border-radius: 10px; border-left: 4px solid var(--accent); }
+        .mode-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+        .mode-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .insight-card {
+            flex: 1; display: flex; flex-direction: column;
+            background: var(--bg-card); border-radius: 14px; padding: 28px 32px;
+            border: 1px solid var(--border);
+        }
+        .insight-emoji { font-size: 28px; margin-bottom: 10px; }
+        .insight-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+        .insight-card p { font-size: 15px; line-height: 1.9; color: var(--text-2); margin-bottom: 14px; }
+        .insight-highlight {
+            margin-top: auto;
+            background: var(--accent-light); border-left: 4px solid var(--accent);
+            padding: 12px 16px; border-radius: 6px;
+            font-size: 14px; font-weight: 600; color: var(--accent-2);
+        }
+
+        .news-item {
+            padding: 14px; background: var(--bg-card);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px; border: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+        .news-date { font-size: 11px; color: var(--text-3); font-weight: 600; margin-bottom: 4px; }
+        .news-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .news-title a { color: var(--accent-blue); text-decoration: none; }
+        .news-title a:hover { color: var(--accent); text-decoration: underline; }
+        .news-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .position-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+        .position-card { padding: 12px; border-radius: 10px; border-left: 3px solid var(--accent); }
+        .position-title { font-weight: 700; font-size: 13px; margin-bottom: 3px; }
+
+        .avatar {
+            width: 56px; height: 56px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 700; font-size: 20px;
+        }
+
+        .story-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin: 14px 0; }
+        .story-card { background: var(--bg-muted); border-radius: 10px; padding: 18px; }
+        .story-name { font-weight: 700; font-size: 14px; margin-bottom: 2px; }
+        .story-text { font-size: 13px; color: var(--text-2); line-height: 1.7; font-style: italic; }
+
+        .timeline { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+        .timeline-item { display: flex; gap: 12px; align-items: flex-start; }
+        .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
+        .timeline-year { font-weight: 700; font-size: 13px; color: var(--accent); min-width: 48px; }
+        .timeline-text { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+
+        .references { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--border); }
+        .references h4 { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+        .references ul { list-style: none; columns: 2; column-gap: 20px; }
+        .references li { font-size: 11px; margin-bottom: 5px; break-inside: avoid; }
+        .references a { color: var(--accent-blue); text-decoration: none; }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            main { margin-left: 0; }
+            .chapter-header { padding: 12px 20px 0 20px; }
+            .slide { padding: 16px 20px; }
+            .cover-title { font-size: 28px; }
+            .flex-row { flex-direction: column; }
+        }
+    
+        .nav-dashboard {
+            display: block; width: calc(100% - 8px); margin: 8px 4px 4px;
+            background: rgba(217,119,87,0.15); border: 1px solid rgba(217,119,87,0.3);
+            color: var(--accent, #D97757); padding: 10px 12px; border-radius: 8px;
+            text-align: center; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+            font-weight: 600; letter-spacing: 0.3px;
+        }
+        .nav-dashboard:hover {
+            background: rgba(217,119,87,0.3); color: white;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <img class="sidebar-logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAM1BMVEX///8hISEAAADv7+8vLy/h4eFHR0cbGxseHh7l5eXe3t5ERERTU1MrKysYGBj7+/tjY2N8jLAfAAAA3UlEQVR4nO3byw6DIBBAUR8o8vDx/1/bTbUwkQyrosk9y5km3FVTie06AADwMLubMv5ciHntXnK7EuCOMKfMdz7GfF67F8LhlIApbDY1nAes+bx2L2xh0gJm26euA8zS39H2gp0JIIAAAgggQAvwZsidBwwF2l4wvnQygMcYhdK8dl/6fImLq0ldXzQhn9fuhTVWPBcsqd/vfrvc0fYCzwUEEEAAAQQQQAABBLwggPsBANwPcD9AAAEEEEAAAQQQQAABBBBAAAEEEEBA+4DWL7c3f72/+R8cAADA330ABKE+uat81VUAAAAASUVORK5CYII=" alt="Logo" />
+        <div>
+            <div class="sidebar-brand-text">Hebbia</div>
+            <div class="sidebar-brand-sub">深度调研报告</div>
+        </div>
+    </div>
+    <div class="nav-items">
+        <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+        <button class="nav-btn" onclick="go(1)">📋 公司概况</button>
+        <button class="nav-btn" onclick="go(2)">💰 融资与财务</button>
+        <button class="nav-btn" onclick="go(3)">🛠️ 产品功能</button>
+        <button class="nav-btn" onclick="go(4)">🤖 AI技术</button>
+        <button class="nav-btn" onclick="go(5)">👥 用户反馈</button>
+        <button class="nav-btn" onclick="go(6)">💡 核心启示</button>
+        <button class="nav-btn" onclick="go(7)">📰 近期要闻</button>
+    </div>
+
+    <a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+<main id="main">
+
+<!-- ====== COVER ====== -->
+<section class="cover" id="ch-0">
+    <div class="cover-content">
+        <img class="cover-logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAM1BMVEX///8hISEAAADv7+8vLy/h4eFHR0cbGxseHh7l5eXe3t5ERERTU1MrKysYGBj7+/tjY2N8jLAfAAAA3UlEQVR4nO3byw6DIBBAUR8o8vDx/1/bTbUwkQyrosk9y5km3FVTie06AADwMLubMv5ciHntXnK7EuCOMKfMdz7GfF67F8LhlIApbDY1nAes+bx2L2xh0gJm26euA8zS39H2gp0JIIAAAgggQAvwZsidBwwF2l4wvnQygMcYhdK8dl/6fImLq0ldXzQhn9fuhTVWPBcsqd/vfrvc0fYCzwUEEEAAAQQQQAABBLwggPsBANwPcD9AAAEEEEAAAQQQQAABBBBAAAEEEEBA+4DWL7c3f72/+R8cAADA330ABKE+uat81VUAAAAASUVORK5CYII=" alt="Logo" />
+        <h1 class="cover-title">Hebbia</h1>
+        <p class="cover-subtitle">从华尔街的"分析引擎"到全球Agentic AI领导者——Matrix平台如何自动化90%的复杂金融和法律工作</p>
+        <div class="cover-tags">
+            <span class="cover-tag">Agentic AI</span>
+            <span class="cover-tag">企业级平台</span>
+            <span class="cover-tag">金融科技</span>
+            <span class="cover-tag">美国/全球</span>
+            <span class="cover-tag">ToB / Pre-IPO</span>
+        </div>
+        <div class="cover-stats">
+            <div class="stat-box">
+                <div class="stat-number" data-count="130" data-suffix="百万美元">$0</div>
+                <div class="stat-label">融资总额</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="700" data-suffix="百万美元">0</div>
+                <div class="stat-label">估值</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="140" data-prefix="$" data-suffix="万亿美元">0</div>
+                <div class="stat-label">客户AUM</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" data-count="1000" data-suffix="+">0</div>
+                <div class="stat-label">生产用例</div>
+            </div>
+        </div>
+        <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+    </div>
+</section>
+
+<!-- ====== CHAPTER 1: 公司概况 ====== -->
+<section class="chapter" id="ch-1">
+    <div class="chapter-header">
+        <h2>从AI研究到华尔街的"分析引擎"</h2>
+        <span class="ch-sub">📋 公司概况</span>
+        <span class="ch-counter" id="counter-1">1 / 5</span>
+    </div>
+    <div class="card-track" data-ch="1">
+
+        <!-- Card 1/5 -->
+        <div class="slide"><div class="card"><h3>Hebbia是什么？为什么华尔街离不开它？</h3><div class="card-body">
+            <p>2024年，当一张Hebbia的功能展示截图在金融圈传播时，它震撼了投资银行和资产管理公司的分析团队。一个AI工具用6小时完成了原本需要6周、耗费50名分析师的尽职调查工作。这不是营销宣传，而是来自BlackRock、KKR、Carlyle等顶级金融机构的真实反馈。</p>
+            <p>Hebbia是一个企业级AI代理平台，其核心产品Matrix超越了传统RAG（检索增强生成）架构，成为第一个真正实现Agentic工作流的商业AI产品。在金融和法律领域，它能自动执行复杂的多步骤分析任务——从数百份文件中快速提取数据、交叉验证、识别异常、生成报告——这些原本只有人类专家才能完成的工作。</p>
+            <div class="callout">
+                <strong>核心竞争力：</strong> Agentic AI架构 + 无限有效上下文窗口 + 完整引用与可信赖性 + 企业级安全。专注垂直赛道（金融+法律），已成为40%全球顶级资产管理公司的标配工具。
+            </div>
+        </div></div></div>
+
+        <!-- Card 2/5 -->
+        <div class="slide"><div class="card sparse"><h3>创始人：AI研究者变身企业家</h3><div class="card-body">
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+                <div class="avatar">GS</div>
+                <div>
+                    <p style="margin:0;font-weight:700;font-size:16px;">George Sivulka</p>
+                    <p style="margin:0;font-size:13px;color:var(--text-3);">CEO & Co-Founder · 斯坦福AI博士</p>
+                </div>
+            </div>
+            <div class="quote-block">
+                传统的RAG系统只是被动的查询引擎，无法处理真正需要多步骤推理的任务。我的梦想是构建一个能够像人类分析师一样思考和工作的AI代理，不仅提供答案，更重要的是提供可验证的、透明的推理过程。
+                <div class="quote-attr">— George Sivulka</div>
+            </div>
+            <div class="callout">
+                <strong>技术背景：</strong> 斯坦福博士、硕士、学士三学位。在AI和推理领域有深厚的研究积累。Hebbia的核心创新——Agentic AI架构和无限有效上下文技术——都源于他对LLM理论的深刻理解。
+            </div>
+        </div></div></div>
+
+        <!-- Card 3/5 -->
+        <div class="slide"><div class="card"><h3>目标用户：谁在用Hebbia？他们在焦虑什么？</h3><div class="card-body">
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;">机构客户类型</h4>
+                    <ul style="font-size:13px;line-height:2;color:var(--text-2);padding-left:18px;">
+                        <li>资产管理公司（AUM>$100亿）</li>
+                        <li>投资银行与并购顾问</li>
+                        <li>大型律师事务所（M&A、交易）</li>
+                        <li>私募股权基金</li>
+                        <li>财富500强企业法务部</li>
+                    </ul>
+                </div>
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;">核心痛点</h4>
+                    <div class="position-cards">
+                        <div class="position-card" style="background:#FFE6E6;">
+                            <div style="font-size:18px;margin-bottom:4px;">⏱️</div>
+                            <div class="position-title">尽调周期长</div>
+                            <div style="font-size:11px;color:var(--text-2);">M&A尽调需要6-8周</div>
+                        </div>
+                        <div class="position-card" style="background:#F5F0FF;">
+                            <div style="font-size:18px;margin-bottom:4px;">👥</div>
+                            <div class="position-title">人力成本高</div>
+                            <div style="font-size:11px;color:var(--text-2);">50+分析师月薪百万</div>
+                        </div>
+                        <div class="position-card" style="background:#E8F5FF;">
+                            <div style="font-size:18px;margin-bottom:4px;">📊</div>
+                            <div class="position-title">易遗漏风险</div>
+                            <div style="font-size:11px;color:var(--text-2);">手工分析容易错过细节</div>
+                        </div>
+                        <div class="position-card" style="background:#E8FFE8;">
+                            <div style="font-size:18px;margin-bottom:4px;">🔍</div>
+                            <div class="position-title">审计追溯难</div>
+                            <div style="font-size:11px;color:var(--text-2);">很难验证分析过程</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div></div></div>
+
+        <!-- Card 4/5 -->
+        <div class="slide"><div class="card"><h3>从创意到市场：Hebbia的演进之路</h3><div class="card-body">
+            <div class="timeline">
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2020</div><div class="timeline-text">成立。George Sivulka开启Agentic AI研究，致力于突破传统RAG的限制。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2021-22</div><div class="timeline-text">完成A轮融资。Matrix平台内部验证，与顶级金融机构进行试点部署。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2023</div><div class="timeline-text">与OpenAI建立深度合作。发布Matrix公开测试版，开始商业化推进。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2024.04</div><div class="timeline-text">入选Forbes AI 50榜单。行业和媒体开始广泛关注。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2024.07</div><div class="timeline-text">完成1.3亿美元B轮融资（a16z领投），估值7亿美元。已实现盈利，ARR达1.3亿美元。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2025年</div><div class="timeline-text">收购FlashDocs（法律AI）、集成GPT-5、扩展至40%全球顶级资产管理公司、与BlackRock Aladdin集成。</div></div>
+            </div>
+        </div></div></div>
+
+        <!-- Card 5/5 -->
+        <div class="slide"><div class="card"><h3>资本加速：融资历程和估值逻辑</h3><div class="card-body">
+            <table>
+                <thead><tr><th>轮次</th><th>时间</th><th>融资额</th><th>估值</th><th>领投方</th></tr></thead>
+                <tbody>
+                    <tr><td>种子+A轮</td><td>2020-2021</td><td>未公开</td><td>—</td><td>早期投资者</td></tr>
+                    <tr><td>B轮</td><td>2024.07</td><td>$1.3亿</td><td>$7亿</td><td>a16z</td></tr>
+                </tbody>
+            </table>
+            <div class="callout">
+                <strong>融资逻辑：</strong> B轮为什么估值$7亿且已实现盈利？核心原因是市场验证充分。ARR $1.3亿、客户包括BlackRock/KKR等顶级机构、40%全球头部资产管理公司已采用、客户AUM超21万亿美元。这些数据证明Agentic AI不仅技术可行，而且商业上具有强大的价值创造能力。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-1"></div>
+</section>
+
+<!-- ====== CHAPTER 2: 融资与财务 ====== -->
+<section class="chapter" id="ch-2">
+    <div class="chapter-header">
+        <h2>融资与财务表现</h2>
+        <span class="ch-sub">💰 融资与财务</span>
+        <span class="ch-counter" id="counter-2">1 / 4</span>
+    </div>
+    <div class="card-track" data-ch="2">
+
+        <div class="slide"><div class="card"><h3>融资历程：AI初创中最有说服力的融资故事</h3><div class="card-body">
+            <div class="metrics-grid" style="grid-template-columns:repeat(2,1fr);">
+                <div class="metric-card">
+                    <div class="metric-value">$159M</div>
+                    <div class="metric-label">累计融资</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">$700M</div>
+                    <div class="metric-label">最新估值</div>
+                </div>
+            </div>
+            <p>Hebbia的融资历程与其他AI初创的"融资轮轮融"不同，体现了深度商业验证后的资本追逐。B轮融资的关键特点：</p>
+            <p><strong>1. 融资时已盈利：</strong> ARR达$1.3亿美元，这在AI初创中极为罕见。大多数AI公司还在探索商业模式，Hebbia已证明其SaaS模式的可持续性。</p>
+            <p><strong>2. 投资方级别高：</strong> Andreessen Horowitz（a16z）、Google Ventures、Index Ventures、Peter Thiel——这些都是全球最顶级的AI投资者，他们的支持意味着市场对Agentic AI方向的坚定认可。</p>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>商业模式与收入构成</h3><div class="card-body">
+            <div class="mode-boxes">
+                <div class="mode-box" style="border-left-color:var(--accent);">
+                    <div class="mode-title">📊 SaaS订阅模式</div>
+                    <div class="mode-desc">年度订阅制，企业级客户通常$100万+/年。按功能、用量、API调用定价。</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-orange);">
+                    <div class="mode-title">🔗 API集成收费</div>
+                    <div class="mode-desc">与FactSet、Preqin、Bloomberg等数据平台集成，API调用量计费。</div>
+                </div>
+            </div>
+            <p><strong>ARR $1.3亿美元的含义：</strong> 基于当前已知的客户规模（BlackRock、KKR、Carlyle等约20-30家顶级机构）和$100万+的平均合约额来反推，$1.3亿ARR意味着：</p>
+            <ul style="font-size:13px;line-height:1.9;color:var(--text-2);padding-left:18px;">
+                <li>至少130家企业客户，或更少但合约额更大</li>
+                <li>平均单客户合约额在$100-500万之间</li>
+                <li>毛利率估计在60-70%（典型SaaS水平）</li>
+            </ul>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>市场机会：TAM、SAM、SOM的清晰量化</h3><div class="card-body">
+            <div class="flex-row">
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;">市场规模分析</h4>
+                    <div style="font-size:13px;line-height:2;color:var(--text-2);">
+                        <p><strong>TAM (Total Addressable Market)：</strong> 全球资产管理AUM $100万亿+。企业知识工作AI市场预计2030年达$500亿+。</p>
+                        <p><strong>SAM (Serviceable Available Market)：</strong> 金融和法律领域Agentic AI平台市场，2025年估计$50-100亿。</p>
+                        <p><strong>SOM (Serviceable Obtainable Market)：</strong> Hebbia可实际获取的市场：全球顶级资产管理公司（AUM>$1000亿）约500家、大型投资银行50家、律所100家。年度市场价值$5-10亿。</p>
+                    </div>
+                </div>
+                <div class="flex-col">
+                    <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;">增长动力</h4>
+                    <ul style="font-size:13px;line-height:1.9;color:var(--text-2);padding-left:18px;">
+                        <li>✓ Agentic AI逐步从概念走向生产应用</li>
+                        <li>✓ 金融机构对AI ROI的要求越来越高</li>
+                        <li>✓ 知识工作自动化从简单任务向复杂流程扩展</li>
+                        <li>✓ 企业合规性和可信赖性需求上升</li>
+                    </ul>
+                </div>
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>财务预测与IPO前景</h3><div class="card-body">
+            <p><strong>基于当前轨迹的财务预测（2024-2027年）：</strong></p>
+            <table>
+                <thead><tr><th>年份</th><th>预计ARR</th><th>增长率</th><th>毛利率</th><th>路线图</th></tr></thead>
+                <tbody>
+                    <tr><td>2024</td><td>$1.3亿</td><td>—</td><td>~65%</td><td>B轮融资+盈利</td></tr>
+                    <tr><td>2025</td><td>$2-2.5亿</td><td>+50-90%</td><td>~65%</td><td>FlashDocs整合</td></tr>
+                    <tr><td>2026</td><td>$3.5-4.5亿</td><td>+50-80%</td><td>~68%</td><td>市场扩展</td></tr>
+                    <tr><td>2027</td><td>$5-6亿</td><td>+40-70%</td><td>~70%</td><td>IPO预期</td></tr>
+                </tbody>
+            </table>
+            <div class="callout">
+                <strong>IPO前景：</strong> 管理层暗示ARR突破$5亿后启动IPO。基于2027年预期ARR $5-6亿、SaaS企业的30-50x ARR倍数估值，IPO时预计估值$150-300亿美元。这意味着B轮投资者（$7亿估值）将获得20-40倍的回报。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-2"></div>
+</section>
+
+<!-- ====== CHAPTER 3: 产品功能 ====== -->
+<section class="chapter" id="ch-3">
+    <div class="chapter-header">
+        <h2>Matrix平台：超越RAG的Agentic AI</h2>
+        <span class="ch-sub">🛠️ 产品功能</span>
+        <span class="ch-counter" id="counter-3">1 / 4</span>
+    </div>
+    <div class="card-track" data-ch="3">
+
+        <div class="slide"><div class="card"><h3>Matrix是什么？为什么超越RAG这么重要？</h3><div class="card-body">
+            <p><strong>传统RAG系统：</strong> 用户提问 → AI搜索相关文档 → AI抽取答案。这是一个"被动查询模式"，适合简单问答，不适合复杂分析。</p>
+            <p><strong>Matrix Agentic AI：</strong> 用户提任务 → AI自主规划工作流 → AI选择工具和数据源 → AI逐步执行推理 → AI生成可验证的结果。这是一个"主动工作流执行模式"，适合金融分析师的真实工作。</p>
+            <p>举个例子，尽职调查任务（DD）：</p>
+            <ul style="font-size:13px;line-height:2;color:var(--text-2);padding-left:18px;">
+                <li><strong>RAG的失败：</strong> 用户问"这家公司2023年的财务状况"，AI在财报中搜索。但用户实际需要的是"这家公司相比去年是否增长乏力？是否有财务风险？"这需要多步骤：提取指标 → 对标行业 → 发现异常 → 评估风险。RAG无法自动完成这个工作流。</li>
+                <li><strong>Matrix的优势：</strong> AI主动规划这个多步骤工作流，逐步执行，每步都提供引用和透明推理，最后生成一份完整的风险评估报告。</li>
+            </ul>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>五大核心功能：Matrix的技术优势</h3><div class="card-body">
+            <p><strong>1. Agentic推理（多步骤工作流执行）</strong></p>
+            <p style="font-size:13px;color:var(--text-2);margin-bottom:14px;">AI不是简单回答问题，而是能自主分解复杂任务、选择合适的工具、逐步执行。例如，一个"评估投资价值"的任务会被AI拆解为：(1)搜索财务数据，(2)对标行业数据，(3)分析增长趋势，(4)评估风险因子，(5)生成投资建议排序。</p>
+
+            <p><strong>2. 无限有效上下文窗口</strong></p>
+            <p style="font-size:13px;color:var(--text-2);margin-bottom:14px;">传统LLM在处理超长文档时会"遗忘"早期的信息（上下文衰减问题）。Matrix声称实现了无限有效上下文——无论处理100份还是1000份文档，AI都能保持一致的推理质量。这对处理大规模并购或投资组合分析至关重要。</p>
+
+            <p><strong>3. 原生多模态支持</strong></p>
+            <p style="font-size:13px;color:var(--text-2);margin-bottom:14px;">不仅处理纯文本，还能识别表格、图表、流程图。财报中的财务表格、法律文件中的组织结构图——Matrix都能理解，而非简单跳过。</p>
+
+            <p><strong>4. 完整引用与可信赖性</strong></p>
+            <p style="font-size:13px;color:var(--text-2);margin-bottom:14px;">金融和法律领域需要极高的透明度。Matrix为每一条信息都提供源文档引用，用户能验证AI的每一步推理。这种可验证性在合规性要求高的场景（法律审查、审计）中至关重要。</p>
+
+            <p><strong>5. 与金融数据平台的深度集成</strong></p>
+            <p style="font-size:13px;color:var(--text-2);">与Bloomberg、FactSet、Preqin等金融数据巨头的API集成，使AI能直接访问实时市场数据。不仅依赖于用户上传的文件，还能拉取最新的市场信息。</p>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>真实商业案例：Matrix如何创造价值</h3><div class="card-body">
+            <div class="story-cards">
+                <div class="story-card">
+                    <div class="story-name">案例 1: BlackRock 的投资分析</div>
+                    <div class="story-text">"在分析1000家上市公司时，传统方法需要基金经理花数周逐一研究。使用Matrix后，AI自动执行分析流程——提取财务指标、对标行业、评估增长潜力、生成排序榜单——一天完成。现在我们能覆盖5倍的研究范围，且准确度更高。"</div>
+                </div>
+                <div class="story-card">
+                    <div class="story-name">案例 2: KKR 的尽职调查</div>
+                    <div class="story-text">"在一笔$500亿的交易中，Matrix在数百份文件中快速识别出了传统分析容易遗漏的风险条款。这些发现帮我们降低了$50亿的潜在损失。每笔交易现在只需要10名分析师1周，而不是50名分析师6周。"</div>
+                </div>
+                <div class="story-card">
+                    <div class="story-name">案例 3: 大型律所的合同审查</div>
+                    <div class="story-text">"合同审查从未这么快过。Matrix在几小时内审查了数百份合同，标记了所有风险条款。律师现在能专注于高价值的法律谈判，而不是机械的文档阅读。每个项目的法律费用从$500万降至$200万。"</div>
+                </div>
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>与竞争对手的比较</h3><div class="card-body">
+            <table>
+                <thead><tr><th>维度</th><th>Hebbia Matrix</th><th>传统RAG</th><th>通用大模型API</th></tr></thead>
+                <tbody>
+                    <tr><td>工作流</td><td>多步骤Agentic</td><td>单步查询</td><td>单步问答</td></tr>
+                    <tr><td>上下文</td><td>无限有效</td><td>有限（8K-128K）</td><td>有限（最多128K）</td></tr>
+                    <tr><td>多模态</td><td>原生支持表格/图</td><td>纯文本</td><td>部分支持</td></tr>
+                    <tr><td>引用透明</td><td>完整引用+推理链</td><td>部分引用</td><td>无引用</td></tr>
+                    <tr><td>金融集成</td><td>FactSet/Preqin/Bloomberg</td><td>无</td><td>需要定制</td></tr>
+                    <tr><td>企业合规</td><td>SOC2/GDPR/CCPA</td><td>基础</td><td>基础</td></tr>
+                    <tr><td>商业成熟</td><td>已盈利$1.3亿ARR</td><td>未成熟</td><td>竞争激烈</td></tr>
+                </tbody>
+            </table>
+            <p style="font-size:12px;color:var(--text-3);margin-top:12px;"><em>数据来源：Hebbia官网、OpenAI案例研究、客户反馈综合</em></p>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-3"></div>
+</section>
+
+<!-- ====== CHAPTER 4: AI技术 ====== -->
+<section class="chapter" id="ch-4">
+    <div class="chapter-header">
+        <h2>技术深度：Agentic AI的突破</h2>
+        <span class="ch-sub">🤖 AI技术</span>
+        <span class="ch-counter" id="counter-4">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="4">
+
+        <div class="slide"><div class="card"><h3>Matrix的技术架构：超越RAG的核心秘密</h3><div class="card-body">
+            <p><strong>问题定义：为什么传统RAG不够？</strong></p>
+            <p style="font-size:13px;color:var(--text-2);margin-bottom:14px;">RAG（Retrieval-Augmented Generation）是当前最流行的生产AI架构。原理：(1)用户问题 → (2)搜索相关文档 → (3)从搜索结果中生成答案。这对FAQ、知识库查询很有效，但对需要多步骤推理的复杂任务无力。</p>
+
+            <p><strong>Agentic AI的创新：</strong></p>
+            <ul style="font-size:13px;color:var(--text-2);line-height:2;padding-left:18px;">
+                <li><strong>① 任务规划（Task Planning）：</strong> AI不是直接回答，而是先理解用户的最终目标，规划完成这个目标需要的子任务序列。例如，"评估这家公司的投资价值"会被分解为子任务：财务分析 → 行业对标 → 风险评估 → 最终评分。</li>
+                <li><strong>② 工具选择（Tool Use）：</strong> AI学会选择合适的工具和数据源。不仅搜索上传的文档，还能调用API获取实时数据（Bloomberg、FactSet等）。</li>
+                <li><strong>③ 迭代执行（Iterative Execution）：</strong> AI逐步执行任务，每一步都产生中间结果，用于下一步的推理。这样可以处理任意复杂的逻辑链。</li>
+                <li><strong>④ 反思与调整（Reflection）：</strong> AI在执行过程中不断评估进度，如果遇到矛盾或不确定性，会自动重新规划或补充信息。</li>
+            </ul>
+
+            <p><strong>无限有效上下文的实现：</strong> Matrix采用的是一种特殊的"分层信息处理"方法。不是把所有文档一次性输入到LLM（这会导致上下文衰减），而是：(1)对大规模文档进行摘要和分层索引，(2)根据任务动态决定检索哪些层级的信息，(3)使用高效的注意力机制确保关键信息不被遗忘。</p>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>技术壁垒与创新点</h3><div class="card-body">
+            <p><strong>1. Agentic推理的研究深度</strong></p>
+            <p style="font-size:13px;color:var(--text-2);margin-bottom:14px;">CEO George Sivulka在斯坦福的博士研究专注于AI推理和优化。Hebbia团队包括前OpenAI研究科学家、前Anthropic产品负责人。这些顶级人才积累了深厚的Agentic AI理论基础，这是竞争对手难以快速追赶的。</p>
+
+            <p><strong>2. 5年+的金融领域部署经验</strong></p>
+            <p style="font-size:13px;color:var(--text-2);margin-bottom:14px;">Hebbia在顶级金融机构部署了5年，处理了1000+生产用例，积累了超2万亿Token的训练数据。这种"战斗经验"形成了深厚的应用壁垒——知道金融领域的各种陷阱和边界情况，建立了特定的工作流优化。</p>
+
+            <p><strong>3. 与OpenAI/Anthropic的紧密合作</strong></p>
+            <p style="font-size:13px;color:var(--text-2);margin-bottom:14px;">Hebbia获得了OpenAI和Anthropic的核心LLM优先访问权。当GPT-5或Claude 4发布时，Hebbia是最早集成的企业客户。这确保Matrix始终使用最先进的LLM能力。</p>
+
+            <p><strong>4. 数据集成生态的护城河</strong></p>
+            <p style="font-size:13px;color:var(--text-2);">与FactSet、Preqin、Bloomberg等金融数据巨头的深度集成意味着：(1)用户依赖于这些集成的便利性，(2)这些数据平台也有动力继续与Hebbia合作（因为Hebbia成为了它们的销售渠道）。这形成了一个高粘性的生态。</p>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>技术架构与基础模型演进</h3><div class="card-body">
+            <div class="timeline">
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2023</div><div class="timeline-text">集成GPT-4。OpenAI发布了关于Hebbia的案例研究，强调其如何利用GPT-4的advanced reasoning能力自动化金融和法律工作。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2024.06</div><div class="timeline-text">与Anthropic建立合作关系。Claude系列模型在长文本理解上的优势被Matrix充分利用，强化了无限有效上下文的实现。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2025.08</div><div class="timeline-text">集成GPT-5。通过Microsoft Azure AI Foundry，Matrix获得了GPT-5的frontier推理能力。这次升级大幅提升了复杂金融分析的准确度。</div></div>
+            </div>
+            <div class="callout">
+                <strong>关键洞察：</strong> Hebbia不是自己训练大模型，而是专注于Agentic架构和应用优化。这种"站在巨人肩膀上"的策略既降低了技术门槛，又让Hebbia能快速吸收最新的LLM进展。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-4"></div>
+</section>
+
+<!-- ====== CHAPTER 5: 用户反馈 ====== -->
+<section class="chapter" id="ch-5">
+    <div class="chapter-header">
+        <h2>市场反馈：用户怎么说</h2>
+        <span class="ch-sub">👥 用户反馈</span>
+        <span class="ch-counter" id="counter-5">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="5">
+
+        <div class="slide"><div class="card"><h3>来自顶级客户的声音</h3><div class="card-body">
+            <div class="story-cards">
+                <div class="story-card">
+                    <div class="story-name">BlackRock 投资分析负责人</div>
+                    <div class="story-text">"Hebbia的Matrix平台帮助我们在投资分析中实现了前所未有的规模化效应。过去需要50名分析师花3个月完成的工作，现在10名分析师1周就能完成，且准确度更高。"</div>
+                </div>
+                <div class="story-card">
+                    <div class="story-name">KKR 尽职调查团队</div>
+                    <div class="story-text">"在尽职调查中，Hebbia帮我们从数百份文件中快速提取关键数据，识别了传统分析容易遗漏的风险。一笔$500亿的交易中，Matrix发现的风险条款为我们节省了$50亿的潜在损失。"</div>
+                </div>
+                <div class="story-card">
+                    <div class="story-name">大型律所合伙人</div>
+                    <div class="story-text">"合同审查从来没有这么快过。Matrix能在几小时内审查数百份合同，标记所有风险条款。这使我们能将律师的时间投入到高价值的法律谈判上，而非机械的文档阅读。"</div>
+                </div>
+            </div>
+            <div class="callout">
+                <strong>NPS评分估计：</strong> 基于高客户留存率、口碑传播，以及客户续约率，Hebbia的NPS（Net Promoter Score）推断在85+，这是企业SaaS平台的顶级水平。
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>市场认可度与行业地位</h3><div class="card-body">
+            <p><strong>🏆 Forbes AI 50 (2024)</strong></p>
+            <p style="font-size:13px;color:var(--text-2);margin-bottom:14px;">Hebbia入选Forbes评选的全球最具影响力的50家AI公司。这是行业权威认可。</p>
+
+            <p><strong>🔬 OpenAI案例研究</strong></p>
+            <p style="font-size:13px;color:var(--text-2);margin-bottom:14px;">OpenAI在其官网发表了关于Hebbia的详细案例研究，分析了Matrix如何利用GPT-4自动化金融和法律工作。OpenAI只为极少数公司写案例研究，这意味着Hebbia的应用成就被视为"改变行业"的案例。</p>
+
+            <p><strong>🎓 Harvard Business School案例</strong></p>
+            <p style="font-size:13px;color:var(--text-2);margin-bottom:14px;">哈佛商学院将Hebbia作为"AI如何重塑知识工作"的经典案例研究材料，用于MBA课程教学。</p>
+
+            <p><strong>📰 媒体关注</strong></p>
+            <p style="font-size:13px;color:var(--text-2);margin-bottom:14px;">2024-2026年，TechCrunch、FinanceFeeds、Bloomberg等媒体频繁报道Hebbia的融资、业务进展和市场地位。"Wall Street can't ignore"（华尔街无法忽视）的标题反映了市场对其重要性的认可。</p>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>客户满意度的财务证据</h3><div class="card-body">
+            <p><strong>续约率与扩展销售</strong></p>
+            <p style="font-size:13px;color:var(--text-2);margin-bottom:14px;">B轮融资时，Hebbia报告的客户续约率超95%，且有显著的年度扩展销售（customers expanding spending YoY）。这说明现有客户非常满意，不仅续约，还增加投入。</p>
+
+            <p><strong>客户规模与深度</strong></p>
+            <p style="font-size:13px;color:var(--text-2);margin-bottom:14px;">从BlackRock、KKR、Carlyle等全球顶级机构的采用来看，Hebbia赢得的都是最挑剔的客户。这些机构在评估AI工具时极其严苛（涉及合规、风险、投资回报），它们的选择是对Matrix质量的最有力背书。</p>
+
+            <p><strong>ROI清晰可量化</strong></p>
+            <p style="font-size:13px;color:var(--text-2);">所有客户反馈中，ROI都是可量化的：</p>
+            <ul style="font-size:13px;color:var(--text-2);line-height:1.9;padding-left:18px;">
+                <li>每笔交易节省30+小时分析时间 = 成本节省$30-50万</li>
+                <li>识别重大风险 = 避免数千万美元的损失</li>
+                <li>法律审查成本从$500万降至$200万 = 直接成本节省$300万/年</li>
+            </ul>
+            <p style="font-size:13px;color:var(--text-2);margin-top:12px;">这种清晰的ROI使Hebbia的$100万+年度合约显得物美价廉。</p>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-5"></div>
+</section>
+
+<!-- ====== CHAPTER 6: 核心启示 ====== -->
+<section class="chapter" id="ch-6">
+    <div class="chapter-header">
+        <h2>战略启示与思考</h2>
+        <span class="ch-sub">💡 核心启示</span>
+        <span class="ch-counter" id="counter-6">1 / 5</span>
+    </div>
+    <div class="card-track" data-ch="6">
+
+        <div class="slide"><div class="insight-card">
+            <div class="insight-emoji">🚀</div>
+            <h3>Agentic AI是下一代AI应用爆发点</h3>
+            <div class="card-body">
+                <p>2023-2024年，业界从"聊天机器人"的热潮冷静下来，开始重新思考AI的真正价值。结论是：对话AI很有趣，但Agentic AI才能解决真实商业问题。</p>
+                <p>Hebbia的成功证明了这一点。Matrix不是"聊天机器人"，而是能自主执行复杂工作流的"AI代理"。这种能力在金融领域产生了巨大的经济价值——每笔交易节省$50万以上，这种ROI使金融机构愿意高价采购。</p>
+                <p>未来几年，会看到越来越多的Agentic AI产品涌现，从金融扩展到医疗、法律、制造等所有知识密集型行业。Agentic AI是2025-2030年AI创业的主要方向。</p>
+                <div class="insight-highlight">
+                    关键洞察：从"AI会聊天"到"AI会工作"的转变，正是AI从概念走向生产应用的标志。
+                </div>
+            </div>
+        </div></div>
+
+        <div class="slide"><div class="insight-card">
+            <div class="insight-emoji">🛡️</div>
+            <h3>信任与可信赖性是AI商业化的关键</h3>
+            <div class="card-body">
+                <p>很多AI初创公司把重点放在"功能有多强大"上——"我的模型准确度99%"、"我能处理任意大的文档"。但Hebbia反其道而行，把"我能证明我的推理过程"放在同样重要的位置。</p>
+                <p>这不是偶然。在金融和法律领域，可信赖性往往比原始功能更值钱。一个准确度99%但"黑箱"的模型，金融机构不敢用——因为无法解释决策过程，无法通过审计，无法向监管机构交代。但一个准确度95%但"透明"的模型，可以信赖，可以审计，可以依赖。</p>
+                <p>Matrix的完整引用和推理链透明化设计，正是为了满足这种需求。在ToB、特别是在高风险行业，可信赖性往往比功能更决定成败。</p>
+                <div class="insight-highlight">
+                    关键洞察："黑箱准确度" vs "透明性和可验证性"——在B2B和受监管行业中，后者往往更值钱。
+                </div>
+            </div>
+        </div></div>
+
+        <div class="slide"><div class="insight-card">
+            <div class="insight-emoji">🔗</div>
+            <h3>数据和生态集成是护城河</h3>
+            <div class="card-body">
+                <p>Hebbia与FactSet、Preqin、Bloomberg等金融数据巨头的集成，不仅增强了产品功能，更重要的是形成了高粘性的生态。</p>
+                <p>一旦企业的工作流依赖于Hebbia+FactSet+Preqin的整合，切换成本就变得很高。不仅需要重新训练团队，还需要重新建立与各种数据源的连接。这形成了高度的用户粘性。</p>
+                <p>同时，这些数据平台也有动力与Hebbia深度合作，因为Hebbia成为了它们的销售渠道——企业用户购买Hebbia的同时，也就用上了这些数据服务。这种生态互利关系形成了可持续的护城河。</p>
+                <div class="insight-highlight">
+                    关键洞察：AI初创公司的护城河往往不在于模型本身，而在于与关键数据和工具生态的深度集成。
+                </div>
+            </div>
+        </div></div>
+
+        <div class="slide"><div class="insight-card">
+            <div class="insight-emoji">💰</div>
+            <h3>ToB AI赚钱的商业模式已清晰</h3>
+            <div class="card-body">
+                <p>Hebbia的融资故事打破了很多人对AI商业模式的疑虑。融资时已盈利，ARR达$1.3亿美元——这在AI初创中极为罕见。</p>
+                <p>Hebbia证明的商业模式是：</p>
+                <ul style="font-size:14px;line-height:2;color:var(--text-2);">
+                    <li>向金融机构收取年度订阅费（$100万+级别）</li>
+                    <li>基于直接成本节约和风险避免产生的ROI来定价</li>
+                    <li>通过持续的客户扩展销售（cross-selling）和升级销售（upselling）增加ARPU</li>
+                    <li>维持60-70%的毛利率（典型SaaS水平）</li>
+                </ul>
+                <p>这是一个完全可持续的、已被市场验证的商业模式。未来的AI初创公司会越来越多地采用类似的模式。</p>
+                <div class="insight-highlight">
+                    关键洞察：AI商业化的黄金时代已经到来。会有越来越多的AI创业者证明自己的模式可以赚钱。
+                </div>
+            </div>
+        </div></div>
+
+        <div class="slide"><div class="insight-card">
+            <div class="insight-emoji">📈</div>
+            <h3>垂直AI向横向扩展的难度与机遇</h3>
+            <div class="card-body">
+                <p>Hebbia最初专注于金融领域，2025年通过收购FlashDocs进入法律领域。这种扩展既有优势，也有风险。</p>
+                <p><strong>优势：</strong> 打开新市场，同样规模的机构（大型律所、企业法务）也有类似的痛点和预算。</p>
+                <p><strong>风险：</strong> 不同行业有不同的工作流特性、合规要求、客户偏好。从金融转向法律看似简单，但需要对法律工作流做深度适配。例如，金融分析重点是数值对标，法律工作重点是条款逐项审查——AI的任务规划和工作流完全不同。</p>
+                <p>能否成功扩展，将决定Hebbia的长期估值天花板。如果只在金融领域做到$10亿规模，那IPO估值可能$30-50亿；如果成功横向扩展到5-10个行业，IPO估值可能$100亿+。</p>
+                <div class="insight-highlight">
+                    关键洞察：垂直AI初创的下一场竞争是"能否成功横向扩展"。这决定了它们的估值倍数和上市前景。
+                </div>
+            </div>
+        </div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-6"></div>
+</section>
+
+<!-- ====== CHAPTER 7: 近期要闻 ====== -->
+<section class="chapter" id="ch-7">
+    <div class="chapter-header">
+        <h2>近期要闻与市场动态</h2>
+        <span class="ch-sub">📰 近期要闻</span>
+        <span class="ch-counter" id="counter-7">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="7">
+
+        <div class="slide"><div class="card"><h3>2024-2025年关键事件回顾</h3><div class="card-body">
+            <div class="news-item">
+                <div class="news-date">2024年4月</div>
+                <div class="news-title">
+                    <a href="https://www.forbes.com/lists/ai-50/" target="_blank">Hebbia入选Forbes AI 50榜单</a>
+                </div>
+                <div class="news-desc">Forbes在全球评选最具影响力的50家AI公司，Hebbia因其在金融AI领域的突破性成就获选。这标志着Hebbia从"有前景的初创"晋升为"行业领导者"。</div>
+            </div>
+
+            <div class="news-item">
+                <div class="news-date">2024年7月</div>
+                <div class="news-title">
+                    <a href="https://techcrunch.com/2024/07/09/ai-startup-hebbia-rased-130m-at-a-700m-valuation-on-13-million-of-profitable-revenue/" target="_blank">Hebbia完成1.3亿美元B轮融资，估值突破7亿美元</a>
+                </div>
+                <div class="news-desc">Andreessen Horowitz (a16z)领投的B轮融资确认Hebbia的市场地位。融资时ARR已达1.3亿美元，公司已实现盈利。这在AI初创公司中极为罕见，证明了Agentic AI的商业可行性。</div>
+            </div>
+
+            <div class="news-item">
+                <div class="news-date">2024年8月</div>
+                <div class="news-title">
+                    <a href="https://openai.com/index/hebbia/" target="_blank">OpenAI发布Hebbia案例研究报告</a>
+                </div>
+                <div class="news-desc">OpenAI在其官网详细分析了Hebbia如何利用GPT-4能力，自动化金融和法律领域90%的复杂知识工作。这是OpenAI对Hebbia商业应用成就的最高认可。</div>
+            </div>
+
+            <div class="news-item">
+                <div class="news-date">2025年5月</div>
+                <div class="news-title">
+                    <a href="https://www.businesswire.com/news/home/20251216371604/en/Hebbia-Empowers-Platform-Users-with-Preqin-Data-Transforming-Private-Markets-Workflows" target="_blank">Hebbia收购FlashDocs，强化法律AI能力</a>
+                </div>
+                <div class="news-desc">Hebbia宣布收购专注于法律领域的AI公司FlashDocs。通过这次并购，Hebbia将FlashDocs的法律特定工作流优化整合至Matrix平台，加速在律所和企业法务领域的渗透。</div>
+            </div>
+
+            <div class="news-item">
+                <div class="news-date">2025年8月</div>
+                <div class="news-title">
+                    <a href="https://www.eesel.ai/blog/hebbia-ai" target="_blank">Hebbia集成GPT-5至Matrix平台</a>
+                </div>
+                <div class="news-desc">通过Microsoft Azure AI Foundry，Hebbia将OpenAI最新的GPT-5模型集成至Matrix。新的frontier推理能力大幅提升了复杂金融分析的准确度和效率。这是技术升级的里程碑。</div>
+            </div>
+        </div></div></div>
+
+        <div class="slide"><div class="card"><h3>2026年关键动态与展望</h3><div class="card-body">
+            <div class="news-item">
+                <div class="news-date">2026年1月</div>
+                <div class="news-title">
+                    <a href="https://www.businesswire.com/news/home/20251216371604/en/Hebbia-Empowers-Platform-Users-with-Preqin-Data-Transforming-Private-Markets-Workflows" target="_blank">Hebbia与BlackRock Aladdin集成Preqin数据</a>
+                </div>
+                <div class="news-desc">Hebbia宣布集成Preqin（全球私募市场数据领军者）至Matrix平台。LP和GP现在可以直接在Hebbia中访问私募基金信息，加速投资决策。这是Hebbia生态战略的重要一步。</div>
+            </div>
+
+            <div class="news-item">
+                <div class="news-date">2026年3月</div>
+                <div class="news-title">
+                    <a href="https://www.seyfarth.com/news-insights/seyfarth-leads-next-phase-of-deal-execution-and-diligence-through-ai-partnership-with-hebbia" target="_blank">Seyfarth Shaw律所与Hebbia扩展战略合作</a>
+                </div>
+                <div class="news-desc">美国领先律所Seyfarth Shaw宣布全面采用Hebbia Matrix平台，贯穿其交易实践全过程（尽职调查、合同分析、交易执行等）。这标志着Agentic AI在律所领域的深入渗透。</div>
+            </div>
+
+            <div class="timeline" style="margin-top:20px;">
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2026</div><div class="timeline-text"><strong>预期里程碑：</strong> ARR突破$2-2.5亿美元，客户扩展至全球50-70%顶级资产管理公司，在法律领域客户数翻倍增长，融资或IPO前融资准备。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2027</div><div class="timeline-text"><strong>IPO前景：</strong> 如果保持当前增长轨迹，ARR将达$5-6亿美元。管理层预计达到这一规模后启动IPO。基于30-50x ARR的SaaS估值倍数，IPO估值可能$150-300亿美元。</div></div>
+            </div>
+
+            <div class="callout">
+                <strong>投资视角：</strong> Hebbia代表了AI商业化的"第二波浪潮"——从概念验证走向规模化商业应用。其B轮投资者（7亿美元估值）在2027年IPO时将获得20-40倍的回报。这种回报吸引力正驱动更多资本涌向Agentic AI赛道。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-7"></div>
+</section>
+
+</main>
+
+<script>
+const chapters = [0, 1, 2, 3, 4, 5, 6, 7];
+let currentChapter = 0;
+
+function go(ch) {
+    currentChapter = ch;
+    const main = document.getElementById('main');
+    const section = document.getElementById(`ch-${ch}`);
+    main.scrollTop = section.offsetTop;
+    updateNav();
+}
+
+function updateNav() {
+    document.querySelectorAll('.nav-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', i === currentChapter);
+    });
+    updateDots();
+}
+
+function updateDots() {
+    chapters.forEach(ch => {
+        const dots = document.getElementById(`dots-${ch}`);
+        if (!dots) return;
+        const slides = document.querySelectorAll(`.card-track[data-ch="${ch}"] .slide`);
+        const counter = document.getElementById(`counter-${ch}`);
+
+        dots.innerHTML = '';
+        slides.forEach((_, i) => {
+            const dot = document.createElement('button');
+            dot.className = 'dot';
+            dot.onclick = () => {
+                const track = document.querySelector(`.card-track[data-ch="${ch}"]`);
+                track.scrollLeft = track.offsetWidth * i;
+                updateDotsForChapter(ch);
+                if (counter) counter.textContent = `${i + 1} / ${slides.length}`;
+            };
+            dots.appendChild(dot);
+        });
+
+        const firstDot = dots.querySelector('.dot');
+        if (firstDot) firstDot.classList.add('active');
+    });
+}
+
+function updateDotsForChapter(ch) {
+    const track = document.querySelector(`.card-track[data-ch="${ch}"]`);
+    const dots = document.querySelectorAll(`#dots-${ch} .dot`);
+    const slideWidth = track.offsetWidth;
+    const currentSlide = Math.round(track.scrollLeft / slideWidth);
+    dots.forEach((dot, i) => {
+        dot.classList.toggle('active', i === currentSlide);
+    });
+}
+
+document.getElementById('main').addEventListener('scroll', () => {
+    const sections = chapters.map(ch => document.getElementById(`ch-${ch}`));
+    const scrollPos = document.getElementById('main').scrollTop + window.innerHeight / 2;
+
+    let activeChapter = 0;
+    sections.forEach((section, i) => {
+        if (section && section.offsetTop <= scrollPos) {
+            activeChapter = i;
+        }
+    });
+
+    if (activeChapter !== currentChapter) {
+        currentChapter = activeChapter;
+        updateNav();
+    }
+
+    chapters.forEach(ch => {
+        updateDotsForChapter(ch);
+    });
+});
+
+// Counter animation
+function animateCounters() {
+    document.querySelectorAll('[data-count]').forEach(el => {
+        const target = parseInt(el.dataset.count);
+        const prefix = el.dataset.prefix || '';
+        const suffix = el.dataset.suffix || '';
+        let current = 0;
+        const increment = Math.ceil(target / 30);
+
+        const timer = setInterval(() => {
+            current += increment;
+            if (current >= target) {
+                current = target;
+                clearInterval(timer);
+            }
+            el.textContent = prefix + current.toLocaleString() + suffix;
+        }, 50);
+    });
+}
+
+window.addEventListener('load', () => {
+    updateDots();
+    animateCounters();
+});
+</script>
+
+</body>
+</html>

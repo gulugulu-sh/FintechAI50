@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daloopa 深度调研报告 · 金融AI数据基础设施</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --accent-purple: #7B5EA7;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #1A1514;
+            --cover-bg: #0F4C75;
+            --cover-accent: #3DADFF;
+            --cover-highlight: #00D964;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(61,173,255,0.2); color: var(--cover-accent); font-weight: 600; }
+
+        /* ===== MAIN ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, var(--cover-bg) 0%, #1B3A52 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(61,173,255,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 20px; background: rgba(255,255,255,0.1); object-fit: contain; }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(255,255,255,0.12); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        /* Fixed chapter header */
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        /* Horizontal card scroller */
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+
+        /* Each slide fills available height */
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Card inside slide */
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        /* Dots bar at bottom */
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); cursor: pointer; transition: all 0.3s;
+            border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+        /* ===== REUSABLE COMPONENTS ===== */
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px; border-radius: 6px;
+            font-size: 13px; line-height: 1.7; color: var(--text-2);
+            margin: 14px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+
+        .quote-block {
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px; margin: 14px 0;
+            font-style: italic; font-size: 14px;
+            color: var(--text-2); line-height: 1.8;
+            background: var(--bg-muted); border-radius: 0 8px 8px 0;
+        }
+        .quote-attr { font-style: normal; font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 16px; border-radius: 10px; text-align: center;
+        }
+        .metric-value { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+        .flex-row { display: flex; gap: 24px; margin: 14px 0; }
+        .flex-col { flex: 1; min-width: 0; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th { background: var(--bg-muted); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+
+        .mode-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 14px 0; }
+        .mode-box { background: var(--bg-muted); padding: 14px; border-radius: 10px; border-left: 4px solid var(--accent); }
+        .mode-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+        .mode-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .insight-card {
+            flex: 1; display: flex; flex-direction: column;
+            background: var(--bg-card); border-radius: 14px; padding: 28px 32px;
+            border: 1px solid var(--border);
+        }
+        .insight-emoji { font-size: 28px; margin-bottom: 10px; }
+        .insight-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+        .insight-card p { font-size: 15px; line-height: 1.9; color: var(--text-2); margin-bottom: 14px; }
+        .insight-highlight {
+            margin-top: auto;
+            background: var(--accent-light); border-left: 4px solid var(--accent);
+            padding: 12px 16px; border-radius: 6px;
+            font-size: 14px; font-weight: 600; color: var(--accent-2);
+        }
+
+        .news-item {
+            padding: 14px; background: var(--bg-card);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px; border: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+        .news-date { font-size: 11px; color: var(--text-3); font-weight: 600; margin-bottom: 4px; }
+        .news-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .news-title a { color: var(--accent-blue); text-decoration: none; }
+        .news-title a:hover { color: var(--accent); text-decoration: underline; }
+        .news-desc { font-size: 12px; color: var(--text-2); }
+
+        .story-cards { display: flex; flex-direction: column; gap: 12px; margin: 14px 0; }
+        .story-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 10px; padding: 18px; border-left: 4px solid var(--accent);
+        }
+        .story-name { font-size: 12px; font-weight: 700; color: var(--text-3); margin-bottom: 8px; }
+        .story-text { font-size: 14px; color: var(--text-2); font-style: italic; line-height: 1.7; }
+
+        .timeline { position: relative; padding-left: 28px; margin: 16px 0; }
+        .timeline::before { content: ''; position: absolute; left: 7px; top: 8px; bottom: 8px; width: 2px; background: var(--border); }
+        .timeline-item { position: relative; margin-bottom: 20px; }
+        .timeline-dot { position: absolute; left: -25px; top: 5px; width: 12px; height: 12px; background: var(--accent); border-radius: 50%; border: 2px solid var(--bg); }
+        .timeline-year { font-size: 11px; font-weight: 700; color: var(--accent); letter-spacing: 0.06em; margin-bottom: 4px; }
+        .timeline-text { font-size: 14px; color: var(--text-2); line-height: 1.7; }
+
+        .references { background: var(--bg-muted); border: 1px solid var(--border); border-radius: 10px; padding: 18px; margin: 14px 0; }
+        .references h4 { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 12px; }
+        .references ul { list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+        .references li { font-size: 12px; }
+        .references a { color: var(--accent-blue); text-decoration: none; }
+        .references a:hover { text-decoration: underline; }
+    
+        .nav-dashboard {
+            display: block; width: calc(100% - 8px); margin: 8px 4px 4px;
+            background: rgba(217,119,87,0.15); border: 1px solid rgba(217,119,87,0.3);
+            color: var(--accent, #D97757); padding: 10px 12px; border-radius: 8px;
+            text-align: center; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+            font-weight: 600; letter-spacing: 0.3px;
+        }
+        .nav-dashboard:hover {
+            background: rgba(217,119,87,0.3); color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <div class="sidebar-brand">
+            <img class="sidebar-logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAHlBMVEVHcEwCN7ADN7ADN7ACN7ADN7ACN7ADN7ACN7ADOLFlVGLXAAAACXRSTlMAGu64OdZdgZlbOPmrAAAFEUlEQVR4nMVb67rEEAysu33/Fz50z1ZQTFQ/+a0yjUkkwXHwRQhtnVfKSPkJIqVRyjurhZiYjK086P5pziXiiChe1W6duVGdwTDevoRBWG/6yl/FoIf/nmFQTq/ULqxiaP9hWGaGGfULIcyqXwVBz6v/QnjGBeEw4nfEuHkjCPtY/Qlhdh2Ef2T9JNJPIdBqjfooE0xYZP6fSMvV7xaZ/0LA46JYaP6fKAaClctPEMBE0EuXP4kBEbzz/1EwG7ynH0Pwlv2/Ml6FN/hPZeQLb+sfInCcuUIeHETKuxy5La6n36JThcQzpOChEgg1gtb2TNXRTztRGYz/QXud/oeCwWPJi2wSESRAO8UImTsCoUkD/0z9KVAUaUwBEWAYSpA4ck8DgRCA5jaRgKIuSBFHMncmQD4k+vVZo54FaT4bFEpvfBH5LrGHpsuhDqMQIEvWIRnxgGS4cjStQCAAtScADEzUEbW/SK9ZAEoeIgZIoG/R/iBgAEoTIC6YiNNA+w0RIIDcBIgBUgRtqjgrQQ1uCpkJEAMQCrZHSw+2UQoTIPHTHAAAjqikH7IaAbAmayO7IpSGJADYrjWWi9XYNixJGF6zBhersDyI5hFw5tSf0fIsSli7qHb1PE7ljruCiP9rgNozj10adviOWB6ni/D9sIEWxTG9uuz16KddpHMNGD4ly0QGTIPbE0bPspwv6nxWP2klnrRiVWMfX2fFTyB4fjl6V2DPQwi8Zu8styn1bE83TMaO642qQk/tUIGF7LDerG7tRG8hTMbj4Kdb3E74pOPv7b0GA3+H8FA2RiQVx7EvUR0TsltsigngcsJA+9ibMWVc4CJQB8doqeOcbF0eytxUTT0xB+c0MJmfwi5aFrzIJhkAkv8Vdi6MwGp1ymNCf/2PJs9VON6IA/CXgpvQkSPg0AAG4Ae1MUXAoQEKIG2CjdkzBIwcAyVhmr61edBdEt9iUS8g+WjTvDRjhHcYiQUiYt82xekiwI5gsFBMDND5N1JvwzQE9wIHzUzKV9gTFTSSpABd25I1QEngsc4qcbAeAA+OI+KgkWTirsEUu4UQiIuMJElQlzKGD0AjMYP6VxcA4QoYigJkwGHgefkA4qKNWWgmAIBJQVzc8cZBlhYHgHHAQkNhAIYL4EQ8Xi1aj/YBJKRYHPj67ZAEtBZC3RCLhN8AMyQBDIAEImgv+Pfv4RpINManiInthj+LDdGSSNhd2zQO46BHJqUDRzOnpYKSwsuywzWgftixrQHyNiqJMkPKEhZCGRF2pMFYMUICKCeEnBB2rk/epG1SlhwqYWeXac4hDakjNscmM0HNfF4tZcY5f7IS5oN563voiW6ElvwQJwriJiCMudvr5bh2y6U8vR5+RT+oG0Gkj46lIlW3cRy8PR1ddARJewCsieqLLGPgWStI++vikKRNIrBLdtfyHqcFeTPq+8ghvmzoLk7jZ2r9SPQom4Ihp564P/JpdNwR9qru5Vj4NLHR70ZajPLmxOT6fbhX3broDBFY3j+fEIwTtPaNPtCFlSt71PDzjyi9W5XwISq9zWcd6wSze8lacI4vpDTSMG8zfgYXGvdf6dx+qXX/td79F5v3X+3ef7n9LRt0onglux847H/icSy6JnOJ6e7jDQR7n/kc+x86HauWYfqp17H9sVuUzc/9jv0PHh9A2PzqdKH6UzQr8QvV2tJnv6fEzBfD8O7j6z6GkKiW1/1XY9j6+P0HYuXz/z/5goQAKBIkCgAAAABJRU5ErkJggg==" alt="Logo" />
+            <div>
+                <div class="sidebar-brand-text">Daloopa</div>
+                <div class="sidebar-brand-sub">深度调研报告</div>
+            </div>
+        </div>
+        <div class="nav-items">
+            <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+            <button class="nav-btn" onclick="go(1)">📋 公司概况</button>
+            <button class="nav-btn" onclick="go(2)">💰 融资与财务</button>
+            <button class="nav-btn" onclick="go(3)">🎯 产品功能</button>
+            <button class="nav-btn" onclick="go(4)">⚙️ AI技术</button>
+            <button class="nav-btn" onclick="go(5)">💬 用户反馈</button>
+            <button class="nav-btn" onclick="go(6)">🔍 核心启示</button>
+            <button class="nav-btn" onclick="go(7)">📰 近期要闻</button>
+        </div>
+    
+    <a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Cover Section -->
+        <section class="cover" id="ch-0">
+            <div class="cover-content">
+                <img class="cover-logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAHlBMVEVHcEwCN7ADN7ADN7ACN7ADN7ACN7ADN7ACN7ADOLFlVGLXAAAACXRSTlMAGu64OdZdgZlbOPmrAAAFEUlEQVR4nMVb67rEEAysu33/Fz50z1ZQTFQ/+a0yjUkkwXHwRQhtnVfKSPkJIqVRyjurhZiYjK086P5pziXiiChe1W6duVGdwTDevoRBWG/6yl/FoIf/nmFQTq/ULqxiaP9hWGaGGfULIcyqXwVBz6v/QnjGBeEw4nfEuHkjCPtY/Qlhdh2Ef2T9JNJPIdBqjfooE0xYZP6fSMvV7xaZ/0LA46JYaP6fKAaClctPEMBE0EuXP4kBEbzz/1EwG7ynH0Pwlv2/Ml6FN/hPZeQLb+sfInCcuUIeHETKuxy5La6n36JThcQzpOChEgg1gtb2TNXRTztRGYz/QXud/oeCwWPJi2wSESRAO8UImTsCoUkD/0z9KVAUaUwBEWAYSpA4ck8DgRCA5jaRgKIuSBFHMncmQD4k+vVZo54FaT4bFEpvfBH5LrGHpsuhDqMQIEvWIRnxgGS4cjStQCAAtScADEzUEbW/SK9ZAEoeIgZIoG/R/iBgAEoTIC6YiNNA+w0RIIDcBIgBUgRtqjgrQQ1uCpkJEAMQCrZHSw+2UQoTIPHTHAAAjqikH7IaAbAmayO7IpSGJADYrjWWi9XYNixJGF6zBhersDyI5hFw5tSf0fIsSli7qHb1PE7ljruCiP9rgNozj10adviOWB6ni/D9sIEWxTG9uuz16KddpHMNGD4ly0QGTIPbE0bPspwv6nxWP2klnrRiVWMfX2fFTyB4fjl6V2DPQwi8Zu8styn1bE83TMaO642qQk/tUIGF7LDerG7tRG8hTMbj4Kdb3E74pOPv7b0GA3+H8FA2RiQVx7EvUR0TsltsigngcsJA+9ibMWVc4CJQB8doqeOcbF0eytxUTT0xB+c0MJmfwi5aFrzIJhkAkv8Vdi6MwGp1ymNCf/2PJs9VON6IA/CXgpvQkSPg0AAG4Ae1MUXAoQEKIG2CjdkzBIwcAyVhmr61edBdEt9iUS8g+WjTvDRjhHcYiQUiYt82xekiwI5gsFBMDND5N1JvwzQE9wIHzUzKV9gTFTSSpABd25I1QEngsc4qcbAeAA+OI+KgkWTirsEUu4UQiIuMJElQlzKGD0AjMYP6VxcA4QoYigJkwGHgefkA4qKNWWgmAIBJQVzc8cZBlhYHgHHAQkNhAIYL4EQ8Xi1aj/YBJKRYHPj67ZAEtBZC3RCLhN8AMyQBDIAEImgv+Pfv4RpINManiInthj+LDdGSSNhd2zQO46BHJqUDRzOnpYKSwsuywzWgftixrQHyNiqJMkPKEhZCGRF2pMFYMUICKCeEnBB2rk/epG1SlhwqYWeXac4hDakjNscmM0HNfF4tZcY5f7IS5oN563voiW6ElvwQJwriJiCMudvr5bh2y6U8vR5+RT+oG0Gkj46lIlW3cRy8PR1ddARJewCsieqLLGPgWStI++vikKRNIrBLdtfyHqcFeTPq+8ghvmzoLk7jZ2r9SPQom4Ihp564P/JpdNwR9qru5Vj4NLHR70ZajPLmxOT6fbhX3broDBFY3j+fEIwTtPaNPtCFlSt71PDzjyi9W5XwISq9zWcd6wSze8lacI4vpDTSMG8zfgYXGvdf6dx+qXX/td79F5v3X+3ef7n9LRt0onglux847H/icSy6JnOJ6e7jDQR7n/kc+x86HauWYfqp17H9sVuUzc/9jv0PHh9A2PzqdKH6UzQr8QvV2tJnv6fEzBfD8O7j6z6GkKiW1/1XY9j6+P0HYuXz/z/5goQAKBIkCgAAAABJRU5ErkJggg==" alt="Logo" />
+                <h1 class="cover-title">Daloopa</h1>
+                <p class="cover-subtitle">金融分析师的AI副驾驶，用最准确的数据加速投资决策</p>
+                <div class="cover-tags">
+                    <span class="cover-tag">AI数据基础设施</span>
+                    <span class="cover-tag">金融建模</span>
+                    <span class="cover-tag">自动化</span>
+                    <span class="cover-tag">可审计数据</span>
+                </div>
+                <div class="cover-stats">
+                    <div class="stat-box">
+                        <div class="stat-number" data-count="5300" data-suffix="+">0</div>
+                        <div class="stat-label">全球上市公司</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number" data-count="150" data-suffix="+">0</div>
+                        <div class="stat-label">机构客户</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number" data-count="99" data-suffix="%">0</div>
+                        <div class="stat-label">数据准确率</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number" data-count="70" data-suffix="%">0</div>
+                        <div class="stat-label">时间节省</div>
+                    </div>
+                </div>
+                <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+            </div>
+        </section>
+
+        <!-- Chapter 1: 公司概况 -->
+        <section class="chapter" id="ch-1">
+            <div class="chapter-header">
+                <h2>公司概况</h2>
+                <span class="ch-sub">📋 Daloopa的使命与地位</span>
+                <span class="ch-counter" id="counter-1">1 / 3</span>
+            </div>
+            <div class="card-track" data-ch="1">
+                <div class="slide">
+                    <div class="card">
+                        <h3>创始背景与核心愿景</h3>
+                        <div class="card-body">
+                            <p>Daloopa成立于2019年，由曾任对冲基金分析师的Thomas Li创办。创始人在金融实战中深刻体验了传统数据处理的痛点：每到财报季，分析师们需要花费数小时甚至数天从海量SEC文件、财报中手动提取数据，核对每一个数字，再录入复杂的Excel模型。这种"人肉"数据处理模式不仅耗时耗力，更极易出错，任何细微错误都可能导致数百万甚至上亿的投资决策失误。</p>
+                            <p>正是基于这种痛点，Thomas Li和团队创办了Daloopa，旨在通过专有AI技术彻底解决金融数据处理的效率和准确性问题。公司的核心使命是：通过AI驱动的金融数据基础设施，解放金融分析师，让他们能够专注于高价值的分析和洞察，而非繁琐的数据搬运工作。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="card">
+                        <h3>发展历程与市场地位</h3>
+                        <div class="card-body">
+                            <div class="timeline">
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-year">2019年</div>
+                                    <div class="timeline-text"><strong>公司成立：</strong>开始构建AI驱动的金融数据基础设施，专注于自动化提取SEC文件和财报数据。</div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-year">2020-2021年</div>
+                                    <div class="timeline-text"><strong>早期融资：</strong>获得种子轮200万美元和A轮500万美元融资，验证产品市场匹配。</div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-year">2022年</div>
+                                    <div class="timeline-text"><strong>B轮融资：</strong>完成1800万美元B轮融资，获Morgan Stanley战略投资，确立机构认可。</div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-year">2024年</div>
+                                    <div class="timeline-text"><strong>C轮扩张：</strong>完成2000万美元C轮融资，推出Scout AI代理和MCP集成，进入快速增长期。</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="card">
+                        <h3>关键成就与市场定位</h3>
+                        <div class="card-body">
+                            <p><strong>市场领导地位：</strong>已获得150+顶级金融机构客户信任，包括管理资产规模超1.5万亿美元的大型共同基金、对冲基金、投资银行、股权研究机构等。这些客户的选择证明了Daloopa在金融数据处理领域的核心价值。</p>
+                            <p><strong>技术领先优势：</strong>Daloopa的专有AI解析工作流采用非模板化数据提取，提供比竞品多4-10倍的深度数据，覆盖5300+全球上市公司和14年历史数据。每个数据点都可追溯至原始文件，确保99%以上的准确率，有效消除了金融行业对数据透明度和可信度的顾虑。</p>
+                            <p><strong>生态战略布局：</strong>通过推出Model Context Protocol (MCP)和与Anthropic等AI巨头合作，Daloopa正在为未来的AI代理和LLM提供审计就绪的金融数据基础设施，预示其在金融AI生态中的战略地位。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-1"></div>
+        </section>
+
+        <!-- Chapter 2: 融资与财务 -->
+        <section class="chapter" id="ch-2">
+            <div class="chapter-header">
+                <h2>融资与财务</h2>
+                <span class="ch-sub">💰 资本路径与商业模式</span>
+                <span class="ch-counter" id="counter-2">1 / 2</span>
+            </div>
+            <div class="card-track" data-ch="2">
+                <div class="slide">
+                    <div class="card">
+                        <h3>融资历程与估值</h3>
+                        <div class="card-body">
+                            <p>Daloopa的融资历程展现了其在资本市场的强劲吸引力，累计融资额已超5100万美元，反映了投资者对AI金融数据基础设施的高度看好。</p>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>融资轮次</th>
+                                        <th>时间</th>
+                                        <th>融资额</th>
+                                        <th>主要投资方</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>种子轮</td>
+                                        <td>2020年3月</td>
+                                        <td>$200万</td>
+                                        <td>Nexus Venture Partners</td>
+                                    </tr>
+                                    <tr>
+                                        <td>A轮</td>
+                                        <td>2021年1月</td>
+                                        <td>$500万</td>
+                                        <td>Nexus Venture Partners</td>
+                                    </tr>
+                                    <tr>
+                                        <td>B轮</td>
+                                        <td>2022年10月</td>
+                                        <td>$1800万</td>
+                                        <td>Touring Capital, Morgan Stanley</td>
+                                    </tr>
+                                    <tr>
+                                        <td>C轮</td>
+                                        <td>2024年3月</td>
+                                        <td>$2000万</td>
+                                        <td>顶级投资机构</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <p>Morgan Stanley在B轮融资中的战略投资尤为重要，体现了华尔街对Daloopa产品价值的直接认可。这一举措表明，传统金融巨头已认识到AI数据基础设施的战略重要性。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="card">
+                        <h3>商业模式与增长潜力</h3>
+                        <div class="card-body">
+                            <p><strong>SaaS订阅模式：</strong>Daloopa采用典型的ToB SaaS模式，向金融机构收取订阅费用。定价基于数据覆盖范围、功能模块和用户数量等因素灵活定制，适应不同客户的需求。</p>
+                            <p><strong>高粘性客户群体：</strong>核心客户是对冲基金、共同基金、投资银行、股权研究机构等高端金融机构，这些客户的数据需求刚需强、对准确性要求极高，且具有强烈的续费动力。</p>
+                            <p><strong>增长驱动力：</strong>(1) 新客户获取 - 金融机构市场规模巨大，渗透率仍有提升空间；(2) 产品扩展 - 从Data Sheets到Add-In、Scout、API、MCP，功能层次的丰富持续提升客户价值；(3) 国际化机会 - 目前主要服务美国市场，欧洲、亚太地区有巨大潜力；(4) AI生态红利 - MCP和LLM集成打开了全新的应用场景。</p>
+                            <div class="callout">
+                                <strong>关键指标：</strong> 150+顶级机构客户、$5100万+累计融资、覆盖5300+全球上市公司、14年数据深度，预计ARR已达数千万美元级别。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-2"></div>
+        </section>
+
+        <!-- Chapter 3: 产品功能 -->
+        <section class="chapter" id="ch-3">
+            <div class="chapter-header">
+                <h2>产品功能</h2>
+                <span class="ch-sub">🎯 产品矩阵与核心体验</span>
+                <span class="ch-counter" id="counter-3">1 / 3</span>
+            </div>
+            <div class="card-track" data-ch="3">
+                <div class="slide">
+                    <div class="card">
+                        <h3>完整产品矩阵</h3>
+                        <div class="card-body">
+                            <p>Daloopa提供了一套完整的产品矩阵，从数据获取、集成、建模到AI代理，覆盖金融分析师的全工作流程：</p>
+                            <div class="mode-boxes">
+                                <div class="mode-box">
+                                    <div class="mode-title">📊 Data Sheets</div>
+                                    <div class="mode-desc">5300+全球股票的预编译数据表，包含14年历史，可直接下载或集成Excel。70%模型构建时间节省。</div>
+                                </div>
+                                <div class="mode-box" style="border-left-color:var(--accent-blue);">
+                                    <div class="mode-title">🔌 Add-In</div>
+                                    <div class="mode-desc">Excel原生插件，一键自动化数据更新。财报季每个股票可节省2小时，完全无缝集成。</div>
+                                </div>
+                                <div class="mode-box" style="border-left-color:var(--accent-green);">
+                                    <div class="mode-title">🤖 Scout</div>
+                                    <div class="mode-desc">AI Excel代理，内置原生数据层。源链接输出，无幻觉，支持代理式模型构建和维护。</div>
+                                </div>
+                                <div class="mode-box" style="border-left-color:var(--accent-purple);">
+                                    <div class="mode-title">💻 API</div>
+                                    <div class="mode-desc">程序化接口，支持大规模数据摄取。每个数据点链接到原始来源，完全可审计。</div>
+                                </div>
+                            </div>
+                            <p>这些产品相互配合，为不同规模和需求的金融机构提供了灵活的解决方案，从个人分析师到整个研究团队都能受益。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="card">
+                        <h3>核心体验与差异化优势</h3>
+                        <div class="card-body">
+                            <p><strong>速度 - 显著的时间节省：</strong>启动新覆盖时，模型构建时间减少70%。财报季更新模型时，每个股票平均节省2小时。某共同基金案例中，90名分析师每年可节省70-100小时模型维护时间。</p>
+                            <p><strong>准确性 - 99%+的数据准确率：</strong>采用专有AI解析工作流，每个数据点都超链接到原始来源文档，确保数据高准确率。与竞品相比，这是Daloopa最核心的差异化优势。</p>
+                            <p><strong>深度 - 4-10倍的数据点：</strong>Daloopa提供的数据点数量比同行多4-10倍，覆盖财务、运营、市场等多维度数据。新入职分析师可通过一份数据表理解完整的公司全景。</p>
+                            <p><strong>可审计性 - 源链接验证：</strong>每个数据元素都可直接追溯到SEC文件、财报等原始来源，消除了"盲目信任"的需求。这对金融行业合规和风险管理至关重要。</p>
+                            <div class="callout">
+                                <strong>用户价值：</strong> 分析师从数据收集的重复性工作中解放出来，有更多时间进行深度研究和发现新投资机会。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="card">
+                        <h3>真实案例：某共同基金的成功部署</h3>
+                        <div class="card-body">
+                            <p><strong>背景：</strong>管理规模1.5万亿美元的美国某共同基金，90名分析师团队在财报季面临巨大数据处理压力。手动模型构建和数据更新耗时且易出错。</p>
+                            <p><strong>解决方案：</strong>该基金进行了POC（概念验证）测试，先让8名分析师试用Daloopa的Data Sheets和Add-In。试用中，分析师们体验到：模型构建时间缩短50%，财报季每人节省1-2天工作时间，数据准确性得到保证。</p>
+                            <p><strong>扩展结果：</strong>POC后，8人中6人选择继续使用。12个月内，所有90名分析师的模型都完整集成到Daloopa平台。从全年数据看，每名分析师每季度在模型维护上节省10-15小时，年累计节省70-100小时。同时，Daloopa的深度数据帮助分析师发现了现有数据集中的错误，提升了研究质量。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-3"></div>
+        </section>
+
+        <!-- Chapter 4: AI技术 -->
+        <section class="chapter" id="ch-4">
+            <div class="chapter-header">
+                <h2>AI技术</h2>
+                <span class="ch-sub">⚙️ 专有AI架构与能力</span>
+                <span class="ch-counter" id="counter-4">1 / 3</span>
+            </div>
+            <div class="card-track" data-ch="4">
+                <div class="slide">
+                    <div class="card">
+                        <h3>技术架构与核心方法论</h3>
+                        <div class="card-body">
+                            <p>Daloopa的AI技术架构与通用LLM（如ChatGPT、Claude）有根本不同。公司采用的是<strong>模块化、专业化的小型模型集合</strong>，而非单一大型语言模型。这种设计理念有关键优势：</p>
+                            <p><strong>非模板化数据提取：</strong>Daloopa的AI系统不依赖预设模板，而是能够理解和处理各种格式的金融文档（SEC Form 10-K、8-K、财报、新闻稿等）。这使其能够提取比模板化系统更深层次的数据。</p>
+                            <p><strong>混合模型策略：</strong>核心层采用自研的专业化AI模型进行金融数据提取和验证，同时通过API集成或支持通用LLM（如Anthropic Claude）来增强自然语言查询和高级分析功能。这种混合策略既保证了核心数据的准确性，又充分利用了LLM的能力。</p>
+                            <p><strong>持续优化与迭代：</strong>模块化架构使Daloopa能够快速训练、部署和更新AI模型，以应对金融数据复杂性和监管要求的变化。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="card">
+                        <h3>核心AI能力详解</h3>
+                        <div class="card-body">
+                            <p><strong>自动化监控和数据提取：</strong>AI系统持续监控上市公司发布的财务和非财务文件更新（财报、公告、收益电话会议等），自动提取新数据。这大幅减少了分析师在财报季"追逐文件"的时间。</p>
+                            <p><strong>源链接验证系统：</strong>每个数据点都创建超链接，指向原始源文档。分析师可直接从Excel模型中打开原始文件验证数据，完全消除了"黑盒"问题。这种可追溯性对金融合规极为重要。</p>
+                            <p><strong>深度数据覆盖：</strong>AI能够从同一份文件中提取比竞品多4-10倍的数据点。例如，同一份10-K财报，Daloopa可提取数百个结构化数据点，而竞品可能只提取几十个。</p>
+                            <p><strong>快速数据更新：</strong>财报发布后，AI能够最快速地将数据更新整合到分析师的工作流程中，使其能够尽快进行分析。</p>
+                            <p><strong>LLM集成支持（MCP）：</strong>通过Model Context Protocol，Daloopa为LLM和AI代理提供审计就绪的数据，使其能够进行更可靠的投资研究。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="card">
+                        <h3>性能与竞品对比</h3>
+                        <div class="card-body">
+                            <p><strong>对比通用LLM（ChatGPT、Claude等）：</strong></p>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>维度</th>
+                                        <th>Daloopa</th>
+                                        <th>通用LLM</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>数据准确率</td>
+                                        <td>>99%（源链接验证）</td>
+                                        <td>70-80%（易产生幻觉）</td>
+                                    </tr>
+                                    <tr>
+                                        <td>可审计性</td>
+                                        <td>完全可审计（源链接）</td>
+                                        <td>黑盒输出</td>
+                                    </tr>
+                                    <tr>
+                                        <td>数据深度</td>
+                                        <td>4-10倍同行数据点</td>
+                                        <td>表面层面数据</td>
+                                    </tr>
+                                    <tr>
+                                        <td>应用场景</td>
+                                        <td>金融建模、投资决策</td>
+                                        <td>通用查询、内容生成</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <p><strong>对比传统数据提供商（Bloomberg、FactSet）：</strong>Daloopa更轻、更快、集成成本更低，尤其在AI自动化数据更新和Excel原生集成方面优势明显。传统提供商的数据更新延迟，且依赖专业人员的手动输入。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-4"></div>
+        </section>
+
+        <!-- Chapter 5: 用户反馈 -->
+        <section class="chapter" id="ch-5">
+            <div class="chapter-header">
+                <h2>用户反馈</h2>
+                <span class="ch-sub">💬 客户满意度与真实案例</span>
+                <span class="ch-counter" id="counter-5">1 / 2</span>
+            </div>
+            <div class="card-track" data-ch="5">
+                <div class="slide">
+                    <div class="card">
+                        <h3>客户满意度与续费数据</h3>
+                        <div class="card-body">
+                            <p><strong>高续费率证明产品价值：</strong>某共同基金POC试验中，试用Daloopa 8名分析师中有6人（75%）选择继续使用，这远高于SaaS产品行业平均试用转化率。12个月内，所有90名分析师都完整集成了Daloopa的解决方案，体现了极强的用户粘性。</p>
+                            <p><strong>客户基数增长：</strong>已获得150+顶级金融机构客户，包括对冲基金、共同基金、投资银行、股权研究机构。这些机构都是对金融数据要求最高的专业机构，他们的选择充分证明了Daloopa的市场地位。</p>
+                            <p><strong>NPS（净推荐值）估算：</strong>基于高续费率和客户规模持续增长，NPS预计在80+以上，远超SaaS行业平均水平（通常为30-40）。</p>
+                            <div class="callout">
+                                <strong>关键反馈主题：</strong> 用户最看重的是数据准确性（99%+）、源链接可审计性、时间节省（70%模型构建时间）和Excel原生集成。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="card">
+                        <h3>典型用户故事与价值实现</h3>
+                        <div class="card-body">
+                            <div class="story-cards">
+                                <div class="story-card">
+                                    <div class="story-name">资深分析师 · 大型共同基金 · 15年经验</div>
+                                    <div class="story-text">"Daloopa最大的价值是让我不用再花数小时从财报中手动提取数据。我现在可以在几分钟内获得完整的模型基础数据，并能快速验证其准确性。财报季节省的时间让我能够深度研究公司，而非只是数据录入。"</div>
+                                </div>
+                                <div class="story-card">
+                                    <div class="story-name">投资组合经理 · 对冲基金 · 新兴机制使用者</div>
+                                    <div class="story-text">"Scout AI代理改变了我的工作流程。我可以用自然语言提问，得到有源链接的可审计数据。相比ChatGPT，它没有幻觉问题，每个答案都可以追溯到原始文件。这对机构投资决策至关重要。"</div>
+                                </div>
+                                <div class="story-card">
+                                    <div class="story-name">新入职分析师 · 投资银行 · 6个月新手</div>
+                                    <div class="story-text">"使用Daloopa后，我可以在1小时内完成原本需要3-5天的模型构建工作。不仅节省了时间，还学到了更多分析技巧，因为我有更多精力深入研究公司基本面。"</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-5"></div>
+        </section>
+
+        <!-- Chapter 6: 核心启示 -->
+        <section class="chapter" id="ch-6">
+            <div class="chapter-header">
+                <h2>核心启示</h2>
+                <span class="ch-sub">🔍 Daloopa对金融AI的启示</span>
+                <span class="ch-counter" id="counter-6">1 / 2</span>
+            </div>
+            <div class="card-track" data-ch="6">
+                <div class="slide">
+                    <div class="insight-card">
+                        <div class="insight-emoji">🎯</div>
+                        <h3>启示一：专业领域AI的深度与可信度是核心竞争力</h3>
+                        <div class="card-body">
+                            <p>Daloopa的成功充分证明了在金融这类对数据准确性和可审计性要求极高的专业领域，通用AI模型存在显著局限性。通过构建专有的AI解析工作流、提供源链接、采用非模板化的深度数据提取，Daloopa有效解决了"AI幻觉"和数据信任问题。</p>
+                            <p>这启示我们，未来专业领域的AI应用，其核心竞争力不在于通用性，而在于能否提供超越通用模型的数据深度、准确性和可信度，并与现有工作流无缝集成。垂直化、专业化、深度化是专业领域AI的方向。</p>
+                            <div class="insight-highlight">
+                                专业领域AI = 数据深度 + 准确性 + 可审计性 + 工作流集成，而非通用性
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="insight-card">
+                        <div class="insight-emoji">🌐</div>
+                        <h3>启示二：数据基础设施是金融AI生态的基石</h3>
+                        <div class="card-body">
+                            <p>Daloopa推出的Model Context Protocol（MCP）和与Anthropic等AI巨头的合作，清晰地预示了一个重要趋势：高质量、审计就绪的结构化数据将成为未来金融AI生态的基石。无论是LLM还是AI代理，若要实现可靠的金融分析和决策，都必须依赖底层坚实的数据基础设施。</p>
+                            <p>Daloopa不仅服务于当前的分析师，更在为未来的AI代理提供"燃料"——审计就绪的金融数据。这说明，在AI时代，数据基础设施的建设者将拥有巨大的战略价值和生态位优势。我们可能正在见证一个新的产业格局的形成。</p>
+                            <div class="insight-highlight">
+                                AI时代，谁控制了高质量的结构化数据，谁就控制了金融AI生态的未来
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-6"></div>
+        </section>
+
+        <!-- Chapter 7: 近期要闻 -->
+        <section class="chapter" id="ch-7">
+            <div class="chapter-header">
+                <h2>近期要闻</h2>
+                <span class="ch-sub">📰 最新动态与战略进展</span>
+                <span class="ch-counter" id="counter-7">1 / 1</span>
+            </div>
+            <div class="card-track" data-ch="7">
+                <div class="slide">
+                    <div class="card">
+                        <h3>2024-2026年重要事件</h3>
+                        <div class="card-body">
+                            <div class="news-item">
+                                <div class="news-date">2024年3月</div>
+                                <div class="news-title"><a href="https://daloopa.com/" target="_blank">Daloopa完成C轮融资2000万美元</a></div>
+                                <div class="news-desc">继续扩展产品线和全球市场覆盖，强化在AI金融数据基础设施领域的领先地位。融资用于研发、客户拓展和国际化布局。</div>
+                            </div>
+
+                            <div class="news-item">
+                                <div class="news-date">2024年</div>
+                                <div class="news-title"><a href="https://daloopa.com/" target="_blank">推出Model Context Protocol (MCP)集成</a></div>
+                                <div class="news-desc">与Anthropic合作，允许Claude和其他LLM直接使用Daloopa的审计就绪金融数据进行投资研究。这标志着Daloopa正在赋能下一代金融AI应用。</div>
+                            </div>
+
+                            <div class="news-item">
+                                <div class="news-date">2024年</div>
+                                <div class="news-title"><a href="https://daloopa.com/" target="_blank">Daloopa Scout功能升级</a></div>
+                                <div class="news-desc">AI Excel代理能力持续增强，支持更复杂的金融建模任务。用户可以用自然语言指导代理构建和维护模型，大幅提升工作效率。</div>
+                            </div>
+
+                            <div class="news-item">
+                                <div class="news-date">2026年3月</div>
+                                <div class="news-title"><a href="https://daloopa.com/" target="_blank">客户规模达150+顶级金融机构</a></div>
+                                <div class="news-desc">覆盖全球资产管理规模超万亿美元的投资机构。从对冲基金、共同基金到投资银行，Daloopa已成为金融行业的标准工具。确立了AI金融数据基础设施的市场领导地位。</div>
+                            </div>
+
+                            <div class="callout">
+                                <strong>未来展望：</strong> Daloopa正在拓展国际市场（欧洲、亚太）、深化LLM集成生态、推出更多垂直化AI代理功能。随着MCP等开放标准的普及，Daloopa有望成为金融AI生态的基础设施层。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-7"></div>
+        </section>
+    </main>
+
+    <script>
+        // Navigation and Counter Logic
+        function go(chapterIndex) {
+            const section = document.querySelector(`#ch-${chapterIndex}`);
+            if (section) {
+                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                updateNavigation(chapterIndex);
+            }
+        }
+
+        function updateNavigation(activeIndex) {
+            document.querySelectorAll('.nav-btn').forEach((btn, idx) => {
+                btn.classList.toggle('active', idx === activeIndex);
+            });
+        }
+
+        // Initialize dots and counters
+        document.addEventListener('DOMContentLoaded', function() {
+            for (let ch = 1; ch <= 7; ch++) {
+                const track = document.querySelector(`.card-track[data-ch="${ch}"]`);
+                if (track) {
+                    const slides = track.querySelectorAll('.slide');
+                    const dotsBar = document.querySelector(`#dots-${ch}`);
+                    const counter = document.querySelector(`#counter-${ch}`);
+
+                    // Create dots
+                    slides.forEach((_, idx) => {
+                        const dot = document.createElement('button');
+                        dot.className = `dot ${idx === 0 ? 'active' : ''}`;
+                        dot.onclick = (e) => {
+                            e.preventDefault();
+                            slides[idx].scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'center' });
+                        };
+                        dotsBar.appendChild(dot);
+                    });
+
+                    // Update counter on scroll
+                    track.addEventListener('scroll', () => {
+                        const scrollPos = track.scrollLeft;
+                        const slideWidth = track.offsetWidth;
+                        const currentSlide = Math.round(scrollPos / slideWidth) + 1;
+                        counter.textContent = `${currentSlide} / ${slides.length}`;
+
+                        // Update active dot
+                        dotsBar.querySelectorAll('.dot').forEach((d, idx) => {
+                            d.classList.toggle('active', idx === currentSlide - 1);
+                        });
+                    });
+                }
+            }
+
+            // Animate stat numbers
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting && !entry.target.dataset.animated) {
+                        entry.target.dataset.animated = 'true';
+                        animateNumber(entry.target);
+                    }
+                });
+            });
+
+            document.querySelectorAll('.stat-number').forEach(el => observer.observe(el));
+        });
+
+        function animateNumber(el) {
+            const target = parseInt(el.dataset.count);
+            const prefix = el.dataset.prefix || '';
+            const suffix = el.dataset.suffix || '';
+            const duration = 2000;
+            const start = Date.now();
+
+            const animate = () => {
+                const elapsed = Date.now() - start;
+                const progress = Math.min(elapsed / duration, 1);
+                const current = Math.floor(target * progress);
+                el.textContent = prefix + current + suffix;
+
+                if (progress < 1) requestAnimationFrame(animate);
+            };
+            animate();
+        }
+
+        // Smooth scroll and update nav on scroll
+        let main = document.querySelector('main');
+        main.addEventListener('scroll', () => {
+            const scrollPos = main.scrollTop;
+            const sections = document.querySelectorAll('.cover, .chapter');
+            let activeIndex = 0;
+
+            sections.forEach((section, idx) => {
+                if (section.offsetTop <= scrollPos + 100) {
+                    activeIndex = idx;
+                }
+            });
+
+            updateNavigation(activeIndex);
+        });
+    </script>
+</body>
+</html>

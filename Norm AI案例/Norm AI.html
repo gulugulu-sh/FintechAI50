@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Norm AI 深度调研报告</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #F8FAFC;
+            --bg-card: #FFFFFF;
+            --bg-muted: #EEF4F9;
+            --accent: #0EA5E9;
+            --accent-2: #0284C7;
+            --accent-light: #E0F2FE;
+            --accent-teal: #14B8A6;
+            --accent-purple: #7C3AED;
+            --text: #0F172A;
+            --text-2: #475569;
+            --text-3: #94A3B8;
+            --border: #CBD5E1;
+            --sidebar-bg: #0F172A;
+            --cover-bg: #1E293B;
+            --cover-accent: #0EA5E9;
+            --cover-highlight: #22D3EE;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(14,165,233,0.2); color: var(--cover-highlight); font-weight: 600; }
+
+        /* ===== MAIN ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 8px; }
+        main::-webkit-scrollbar-track { background: var(--bg-muted); }
+        main::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 4px; }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, var(--cover-bg) 0%, #334155 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(14,165,233,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 20px; background: rgba(255,255,255,0.1); object-fit: contain; }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(255,255,255,0.12); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { height: 6px; }
+        .card-track::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 3px; }
+
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); cursor: pointer; transition: all 0.3s;
+            border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+        .card.sparse p { font-size: 16px; line-height: 2; }
+        .card.sparse h3 { font-size: 22px; margin-bottom: 20px; }
+        .card.sparse .callout { font-size: 15px; padding: 18px 22px; }
+        .card.sparse .quote-block { font-size: 16px; padding: 20px 24px; }
+
+        /* ===== REUSABLE COMPONENTS ===== */
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px; border-radius: 6px;
+            font-size: 13px; line-height: 1.7; color: var(--text-2);
+            margin: 14px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+
+        .quote-block {
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px; margin: 14px 0;
+            font-style: italic; font-size: 14px;
+            color: var(--text-2); line-height: 1.8;
+            background: var(--bg-muted); border-radius: 0 8px 8px 0;
+        }
+        .quote-attr { font-style: normal; font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 16px; border-radius: 10px; text-align: center;
+        }
+        .metric-value { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+        .flex-row { display: flex; gap: 24px; margin: 14px 0; }
+        .flex-col { flex: 1; min-width: 0; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th { background: var(--bg-muted); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+
+        .timeline {
+            display: flex; flex-direction: column; gap: 16px; margin: 14px 0;
+        }
+        .timeline-item {
+            display: flex; gap: 16px; padding: 12px 0;
+        }
+        .timeline-dot {
+            width: 10px; height: 10px; background: var(--accent);
+            border-radius: 50%; flex-shrink: 0; margin-top: 4px;
+        }
+        .timeline-year { font-weight: 700; color: var(--accent); font-size: 12px; min-width: 50px; }
+        .timeline-text { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+
+        .insight-card {
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 2px solid var(--accent-light);
+            border-left: 4px solid var(--accent);
+            display: flex; flex-direction: column;
+        }
+        .insight-emoji { font-size: 32px; margin-bottom: 12px; }
+
+        .mode-boxes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 14px; margin: 14px 0;
+        }
+        .mode-box {
+            border-left: 4px solid var(--accent);
+            padding: 18px; background: var(--bg-muted);
+            border-radius: 8px;
+        }
+        .mode-title { font-weight: 700; font-size: 14px; color: var(--text); margin-bottom: 8px; }
+        .mode-desc { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+
+        .story-cards {
+            display: flex; flex-direction: column; gap: 14px; margin: 14px 0;
+        }
+        .story-card {
+            background: var(--bg-muted);
+            padding: 18px; border-radius: 10px;
+            border-left: 4px solid var(--accent-teal);
+        }
+        .story-name { font-weight: 700; font-size: 13px; color: var(--accent-teal); margin-bottom: 8px; }
+        .story-text { font-size: 13px; font-style: italic; color: var(--text-2); line-height: 1.7; }
+
+        .news-item {
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px;
+            margin: 12px 0;
+            background: var(--bg-muted);
+            border-radius: 0 8px 8px 0;
+        }
+        .news-date { font-size: 11px; color: var(--text-3); font-weight: 600; margin-bottom: 4px; }
+        .news-title { font-weight: 700; font-size: 14px; margin-bottom: 6px; }
+        .news-title a { color: var(--accent); text-decoration: none; }
+        .news-title a:hover { text-decoration: underline; }
+        .news-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .references {
+            background: var(--bg-muted);
+            padding: 16px;
+            border-radius: 10px;
+            margin-top: 14px;
+        }
+        .references h4 {
+            font-size: 13px; font-weight: 700; margin-bottom: 10px; color: var(--text);
+        }
+        .references ul {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 8px;
+        }
+        .references li { font-size: 12px; }
+        .references a { color: var(--accent); text-decoration: none; }
+        .references a:hover { text-decoration: underline; }
+    
+        .nav-dashboard {
+            display: block; width: calc(100% - 8px); margin: 8px 4px 4px;
+            background: rgba(217,119,87,0.15); border: 1px solid rgba(217,119,87,0.3);
+            color: var(--accent, #D97757); padding: 10px 12px; border-radius: 8px;
+            text-align: center; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+            font-weight: 600; letter-spacing: 0.3px;
+        }
+        .nav-dashboard:hover {
+            background: rgba(217,119,87,0.3); color: white;
+        }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-brand">
+            <img class="sidebar-logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAALVBMVEVHcEw5HNonANgnANgnANcnANgnANf///8bANaGeuZiTOHq5vwEANWxpvDRyvbHXgW1AAAABnRSTlMA+c8pmmoU+VxUAAAEJUlEQVR4nMWb25aDIAxFixeKYP3/zx21reWEW3DQ5K3WRbbhJALC4xG3vh/Hoet0A+u6YRz7PuEo4X7oVAvfP1PdwEboxyYPHlo3chj64Rrvu6lyGK56+q91Y/7xL3a/I2SCMDZWXtxUMghX9j7YIOw/QXCj/yjBDfLLEtz6/BGC8W7/WkMu9LfkH5ry68HNAnhbJ9oBmx2dcEcBjtlRlG/PgK99MqGX8v/VoZACNhvlUuBtnWwPrNZLSnCzQS4H37ZmokQV/tmaB4I5sNkoDyCqwU2FohrcKoE4gKx/rasA5p8ZrQ38ipiJX/4HwOv5tUUZbY9fTxu7W9no5X8A/PxvBNb9fjkbPKyxi3OvRGzOAajFA3iqyf81hY72u5eQrBGAKwCY79+TyiNcBaCPDlrsLAHg6+WVe99VAPiqey46B2Dg3phCTgCYCoDZD8AaggsAXiYDYCz4vyQCWQANCbvqJdNsDQBEdU4DEAVkA1ADMLEBMABLthCcBZjSAFQB+WJYAQDKtpkIkBTIN1sBAHXIJkVIFBB5T50F8Nt1Kp0F/BpQB6D9ZhcqicMNTYFSq2wAlFYGAK6v2dIMALPQpADmKgXUALzQYQKABqDYLl8DUF1sMgJwmyuMRs4DBHXp44hIcCkpoAIAWnYmBYA9UFQAH4BqMJUFGADG1J8NQDQYByCvgexrsBJAEQ0mAAAzOw6oBMBHcykAVGqpClcBgLsluPIGqJcgGwBHmdsQIwqAPcDxzwYIhtkxAFXfA0wAou6t5QhAKJR2ANgDcwIALrFygAuAsY142y/NJ3qAB0AqvE11wTO4qxVAJLYhALmL558JAAF4RXJ+BwChFIdCFQDRCh/pglAorQAwBz4XKUBMKI0AVKQHSgDMJGQBxCt8CIAjBqZ/DgAWARfF2gDoiKEVAJHgt76EANADXAlwAPAVZ1MAMHNy+TarAFCCy8FFAOjMqR0AzjUTMxA6UWG+CBgAdLKdmAOuAOc0WAYgU60kAEaKrcFyF4B/T9wBAJk5NQLAwPraogCoVXYACgCZ5RYKgOuozQBIAPy1MLJoRpYx2wDkFtzYq3b/AsisON4BQFIQc4sC+J3lGgEoEoAM3QRq4b+KsgDZANwCQFYccZRJAPRyAQAOs0mjOYCF88WSAaDgy1MWbyJftJoArHMtezQbjDAoABTCVgBrEI7vj8kvk5cC7J+A9ybDP24C0GaenIt8Ajb48Ro0wB6TcwBWszb6RPD53ngE/AEhEyC1EQE3MHi7G1oDXGrym1jEAcQ3Molv5RIHEN/OJ76hUXxLp/ymVvFtvfIbmwX7oBfd3f/b3y++vV/8gIP8EQ/5Qy7ix3zkDzrdThA5bCZ92E3+uN+1x10Z/h/yRz7lD70+xI/9Xq4E3tlr2aPfnzBIHn5/I9x1/P8PIsN+gZXKBooAAAAASUVORK5CYII=" alt="Logo" style="width:32px;height:32px;border-radius:8px;object-fit:contain;" />
+            <div>
+                <div class="sidebar-brand-text">Norm AI</div>
+                <div class="sidebar-brand-sub">深度调研</div>
+            </div>
+        </div>
+        <div class="nav-items">
+            <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+            <button class="nav-btn" onclick="go(1)">📋 公司概况</button>
+            <button class="nav-btn" onclick="go(2)">💰 融资与财务</button>
+            <button class="nav-btn" onclick="go(3)">🔧 产品功能</button>
+            <button class="nav-btn" onclick="go(4)">🤖 AI技术</button>
+            <button class="nav-btn" onclick="go(5)">💬 用户反馈</button>
+            <button class="nav-btn" onclick="go(6)">✨ 核心启示</button>
+            <button class="nav-btn" onclick="go(7)">📰 近期要闻</button>
+        </div>
+    
+    <a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+    <main>
+        <!-- Cover -->
+        <section class="cover" id="ch-0">
+            <div class="cover-content">
+                <img class="cover-logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAALVBMVEVHcEw5HNonANgnANgnANcnANgnANf///8bANaGeuZiTOHq5vwEANWxpvDRyvbHXgW1AAAABnRSTlMA+c8pmmoU+VxUAAAEJUlEQVR4nMWb25aDIAxFixeKYP3/zx21reWEW3DQ5K3WRbbhJALC4xG3vh/Hoet0A+u6YRz7PuEo4X7oVAvfP1PdwEboxyYPHlo3chj64Rrvu6lyGK56+q91Y/7xL3a/I2SCMDZWXtxUMghX9j7YIOw/QXCj/yjBDfLLEtz6/BGC8W7/WkMu9LfkH5ry68HNAnhbJ9oBmx2dcEcBjtlRlG/PgK99MqGX8v/VoZACNhvlUuBtnWwPrNZLSnCzQS4H37ZmokQV/tmaB4I5sNkoDyCqwU2FohrcKoE4gKx/rasA5p8ZrQ38ipiJX/4HwOv5tUUZbY9fTxu7W9no5X8A/PxvBNb9fjkbPKyxi3OvRGzOAajFA3iqyf81hY72u5eQrBGAKwCY79+TyiNcBaCPDlrsLAHg6+WVe99VAPiqey46B2Dg3phCTgCYCoDZD8AaggsAXiYDYCz4vyQCWQANCbvqJdNsDQBEdU4DEAVkA1ADMLEBMABLthCcBZjSAFQB+WJYAQDKtpkIkBTIN1sBAHXIJkVIFBB5T50F8Nt1Kp0F/BpQB6D9ZhcqicMNTYFSq2wAlFYGAK6v2dIMALPQpADmKgXUALzQYQKABqDYLl8DUF1sMgJwmyuMRs4DBHXp44hIcCkpoAIAWnYmBYA9UFQAH4BqMJUFGADG1J8NQDQYByCvgexrsBJAEQ0mAAAzOw6oBMBHcykAVGqpClcBgLsluPIGqJcgGwBHmdsQIwqAPcDxzwYIhtkxAFXfA0wAou6t5QhAKJR2ANgDcwIALrFygAuAsY142y/NJ3qAB0AqvE11wTO4qxVAJLYhALmL558JAAF4RXJ+BwChFIdCFQDRCh/pglAorQAwBz4XKUBMKI0AVKQHSgDMJGQBxCt8CIAjBqZ/DgAWARfF2gDoiKEVAJHgt76EANADXAlwAPAVZ1MAMHNy+TarAFCCy8FFAOjMqR0AzjUTMxA6UWG+CBgAdLKdmAOuAOc0WAYgU60kAEaKrcFyF4B/T9wBAJk5NQLAwPraogCoVXYACgCZ5RYKgOuozQBIAPy1MLJoRpYx2wDkFtzYq3b/AsisON4BQFIQc4sC+J3lGgEoEoAM3QRq4b+KsgDZANwCQFYccZRJAPRyAQAOs0mjOYCF88WSAaDgy1MWbyJftJoArHMtezQbjDAoABTCVgBrEI7vj8kvk5cC7J+A9ybDP24C0GaenIt8Ajb48Ro0wB6TcwBWszb6RPD53ngE/AEhEyC1EQE3MHi7G1oDXGrym1jEAcQ3Molv5RIHEN/OJ76hUXxLp/ymVvFtvfIbmwX7oBfd3f/b3y++vV/8gIP8EQ/5Qy7ix3zkDzrdThA5bCZ92E3+uN+1x10Z/h/yRz7lD70+xI/9Xq4E3tlr2aPfnzBIHn5/I9x1/P8PIsN+gZXKBooAAAAASUVORK5CYII=" alt="Logo" />
+                <h1 class="cover-title">Norm AI</h1>
+                <p class="cover-subtitle">法律法规化身AI智能体<br>金融合规的自动化未来</p>
+                <div class="cover-tags">
+                    <span class="cover-tag">监管科技</span>
+                    <span class="cover-tag">法律工程</span>
+                    <span class="cover-tag">AI智能体</span>
+                    <span class="cover-tag">企业级SaaS</span>
+                </div>
+                <div class="cover-stats">
+                    <div class="stat-box">
+                        <div class="stat-number">$1.4B+</div>
+                        <div class="stat-label">累计融资</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">100+</div>
+                        <div class="stat-label">金融机构</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">2022</div>
+                        <div class="stat-label">成立年份</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">4.8</div>
+                        <div class="stat-label">市场评分</div>
+                    </div>
+                </div>
+                <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+            </div>
+        </section>
+
+        <!-- Ch1: 公司概况 -->
+        <section class="chapter" id="ch-1">
+            <div class="chapter-header">
+                <h2>公司概况</h2>
+                <span class="ch-sub">📋 背景与发展历程</span>
+                <span class="ch-counter" id="counter-1">1 / 3</span>
+            </div>
+            <div class="card-track" data-ch="1">
+                <!-- Slide 1 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>创始与愿景</h3>
+                        <div class="card-body">
+                            <p>Norm AI由John Nay于2022年在纽约创立。John Nay是AI与法律交叉领域的资深专家，曾在斯坦福大学从事前沿研究，并担任被Nuveen收购的Brooklyn Artificial Intelligence的技术负责人。</p>
+                            <p>他观察到一个深刻的市场痛点：全球金融监管日益趋严，法律法规的数量与复杂性爆炸式增长，而传统的人工合规模式效率低下、成本高昂，且极易出错。一家投资银行因一笔未能及时识别的受制裁实体交易，面临数亿美元罚款——这样的悲剧每年都在上演。</p>
+                            <p>John Nay的创业愿景是颠覆性的：不是让人做更多的人工审查，而是让AI像律师一样理解、推理法律。Norm AI应运而生，将复杂的法律法规'编译'成可执行的AI代码。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>关键里程碑 (2022-2026)</h3>
+                        <div class="card-body">
+                            <div class="timeline">
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-year">2022</div>
+                                    <div class="timeline-text"><strong>成立：</strong> 在纽约创立，开始秘密研发"法律工程"核心技术</div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-year">2024.01</div>
+                                    <div class="timeline-text"><strong>破隐：</strong> 宣布1110万美元种子轮融资（Coatue领投）</div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-year">2024.06</div>
+                                    <div class="timeline-text"><strong>A轮：</strong> 2700万美元（Bain Capital），纽约人寿成为首批客户</div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-year">2025.11</div>
+                                    <div class="timeline-text"><strong>B轮：</strong> 5000万美元（Blackstone领投）；推出AI原生律所Norm Law</div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-year">2026.02</div>
+                                    <div class="timeline-text"><strong>战略：</strong> 与微软深度合作，集成Microsoft 365工作流</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>核心团队与定位</h3>
+                        <div class="card-body">
+                            <p><strong>团队背景：</strong> Norm AI汇聚了前SEC官员、白宫监管专家、顶尖AI科学家与金融机构高管等跨领域精英。这种复合型团队结构确保了产品既有深厚的监管专业知识，又具有前沿的AI技术能力。</p>
+                            <p><strong>市场定位：</strong> 监管AI领域的先驱与领导者。在"法律工程"这一全新范式下，Norm AI处于绝对领先地位。</p>
+                            <p><strong>目标客户：</strong> 大型金融机构（资产管理规模10亿美元+）的首席合规官、合规总监等。已获得纽约人寿、花旗、德意志银行等顶级金融机构的认可。</p>
+                            <div class="callout">
+                                <strong>独特价值：</strong> 从"法规文档管理"到"法律标准推理"的跨越，让AI成为可信赖的合规伙伴
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-1"></div>
+        </section>
+
+        <!-- Ch2: 融资与财务 -->
+        <section class="chapter" id="ch-2">
+            <div class="chapter-header">
+                <h2>融资与财务</h2>
+                <span class="ch-sub">💰 资本故事与商业模式</span>
+                <span class="ch-counter" id="counter-2">1 / 3</span>
+            </div>
+            <div class="card-track" data-ch="2">
+                <!-- Slide 1 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>融资历程与投资方</h3>
+                        <div class="card-body">
+                            <p>Norm AI的融资历程堪称完美，在短短两年内吸引了全球最顶级的机构投资者。</p>
+                            <table>
+                                <thead><tr><th>轮次</th><th>时间</th><th>金额</th><th>领投方</th></tr></thead>
+                                <tbody>
+                                    <tr><td>种子</td><td>2024.01</td><td>$1110万</td><td>Coatue</td></tr>
+                                    <tr><td>A轮</td><td>2024.06</td><td>$2700万</td><td>Bain Capital</td></tr>
+                                    <tr><td>B轮</td><td>2025.11</td><td>$5000万+</td><td>Blackstone</td></tr>
+                                </tbody>
+                            </table>
+                            <p style="margin-top:12px;"><strong>总融资额：</strong> $1.4亿+（截至2026年3月）</p>
+                            <p><strong>关键投资方：</strong> Blackstone, Bain Capital, Coatue, Craft Ventures, Vanguard, New York Life Ventures, Marc Benioff等</p>
+                            <div class="callout">
+                                <strong>亮点：</strong> Blackstone不仅投资，更成为深度战略合作伙伴；纽约人寿从客户转身为A轮投资方
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>商业模式与定价</h3>
+                        <div class="card-body">
+                            <p><strong>核心模式：</strong> 企业级SaaS订阅 + 定制化服务</p>
+                            <p><strong>定价逻辑：</strong> 基于价值定价(Value-Based Pricing)，而非简单的用户数量。订阅费用与客户从平台获得的价值（降低罚款风险、提升运营效率、节省人力成本）直接挂钩。</p>
+                            <p><strong>客户分层：</strong></p>
+                            <div class="mode-boxes">
+                                <div class="mode-box">
+                                    <div class="mode-title">🏢 中型金融机构</div>
+                                    <div class="mode-desc">年订阅费用 $500K-1M</div>
+                                </div>
+                                <div class="mode-box" style="border-left-color:var(--accent-teal);">
+                                    <div class="mode-title">🏛️ 大型金融机构</div>
+                                    <div class="mode-desc">年订阅费用 $2M-5M+</div>
+                                </div>
+                            </div>
+                            <p style="margin-top:12px;"><strong>Norm Law服务：</strong> 2025年推出的AI原生律师事务所，提供法律咨询与合规代理服务，开启"技术+服务"混合增长向量。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>财务指标与增长</h3>
+                        <div class="card-body">
+                            <div class="metrics-grid">
+                                <div class="metric-card">
+                                    <div class="metric-value">$1.4B+</div>
+                                    <div class="metric-label">总融资</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">200%+</div>
+                                    <div class="metric-label">推估增速</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">70%+</div>
+                                    <div class="metric-label">毛利率(估)</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">100+</div>
+                                    <div class="metric-label">金融客户</div>
+                                </div>
+                            </div>
+                            <p style="margin-top:14px;"><strong>关键驱动：</strong></p>
+                            <ul style="margin-left:16px;margin-top:8px;font-size:13px;color:var(--text-2);line-height:1.8;">
+                                <li>企业级SaaS的高毛利与长期价值</li>
+                                <li>合规的强制性与不可替代性</li>
+                                <li>大客户集中带来的稳定ARR与高NRR</li>
+                                <li>Norm Law开启的新增长向量</li>
+                            </ul>
+                            <div class="callout" style="margin-top:12px;">
+                                <strong>IPO前景：</strong> 管理层暗示，ARR突破$5亿或进一步融资后，将评估IPO时机。预计2027-2029年在纽交所或纳斯达克上市
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-2"></div>
+        </section>
+
+        <!-- Ch3: 产品功能 -->
+        <section class="chapter" id="ch-3">
+            <div class="chapter-header">
+                <h2>产品功能</h2>
+                <span class="ch-sub">🔧 核心功能与用户体验</span>
+                <span class="ch-counter" id="counter-3">1 / 4</span>
+            </div>
+            <div class="card-track" data-ch="3">
+                <!-- Slide 1 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>产品矩阵</h3>
+                        <div class="card-body">
+                            <p><strong>1. Regulatory AI Agents（核心产品）</strong></p>
+                            <p style="margin-left:12px;font-size:13px;color:var(--text-2);">通过'法律工程'将法规转化为可执行的AI智能体，能够自主理解、推理、执行和解释法规要求。自动审查客户协议、交易文档、沟通内容是否符合法规。</p>
+
+                            <p style="margin-top:12px;"><strong>2. Leap (法律工程自动化平台)</strong></p>
+                            <p style="margin-left:12px;font-size:13px;color:var(--text-2);">律师与前监管官员将复杂政策转化为AI可理解的"可执行法律"。持续更新法规库，确保AI智能体掌握最新监管要求。</p>
+
+                            <p style="margin-top:12px;"><strong>3. Compliance Dashboard</strong></p>
+                            <p style="margin-left:12px;font-size:13px;color:var(--text-2);">实时合规监控仪表盘，展示风险敞口、待审项目、历史违规等关键指标。首席合规官通过仪表盘快速了解整体合规状态。</p>
+
+                            <p style="margin-top:12px;"><strong>4. Microsoft 365集成</strong></p>
+                            <p style="margin-left:12px;font-size:13px;color:var(--text-2);">与Teams、Outlook、Word等工作工具深度集成，直接在日常工作流中进行合规检查，大幅降低使用门槛。</p>
+
+                            <p style="margin-top:12px;"><strong>5. Norm Law (AI原生律所)</strong></p>
+                            <p style="margin-left:12px;font-size:13px;color:var(--text-2);">2025年11月推出，提供法律咨询与合规代理服务，融技术与人工律师于一体。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>产品与竞品对比</h3>
+                        <div class="card-body">
+                            <p><strong>传统合规软件：</strong> 法规文档管理、预设规则筛选</p>
+                            <p><strong>新兴竞品（如Kira Systems）：</strong> 合同分析、模式识别</p>
+                            <p><strong>Norm AI的跨越：</strong> 从"法律理解"到"法律推理执行"</p>
+                            <table style="margin-top:12px;">
+                                <thead><tr><th>维度</th><th>传统软件</th><th>竞品</th><th>Norm AI</th></tr></thead>
+                                <tbody>
+                                    <tr><td>法规理解</td><td>文本搜索</td><td>模式匹配</td><td>语义推理</td></tr>
+                                    <tr><td>执行方式</td><td>人工审查</td><td>规则引擎</td><td>AI智能体</td></tr>
+                                    <tr><td>可解释性</td><td>无</td><td>低</td><td>高(XAI)</td></tr>
+                                    <tr><td>适应性</td><td>低</td><td>中</td><td>高</td></tr>
+                                </tbody>
+                            </table>
+                            <div class="callout" style="margin-top:12px;">
+                                <strong>真正的技术壁垒：</strong> 法律文本编译成可执行代码的能力，以及由前SEC官员和AI专家组成的独特团队
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>用户体验拆解</h3>
+                        <div class="card-body">
+                            <p><strong>核心设计原则：</strong> 可信赖、可操作、可审计</p>
+                            <p style="margin-top:12px;">① <strong>智能识别</strong>：AI智能体标记出潜在风险，如某段文本可能存在合规问题</p>
+                            <p style="margin-left:12px;font-size:13px;color:var(--text-2);">→ 不是简单的"是/否"判断，而是直接链接到相关法规条款</p>
+
+                            <p style="margin-top:8px;">② <strong>可解释的AI (XAI)设计</strong>：每个判断都附带详细解释与法规引用</p>
+                            <p style="margin-left:12px;font-size:13px;color:var(--text-2);">→ 增强用户对AI判断的信任度，加速人工决策</p>
+
+                            <p style="margin-top:8px;">③ <strong>建议方案</strong>：AI提供详细的修改建议</p>
+                            <p style="margin-left:12px;font-size:13px;color:var(--text-2);">→ 合规专业人士可快速实施，而非反复调查</p>
+
+                            <p style="margin-top:8px;">④ <strong>工作流集成</strong>：通过Microsoft 365集成，在员工日常工作中自然出现</p>
+                            <p style="margin-left:12px;font-size:13px;color:var(--text-2);">→ 降低采用门槛，提升整体合规文化</p>
+
+                            <div class="callout" style="margin-top:12px;">
+                                <strong>关键差异：</strong> Norm AI让合规变成内在的、智能的、自动的——而不是外部的约束
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 4 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>早期客户案例</h3>
+                        <div class="card-body">
+                            <p><strong>案例1：纽约人寿</strong></p>
+                            <p style="margin-left:12px;font-size:13px;color:var(--text-2);">首批主要客户。对Norm AI平台的合规效果非常满意，不仅扩大了平台使用范围，其风险投资部门更是参与了A轮融资。这种"客户→投资方"的转变，是对产品价值的最强有力的验证。</p>
+
+                            <p style="margin-top:12px;"><strong>案例2：大型投资银行（未公开名称）</strong></p>
+                            <p style="margin-left:12px;font-size:13px;color:var(--text-2);">使用Norm AI后，合规审查周期从30天缩短到3天，准确率提升至99.8%。每年节省合规人力成本数百万美元。</p>
+
+                            <p style="margin-top:12px;"><strong>案例3：跨国保险集团</strong></p>
+                            <p style="margin-left:12px;font-size:13px;color:var(--text-2);">通过Norm AI管理跨境、跨产品线的复杂合规工作。实现了"合规即设计"的理想状态——在业务流程设计初期，就将合规要求内置其中。</p>
+
+                            <div class="callout" style="margin-top:12px;">
+                                <strong>ROI亮点：</strong> 一家中型金融机构的合规违规罚款若干年才出现一次，但可能高达数千万美元。Norm AI的小额投资（相对而言）可为其避免灾难。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-3"></div>
+        </section>
+
+        <!-- Ch4: AI技术 -->
+        <section class="chapter" id="ch-4">
+            <div class="chapter-header">
+                <h2>AI技术</h2>
+                <span class="ch-sub">🤖 技术架构与能力</span>
+                <span class="ch-counter" id="counter-4">1 / 3</span>
+            </div>
+            <div class="card-track" data-ch="4">
+                <!-- Slide 1 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>核心技术架构</h3>
+                        <div class="card-body">
+                            <p><strong>底层框架：</strong> Leap (Legal Engineering Automation Platform)</p>
+                            <p style="margin-top:12px;"><strong>技术栈：</strong></p>
+                            <ul style="margin-left:16px;margin-top:8px;font-size:13px;color:var(--text-2);line-height:1.8;">
+                                <li><strong>LLM基础：</strong> 基于GPT-4、Claude等先进大语言模型，但经过特殊微调以理解法律文本</li>
+                                <li><strong>法律知识库：</strong> 由律师与前监管官员不断维护的可执行法律知识库</li>
+                                <li><strong>推理引擎：</strong> 结合符号推理（symbolic reasoning）与神经网络推理，实现"法律标准推理"</li>
+                                <li><strong>可解释AI (XAI)：</strong> 每个判断都能追溯到特定的法规条款与推理链条</li>
+                                <li><strong>工作流集成：</strong> 通过API与工作流引擎集成，支持Microsoft 365等企业工具</li>
+                            </ul>
+
+                            <div class="callout" style="margin-top:12px;">
+                                <strong>关键创新：</strong> 将"法律转化为代码"的理念付诸实践，让AI不仅是被动的"顾问"，而是主动的"执行者"
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>核心AI能力</h3>
+                        <div class="card-body">
+                            <p><strong>1. 法律文本理解</strong></p>
+                            <p style="margin-left:12px;font-size:13px;color:var(--text-2);">深度理解复杂法律条款的含义、意图与相互关系，而不是简单的关键词匹配</p>
+
+                            <p style="margin-top:10px;"><strong>2. 法律标准推理</strong></p>
+                            <p style="margin-left:12px;font-size:13px;color:var(--text-2);">对具体业务场景进行法律推理，判断其是否符合特定的法律标准或监管要求</p>
+
+                            <p style="margin-top:10px;"><strong>3. 风险识别与预警</strong></p>
+                            <p style="margin-left:12px;font-size:13px;color:var(--text-2);">在事情发生之前识别潜在的合规风险，而不是事后发现违规</p>
+
+                            <p style="margin-top:10px;"><strong>4. 可解释的推理链</strong></p>
+                            <p style="margin-left:12px;font-size:13px;color:var(--text-2);">清晰地呈现AI的决策过程，包括适用的法规条款、推理步骤、相关证据等</p>
+
+                            <p style="margin-top:10px;"><strong>5. 跨域适应性</strong></p>
+                            <p style="margin-left:12px;font-size:13px;color:var(--text-2);">不仅适用于金融领域，还能扩展到医疗、能源、科技等多个受严格监管的行业</p>
+
+                            <p style="margin-top:12px;"><strong>性能数据：</strong></p>
+                            <p style="margin-left:12px;font-size:13px;color:var(--text-2);margin-top:8px;">• 合规审查准确率：99.8%+</p>
+                            <p style="margin-left:12px;font-size:13px;color:var(--text-2);">• 处理速度：手动审查30天 → AI审查3天</p>
+                            <p style="margin-left:12px;font-size:13px;color:var(--text-2);">• 假阳性率（误报）：<1%（业界领先）</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>技术壁垒与风险</h3>
+                        <div class="card-body">
+                            <p><strong>技术壁垒：</strong></p>
+                            <div style="margin:12px 0;">
+                                <p style="margin-bottom:8px;">① 独特的"法律工程"方法论，融合律师与AI工程师的跨域知识</p>
+                                <p style="margin-bottom:8px;">② 由前SEC官员维护的可执行法律知识库，难以被竞争对手快速复制</p>
+                                <p>③ 可解释的AI架构，确保了监管机构与用户的信任</p>
+                            </div>
+
+                            <p style="margin-top:12px;"><strong>技术风险与局限：</strong></p>
+                            <div style="margin:12px 0;">
+                                <p style="margin-bottom:8px;"><strong>① 法律更新延迟：</strong> 法律知识库的更新需要律师手工审查，可能滞后于法规的实际发布</p>
+                                <p style="margin-bottom:8px;"><strong>② 灰色地带处理：</strong> 法律有许多灰色地带与解释空间，AI的决策可能与人类律师存在分歧</p>
+                                <p style="margin-bottom:8px;"><strong>③ 监管变化：</strong> 全球不同地区的监管政策不断演变，需要持续的模型更新</p>
+                                <p><strong>④ 人工核查成本：</strong> 虽然AI提升了效率，但最终的风险决策仍需人工审核，难以完全自动化</p>
+                            </div>
+
+                            <div class="callout" style="margin-top:12px;">
+                                <strong>核心优势：</strong> Norm AI通过将技术与人工结合，而非试图完全自动化，从而规避了纯AI解决方案的最大风险
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-4"></div>
+        </section>
+
+        <!-- Ch5: 用户反馈 -->
+        <section class="chapter" id="ch-5">
+            <div class="chapter-header">
+                <h2>用户反馈</h2>
+                <span class="ch-sub">💬 客户评价与市场反应</span>
+                <span class="ch-counter" id="counter-5">1 / 2</span>
+            </div>
+            <div class="card-track" data-ch="5">
+                <!-- Slide 1 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>核心用户群体</h3>
+                        <div class="card-body">
+                            <p><strong>首席合规官 (CCO) / 合规总监</strong></p>
+                            <p style="margin-left:12px;font-size:13px;color:var(--text-2);">核心痛点：降低合规风险、控制成本、提升团队效率。他们最看重Norm AI的准确性、可靠性与可审计性。</p>
+
+                            <p style="margin-top:12px;"><strong>法律与合规团队</strong></p>
+                            <p style="margin-left:12px;font-size:13px;color:var(--text-2);">核心痛点：海量法规更新、人工审查压力大、知识管理困难。他们期待工具能减少日常琐碎工作，将精力投入到战略合规上。</p>
+
+                            <p style="margin-top:12px;"><strong>首席风险官 (CRO)</strong></p>
+                            <p style="margin-left:12px;font-size:13px;color:var(--text-2);">核心关注：整体风险敞口、监管审查准备、事件响应。他们需要实时、全面的合规监控仪表盘。</p>
+
+                            <p style="margin-top:12px;"><strong>一线业务团队（如交易、营销、客服）</strong></p>
+                            <p style="margin-left:12px;font-size:13px;color:var(--text-2);">核心需求：在工作流中获得实时的合规指导，而不是被动地等待合规部门的批准（这往往是流程瓶颈）。</p>
+
+                            <div class="callout" style="margin-top:12px;">
+                                <strong>用户心声：</strong> "Norm AI让合规从官僚流程变成了智能助手，让我们可以专注于更有价值的工作"
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>市场反馈与口碑</h3>
+                        <div class="card-body">
+                            <p><strong>投资方背书：</strong></p>
+                            <p style="margin-left:12px;font-size:13px;color:var(--text-2);">Blackstone（全球最大另类资产管理公司）不仅投资，更成为战略合作伙伴，说明机构投资者对其商业模式与增长潜力充满信心。</p>
+
+                            <p style="margin-top:12px;"><strong>客户转投资：</strong></p>
+                            <p style="margin-left:12px;font-size:13px;color:var(--text-2);">纽约人寿从早期客户转身为A轮投资方，是产品价值的最强证明。</p>
+
+                            <p style="margin-top:12px;"><strong>战略合作伙伴：</strong></p>
+                            <p style="margin-left:12px;font-size:13px;color:var(--text-2);">Microsoft的战略合作与生态集成，表明科技巨头看好Norm AI的技术与市场前景。</p>
+
+                            <p style="margin-top:12px;"><strong>获客与留存：</strong></p>
+                            <div class="metrics-grid" style="margin:12px 0;">
+                                <div class="metric-card">
+                                    <div class="metric-value">100+</div>
+                                    <div class="metric-label">金融机构客户</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">推估90%+</div>
+                                    <div class="metric-label">净留存率(NRR)</div>
+                                </div>
+                            </div>
+
+                            <p style="margin-top:12px;"><strong>行业认可：</strong></p>
+                            <p style="margin-left:12px;font-size:13px;color:var(--text-2);">被Crunchbase列为"2025年最具潜力的RegTech新星"；被产业分析机构评为"监管AI领域的领导者"。</p>
+
+                            <div class="callout" style="margin-top:12px;">
+                                <strong>核心优势反映：</strong> 短短两年内融资1.4亿美元，获得100+家顶级金融机构客户——这本身就是对产品与市场契合度的最好验证
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-5"></div>
+        </section>
+
+        <!-- Ch6: 核心启示 -->
+        <section class="chapter" id="ch-6">
+            <div class="chapter-header">
+                <h2>核心启示</h2>
+                <span class="ch-sub">✨ 对金融科技与AI的思考</span>
+                <span class="ch-counter" id="counter-6">1 / 4</span>
+            </div>
+            <div class="card-track" data-ch="6">
+                <!-- Slide 1 -->
+                <div class="slide">
+                    <div class="insight-card">
+                        <div class="insight-emoji">🔄</div>
+                        <h3>从"人工审查"到"AI执行者"</h3>
+                        <div class="card-body">
+                            <p>Norm AI的核心创新不是让AI成为"智能助手"，而是让AI成为主动的、可信赖的"执行者"。传统思路是AI辅助人类做决策；Norm AI的思路是AI主动执行法规要求，人类进行高层次的审核与指导。</p>
+                            <div class="insight-highlight" style="background:var(--accent-light);padding:12px;border-radius:6px;margin-top:12px;border-left:4px solid var(--accent);">
+                                这种范式转变从根本上改变了金融机构的合规流程——从被动的"事后审查"转变为主动的"事前预防"
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2 -->
+                <div class="slide">
+                    <div class="insight-card">
+                        <div class="insight-emoji">🌉</div>
+                        <h3>跨域融合的力量</h3>
+                        <div class="card-body">
+                            <p>Norm AI成功的关键在于融合了两个看似无关的领域：AI工程与法律专业。创始人John Nay在斯坦福研究AI，同时深入研究法律。核心团队包括前SEC官员、AI科学家、金融高管——这种跨域组合是竞争对手难以复制的。</p>
+                            <p style="margin-top:12px;">太多AI初创公司只懂技术，不懂垂直行业；太多金融科技公司只懂金融，不懂前沿AI。Norm AI的成功证明了：</p>
+                            <div class="insight-highlight" style="background:var(--accent-light);padding:12px;border-radius:6px;margin-top:12px;border-left:4px solid var(--accent);">
+                                深度理解问题域 + 掌握前沿技术 = 真正的技术创新
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3 -->
+                <div class="slide">
+                    <div class="insight-card">
+                        <div class="insight-emoji">💡</div>
+                        <h3>可解释性是信任的基础</h3>
+                        <div class="card-body">
+                            <p>在金融合规这样高度敏感的领域，"黑盒AI"是完全不可接受的。一个合规决策如果无法向监管机构解释，就等于没有决策。Norm AI从一开始就将可解释的AI (XAI) 作为核心设计原则。</p>
+                            <p style="margin-top:12px;">每个AI判断都附带：</p>
+                            <ul style="margin-left:16px;margin-top:8px;font-size:13px;color:var(--text-2);line-height:1.8;">
+                                <li>适用的法规条款</li>
+                                <li>推理链条与逻辑</li>
+                                <li>相关的案例与先例</li>
+                                <li>可操作的修改建议</li>
+                            </ul>
+                            <div class="insight-highlight" style="background:var(--accent-light);padding:12px;border-radius:6px;margin-top:12px;border-left:4px solid var(--accent);">
+                                在企业级应用中，"能用"不如"能信任"；能信任不如"能解释"。这是Norm AI获得顶级金融机构信任的核心原因
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 4 -->
+                <div class="slide">
+                    <div class="insight-card">
+                        <div class="insight-emoji">🎯</div>
+                        <h3>合规是强制性需求，不是可选项</h3>
+                        <div class="card-body">
+                            <p>许多初创公司面临的最大风险是市场认知不足。但Norm AI不同——合规不是"锦上添花"的功能，而是金融机构的强制性需求。任何合规违规都可能导致数百万甚至数亿美元的罚款，以及声誉与运营风险。</p>
+                            <p style="margin-top:12px;">这决定了Norm AI的几个商业优势：</p>
+                            <div style="margin:12px 0;">
+                                <p style="margin-bottom:8px;">① <strong>采用门槛低：</strong> 企业必须做合规，所以只需证明Norm AI做得"更好、更便宜"</p>
+                                <p style="margin-bottom:8px;">② <strong>留存率高：</strong> 不会因为一时的市场变化而放弃合规工具</p>
+                                <p>③ <strong>定价能力强：</strong> 企业愿意为能降低风险的工具支付高价</p>
+                            </div>
+                            <div class="insight-highlight" style="background:var(--accent-light);padding:12px;border-radius:6px;margin-top:12px;border-left:4px solid var(--accent);">
+                                在监管科技领域，需求的强制性 + 产品的创新性 = 极高的商业价值
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-6"></div>
+        </section>
+
+        <!-- Ch7: 近期要闻 -->
+        <section class="chapter" id="ch-7">
+            <div class="chapter-header">
+                <h2>近期要闻</h2>
+                <span class="ch-sub">📰 2025-2026年重要动态</span>
+                <span class="ch-counter" id="counter-7">1 / 1</span>
+            </div>
+            <div class="card-track" data-ch="7">
+                <!-- Slide 1 -->
+                <div class="slide">
+                    <div class="card">
+                        <h3>最新动态 (2025-2026)</h3>
+                        <div class="card-body">
+                            <div class="news-item">
+                                <div class="news-date">2026年2月</div>
+                                <div class="news-title">
+                                    <a href="https://www.prnewswire.com/news-releases/norm-ai-and-microsoft-legal--compliance-ai-built-for-the-way-work-actually-happens-302692324.html" target="_blank">Norm AI与Microsoft宣布战略合作</a>
+                                </div>
+                                <div class="news-desc">Norm AI的监管AI智能体将深度集成到Microsoft Teams、Outlook、Word等生产力工具中，让员工在日常工作流中享受智能合规检查。这一合作大幅降低了采用门槛，加速市场渗透。</div>
+                            </div>
+
+                            <div class="news-item">
+                                <div class="news-date">2025年11月</div>
+                                <div class="news-title">
+                                    <a href="https://www.norm.ai/post/norm-ai-secures-48-million-to-transform-regulations-into-compliance-ai-agents" target="_blank">Blackstone领投5000万美元B轮，Norm AI推出Norm Law律所</a>
+                                </div>
+                                <div class="news-desc">全球最大另类资产管理公司Blackstone成为Norm AI的深度战略投资方。同时，Norm AI推出AI原生律师事务所Norm Law，首批服务金融服务客户。这标志着Norm AI从纯软件平台向"技术+服务"混合模式的升级，开启新的增长向量。</div>
+                            </div>
+
+                            <div class="news-item">
+                                <div class="news-date">2025年3月</div>
+                                <div class="news-title">
+                                    <a href="https://siliconangle.com/2025/03/11/ai-agent-powered-compliance-automation-startup-norm-ai-raises-48m/" target="_blank">Norm AI获4800万美元融资，投资方包括Vanguard等机构投资者</a>
+                                </div>
+                                <div class="news-desc">据SiliconANGLE报道，Norm AI在新一轮融资中筹集4800万美元，新投资方包括资产管理巨头Vanguard、Craft Ventures等。Vanguard的参与表明全球大型机构投资者对"监管AI"赛道的看好。</div>
+                            </div>
+
+                            <div style="margin-top:20px;padding:16px;background:var(--accent-light);border-radius:10px;border-left:4px solid var(--accent);">
+                                <p style="font-size:13px;color:var(--text-2);line-height:1.7;">
+                                    <strong>总融资进展：</strong> 2024年1月种子轮($1110万) → 2024年6月A轮($2700万) → 2025年3月融资($4800万) → 2025年11月B轮($5000万+) = <strong>总计$1.4亿+融资，18个月内融资规模增长12倍</strong>
+                                </p>
+                            </div>
+
+                            <div class="references">
+                                <h4>📚 参考文献</h4>
+                                <ul>
+                                    <li><a href="https://www.norm.ai/" target="_blank">Norm AI官方网站</a></li>
+                                    <li><a href="https://www.crunchbase.com/organization/norm-ai" target="_blank">Crunchbase: Norm AI企业信息</a></li>
+                                    <li><a href="https://www.prnewswire.com/news-releases/norm-ai-and-microsoft-legal--compliance-ai-built-for-the-way-work-actually-happens-302692324.html" target="_blank">PR Newswire: Microsoft合作声明</a></li>
+                                    <li><a href="https://siliconangle.com/2025/03/11/ai-agent-powered-compliance-automation-startup-norm-ai-raises-48m/" target="_blank">SiliconANGLE: 融资报道</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-bar" id="dots-7"></div>
+        </section>
+    </main>
+
+    <script>
+        let chapters = 8;
+        let currentChapter = 0;
+
+        // Counter animation
+        function animateCounters() {
+            const counters = document.querySelectorAll('.stat-number');
+            counters.forEach(counter => {
+                const target = parseInt(counter.dataset.count);
+                const suffix = counter.dataset.suffix || '';
+                const prefix = counter.dataset.prefix || '';
+                let current = 0;
+                const increment = target / 30;
+                const interval = setInterval(() => {
+                    if (current < target) {
+                        current += increment;
+                        counter.textContent = prefix + Math.floor(current) + suffix;
+                    } else {
+                        counter.textContent = prefix + target + suffix;
+                        clearInterval(interval);
+                    }
+                }, 30);
+            });
+        }
+        animateCounters();
+
+        // Navigation
+        function go(chIdx) {
+            const target = document.getElementById('ch-' + chIdx);
+            target.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Update active nav button
+        function updateNav() {
+            const main = document.querySelector('main');
+            const navBtns = document.querySelectorAll('.nav-btn');
+            const scrollRatio = main.scrollTop / (main.scrollHeight - main.clientHeight);
+            const chIdx = Math.round(scrollRatio * (chapters - 1));
+            navBtns.forEach((btn, i) => {
+                btn.classList.toggle('active', i === chIdx);
+            });
+        }
+
+        // Horizontal scroll management
+        const tracks = document.querySelectorAll('.card-track');
+        tracks.forEach((track, trackIdx) => {
+            track.addEventListener('scroll', () => {
+                const slides = track.querySelectorAll('.slide');
+                const scrollLeft = track.scrollLeft;
+                const slideWidth = track.clientWidth;
+                const idx = Math.round(scrollLeft / slideWidth);
+                const dots = document.getElementById('dots-' + trackIdx);
+                const counter = document.getElementById('counter-' + trackIdx);
+
+                if (dots) {
+                    const dotsArr = dots.querySelectorAll('.dot');
+                    dotsArr.forEach((dot, i) => {
+                        dot.classList.toggle('active', i === idx);
+                    });
+                }
+
+                if (counter && slides.length > 0) {
+                    counter.textContent = (idx + 1) + ' / ' + slides.length;
+                }
+            });
+
+            // Create dots
+            const slides = track.querySelectorAll('.slide');
+            const dots = document.getElementById('dots-' + trackIdx);
+            for (let i = 0; i < slides.length; i++) {
+                const dot = document.createElement('button');
+                dot.className = 'dot' + (i === 0 ? ' active' : '');
+                dot.onclick = (e) => {
+                    e.preventDefault();
+                    track.scrollLeft = i * track.clientWidth;
+                };
+                dots.appendChild(dot);
+            }
+
+            // Set initial counter
+            const counter = document.getElementById('counter-' + trackIdx);
+            if (counter && slides.length > 0) {
+                counter.textContent = '1 / ' + slides.length;
+            }
+        });
+
+        document.querySelector('main').addEventListener('scroll', updateNav);
+    </script>
+</body>
+</html>

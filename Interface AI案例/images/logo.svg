@@ -1,0 +1,56 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="95" fill="#0F4C7D" opacity="0.1" stroke="#0F4C7D" stroke-width="2"/>
+
+  <!-- Gradient definitions -->
+  <defs>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0F4C7D;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1B5E9F;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2196F3;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#00BCD4;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Left voice wave (representing voice/chat) -->
+  <g transform="translate(45, 100)">
+    <!-- Wave 1 (outer) -->
+    <path d="M 0,-25 Q 8,-30 15,-25 Q 22,-20 25,-10 Q 28,0 25,10 Q 22,20 15,25 Q 8,30 0,25"
+          fill="none" stroke="#2196F3" stroke-width="2.5" opacity="0.8"/>
+
+    <!-- Wave 2 (middle) -->
+    <path d="M 0,-18 Q 6,-22 12,-18 Q 18,-14 20,-6 Q 22,2 20,10 Q 18,18 12,22 Q 6,26 0,22"
+          fill="none" stroke="#2196F3" stroke-width="2.5" opacity="0.6"/>
+
+    <!-- Wave 3 (inner/solid) -->
+    <circle cx="0" cy="0" r="6" fill="#2196F3"/>
+  </g>
+
+  <!-- Right interface/chat bubbles (representing chat/interface) -->
+  <g transform="translate(115, 100)">
+    <!-- Chat bubble 1 (top right) -->
+    <rect x="8" y="-22" width="16" height="12" rx="6" fill="#00BCD4" opacity="0.9"/>
+    <polygon points="8,-18 5,-14 8,-14" fill="#00BCD4" opacity="0.9"/>
+
+    <!-- Chat bubble 2 (bottom left) -->
+    <rect x="-18" y="4" width="20" height="12" rx="6" fill="#2196F3" opacity="0.7"/>
+    <polygon points="-18,8 -22,14 -18,14" fill="#2196F3" opacity="0.7"/>
+
+    <!-- Chat bubble 3 (top left) -->
+    <rect x="-16" y="-18" width="14" height="10" rx="5" fill="#2196F3" opacity="0.5"/>
+  </g>
+
+  <!-- Center connector (bridge between voice and interface) -->
+  <line x1="70" y1="100" x2="105" y2="100" stroke="#1B5E9F" stroke-width="2" opacity="0.6"/>
+  <circle cx="87.5" cy="100" r="3" fill="#1B5E9F"/>
+
+  <!-- Top text label -->
+  <text x="100" y="155" font-family="Arial, sans-serif" font-size="20" font-weight="bold"
+        text-anchor="middle" fill="#0F4C7D">Interface AI</text>
+
+  <!-- Bottom tagline -->
+  <text x="100" y="172" font-family="Arial, sans-serif" font-size="10"
+        text-anchor="middle" fill="#2196F3" opacity="0.7">Banking AI Solutions</text>
+</svg>

@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generated Assets — AI-Powered Portfolio Management Case Study</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #1A1514;
+            --cover-bg: #1F47E5;
+            --cover-accent: #341CFF;
+            --cover-highlight: #FFE36D;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(217,119,87,0.2); color: var(--accent); font-weight: 600; }
+
+        .nav-dashboard {
+            display: block; width: calc(100% - 8px); margin: 8px 4px 4px;
+            background: rgba(217,119,87,0.15); border: 1px solid rgba(217,119,87,0.3);
+            color: var(--accent); padding: 10px 12px; border-radius: 8px;
+            text-align: center; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+        }
+        .nav-dashboard:hover {
+            background: rgba(217,119,87,0.3); color: white;
+        }
+
+        /* ===== MAIN ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, var(--cover-bg) 0%, #2F2E9F 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(52,28,255,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 20px; background: rgba(255,255,255,0.1); object-fit: contain; }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(255,255,255,0.12); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        /* Fixed chapter header */
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        /* Horizontal card scroller */
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+
+        /* Each slide fills available height */
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Card inside slide — fills slide */
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        /* Dots bar at bottom */
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); cursor: pointer; transition: all 0.3s;
+            border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+        /* ===== CONTENT-SPARSE: bigger text for cards with less content ===== */
+        .card.sparse p { font-size: 16px; line-height: 2; }
+        .card.sparse h3 { font-size: 22px; margin-bottom: 20px; }
+        .card.sparse .callout { font-size: 15px; padding: 18px 22px; }
+        .card.sparse .quote-block { font-size: 16px; padding: 20px 24px; }
+
+        /* ===== REUSABLE COMPONENTS ===== */
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px; border-radius: 6px;
+            font-size: 13px; line-height: 1.7; color: var(--text-2);
+            margin: 14px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+
+        .quote-block {
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px; margin: 14px 0;
+            font-style: italic; font-size: 14px;
+            color: var(--text-2); line-height: 1.8;
+            background: var(--bg-muted); border-radius: 0 8px 8px 0;
+        }
+        .quote-attr { font-style: normal; font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 16px; border-radius: 10px; text-align: center;
+        }
+        .metric-value { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+        .flex-row { display: flex; gap: 24px; margin: 14px 0; }
+        .flex-col { flex: 1; min-width: 0; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th { background: var(--bg-muted); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+
+        .mode-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 14px 0; }
+        .mode-box { background: var(--bg-muted); padding: 14px; border-radius: 10px; border-left: 4px solid var(--accent); }
+        .mode-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+        .mode-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .position-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+        .position-card { padding: 12px; border-radius: 10px; }
+        .position-title { font-weight: 700; font-size: 13px; margin-bottom: 3px; }
+
+        .story-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin: 14px 0; }
+        .story-card { background: var(--bg-muted); border-radius: 10px; padding: 18px; }
+        .story-name { font-weight: 700; font-size: 14px; margin-bottom: 2px; }
+        .story-text { font-size: 13px; color: var(--text-2); line-height: 1.7; font-style: italic; }
+
+        .timeline { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+        .timeline-item { display: flex; gap: 12px; align-items: flex-start; }
+        .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
+        .timeline-year { font-weight: 700; font-size: 13px; color: var(--accent); min-width: 48px; }
+        .timeline-text { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+
+        .insight-card {
+            flex: 1; display: flex; flex-direction: column;
+            background: var(--bg-card); border-radius: 14px; padding: 28px 32px;
+            border: 1px solid var(--border);
+        }
+        .insight-emoji { font-size: 28px; margin-bottom: 10px; }
+        .insight-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+        .insight-card p { font-size: 15px; line-height: 1.9; color: var(--text-2); margin-bottom: 14px; }
+        .insight-highlight {
+            margin-top: auto;
+            background: var(--accent-light); border-left: 4px solid var(--accent);
+            padding: 12px 16px; border-radius: 6px;
+            font-size: 14px; font-weight: 600; color: var(--accent-2);
+        }
+
+        .references { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--border); }
+        .references h4 { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+        .references ul { list-style: none; columns: 2; column-gap: 20px; }
+        .references li { font-size: 11px; margin-bottom: 5px; break-inside: avoid; }
+        .references a { color: var(--accent-blue); text-decoration: none; }
+
+        .avatar {
+            width: 56px; height: 56px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 700; font-size: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            main { margin-left: 0; }
+            .chapter-header { padding: 12px 20px 0 20px; }
+            .slide { padding: 16px 20px; }
+            .cover-title { font-size: 28px; }
+            .flex-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <img class="sidebar-logo" alt="Generated Assets" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAGFBMVEVHcEwAN5oAN5oAOJsAN5oAN5oAN5oAN5rpUSOvAAAAB3RSTlMAnW8f5UDDurmG1AAAAoRJREFUeJztWwluhDAMbALJ/v/HJbuqFsqSOOOxrarMAxjLV3zx9YWj5Jw25LIoPoJyp/VxQM3Fjz3Xx0dUFxnKBfsLydoaZe3RP9VgKcIypH9qwYw/Segbsgl9kdI3Oxjw5wn+DfSA6Pr+J5DNIPK+I6i+CPBTJYD4iRKA/DQ/EIf/GZRYmIy/Iwh5edHwP1a9ALADvKB2RJUBGpRG0BmgQWmE6Qx8hioW9QrYEKwAlQooCtB4gSIH7oHnQw4/ngtmirAuUAFIFsBtoMzCb4A24MRAAxgH6mfgDUwAmgugTkBJgy9gyZDmg6gX8vixVo0XBFsYIGVJuAC0RNwEQMKAKQAUh1QThAvwJ50wPA8wBcAyYfhbEP4aEusBrEEkhgHET/RCtC6neSFaFYf3BSwb4JPj8N6QFAcwf/x8gOOGCn5Kaa6b1xK8QMVPCAT1uFjJr98eKf1Qza80AmVer4gE0sYC5qftbEB+3voSywaEZYVKAvL6dtoT6Tv0yYfRYIE+VaWbXDHIzhdM1P8DmRKwVpgmAjSLmBKhawiXS55y9Tyt5kc8OxlOUVmz90HXUnJKtdaUsucZ140bN27c+M9ob8/27gQcMTfs75irzcloB8vp8fcV4WMB5FgBXNSAdtfDR1x3hRanuzP8ThJ0+F2sMGjGzINh2AdZCzDitzaCoBe1FWDMb6sCyYyUOYg6QTQitXwcRQMRy0iU8Fs6gWw2aJiPZQIYeqFsUWAoQLgGwn0gPApk02HLPBCeCSVOYPoWSHKxbU0UXg+MVWBdlg6ToTH/MBAc+rOuEVy6s2j+jg68utOrjOw4IviUDkwXU2f8DobVfUiz/918TUH7kSWb/Or/DYrRm4U1llxdAAAAAElFTkSuQmCC" />
+        <div>
+            <div class="sidebar-brand-text">Generated Assets</div>
+            <div class="sidebar-brand-sub">深度调研报告</div>
+        </div>
+    </div>
+    <div class="nav-items">
+        <button class="nav-btn active" onclick="go(0)">🏠 Cover</button>
+        <button class="nav-btn" onclick="go(1)">📋 Overview</button>
+        <button class="nav-btn" onclick="go(2)">🤖 AI Product</button>
+        <button class="nav-btn" onclick="go(3)">💰 Revenue Model</button>
+        <button class="nav-btn" onclick="go(4)">📈 Market Expansion</button>
+        <button class="nav-btn" onclick="go(5)">🏆 Competitive Edge</button>
+        <button class="nav-btn" onclick="go(6)">⚖️ Risks & Roadmap</button>
+        <button class="nav-btn" onclick="go(7)">🚀 Impact & Future</button>
+    </div>
+    <a class="nav-dashboard" href="../Dashboard.html">← Return to Top 50</a>
+</nav>
+
+<main id="main">
+
+<!-- ====== COVER ====== -->
+<section class="cover" id="ch-0">
+    <div class="cover-content">
+        <img class="cover-logo" alt="Generated Assets Logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAGFBMVEVHcEwAN5oAN5oAOJsAN5oAN5oAN5oAN5rpUSOvAAAAB3RSTlMAnW8f5UDDurmG1AAAAoRJREFUeJztWwluhDAMbALJ/v/HJbuqFsqSOOOxrarMAxjLV3zx9YWj5Jw25LIoPoJyp/VxQM3Fjz3Xx0dUFxnKBfsLydoaZe3RP9VgKcIypH9qwYw/Segbsgl9kdI3Oxjw5wn+DfSA6Pr+J5DNIPK+I6i+CPBTJYD4iRKA/DQ/EIf/GZRYmIy/Iwh5edHwP1a9ALADvKB2RJUBGpRG0BmgQWmE6Qx8hioW9QrYEKwAlQooCtB4gSIH7oHnQw4/ngtmirAuUAFIFsBtoMzCb4A24MRAAxgH6mfgDUwAmgugTkBJgy9gyZDmg6gX8vixVo0XBFsYIGVJuAC0RNwEQMKAKQAUh1QThAvwJ50wPA8wBcAyYfhbEP4aEusBrEEkhgHET/RCtC6neSFaFYf3BSwb4JPj8N6QFAcwf/x8gOOGCn5Kaa6b1xK8QMVPCAT1uFjJr98eKf1Qza80AmVer4gE0sYC5qftbEB+3voSywaEZYVKAvL6dtoT6Tv0yYfRYIE+VaWbXDHIzhdM1P8DmRKwVpgmAjSLmBKhawiXS55y9Tyt5kc8OxlOUVmz90HXUnJKtdaUsucZ140bN27c+M9ob8/27gQcMTfs75irzcloB8vp8fcV4WMB5FgBXNSAdtfDR1x3hRanuzP8ThJ0+F2sMGjGzINh2AdZCzDitzaCoBe1FWDMb6sCyYyUOYg6QTQitXwcRQMRy0iU8Fs6gWw2aJiPZQIYeqFsUWAoQLgGwn0gPApk02HLPBCeCSVOYPoWSHKxbU0UXg+MVWBdlg6ToTH/MBAc+rOuEVy6s2j+jg68utOrjOw4IviUDkwXU2f8DobVfUiz/918TUH7kSWb/Or/DYrRm4U1llxdAAAAAElFTkSuQmCC" />
+        <h1 class="cover-title">Generated Assets</h1>
+        <p class="cover-subtitle">AI-Powered Portfolio Management: Turn Any Investment Idea Into A Diversified Index</p>
+        <div class="cover-tags">
+            <span class="cover-tag">GenAI</span>
+            <span class="cover-tag">Portfolio Construction</span>
+            <span class="cover-tag">LLM Agents</span>
+            <span class="cover-tag">Retail Wealth</span>
+            <span class="cover-tag">Fintech</span>
+        </div>
+        <div class="cover-stats">
+            <div class="stat-box">
+                <div class="stat-number">$4.2B+</div>
+                <div class="stat-label">AUM</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">2.5M+</div>
+                <div class="stat-label">AI Portfolios</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">0.49%</div>
+                <div class="stat-label">Fee</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">4.7★</div>
+                <div class="stat-label">App Rating</div>
+            </div>
+        </div>
+        <div class="cover-scroll-hint">↓ Scroll to explore</div>
+    </div>
+</section>
+
+<!-- ====== CHAPTER 1: Company Overview (3 cards) ====== -->
+<section class="chapter" id="ch-1">
+    <div class="chapter-header">
+        <h2>Democratizing Institutional-Grade Portfolio Management</h2>
+        <span class="ch-sub">📋 Company Overview</span>
+        <span class="ch-counter" id="counter-1">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="1">
+
+        <!-- 1/3: Mission & Positioning -->
+        <div class="slide"><div class="card"><h3>A Shift in Investment Access</h3><div class="card-body">
+            <p>Generated Assets represents a fundamental shift in how everyday investors access customized portfolio management. Rather than choosing from a limited menu of ETFs or hiring expensive advisors, users articulate their investment thesis in plain English, and AI agents research, filter, and assemble diversified indices in minutes. This democratization transforms institutional-grade portfolio construction from a gatekept activity into a consumer-grade experience.</p>
+            <div class="callout">
+                <strong>Core Mission:</strong> Democratize institutional-grade portfolio management through AI, enabling every investor to turn conviction into diversified returns.
+            </div>
+            <p>Launched in November 2025 by Public.com, Generated Assets has rapidly scaled to 2.5M+ active portfolios and $4.2B in AUM—proof that there is massive demand for personalized, thematic investing outside the constraints of traditional ETFs.</p>
+        </div></div></div>
+
+        <!-- 2/3: Origin Story -->
+        <div class="slide"><div class="card"><h3>From Vision to Reality</h3><div class="card-body">
+            <p>Public.com's leadership recognized an opportunity to leverage recent advances in large language models and agentic AI to solve a structural problem: traditional investing platforms offered limited customization. Investors were confined to pre-built ETFs or required deep financial expertise to articulate custom theses.</p>
+            <p>By enabling investors to express their conviction in plain English—"invest in space exploration companies" or "semiconductor makers with 25%+ revenue growth"—AI agents could instantly research, filter thousands of securities, and assemble diversified indices tailored to each user's worldview.</p>
+            <div class="callout">
+                <strong>Key Insight:</strong> Generated Assets transforms investment from a gatekept professional activity into an accessible, personalized endeavor—answering: What if anyone could build an investment portfolio as unique as their own conviction?
+            </div>
+        </div></div></div>
+
+        <!-- 3/3: User Profile -->
+        <div class="slide"><div class="card"><h3>Who Uses Generated Assets?</h3><div class="card-body">
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">22-45</div>
+                    <div class="metric-label">Core Age Range</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">99.8%</div>
+                    <div class="metric-label">USA-Based</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">Tech-Savvy</div>
+                    <div class="metric-label">Profile</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">High Conviction</div>
+                    <div class="metric-label">Mindset</div>
+                </div>
+            </div>
+            <p style="margin-top: 16px;"><strong>Core Pain Points:</strong> Limited ability to express specific investment theses; time poverty in research; intimidation by professional tools; desire for thematic investing without advisor fees (0.5%-1%+).</p>
+            <div class="callout">
+                <strong>Behavioral Profile:</strong> Active daily/weekly engagement, high affinity for social proof, experimentation-oriented, preference for intuitive UX over data tables.
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-1"></div>
+</section>
+
+<!-- ====== CHAPTER 2: AI Product & UX (2 cards) ====== -->
+<section class="chapter" id="ch-2">
+    <div class="chapter-header">
+        <h2>Natural Language Meets Portfolio Science</h2>
+        <span class="ch-sub">🤖 AI Product & UX</span>
+        <span class="ch-counter" id="counter-2">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="2">
+
+        <!-- 1/2: Core Technology -->
+        <div class="slide"><div class="card"><h3>The Swarm Architecture</h3><div class="card-body">
+            <p>Generated Assets leverages a "swarm of evaluation agents"—distributed LLM-powered agents orchestrated to research, filter, and construct portfolios. Users simply type: "invest in water scarcity solutions with strong ESG ratings" or "semiconductor makers with 20%+ YoY revenue growth."</p>
+            <p>The system instantly:</p>
+            <div style="margin: 12px 0; padding-left: 18px; font-size: 14px; line-height: 1.9;">
+                <strong>• Intent Recognition:</strong> Parse the natural language investment thesis<br/>
+                <strong>• Market Research:</strong> Aggregate news, filings, and market data<br/>
+                <strong>• Security Filtering:</strong> Apply quantitative screens<br/>
+                <strong>• Portfolio Construction:</strong> Optimize weights and diversification<br/>
+                <strong>• Backtesting:</strong> Simulate historical performance vs. S&P 500
+            </div>
+            <div class="callout">
+                <strong>Magic Moment:</strong> Real-time backtesting shows how your conviction would have performed historically—turning abstract investment ideas into concrete historical performance evidence in seconds.
+            </div>
+        </div></div></div>
+
+        <!-- 2/2: Competitive Advantages -->
+        <div class="slide"><div class="card"><h3>Why Generated Assets Stands Out</h3><div class="card-body">
+            <p><strong>vs. Wealthfront/Betterment:</strong> Traditional robo-advisors offer lower fees (0.25%) but zero customization. You get one-size-fits-all ETF portfolios—no thematic investing, no personalization.</p>
+            <p><strong>vs. DIY Platforms:</strong> Charles Schwab and E*TRADE let you pick stocks, but require deep expertise. Generated Assets turns 2 hours of research into 2 minutes of conversation.</p>
+            <div class="callout">
+                <strong>Sustainable Moat:</strong> Combines robo-advisor accessibility with conviction-driven personalization previously reserved for $5M+ accounts. This 10x better UX for conviction investing is the competitive edge.
+            </div>
+            <div class="mode-boxes">
+                <div class="mode-box">
+                    <div class="mode-title">🎯 Natural Language</div>
+                    <div class="mode-desc">No competitors offer comparable LLM-driven portfolio construction.</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">⚡ Real-Time Backtesting</div>
+                    <div class="mode-desc">Instant historical performance analysis vs. S&P 500.</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">🔗 Seamless Execution</div>
+                    <div class="mode-desc">Integrated with Public.com ecosystem—no trading friction.</div>
+                </div>
+                <div class="mode-box">
+                    <div class="mode-title">📊 Transparent Reasoning</div>
+                    <div class="mode-desc">Clear breakdown of why stocks were selected.</div>
+                </div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-2"></div>
+</section>
+
+<!-- ====== CHAPTER 3: Revenue Model & Pricing (2 cards) ====== -->
+<section class="chapter" id="ch-3">
+    <div class="chapter-header">
+        <h2>Value Capture in Wealth Management</h2>
+        <span class="ch-sub">💰 Revenue Model & Pricing</span>
+        <span class="ch-counter" id="counter-3">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="3">
+
+        <!-- 1/2: Pricing Model -->
+        <div class="slide"><div class="card"><h3>0.49% Annual Management Fee</h3><div class="card-body">
+            <p>Generated Assets charges 0.49% annual management fee (charged monthly) on assets under management—competitive with robo-advisors (0.25%) but justified by high customization and unique UX.</p>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">0.49%</div>
+                    <div class="metric-label">Annual Fee</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">$8-15</div>
+                    <div class="metric-label">CAC</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">$2-3.2K</div>
+                    <div class="metric-label">10-Yr LTV</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">6 mo</div>
+                    <div class="metric-label">CAC Payback</div>
+                </div>
+            </div>
+            <div class="callout">
+                <strong>Unit Economics:</strong> CAC is extremely low ($8-15) because Generated Assets leverages cross-sell from Public.com's 15M+ existing user base. LTV is ~$1,800-3,200 per user over 10 years, creating a highly profitable flywheel.
+            </div>
+        </div></div></div>
+
+        <!-- 2/2: Path to Profitability -->
+        <div class="slide"><div class="card sparse"><h3>Scaling to Profitability</h3><div class="card-body">
+            <div class="timeline">
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2025</div><div class="timeline-text"><strong>Launch:</strong> Generated Assets soft-launches. ARR estimate $80-120M (ecosystem contribution).</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2026</div><div class="timeline-text"><strong>Scaling:</strong> 2.5M active portfolios, $4.2B AUM. Path to profitability evident with 75% gross margins (SaaS model).</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2027+</div><div class="timeline-text"><strong>Profitability Target:</strong> Achieve EBITDA-positive with expanded asset classes (crypto, fixed income, real estate).</div></div>
+            </div>
+            <div class="callout">
+                <strong>Growth Multiplier:</strong> Each new asset class (crypto, fixed income, commodities) expands addressable market and multiplies user LTV.
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-3"></div>
+</section>
+
+<!-- ====== CHAPTER 4: Market Expansion (2 cards) ====== -->
+<section class="chapter" id="ch-4">
+    <div class="chapter-header">
+        <h2>From Equity to Multi-Asset Ecosystem</h2>
+        <span class="ch-sub">📈 Market Expansion & Roadmap</span>
+        <span class="ch-counter" id="counter-4">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="4">
+
+        <!-- 1/2: Current State -->
+        <div class="slide"><div class="card"><h3>Today: US Equity Focus</h3><div class="card-body">
+            <p>Currently, Generated Assets supports US equity indices with 99.8% market coverage. The product covers thematic investing (AI, green energy, space tech) and strength-based screening (revenue growth, profitability, volatility).</p>
+            <div class="callout">
+                <strong>TAM Insight:</strong> $12T+ global retail investing AUM; $2T+ addressable in US. Generated Assets is capturing early adopters in the "conviction investing" segment—those frustrated with passive indexing.
+            </strong>
+            </div>
+            <p>Key trends enabling growth: Shift from passive indexing to thematic investing, increased GenAI adoption in financial tools, rising retail investor sophistication, and social/community-driven investment discovery.</p>
+        </div></div></div>
+
+        <!-- 2/2: Roadmap -->
+        <div class="slide"><div class="card"><h3>Near & Long-Term Expansion</h3><div class="card-body">
+            <p><strong>Near-term (2026-2027):</strong></p>
+            <ul style="margin: 12px 0; padding-left: 18px; font-size: 14px; line-height: 1.8; color: var(--text-2);">
+                <li>Crypto-weighted portfolios (Bitcoin, Ethereum, Layer 2 tokens)</li>
+                <li>Fixed income screening (bonds, treasuries, corporate debt)</li>
+                <li>International equity themes (Asia Tech, EU Growth)</li>
+            </ul>
+            <p style="margin-top: 16px;"><strong>Long-term (2027+):</strong></p>
+            <ul style="padding-left: 18px; font-size: 14px; line-height: 1.8; color: var(--text-2);">
+                <li>Real estate investment trusts (REITs)</li>
+                <li>Commodities (energy, agriculture, metals)</li>
+                <li>Alternative assets (private equity, hedge fund indices)</li>
+            </ul>
+            <div class="callout">
+                <strong>Growth Multiplier:</strong> Each expansion multiplies addressable market and user lifetime value—moving from $2T US equity TAM to $30T+ multi-asset global TAM.
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-4"></div>
+</section>
+
+<!-- ====== CHAPTER 5: Competitive Positioning (2 cards) ====== -->
+<section class="chapter" id="ch-5">
+    <div class="chapter-header">
+        <h2>Why Generated Assets Wins</h2>
+        <span class="ch-sub">🏆 Competitive Positioning</span>
+        <span class="ch-counter" id="counter-5">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="5">
+
+        <!-- 1/2: Direct Competitors -->
+        <div class="slide"><div class="card"><h3>The Competitive Landscape</h3><div class="card-body">
+            <p><strong>Wealthfront (0.25% fee):</strong> Automated robo-advisor with rule-based asset allocation. Lower fees, hands-off approach, established brand—but zero customization. You get one-size-fits-all ETF portfolios.</p>
+            <p><strong>Betterment (0.25% fee):</strong> Goal-based robo-advisor with behavioral finance angle. Tax optimization, low-cost ETFs—but limited thematic investing and minimal AI personalization.</p>
+            <p><strong>Moomoo (Futu):</strong> Social trading with algo-driven insights, Asia-focused. Community features and advanced charting—but targets active traders, not passive conviction investors.</p>
+            <div class="callout">
+                <strong>Generated Assets' Edge:</strong> Combines accessibility of robo-advisors (simple, low-friction) with conviction-driven personalization previously reserved for $5M+ accounts managed by hedge fund PMs. This 10x better UX is the durable moat.
+            </div>
+        </div></div></div>
+
+        <!-- 2/2: Data Moat -->
+        <div class="slide"><div class="card"><h3>Long-Term Competitive Moats</h3><div class="card-body">
+            <p><strong>Data Advantage:</strong> Public.com's 15M+ user dataset for model training—real portfolio construction conversations, backtesting outcomes, user feedback loops.</p>
+            <p><strong>Fine-Tuned Models:</strong> Domain-specific financial knowledge encoded into LLM weights. Every user conversation refines the system's understanding of what makes a "good" portfolio.</p>
+            <p><strong>UX Integration:</strong> Natural language → execution is seamlessly embedded in Public.com's mobile-first ecosystem. Competitors would need to build an entire platform.</p>
+            <div class="callout">
+                <strong>Regulatory Moat:</strong> Generated Assets has navigated compliance landscape for AI-driven advisory (with disclaimers). New entrants face similar regulatory hurdles—but Generated Assets' head start creates a barrier.
+            </div>
+            <p style="margin-top: 16px;"><strong>Community Flywheel:</strong> 2.5M+ user-generated portfolios create network effects—investors discover thematic portfolios from peers, fork them, create variations. This social discovery accelerates adoption.</p>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-5"></div>
+</section>
+
+<!-- ====== CHAPTER 6: Risks & Regulatory (2 cards) ====== -->
+<section class="chapter" id="ch-6">
+    <div class="chapter-header">
+        <h2>Navigating Challenges & Guardrails</h2>
+        <span class="ch-sub">⚖️ Risks & Regulatory Landscape</span>
+        <span class="ch-counter" id="counter-6">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="6">
+
+        <!-- 1/2: AI & Operational Risks -->
+        <div class="slide"><div class="card"><h3>AI Hallucination & Model Risk</h3><div class="card-body">
+            <p><strong>Hallucination Risk:</strong> AI agents may "hallucinate" stock research—citing non-existent earnings data or misinterpreting news articles. A user could build a portfolio based on fabricated fundamentals.</p>
+            <p><strong>Backtest Correlation Breakdown:</strong> Historical backtests assume past correlations hold in the future. During market regime shifts (macro crisis, sector rotation), AI-selected portfolios could underperform dramatically.</p>
+            <p><strong>Concentration Risk:</strong> Users might create overly concentrated "AI-selected" portfolios without understanding diversification limits. The system should enforce diversification requirements.</p>
+            <div class="callout">
+                <strong>Mitigation Strategy:</strong> Clear disclaimers ("not investment advice"), human review layer on high-confidence recommendations, continuous model auditing, diversification enforcement, regular backtesting against new market regimes.
+            </div>
+        </div></div></div>
+
+        <!-- 2/2: Regulatory & Market Headwinds -->
+        <div class="slide"><div class="card"><h3>SEC/FINRA Oversight & Competition</h3><div class="card-body">
+            <p><strong>Regulatory Scrutiny:</strong> SEC and FINRA are actively monitoring AI-driven investment advice. Generated Assets could face classification as an "investment adviser" requiring registration and compliance overhead.</p>
+            <p><strong>Competitive Pressure:</strong> Schwab, Fidelity, and Vanguard are integrating AI into their platforms. These incumbents have regulatory relationships, massive user bases, and capital to compete.</p>
+            <p><strong>Market Headwinds:</strong> Market volatility may dampen new user acquisition. During downturns, retail investors become more cautious—reducing demand for "personalized thematic indices."</p>
+            <div class="callout">
+                <strong>Upside Opportunity:</strong> Despite risks, market trends strongly favor Generated Assets. Shift from passive indexing to conviction investing, rising retail sophistication, and GenAI adoption create a structural tailwind. Company is well-positioned to become the go-to platform for thematic, AI-assisted investing.
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-6"></div>
+</section>
+
+<!-- ====== CHAPTER 7: User Stories & Impact (2 cards) ====== -->
+<section class="chapter" id="ch-7">
+    <div class="chapter-header">
+        <h2>The Future of Investing</h2>
+        <span class="ch-sub">🚀 Impact & Future Outlook</span>
+        <span class="ch-counter" id="counter-7">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="7">
+
+        <!-- 1/2: User Stories -->
+        <div class="slide"><div class="card"><h3>Conviction in Action</h3><div class="card-body">
+            <p><strong>Story 1 – Space Enthusiast:</strong> Builds "Space Exploration Index" (SpaceX, Lockheed, Rocket Lab) in 2 minutes vs. 20 hours of manual research. Backtesting shows 1.8x outperformance vs. S&P 500 over past 3 years.</p>
+            <p><strong>Story 2 – ESG Investor:</strong> Creates "Renewable Energy + Carbon Negative" index auto-filtered for low emissions and profitability. AI surfaces 40 candidates meeting criteria; user allocates $50K.</p>
+            <p><strong>Story 3 – Options Trader:</strong> Bases "High IV Rank Tech" portfolio on AI-discovered volatility trades. Uses backtesting to validate edge before deploying capital.</p>
+            <div class="callout">
+                <strong>Common Thread:</strong> All three users express conviction without deep expertise. Generated Assets turns abstract investment ideas into executable, backtested portfolios—democratizing a capability previously limited to institutional investors.
+            </div>
+        </div></div></div>
+
+        <!-- 2/2: The Bigger Picture -->
+        <div class="slide"><div class="card sparse"><h3>Why This Matters for Investing</h3><div class="card-body">
+            <p>Generated Assets proves that GenAI isn't just a productivity tool—it's a fundamental UX innovation that transforms how people interact with complex domains.</p>
+            <p>As AI continues advancing, expect portfolio construction to evolve from static asset allocation to dynamic, personalized, conviction-driven strategies accessible to anyone with an idea and an internet connection.</p>
+            <div class="callout">
+                <strong>The Thesis:</strong> Generated Assets is the early leader in this inevitable future. The company has captured the right market moment—when AI capabilities, regulatory clarity, and retail demand for customization align. Winner-take-most dynamics suggest the company could scale to become the Robinhood of thematic, AI-assisted investing.
+            </div>
+            <p style="margin-top: 16px;"><strong>IPO Outlook:</strong> Public.com is positioning Generated Assets for public markets. Once profitability is achieved (~2027-2028), expect NYSE listing with potential for $15B+ valuation. Generated Assets is not a feature—it's a new business model that redefines wealth management for the GenAI era.</p>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-7"></div>
+</section>
+
+</main>
+
+<script>
+    // Navigation
+    function go(n) {
+        const main = document.getElementById('main');
+        const chapters = main.querySelectorAll('.cover, .chapter');
+        if (chapters[n]) {
+            chapters[n].scrollIntoView({ behavior: 'smooth' });
+            updateNav(n);
+        }
+    }
+
+    // Update active nav button
+    function updateNav(n) {
+        document.querySelectorAll('.nav-btn').forEach((btn, i) => {
+            btn.classList.toggle('active', i === n);
+        });
+    }
+
+    // Scroll detection for nav & counter update
+    const main = document.getElementById('main');
+    main.addEventListener('scroll', () => {
+        const chapters = main.querySelectorAll('.cover, .chapter');
+        let active = 0;
+        chapters.forEach((ch, i) => {
+            const rect = ch.getBoundingClientRect();
+            if (rect.top <= window.innerHeight / 2) active = i;
+        });
+        updateNav(active);
+
+        // Update counters and dots for each chapter
+        document.querySelectorAll('.chapter').forEach((ch, idx) => {
+            const counter = ch.querySelector('.ch-counter');
+            const track = ch.querySelector('.card-track');
+            if (track) {
+                const scrollPercentage = track.scrollLeft / (track.scrollWidth - track.clientWidth) || 0;
+                const totalSlides = ch.querySelectorAll('.slide').length;
+                const currentSlide = Math.round(scrollPercentage * (totalSlides - 1)) + 1;
+                if (counter) counter.textContent = currentSlide + ' / ' + totalSlides;
+
+                // Update dots
+                const dotsBar = ch.querySelector('.dots-bar');
+                if (dotsBar) {
+                    dotsBar.innerHTML = '';
+                    for (let i = 0; i < totalSlides; i++) {
+                        const dot = document.createElement('button');
+                        dot.className = 'dot' + (i + 1 === currentSlide ? ' active' : '');
+                        dot.onclick = () => {
+                            const slideWidth = track.children[0].clientWidth;
+                            track.scrollLeft = i * (slideWidth + 0); // approx scroll
+                        };
+                        dotsBar.appendChild(dot);
+                    }
+                }
+            }
+        });
+    });
+
+    // Init
+    window.addEventListener('load', () => main.dispatchEvent(new Event('scroll')));
+</script>
+
+</body>
+</html>

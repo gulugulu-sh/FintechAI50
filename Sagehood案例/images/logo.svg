@@ -1,0 +1,61 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="200" height="200" fill="#FFFFFF" rx="12"/>
+
+  <!-- Main brand color: Deep blue/teal (tech-forward) -->
+  <defs>
+    <linearGradient id="sagegradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0A66C2;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1B8FD4;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="accentgradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF6B35;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFA500;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- AI Agent Symbol - 8 interconnected nodes representing multi-agent system -->
+  <g id="agents">
+    <!-- Central orchestrator -->
+    <circle cx="100" cy="100" r="12" fill="url(#sagegradient)" stroke="white" stroke-width="2"/>
+
+    <!-- 8 surrounding agents in circle -->
+    <g id="agent-nodes">
+      <!-- Node 1 (top) -->
+      <circle cx="100" cy="50" r="8" fill="url(#accentgradient)" stroke="white" stroke-width="1.5"/>
+      <line x1="100" y1="62" x2="100" y2="88" stroke="url(#sagegradient)" stroke-width="2"/>
+
+      <!-- Node 2 (top-right) -->
+      <circle cx="135.4" cy="64.6" r="8" fill="url(#accentgradient)" stroke="white" stroke-width="1.5"/>
+      <line x1="129.3" y1="70.7" x2="111.8" y2="88.2" stroke="url(#sagegradient)" stroke-width="2"/>
+
+      <!-- Node 3 (right) -->
+      <circle cx="150" cy="100" r="8" fill="url(#accentgradient)" stroke="white" stroke-width="1.5"/>
+      <line x1="138" y1="100" x2="112" y2="100" stroke="url(#sagegradient)" stroke-width="2"/>
+
+      <!-- Node 4 (bottom-right) -->
+      <circle cx="135.4" cy="135.4" r="8" fill="url(#accentgradient)" stroke="white" stroke-width="1.5"/>
+      <line x1="129.3" y1="129.3" x2="111.8" y2="111.8" stroke="url(#sagegradient)" stroke-width="2"/>
+
+      <!-- Node 5 (bottom) -->
+      <circle cx="100" cy="150" r="8" fill="url(#accentgradient)" stroke="white" stroke-width="1.5"/>
+      <line x1="100" y1="138" x2="100" y2="112" stroke="url(#sagegradient)" stroke-width="2"/>
+
+      <!-- Node 6 (bottom-left) -->
+      <circle cx="64.6" cy="135.4" r="8" fill="url(#accentgradient)" stroke="white" stroke-width="1.5"/>
+      <line x1="70.7" y1="129.3" x2="88.2" y2="111.8" stroke="url(#sagegradient)" stroke-width="2"/>
+
+      <!-- Node 7 (left) -->
+      <circle cx="50" cy="100" r="8" fill="url(#accentgradient)" stroke="white" stroke-width="1.5"/>
+      <line x1="62" y1="100" x2="88" y2="100" stroke="url(#sagegradient)" stroke-width="2"/>
+
+      <!-- Node 8 (top-left) -->
+      <circle cx="64.6" cy="64.6" r="8" fill="url(#accentgradient)" stroke="white" stroke-width="1.5"/>
+      <line x1="70.7" y1="70.7" x2="88.2" y2="88.2" stroke="url(#sagegradient)" stroke-width="2"/>
+    </g>
+  </g>
+
+  <!-- Subtle tech accent lines -->
+  <line x1="35" y1="180" x2="55" y2="180" stroke="#E0E0E0" stroke-width="1.5" opacity="0.6"/>
+  <line x1="145" y1="180" x2="165" y2="180" stroke="#E0E0E0" stroke-width="1.5" opacity="0.6"/>
+</svg>

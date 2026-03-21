@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- Background -->
+  <rect width="200" height="200" fill="#2563EB" rx="24"/>
+
+  <!-- Kite shape - stylized K for "Kite" -->
+  <g fill="white">
+    <!-- Vertical line of K -->
+    <rect x="70" y="40" width="16" height="120" rx="8"/>
+
+    <!-- Top diagonal of K -->
+    <path d="M 86 60 L 130 90 L 125 100 L 81 70 Z" fill="white"/>
+
+    <!-- Bottom diagonal of K -->
+    <path d="M 86 120 L 130 150 L 125 160 L 81 130 Z" fill="white"/>
+
+    <!-- Agent dot indicator -->
+    <circle cx="140" cy="80" r="8" fill="#FBBF24" opacity="0.8"/>
+  </g>
+
+  <!-- Text label -->
+  <text x="100" y="175" font-family="Inter, sans-serif" font-size="16" font-weight="700" fill="white" text-anchor="middle">KiteAI</text>
+</svg>

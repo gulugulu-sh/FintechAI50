@@ -1,0 +1,41 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" width="200" height="200">
+  <!-- Define gradients and patterns -->
+  <defs>
+    <linearGradient id="tealGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0A7F7E;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1B8D8B;stop-opacity:1" />
+    </linearGradient>
+
+    <pattern id="guilloche" patternUnits="userSpaceOnUse" width="20" height="20">
+      <path d="M0,0 Q10,10 20,20 M20,0 Q10,10 0,20" stroke="#0A7F7E" stroke-width="0.5" fill="none" opacity="0.2"/>
+    </pattern>
+  </defs>
+
+  <!-- Background -->
+  <rect width="200" height="200" fill="#FFFFFF"/>
+
+  <!-- Main circle background with teal gradient -->
+  <circle cx="100" cy="100" r="95" fill="url(#tealGradient)"/>
+
+  <!-- Subtle guilloche pattern -->
+  <circle cx="100" cy="100" r="95" fill="url(#guilloche)" opacity="0.15"/>
+
+  <!-- Verified Tick Symbol (V shape) - centered, white -->
+  <!-- Left arm of V -->
+  <path d="M 65 110 L 85 140 L 95 128 L 75 98 Z" fill="#FFFFFF" opacity="0.95"/>
+
+  <!-- Right arm of V (checkmark style) -->
+  <path d="M 95 128 L 115 100 L 135 75 L 145 85 L 125 115 L 110 135 Z" fill="#FFFFFF"/>
+
+  <!-- Light teal accent box around symbol for security feature reference -->
+  <rect x="55" y="65" width="90" height="90" fill="none" stroke="#B8E5E4" stroke-width="1.5" opacity="0.6" rx="4"/>
+
+  <!-- Decorative accent dots (security element) -->
+  <circle cx="65" cy="75" r="2" fill="#E8F8F7" opacity="0.8"/>
+  <circle cx="135" cy="75" r="2" fill="#E8F8F7" opacity="0.8"/>
+  <circle cx="65" cy="145" r="2" fill="#E8F8F7" opacity="0.8"/>
+  <circle cx="135" cy="145" r="2" fill="#E8F8F7" opacity="0.8"/>
+
+  <!-- Subtle inner circle highlight for depth -->
+  <circle cx="100" cy="100" r="90" fill="none" stroke="#FFFFFF" stroke-width="0.5" opacity="0.3"/>
+</svg>

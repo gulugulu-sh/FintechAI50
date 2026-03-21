@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prospero AI 深度调研报告</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #FAF7F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #F0EBE4;
+            --accent: #D97757;
+            --accent-2: #C4602F;
+            --accent-light: #FAE9E0;
+            --accent-green: #4A8C6F;
+            --accent-blue: #3D6B9E;
+            --text: #1A1514;
+            --text-2: #5C5044;
+            --text-3: #9E8E82;
+            --border: #E5DDD4;
+            --sidebar-bg: #1A1514;
+            --cover-bg: #21248D;
+            --cover-accent: #341CFF;
+            --cover-highlight: #FFE36D;
+            --header-h: 72px;
+            --dots-h: 40px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0;
+            width: 220px; height: 100vh;
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 12px; z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            object-fit: contain; background: rgba(255,255,255,0.1);
+        }
+        .sidebar-brand-text { font-size: 14px; font-weight: 700; }
+        .sidebar-brand-sub { font-size: 10px; opacity: 0.6; }
+        .nav-items { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .nav-btn {
+            display: block; width: 100%;
+            background: none; border: none; color: rgba(255,255,255,0.55);
+            padding: 8px 12px; border-radius: 8px;
+            text-align: left; font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-btn.active { background: rgba(217,119,87,0.2); color: var(--accent); font-weight: 600; }
+
+        /* ===== MAIN ===== */
+        main {
+            margin-left: 220px; height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        main::-webkit-scrollbar { width: 0; }
+        main { scrollbar-width: none; }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 100vh; scroll-snap-align: start;
+            background: linear-gradient(135deg, var(--cover-bg) 0%, #2F2E9F 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+            color: white; position: relative; overflow: hidden;
+        }
+        .cover::before {
+            content: ''; position: absolute;
+            top: -40%; right: -15%;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(52,28,255,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: drift 20s ease-in-out infinite;
+        }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(30px,-30px); }
+        }
+        .cover-content { position: relative; z-index: 2; max-width: 700px; }
+        .cover-logo { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 20px; background: rgba(255,255,255,0.1); object-fit: contain; }
+        .cover-title { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+        .cover-subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; line-height: 1.6; }
+        .cover-tags { display: flex; gap: 10px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
+        .cover-tag { padding: 5px 14px; background: rgba(255,255,255,0.12); border-radius: 20px; font-size: 12px; }
+        .cover-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+        .stat-box { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+        .cover-scroll-hint {
+            position: absolute; bottom: 24px;
+            font-size: 13px; opacity: 0.6;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* ===== CHAPTER LAYOUT ===== */
+        .chapter {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        /* Fixed chapter header */
+        .chapter-header {
+            flex-shrink: 0;
+            height: var(--header-h);
+            padding: 16px 48px 0 48px;
+            display: flex; align-items: baseline; gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .chapter-header h2 {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chapter-header .ch-sub {
+            font-size: 12px; color: var(--text-3); white-space: nowrap;
+        }
+        .chapter-header .ch-counter {
+            margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+
+        /* Horizontal card scroller */
+        .card-track {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .card-track::-webkit-scrollbar { display: none; }
+        .card-track { scrollbar-width: none; }
+
+        /* Each slide fills available height */
+        .slide {
+            flex: 0 0 100%; width: 100%;
+            scroll-snap-align: start;
+            height: calc(100vh - var(--header-h) - var(--dots-h));
+            padding: 24px 48px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .slide::-webkit-scrollbar { width: 3px; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Card inside slide — fills slide */
+        .card {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .card h3 {
+            font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+            flex-shrink: 0;
+        }
+        .card-body { flex: 1; overflow-y: auto; }
+        .card-body::-webkit-scrollbar { width: 3px; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .card p { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-bottom: 12px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        /* Dots bar at bottom */
+        .dots-bar {
+            flex-shrink: 0;
+            height: var(--dots-h);
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; background: var(--bg);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); cursor: pointer; transition: all 0.3s;
+            border: none; padding: 0;
+        }
+        .dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+        /* ===== CONTENT-SPARSE: bigger text for cards with less content ===== */
+        .card.sparse p { font-size: 16px; line-height: 2; }
+        .card.sparse h3 { font-size: 22px; margin-bottom: 20px; }
+        .card.sparse .callout { font-size: 15px; padding: 18px 22px; }
+        .card.sparse .quote-block { font-size: 16px; padding: 20px 24px; }
+
+        /* ===== REUSABLE COMPONENTS ===== */
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 18px; border-radius: 6px;
+            font-size: 13px; line-height: 1.7; color: var(--text-2);
+            margin: 14px 0;
+        }
+        .callout strong { color: var(--accent-2); }
+
+        .quote-block {
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px; margin: 14px 0;
+            font-style: italic; font-size: 14px;
+            color: var(--text-2); line-height: 1.8;
+            background: var(--bg-muted); border-radius: 0 8px 8px 0;
+        }
+        .quote-attr { font-style: normal; font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-muted);
+            padding: 16px; border-radius: 10px; text-align: center;
+        }
+        .metric-value { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .metric-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+        .flex-row { display: flex; gap: 24px; margin: 14px 0; }
+        .flex-col { flex: 1; min-width: 0; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th { background: var(--bg-muted); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+
+        .phone-gallery { display: flex; gap: 12px; justify-content: center; margin: 16px 0; flex-wrap: wrap; }
+        .phone-frame {
+            flex-shrink: 0; background: var(--sidebar-bg);
+            border-radius: 24px; padding: 8px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+        }
+        .phone-frame img {
+            display: block; border-radius: 16px;
+            width: 110px; height: auto;
+            aspect-ratio: 9/16; object-fit: cover;
+            background: var(--bg-muted);
+        }
+        .phone-label { text-align: center; font-size: 10px; color: var(--text-3); margin-top: 6px; }
+
+        .wide-screenshot {
+            width: 100%; max-width: 560px; border-radius: 12px;
+            border: 1px solid var(--border); margin: 12px auto; display: block;
+            aspect-ratio: 16/9; object-fit: cover; background: var(--bg-muted);
+        }
+
+        .mode-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 14px 0; }
+        .mode-box { background: var(--bg-muted); padding: 14px; border-radius: 10px; border-left: 4px solid var(--accent); }
+        .mode-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+        .mode-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .insight-card {
+            flex: 1; display: flex; flex-direction: column;
+            background: var(--bg-card); border-radius: 14px; padding: 28px 32px;
+            border: 1px solid var(--border);
+        }
+        .insight-emoji { font-size: 28px; margin-bottom: 10px; }
+        .insight-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+        .insight-card p { font-size: 15px; line-height: 1.9; color: var(--text-2); margin-bottom: 14px; }
+        .insight-highlight {
+            margin-top: auto;
+            background: var(--accent-light); border-left: 4px solid var(--accent);
+            padding: 12px 16px; border-radius: 6px;
+            font-size: 14px; font-weight: 600; color: var(--accent-2);
+        }
+
+        .news-item {
+            padding: 14px; background: var(--bg-card);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px; border: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+        .news-date { font-size: 11px; color: var(--text-3); font-weight: 600; margin-bottom: 4px; }
+        .news-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .news-title a { color: var(--accent-blue); text-decoration: none; }
+        .news-title a:hover { color: var(--accent); text-decoration: underline; }
+        .news-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+        .references { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--border); }
+        .references h4 { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+        .references ul { list-style: none; columns: 2; column-gap: 20px; }
+        .references li { font-size: 11px; margin-bottom: 5px; break-inside: avoid; }
+        .references a { color: var(--accent-blue); text-decoration: none; }
+
+        .avatar {
+            width: 56px; height: 56px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 700; font-size: 20px;
+        }
+
+        .position-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+        .position-card { padding: 12px; border-radius: 10px; }
+        .position-title { font-weight: 700; font-size: 13px; margin-bottom: 3px; }
+
+        .story-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin: 14px 0; }
+        .story-card { background: var(--bg-muted); border-radius: 10px; padding: 18px; }
+        .story-name { font-weight: 700; font-size: 14px; margin-bottom: 2px; }
+        .story-tag { font-size: 11px; color: var(--text-3); margin-bottom: 8px; }
+        .story-text { font-size: 13px; color: var(--text-2); line-height: 1.7; font-style: italic; }
+
+        .timeline { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+        .timeline-item { display: flex; gap: 12px; align-items: flex-start; }
+        .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
+        .timeline-year { font-weight: 700; font-size: 13px; color: var(--accent); min-width: 48px; }
+        .timeline-text { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+
+        .dashboard-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s;
+            margin-top: 12px;
+        }
+        .dashboard-btn:hover {
+            background: var(--accent-2);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(217,119,87,0.3);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            main { margin-left: 0; }
+            .chapter-header { padding: 12px 20px 0 20px; }
+            .slide { padding: 16px 20px; }
+            .cover-title { font-size: 28px; }
+            .flex-row { flex-direction: column; }
+        }
+    .nav-dashboard{display:block;width:calc(100% - 8px);margin:8px 4px 4px;background:rgba(217,119,87,0.15);border:1px solid rgba(217,119,87,0.3);color:var(--accent,#D97757);padding:10px 12px;border-radius:8px;text-align:center;font-size:12px;font-family:inherit;cursor:pointer;transition:all .2s;text-decoration:none;font-weight:600;letter-spacing:.3px}.nav-dashboard:hover{background:rgba(217,119,87,0.25);transform:translateY(-1px)}
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <img class="sidebar-logo" alt="Prospero" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAM1BMVEX+/v7Zje7rl/CQZej////Jhe29f+z///+SZOj///+aa+mlceqxeeuDXebx3frcw/bGpvFgHKR5AAAACnRSTlNT////////d/l84WcWOQAABEBJREFUeJztm4mSoyAQhqMoU6Movv/TTh+cRiuCQnaraPAAs/5fH3ES475evz9ftN/X63f4qr1ePw2gATSABtAAGkADaABZ/27d1m8CrNuyLNvXAEh+eQghA8DKgwldHyCQR5vulkIiwE6e8nAPIQngQP52KSQArMfyN0vhOgBEWp4i5JfCdQC96GGdTxFUJkIKwDKvgxanCHmlkAQAfg6EIMQiaGU6jfNKIQVACPYT3gzioOWVQhLAQq5CKajFeB6HQWSUQloEWBRKAapRWFURgySWQiIAi6Cf2sovAYcwISoJYFSwFHbK/uCcgJAJwKHeTgiEkJdLIQEgUpigUzWeIVwthRSAKWpgeGGaxFG7XgpJEQgEzEZyZKxqwADDS6WQFIHJdVpQhEpBCDthtCdDdOGqkAbghK0UbrAUPNk0+ZdN4vMfiLQUHJqgC1NwUPidz0lI+UAiTwgmfNfp6e0opker5wAGDvWxUSnE8ni5nMWjAOAQnXu2PTTtQkQHZhzD9mEA8nNmeWizXWCAHq8zz3NEiOZxAIfAGBaF3MZSIJaNY4VwBQCgFPDUcxwBmmDHMRT8EliVABjYzwCBNjTAUoCPz5PFKhIBQpiM8OwZeF/BsWBcCgBDPR/bsM1VAOBb+jFCDCDLAWA1spO281IRAKsRVS0BbwFAccNVYYCB3FVhowgoh1McgBBUiBBFQFUAgGs+KinSU1QDdldVSAEDcAhYc9i8fJUIbOy+MwAIrDiA3slXBtDqTX8HMJYEwORzJ1/NngGQZqogACefdKX0ewggLY4sFwHNclKZ5nYAIJgsBaDRu1jaqloAHpUBWI3vbCparwjgJ4oAbKG0kn6lJHwT2aSzMhFw8u+GH0Z3U48D7AUC6+DD6LiffBjgXcArgfx2MP0kAMuPu4Zdji75dsoc/PT1OAVg4/PLUYY7tNKcm5FhZAD3XARWPJs5cbBDXnLyRzcVhOfTF/QUgFjdCI0m+TxtDrmXff45JQmATfoNClH07bT0r4Bj3YWbdQkAY2AWhuT9KLZLt8kyAYxtx9PX5e8B4IVnO5G//FtaPgAmWJ/IX0l+HkCHnZo28t1bo2NFAPjsNsNr5yfC5WryMwCcu10H730XEDNnDvaJP5kkAfggE0DX2W4xUpKfAdB5QwCvbyeTkp8OEBSaAYhC0CUmPwNgH4EwJF2Xmvx7ABDsaJiR/JsAawyQ//P5QwDZ+v8dQE/dAvRuohKAFewJwGjTpg5AHxBgBCxMXzEC7DJHwA2g1QEgqb43Eej9oFYKSN9AAIABol4FoO976zVHoHf6tQDYe1K0KTBWCcDFgAF8QKoC9CHANyLQAL4GMOhvAwzDGcCdRxrT7hGtRwAVn6gMEBxA5WdKHYIFuP14c86dUg/wwNPVefeKGeCRh7sz75av63D/meY7AM9ZA2gADaABNIAG0AD+gf/8/m37AzOJKO1n7VQ5AAAAAElFTkSuQmCC" />
+        <div>
+            <div class="sidebar-brand-text">Prospero</div>
+            <div class="sidebar-brand-sub">深度调研报告</div>
+        </div>
+    </div>
+    <div class="nav-items">
+        <button class="nav-btn active" onclick="go(0)">🏠 封面</button>
+        <button class="nav-btn" onclick="go(1)">📋 公司与使命</button>
+        <button class="nav-btn" onclick="go(2)">🤖 核心技术</button>
+        <button class="nav-btn" onclick="go(3)">💰 商业模式</button>
+        <button class="nav-btn" onclick="go(4)">📈 市场与竞争</button>
+        <button class="nav-btn" onclick="go(5)">🚀 发展里程</button>
+        <button class="nav-btn" onclick="go(6)">💡 核心启示</button>
+        <button class="nav-btn" onclick="go(7)">📰 近期要闻</button>
+    </div>
+<a class="nav-dashboard" href="../Dashboard.html">← 返回 Top 50 图谱</a>
+</nav>
+
+<main id="main">
+
+<!-- ====== COVER ====== -->
+<section class="cover" id="ch-0">
+    <div class="cover-content">
+        <img class="cover-logo" alt="Prospero Logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAM1BMVEX+/v7Zje7rl/CQZej////Jhe29f+z///+SZOj///+aa+mlceqxeeuDXebx3frcw/bGpvFgHKR5AAAACnRSTlNT////////d/l84WcWOQAABEBJREFUeJztm4mSoyAQhqMoU6Movv/TTh+cRiuCQnaraPAAs/5fH3ES475evz9ftN/X63f4qr1ePw2gATSABtAAGkADaABZ/27d1m8CrNuyLNvXAEh+eQghA8DKgwldHyCQR5vulkIiwE6e8nAPIQngQP52KSQArMfyN0vhOgBEWp4i5JfCdQC96GGdTxFUJkIKwDKvgxanCHmlkAQAfg6EIMQiaGU6jfNKIQVACPYT3gzioOWVQhLAQq5CKajFeB6HQWSUQloEWBRKAapRWFURgySWQiIAi6Cf2sovAYcwISoJYFSwFHbK/uCcgJAJwKHeTgiEkJdLIQEgUpigUzWeIVwthRSAKWpgeGGaxFG7XgpJEQgEzEZyZKxqwADDS6WQFIHJdVpQhEpBCDthtCdDdOGqkAbghK0UbrAUPNk0+ZdN4vMfiLQUHJqgC1NwUPidz0lI+UAiTwgmfNfp6e0opker5wAGDvWxUSnE8ni5nMWjAOAQnXu2PTTtQkQHZhzD9mEA8nNmeWizXWCAHq8zz3NEiOZxAIfAGBaF3MZSIJaNY4VwBQCgFPDUcxwBmmDHMRT8EliVABjYzwCBNjTAUoCPz5PFKhIBQpiM8OwZeF/BsWBcCgBDPR/bsM1VAOBb+jFCDCDLAWA1spO281IRAKsRVS0BbwFAccNVYYCB3FVhowgoh1McgBBUiBBFQFUAgGs+KinSU1QDdldVSAEDcAhYc9i8fJUIbOy+MwAIrDiA3slXBtDqTX8HMJYEwORzJ1/NngGQZqogACefdKX0ewggLY4sFwHNclKZ5nYAIJgsBaDRu1jaqloAHpUBWI3vbCparwjgJ4oAbKG0kn6lJHwT2aSzMhFw8u+GH0Z3U48D7AUC6+DD6LiffBjgXcArgfx2MP0kAMuPu4Zdji75dsoc/PT1OAVg4/PLUYY7tNKcm5FhZAD3XARWPJs5cbBDXnLyRzcVhOfTF/QUgFjdCI0m+TxtDrmXff45JQmATfoNClH07bT0r4Bj3YWbdQkAY2AWhuT9KLZLt8kyAYxtx9PX5e8B4IVnO5G//FtaPgAmWJ/IX0l+HkCHnZo28t1bo2NFAPjsNsNr5yfC5WryMwCcu10H730XEDNnDvaJP5kkAfggE0DX2W4xUpKfAdB5QwCvbyeTkp8OEBSaAYhC0CUmPwNgH4EwJF2Xmvx7ABDsaJiR/JsAawyQ//P5QwDZ+v8dQE/dAvRuohKAFewJwGjTpg5AHxBgBCxMXzEC7DJHwA2g1QEgqb43Eej9oFYKSN9AAIABol4FoO976zVHoHf6tQDYe1K0KTBWCcDFgAF8QKoC9CHANyLQAL4GMOhvAwzDGcCdRxrT7hGtRwAVn6gMEBxA5WdKHYIFuP14c86dUg/wwNPVefeKGeCRh7sz75av63D/meY7AM9ZA2gADaABNIAG0AD+gf/8/m37AzOJKO1n7VQ5AAAAAElFTkSuQmCC" />
+        <h1 class="cover-title">Prospero</h1>
+        <p class="cover-subtitle">AI如何赋能零售投资者做出制度级别的投资决策——从股票筛选到机构级洞察的民主化革命</p>
+        <div class="cover-tags">
+            <span class="cover-tag">股票筛选</span>
+            <span class="cover-tag">AI模型</span>
+            <span class="cover-tag">Fintech</span>
+            <span class="cover-tag">零售投资</span>
+            <span class="cover-tag">Freemium</span>
+        </div>
+        <div class="cover-stats">
+            <div class="stat-box">
+                <div class="stat-number">91%</div>
+                <div class="stat-label">超越S&P表现</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">100M+</div>
+                <div class="stat-label">数据点整合</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">10000+</div>
+                <div class="stat-label">专有模型</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">$16M</div>
+                <div class="stat-label">融资估值</div>
+            </div>
+        </div>
+        <div class="cover-scroll-hint">↓ 向下滑动探索</div>
+    </div>
+</section>
+
+<!-- ====== CHAPTER 1: 公司与使命 ====== -->
+<section class="chapter" id="ch-1">
+    <div class="chapter-header">
+        <h2>从机构级数据到散户手中的革命</h2>
+        <span class="ch-sub">📋 公司与使命</span>
+        <span class="ch-counter" id="counter-1">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="1">
+
+        <!-- 1/3 创始人与愿景 -->
+        <div class="slide"><div class="card"><h3>George Kailas的华尔街困惑</h3><div class="card-body">
+            <p>George Kailas在Praesidium Investment Management和其他知名投资机构度过了多年的股权分析生涯。每天，他都看到同样的数据和分析工具掌握在极少数人手中，而全球数百万散户投资者却被排除在这个信息门槛之外。</p>
+            <p>在Instadat担任CEO期间，他见证了AI在金融预测中的巨大潜力。这个启发激发了他的想法：能否通过一个民主化的AI平台，将华尔街机构级的投资洞察带给每一个零售投资者，打破信息不对称的枷锁？</p>
+            <div class="callout">
+                <strong>使命：</strong> 通过AI赋能零售投资者，让他们能够获得机构级的投资洞察，打破零售投资者和专业投资者之间的信息鸿沟。Prospero不是简单的财务工具，而是一个民主化的投资赋权平台。
+            </div>
+        </div></div></div>
+
+        <!-- 2/3 公司概况 -->
+        <div class="slide"><div class="card"><h3>Prospero的三层价值主张</h3><div class="card-body">
+            <p>Prospero.ai成立于2018年，总部位于纽约，是一家专为零售投资者设计的AI驱动股票筛选平台。该公司整合了超过1亿个数据点和10000多个专有AI模型，将机构级的投资洞察简化为易于理解的每日股票推荐。</p>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">91%</div>
+                    <div class="metric-label">2025年YTD超越S&P</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">100M+</div>
+                    <div class="metric-label">数据点整合</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">10000+</div>
+                    <div class="metric-label">专有AI模型</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">60%</div>
+                    <div class="metric-label">选股胜率</div>
+                </div>
+            </div>
+            <p>通过结合机构交易数据、市场情绪和传统基本面分析，Prospero为散户投资者提供了之前只有专业投资者才能获得的分析工具。2025年的表现充分证明了其算法的有效性——年初至今超越S&P 500指数91%。</p>
+        </div></div></div>
+
+        <!-- 3/3 核心用户 -->
+        <div class="slide"><div class="card"><h3>谁在用Prospero？他们的痛点是什么？</h3><div class="card-body">
+            <p><strong>目标用户：</strong>25-55岁，具有投资意愿但时间有限的散户投资者——从初学者到有经验的交易者。这群人通常是高学历、中等收入的专业人士或小企业主，希望通过股票投资增加财富，但缺乏时间进行深度研究和市场分析。</p>
+            <div class="position-cards">
+                <div class="position-card" style="background:#FFE6E6;">
+                    <div style="font-size:16px;margin-bottom:6px;">🔍</div>
+                    <div class="position-title">缺乏工具</div>
+                    <div style="font-size:12px;color:var(--text-2);line-height:1.5;">无法获得机构投资者使用的高级分析工具</div>
+                </div>
+                <div class="position-card" style="background:#F5F0FF;">
+                    <div style="font-size:16px;margin-bottom:6px;">⏰</div>
+                    <div class="position-title">时间压力</div>
+                    <div style="font-size:12px;color:var(--text-2);line-height:1.5;">缺乏时间进行深度的股票研究分析</div>
+                </div>
+                <div class="position-card" style="background:#E8F5FF;">
+                    <div style="font-size:16px;margin-bottom:6px;">🔔</div>
+                    <div class="position-title">噪音困扰</div>
+                    <div style="font-size:12px;color:var(--text-2);line-height:1.5;">对市场噪音困惑，难以区分真实信号</div>
+                </div>
+                <div class="position-card" style="background:#E8FFE8;">
+                    <div style="font-size:16px;margin-bottom:6px;">😰</div>
+                    <div class="position-title">信心缺失</div>
+                    <div style="font-size:12px;color:var(--text-2);line-height:1.5;">担心自己的选股策略不如专业投资者</div>
+                </div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-1"></div>
+</section>
+
+<!-- ====== CHAPTER 2: 核心技术 ====== -->
+<section class="chapter" id="ch-2">
+    <div class="chapter-header">
+        <h2>10000个模型的算法引擎</h2>
+        <span class="ch-sub">🤖 核心技术</span>
+        <span class="ch-counter" id="counter-2">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="2">
+
+        <!-- 1/3 数据整合 -->
+        <div class="slide"><div class="card"><h3>100M+数据点的多维融合</h3><div class="card-body">
+            <p>Prospero的核心竞争力在于其庞大的数据整合能力。该平台整合了超过1亿个数据点，包括市场交易数据、社交媒体情绪、新闻流和传统基本面指标。通过机器学习算法对这些多维度数据进行处理和关联分析。</p>
+            <div class="callout">
+                <strong>数据维度：</strong> 机构交易数据（大宗交易流向）、市场情绪（社交媒体、新闻情绪）、技术指标（动量、成交量、相对强度）、基本面数据（财报、分析师评级）、宏观数据（经济指标、行业趋势）。
+            </div>
+            <p>这种多维度的数据融合是Prospero区别于传统股票筛选工具的关键。它不仅关注某一个因素（如技术面或基本面），而是通过综合分析，发现在多个维度上都表现出强信号的股票机会。</p>
+        </div></div></div>
+
+        <!-- 2/3 AI模型架构 -->
+        <div class="slide"><div class="card"><h3>10000+专有模型的持续优化</h3><div class="card-body">
+            <p>Prospero运行超过10000个专有的机器学习和深度学习模型，每个模型针对特定的投资信号或市场行为进行优化和训练。这意味着平台不是依靠单一的"黑盒"模型，而是通过模型集合（ensemble）的方式，不断提升预测的准确性和鲁棒性。</p>
+            <p>该平台整合了10个核心的量化投资信号，包括动量评分、成交量信号、相对强度指标等，与机构交易员使用的信号类型相同。但不同的是，这些信号被打包成了移动应用里的简单推荐，散户用户无需理解复杂的量化概念，就能获得机构级的分析结论。</p>
+            <div class="callout">
+                <strong>核心创新：</strong> 实时数据处理与每日推荐。平台每天基于最新的市场数据、技术指标和趋势信号生成股票推荐清单，确保用户能够及时识别交易机会。
+            </div>
+        </div></div></div>
+
+        <!-- 3/3 产品功能 -->
+        <div class="slide"><div class="card"><h3>从推荐到个性化的功能进化</h3><div class="card-body">
+            <p>Prospero的产品功能层层递进，逐步提升用户的价值获取：</p>
+            <div class="mode-boxes">
+                <div class="mode-box">
+                    <div class="mode-title">🎯 每日推荐</div>
+                    <div class="mode-desc">AI生成的每日股票推荐清单，基于100M+数据点和10000+模型</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-green);">
+                    <div class="mode-title">🔧 个性化筛选</div>
+                    <div class="mode-desc">根据投资目标(收益、增长、价值)对推荐进行筛选和定制</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-blue);">
+                    <div class="mode-title">🔔 信号监控</div>
+                    <div class="mode-desc">设置监听清单，当AI系统识别到重要信号变化时获得通知</div>
+                </div>
+                <div class="mode-box" style="border-left-color:var(--accent-purple);">
+                    <div class="mode-title">📚 教育内容</div>
+                    <div class="mode-desc">机构级分析与财务教育，帮助初学者理解投资潜力</div>
+                </div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-2"></div>
+</section>
+
+<!-- ====== CHAPTER 3: 商业模式 ====== -->
+<section class="chapter" id="ch-3">
+    <div class="chapter-header">
+        <h2>Freemium策略与多元收入</h2>
+        <span class="ch-sub">💰 商业模式</span>
+        <span class="ch-counter" id="counter-3">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="3">
+
+        <!-- 1/3 商业模式 -->
+        <div class="slide"><div class="card"><h3>Freemium + 高级功能的双层模式</h3><div class="card-body">
+            <p>Prospero采用Freemium模式，核心的iOS/Android应用完全免费，通过应用内广告或合作伙伴推荐获得部分收入。这个策略的妙处在于它大幅降低了用户获取成本，允许Prospero通过免费应用迅速积累用户规模和数据反馈。</p>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">$60K</div>
+                    <div class="metric-label">2024年收入</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">$800K+</div>
+                    <div class="metric-label">2024年支出</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">高</div>
+                    <div class="metric-label">月度烧率</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">种子后期</div>
+                    <div class="metric-label">发展阶段</div>
+                </div>
+            </div>
+            <p>公司目前处于早期阶段，尚未盈利，资源重点投入产品开发和算法优化。随着用户基础的增长和付费功能的推出，Prospero计划逐步提升收入贡献。</p>
+        </div></div></div>
+
+        <!-- 2/3 收入流 -->
+        <div class="slide"><div class="card"><h3>四大收入流的组织</h3><div class="card-body">
+            <div class="story-cards">
+                <div class="story-card">
+                    <div class="story-name">💎 高级订阅</div>
+                    <div class="story-text">计划推出付费订阅层，提供更高级的分析工具、无广告体验和优先支持</div>
+                </div>
+                <div class="story-card">
+                    <div class="story-name">🤝 平台合作</div>
+                    <div class="story-text">与Finimize等投资社区合作，为其用户提供AI信号，获得收入分成</div>
+                </div>
+                <div class="story-card">
+                    <div class="story-name">🏢 企业授权</div>
+                    <div class="story-text">未来向财务顾问公司提供白标解决方案</div>
+                </div>
+                <div class="story-card">
+                    <div class="story-name">📊 广告与推荐</div>
+                    <div class="story-text">核心应用通过应用内广告和合作伙伴推荐获得收入</div>
+                </div>
+            </div>
+        </div></div></div>
+
+        <!-- 3/3 增长战略 -->
+        <div class="slide"><div class="card"><h3>从产品驱动到生态驱动</h3><div class="card-body">
+            <p>Prospero的增长战略围绕几个核心支柱展开：</p>
+            <div class="timeline">
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">短期</div><div class="timeline-text">推出高级订阅层，引入更多付费功能。扩展Finimize合作，开发共同品牌产品。改进移动应用用户界面和功能深度。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">中期</div><div class="timeline-text">国际市场扩展（欧洲、亚太地区）。推出Web平台，支持桌面用户。开发API和白标解决方案for财务顾问。</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">长期</div><div class="timeline-text">扩展到组合管理和风险分析工具。建立机构客户段。开发高级AI agent，提供实时交易执行建议。</div></div>
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-3"></div>
+</section>
+
+<!-- ====== CHAPTER 4: 市场与竞争 ====== -->
+<section class="chapter" id="ch-4">
+    <div class="chapter-header">
+        <h2>AI赋能的投资民主化浪潮</h2>
+        <span class="ch-sub">📈 市场与竞争</span>
+        <span class="ch-counter" id="counter-4">1 / 3</span>
+    </div>
+    <div class="card-track" data-ch="4">
+
+        <!-- 1/3 市场机会 -->
+        <div class="slide"><div class="card"><h3>万亿级的TAM，百亿级的SAM</h3><div class="card-body">
+            <p>全球散户投资市场规模数万亿美元，仅美国就有数百万个活跃散户投资者。这些投资者每年在股票交易上花费数百亿美元，但大多数人缺乏获取机构级分析工具的机会。</p>
+            <p>Prospero的初期可寻址市场（SAM）主要集中在美国希望使用AI工具进行股票筛选的散户投资者，估计规模在数十亿美元。而随着AI在金融领域的渗透加深，以及国际扩展的推进，长期TAM将进一步扩大。</p>
+            <div class="callout">
+                <strong>市场趋势：</strong> 散户投资的爆炸性增长（Robinhood等移动交易应用的推动）、AI在投资中的采用加速、民主化金融工具的下沉趋势、社交投资与社区的兴起。
+            </div>
+        </div></div></div>
+
+        <!-- 2/3 竞争格局 -->
+        <div class="slide"><div class="card"><h3>差异化的竞争优势</h3><div class="card-body">
+            <p><strong>直接竞争对手：</strong>Zacks Investment Research、TradingView、Seeking Alpha、Finviz Elite等传统或新兴的股票筛选平台。</p>
+            <p><strong>间接竞争对手：</strong>传统财务顾问、Robo-advisors（Wealthfront、Betterment）、传统券商的内置分析工具。</p>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">91%</div>
+                    <div class="metric-label">算法超越表现</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">Freemium</div>
+                    <div class="metric-label">移动优先体验</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">10000+</div>
+                    <div class="metric-label">专有模型</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">机构级</div>
+                    <div class="metric-label">数据整合</div>
+                </div>
+            </div>
+            <p>Prospero通过卓越的算法性能（91%超越S&P）、免费的移动优先体验和机构级数据整合，与竞争对手区分开来。该平台专注于股票筛选而非资产管理，满足一个明确的市场需求。</p>
+        </div></div></div>
+
+        <!-- 3/3 合作生态 -->
+        <div class="slide"><div class="card"><h3>与Finimize的战略联盟</h3><div class="card-body">
+            <p>2025年10月，Prospero与拥有100万+成员的全球零售投资社区Finimize建立合作关系。这是Prospero国际扩展和生态建设的重要里程碑。</p>
+            <p>Finimize的分析师团队评估了Prospero的专有AI交易信号如何增强Finimize的市场覆盖的深度和预测力，帮助缩小专业投资者和散户之间的差距。这个合作代表着Prospero从一个独立应用向平台生态进化的开始。</p>
+            <div class="callout">
+                <strong>战略价值：</strong> 扩展到全球用户基础（100万+Finimize成员）、获得合作伙伴的分析支持、进入欧洲和亚太市场、验证B2B合作的可行性模式。
+            </div>
+            <p>除Finimize外，Prospero还有机会与金融内容创作者、移动券商应用、财务规划工具、财经新闻服务提供商建立合作。这些潜在的合作可以进一步扩大Prospero的触及范围和价值提升。</p>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-4"></div>
+</section>
+
+<!-- ====== CHAPTER 5: 发展里程 ====== -->
+<section class="chapter" id="ch-5">
+    <div class="chapter-header">
+        <h2>从种子到融资估值的扩张之路</h2>
+        <span class="ch-sub">🚀 发展里程</span>
+        <span class="ch-counter" id="counter-5">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="5">
+
+        <!-- 1/2 里程碑 -->
+        <div class="slide"><div class="card"><h3>八年磨剑：从构想到市场验证</h3><div class="card-body">
+            <div class="timeline">
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2018</div><div class="timeline-text">George Kailas创办Prospero.ai，带着将AI应用于民主化投资的愿景正式启航</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2019-2020</div><div class="timeline-text">iOS和Android应用首次发布，完成产品市场验证，初步获得散户用户</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2023-2024</div><div class="timeline-text">AI算法性能显著提升，实现77%年度超越S&P 500，验证了核心技术的投资价值</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2025.10</div><div class="timeline-text">与Finimize宣布战略合作伙伴关系，扩展到全球100万+零售投资社区</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2025.10</div><div class="timeline-text">获得Global Financial Market Review"2025年度最佳AI金融科技初创企业"奖项，行业认可与品牌价值提升</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2025.10</div><div class="timeline-text">完成Republic众筹融资轮，估值$1600万，为产品和团队扩展筹集资本</div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2025.12-2026.03</div><div class="timeline-text">2025年AI信号表现超越S&P 500指数91% (YTD)，算法性能新高，投资价值充分验证</div></div>
+            </div>
+        </div></div></div>
+
+        <!-- 2/2 融资与财务 -->
+        <div class="slide"><div class="card"><h3>资本运作与财务状况</h3><div class="card-body">
+            <table>
+                <thead><tr><th>轮次</th><th>时间</th><th>金额</th><th>估值</th><th>投资者</th></tr></thead>
+                <tbody>
+                    <tr><td>种子轮</td><td>2018-2019</td><td>未公开</td><td>—</td><td>天使投资者</td></tr>
+                    <tr><td>早期融资</td><td>2020-2021</td><td>未公开</td><td>—</td><td>天使和种子基金</td></tr>
+                    <tr><td>Crowd SAFE</td><td>2025-10</td><td>$16M</td><td>$16M</td><td>Republic众筹投资者</td></tr>
+                </tbody>
+            </table>
+            <p><strong>关键投资者与顾问：</strong></p>
+            <ul style="font-size:13px;line-height:1.9;color:var(--text-2);padding-left:18px;">
+                <li>Marti Subrahmanyam - NYU金融教授，金融领域权威</li>
+                <li>Andrew Cosentino - Citadel & Goldman Sachs资深人士</li>
+                <li>Camilo Concha - LendingUSA和Bitcoin IRA创始人</li>
+                <li>Republic Crowd投资者 - 全球散户投资者社区</li>
+            </ul>
+            <div class="callout">
+                <strong>融资意义：</strong> $16M融资为Prospero提供了至少2年的运营资金，支持产品研发、市场扩展和团队建设。Republic众筹的选择体现了Prospero与散户投资者社区的天然共鸣。
+            </div>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-5"></div>
+</section>
+
+<!-- ====== CHAPTER 6: 核心启示 ====== -->
+<section class="chapter" id="ch-6">
+    <div class="chapter-header">
+        <h2>Prospero如何重塑投资民主化</h2>
+        <span class="ch-sub">💡 核心启示</span>
+        <span class="ch-counter" id="counter-6">1 / 4</span>
+    </div>
+    <div class="card-track" data-ch="6">
+
+        <!-- 1/4 启示1 -->
+        <div class="slide"><div class="insight-card">
+            <div class="insight-emoji">🔬</div>
+            <h3>算法性能是信任的基础</h3>
+            <div class="card-body">
+                <p>Prospero的91%超越S&P的表现不仅仅是一个营销数字，而是其整个商业模式的基石。在投资领域，任何产品的核心价值来自于是否能帮助用户赚钱。无论UI多么优雅、故事多么迷人，如果算法表现平庸，用户最终会背离。</p>
+                <p>Prospero的成功告诉我们，在AI金融产品的竞争中，技术深度和算法性能是不可妥协的。这也解释了为什么Prospero在融资和合作中获得了高度认可——机构和顾问可以通过回测数据验证其算法的真实价值。</p>
+                <div class="insight-highlight">
+                    关键启示：AI金融产品的差异化不在噱头，而在真实的算法性能和持续的优化能力。
+                </div>
+            </div>
+        </div></div>
+
+        <!-- 2/4 启示2 -->
+        <div class="slide"><div class="insight-card">
+            <div class="insight-emoji">🎯</div>
+            <h3>Freemium模式的威力</h3>
+            <div class="card-body">
+                <p>Prospero选择Freemium而非高端付费的决策是关键的产品策略。通过免费应用，Prospero可以快速积累用户规模、获得真实的使用数据、建立品牌认知。在零售金融领域，用户获取成本是第一大支出，Freemium大幅削减了这个成本。</p>
+                <p>更重要的是，Freemium模式让散户投资者愿意尝试——他们不需要先投入金钱，就能体验平台的核心功能。一旦体验到价值（通过推荐获利），他们自然会升级到付费功能。这是比传统付费墙更聪明的用户转化策略。</p>
+                <div class="insight-highlight">
+                    关键启示：在消费金融领域，免费获取信任，付费获取深度。Freemium不是低端，而是聪明的增长杠杆。
+                </div>
+            </div>
+        </div></div>
+
+        <!-- 3/4 启示3 -->
+        <div class="slide"><div class="insight-card">
+            <div class="insight-emoji">🌍</div>
+            <h3>AI民主化的使命驱动</h3>
+            <div class="card-body">
+                <p>Prospero最深层的竞争力来自于创始人George Kailas的一个明确愿景：打破信息不对称。这不是纯粹的商业计算，而是一个"让AI为普通人服务"的使命。这种使命感吸引了志同道合的投资者（如NYU教授Marti Subrahmanyam），激发了用户的内生需求。</p>
+                <p>在AI金融热潮中，许多产品冲着融资和变现来。但Prospero更关注是否真正赋能了散户投资者。这种价值观上的坚持，最终反过来强化了用户信任和品牌认可，形成了良性循环。</p>
+                <div class="insight-highlight">
+                    关键启示：AI金融的下一个浪潮属于那些真正关心赋权、而非纯粹变现的产品。使命驱动的产品往往比纯利润驱动的产品走得更远。
+                </div>
+            </div>
+        </div></div>
+
+        <!-- 4/4 启示4 -->
+        <div class="slide"><div class="insight-card">
+            <div class="insight-emoji">🤝</div>
+            <h3>生态合作而非独自竞争</h3>
+            <div class="card-body">
+                <p>Prospero与Finimize的合作标志着一个重要的战略转变：从独立应用到生态参与者。Prospero不是试图成为"一站式投资平台"，而是聚焦于自己的核心能力（AI选股信号），然后与其他投资社区、内容平台、财务工具无缝集成。</p>
+                <p>这个策略的好处是显而易见的：Prospero可以快速进入新市场（Finimize的100万用户）、获得分析支持、获得品牌背书，同时不需要自己构建社区。这是比"平台竞争"更高明的生态竞争。</p>
+                <div class="insight-highlight">
+                    关键启示：在AI金融的生态竞争中，深度的垂直能力比广度的平台野心更值钱。专注于一个维度的卓越，比试图做所有事情更容易成功。
+                </div>
+            </div>
+        </div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-6"></div>
+</section>
+
+<!-- ====== CHAPTER 7: 近期要闻 ====== -->
+<section class="chapter" id="ch-7">
+    <div class="chapter-header">
+        <h2>媒体关注与行业认可</h2>
+        <span class="ch-sub">📰 近期要闻</span>
+        <span class="ch-counter" id="counter-7">1 / 2</span>
+    </div>
+    <div class="card-track" data-ch="7">
+
+        <!-- 1/2 媒体报道 -->
+        <div class="slide"><div class="card"><h3>行业媒体与权威认可</h3><div class="card-body">
+            <div class="news-item">
+                <div class="news-date">2025年10月</div>
+                <div class="news-title">
+                    <a href="https://www.prweb.com/releases/prosperoai-named-best-ai-fintech-start-up-usa-2025-by-global-financial-market-review-302466084.html" target="_blank">Prospero.AI Named Best AI Fintech Start-Up USA 2025</a>
+                </div>
+                <div class="news-desc">Global Financial Market Review的官方认可，确立Prospero在AI金融科技领域的领先地位。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2025年10月</div>
+                <div class="news-title">
+                    <a href="https://fintech.global/2025/10/24/prospero-ai-and-finimize-unite-to-empower-retail-investors/" target="_blank">Prospero.ai and Finimize Unite to Empower Retail Investors</a>
+                </div>
+                <div class="news-desc">Fintech Global报道了两个领先金融科技平台的战略合作，强调了民主化投资的行业趋势。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2025年10月</div>
+                <div class="news-title">
+                    <a href="https://www.morningstar.com/news/business-wire/20251023100766/prosperoai-and-finimize-partner-to-bring-institutional-grade-ai-insights-to-millions-of-retail-investors" target="_blank">Prospero.ai and Finimize Partner to Bring Institutional-Grade AI Insights to Retail Investors</a>
+                </div>
+                <div class="news-desc">Morningstar和Business Wire的重磅报道，突出了机构级AI洞察向散户投资者的转移。</div>
+            </div>
+            <div class="news-item">
+                <div class="news-date">2025年</div>
+                <div class="news-title">
+                    <a href="https://www.theinvestorspodcast.com/business/top-5-ai-stock-picking-tools-in-2025/" target="_blank">Top 5 AI Stock Picking Tools in 2025: Smarter Investing with Prospero.ai</a>
+                </div>
+                <div class="news-desc">The Investors Podcast将Prospero列为2025年最佳AI选股工具之一，获得专业投资者的认可。</div>
+            </div>
+        </div></div></div>
+
+        <!-- 2/2 未来展望 -->
+        <div class="slide"><div class="card sparse"><h3>Prospero的下一个五年</h3><div class="card-body">
+            <p>如果说Prospero过去的成就在于"打造出性能卓越的AI选股引擎"，那么未来的挑战在于"如何将这个引擎转化为全球性的投资生态"。</p>
+            <p><strong>短期焦点（6-12个月）：</strong>推出高级订阅功能、扩展Finimize合作、改进移动体验、构建财务教育内容库。</p>
+            <p><strong>中期目标（1-2年）：</strong>国际市场扩展、Web平台发布、白标解决方案、投资者社区功能。</p>
+            <p><strong>长期愿景（2-5年）：</strong>扩展到组合管理和风险分析、建立机构客户段、开发高级AI agent、评估IPO可能性。</p>
+            <div class="callout">
+                <strong>核心任务：</strong> Prospero需要在保持算法领先的同时，快速建立用户规模和付费转化能力。融资后的第一个关键指标不是用户数，而是付费用户数和LTV。
+            </div>
+            <p><button class="dashboard-btn" onclick="window.open('https://www.prospero.ai', '_blank')">➜ 访问Prospero官网</button></p>
+        </div></div></div>
+
+    </div>
+    <div class="dots-bar" id="dots-7"></div>
+</section>
+
+</main>
+
+<script>
+function go(chIndex) {
+    const elem = document.getElementById(`ch-${chIndex}`);
+    if (elem) {
+        elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        updateNavButtons();
+    }
+}
+
+function updateNavButtons() {
+    const main = document.getElementById('main');
+    const sections = main.querySelectorAll('section');
+    let closestIndex = 0;
+    let closestDistance = Infinity;
+    const viewportCenter = window.innerHeight / 2;
+
+    sections.forEach((section, index) => {
+        const rect = section.getBoundingClientRect();
+        const distance = Math.abs(rect.top - viewportCenter);
+        if (distance < closestDistance) {
+            closestDistance = distance;
+            closestIndex = index;
+        }
+    });
+
+    document.querySelectorAll('.nav-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', i === closestIndex);
+    });
+}
+
+// Update nav buttons on scroll
+document.getElementById('main').addEventListener('scroll', updateNavButtons, { passive: true });
+
+// Handle horizontal scrolling within card-tracks
+document.querySelectorAll('.card-track').forEach(track => {
+    track.addEventListener('scroll', () => {
+        const chNum = track.dataset.ch;
+        const slides = track.querySelectorAll('.slide');
+        let activeIndex = 0;
+        const trackScrollLeft = track.scrollLeft;
+        const trackWidth = track.clientWidth;
+
+        slides.forEach((slide, i) => {
+            const slideLeft = slide.offsetLeft;
+            if (slideLeft <= trackScrollLeft + trackWidth / 2) {
+                activeIndex = i;
+            }
+        });
+
+        // Update dots
+        const dotsBar = document.getElementById(`dots-${chNum}`);
+        if (dotsBar) {
+            const dots = dotsBar.querySelectorAll('.dot');
+            dots.forEach((dot, i) => {
+                dot.classList.toggle('active', i === activeIndex);
+            });
+        }
+
+        // Update counter
+        const counter = document.getElementById(`counter-${chNum}`);
+        if (counter) {
+            counter.textContent = `${activeIndex + 1} / ${slides.length}`;
+        }
+    }, { passive: true });
+});
+
+// Initialize dots and counters
+function initDots() {
+    document.querySelectorAll('.card-track').forEach(track => {
+        const chNum = track.dataset.ch;
+        const slides = track.querySelectorAll('.slide');
+        const dotsBar = document.getElementById(`dots-${chNum}`);
+
+        if (dotsBar) {
+            dotsBar.innerHTML = '';
+            slides.forEach((_, i) => {
+                const dot = document.createElement('button');
+                dot.className = `dot ${i === 0 ? 'active' : ''}`;
+                dot.onclick = (e) => {
+                    e.preventDefault();
+                    const slideWidth = track.clientWidth;
+                    track.scrollLeft = slideWidth * i;
+                };
+                dotsBar.appendChild(dot);
+            });
+        }
+
+        const counter = document.getElementById(`counter-${chNum}`);
+        if (counter) {
+            counter.textContent = `1 / ${slides.length}`;
+        }
+    });
+}
+
+initDots();
+updateNavButtons();
+</script>
+
+</body>
+</html>
