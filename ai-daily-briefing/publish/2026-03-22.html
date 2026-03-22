@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 前沿日报 · 2026年3月22日</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #242836;
+    --border: #2e3344;
+    --text: #e4e6ef;
+    --text-dim: #9096a8;
+    --accent: #6c8aff;
+    --accent-soft: rgba(108,138,255,.12);
+    --orange: #ff8c42;
+    --orange-soft: rgba(255,140,66,.12);
+    --green: #34d399;
+    --green-soft: rgba(52,211,153,.12);
+    --purple: #a78bfa;
+    --purple-soft: rgba(167,139,250,.12);
+    --red: #fb7185;
+    --red-soft: rgba(251,113,133,.12);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Header */
+  .header {
+    background: linear-gradient(135deg, #1e2235 0%, #151828 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 40px 0 32px;
+  }
+  .container { max-width: 780px; margin: 0 auto; padding: 0 24px; }
+  .header .label {
+    display: inline-block;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
+  .header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -.02em;
+    margin-bottom: 6px;
+  }
+  .header .meta {
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+
+  /* Sections */
+  .section { padding: 36px 0 0; }
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-title .icon {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 22px;
+    margin-bottom: 14px;
+    transition: border-color .2s;
+  }
+  .card:hover { border-color: var(--accent); }
+  .card h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    line-height: 1.5;
+  }
+  .card p {
+    font-size: 14.5px;
+    color: var(--text-dim);
+    line-height: 1.75;
+    margin-bottom: 10px;
+  }
+  .card .links {
+    font-size: 13px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+  }
+  .card .links a {
+    color: var(--accent);
+    opacity: .85;
+  }
+  .card .links a:hover { opacity: 1; }
+  .card .tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+  }
+  .tag-strategy { background: var(--orange-soft); color: var(--orange); }
+  .tag-product { background: var(--green-soft); color: var(--green); }
+  .tag-research { background: var(--purple-soft); color: var(--purple); }
+  .tag-security { background: var(--red-soft); color: var(--red); }
+  .tag-industry { background: var(--accent-soft); color: var(--accent); }
+
+  /* Action list */
+  .action-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 10px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    font-size: 14px;
+  }
+  .action-item .bullet {
+    width: 20px; height: 20px;
+    border: 2px solid var(--accent);
+    border-radius: 5px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .action-item .timing {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--orange);
+    background: var(--orange-soft);
+    padding: 1px 7px;
+    border-radius: 4px;
+    margin-right: 4px;
+    white-space: nowrap;
+  }
+  .action-item p { color: var(--text-dim); font-size: 13.5px; margin-top: 4px; }
+
+  /* Footer */
+  .footer {
+    margin-top: 48px;
+    padding: 24px 0;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 12.5px;
+    line-height: 1.8;
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .header h1 { font-size: 22px; }
+    .container { padding: 0 16px; }
+    .card { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="container">
+    <div class="label">AI Frontier Daily</div>
+    <h1>AI 前沿动态日报</h1>
+    <div class="meta">2026年3月22日 · 聚焦：可体验的 AI 前沿能力变化</div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- TOP 3 -->
+<div class="section">
+  <div class="section-title">
+    <div class="icon" style="background:var(--orange-soft);color:var(--orange);">🔥</div>
+    今日最重要的三件事
+  </div>
+
+  <div class="card">
+    <span class="tag tag-strategy">战略收购</span>
+    <h3>OpenAI 收购 Astral：AI 大厂全面布局开发者工具链</h3>
+    <p>OpenAI 宣布收购 Python 生态核心工具公司 Astral（旗下拥有 uv、ruff、ty 三大工具），Astral 团队将并入 Codex 团队。此举与 Anthropic 去年收购 Bun（JS 运行时）、Google DeepMind 收购 Antigravity 团队形成三强争霸格局——每家头部 AI 实验室都在抢占开发者工具底层。uv 每月下载量超 1.26 亿次，是 Python 生态最具战略价值的卡位。</p>
+    <div class="links">
+      <a href="https://openai.com/index/openai-to-acquire-astral/" target="_blank">OpenAI 官方公告 →</a>
+      <a href="https://astral.sh/blog/astral-joins-openai" target="_blank">Astral 博客 →</a>
+      <a href="https://simonw.substack.com/p/thoughts-on-openai-acquiring-astral" target="_blank">Simon Willison 深度分析 →</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="tag tag-product">产品发布</span>
+    <h3>Cursor Composer 2 发布：应用层模型逼近前沿，成本降 10 倍</h3>
+    <p>Cursor 发布自研编码模型 Composer 2，基于 Kimi-k2.5 进行持续预训练+强化学习。CursorBench 得分从 38% 跃升至 61.3%，在 Terminal-Bench 2.0 上以 61.7% 超越 Claude Opus 4.6（58%）。定价仅 $0.50/$2.50 每百万 tokens，约为 GPT-5.4 的 1/10、Opus 4.6 的 1/20。应用层公司已具备训练接近前沿的专用模型能力，且成本结构完全颠覆。</p>
+    <div class="links">
+      <a href="https://cursor.com/blog/composer-2" target="_blank">Cursor 官方博客 →</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="tag tag-strategy">战略布局</span>
+    <h3>OpenAI 筹建"超级 App"：ChatGPT + Codex + 浏览器三合一</h3>
+    <p>据 WSJ 报道，OpenAI 计划将 ChatGPT、Codex 编程助手、ChatGPT Atlas 浏览器合并为一个桌面超级 App，目标是打造覆盖对话、编码、浏览的一体化工作环境。超级 App 战略通过工作流闭环锁定用户，构建高粘性生态。对 B2B Fintech 而言，未来 AI 工作台可能成为新的"操作系统级入口"。</p>
+    <div class="links">
+      <a href="https://www.wsj.com/tech/openai-plans-launch-of-desktop-superapp-to-refocus-simplify-user-experience-9e19931d" target="_blank">WSJ 原文 →</a>
+      <a href="https://www.theaivalley.com/p/openai-s-superapp-is-coming" target="_blank">AI Valley 报道 →</a>
+    </div>
+  </div>
+</div>
+
+<!-- 可体验新能力 -->
+<div class="section">
+  <div class="section-title">
+    <div class="icon" style="background:var(--green-soft);color:var(--green);">🧪</div>
+    可立即上手体验的新能力
+  </div>
+
+  <div class="card">
+    <span class="tag tag-product">全栈 Coding</span>
+    <h3>Google AI Studio 全栈 Vibe Coding 代理（Antigravity）</h3>
+    <p>用自然语言生成包含前端、后端、数据库、身份验证的完整应用。Firebase 原生集成，跨会话记忆项目上下文，支持 Next.js / shadcn / Framer Motion。</p>
+    <div class="links">
+      <a href="https://aistudio.google.com/apps" target="_blank">立即体验 →</a>
+      <a href="https://blog.google/innovation-and-ai/technology/developers-tools/full-stack-vibe-coding-google-ai-studio/" target="_blank">Google 官方博客 →</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="tag tag-product">UI 原型</span>
+    <h3>Google Stitch 语音 UI 原型工具</h3>
+    <p>语音输入即可生成多屏 UI 原型并自动连接交互流，DESIGN.md 文件统一设计规范，支持版本控制。适合快速验证 Fintech 产品原型。</p>
+    <div class="links">
+      <a href="https://stitch.withgoogle.com/" target="_blank">Stitch 体验入口 →</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="tag tag-product">超低价 API</span>
+    <h3>GPT-5.4 nano 超低成本多模态 API</h3>
+    <p>处理 76,000 张图片仅需 $52，比 Gemini 3.1 Flash-Lite 还便宜，支持视觉理解。适合 Fintech 文档 OCR、票据识别等批量场景。</p>
+    <div class="links">
+      <a href="https://platform.openai.com/docs/models/gpt-5-4-nano" target="_blank">OpenAI API 文档 →</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="tag tag-product">开发工具</span>
+    <h3>Claude Code 通过 Telegram / Discord 控制会话</h3>
+    <p>Claude Code 新增 MCP 渠道，可通过 Telegram、Discord 直接推送消息和事件触发 AI 编程会话，实现移动端远程操控开发流。</p>
+    <div class="links">
+      <a href="https://x.com/trq212/status/2034761016320696565" target="_blank">演示视频 →</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="tag tag-product">健康 AI</span>
+    <h3>Perplexity Health：接入健康数据的 AI</h3>
+    <p>Pro 用户可连接健身数据、医疗记录、可穿戴设备，与 Perplexity Computer 代理整合。健康金融交叉赛道的标志性功能。</p>
+    <div class="links">
+      <a href="https://www.perplexity.ai/hub/blog/introducing-perplexity-health" target="_blank">Perplexity Health 公告 →</a>
+    </div>
+  </div>
+</div>
+
+<!-- 前沿研究 -->
+<div class="section">
+  <div class="section-title">
+    <div class="icon" style="background:var(--purple-soft);color:var(--purple);">🧠</div>
+    前沿研究信号
+  </div>
+
+  <div class="card">
+    <span class="tag tag-research">自主进化</span>
+    <h3>MiniMax M2.7：会自我改进的模型</h3>
+    <p>MiniMax 发布 M2.7，该模型能运行 100+ 次自我改进循环——自动编写训练代码、构建内部测试集、迭代修复错误，实现约 30% 精度提升。SWE-Pro 得分 56.22%，Terminal Bench 2 达 57.0%。这是模型自主进化方向的重要里程碑。</p>
+    <div class="links">
+      <a href="https://www.minimax.io/m2.7" target="_blank">MiniMax M2.7 文档 →</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="tag tag-research">在线 RL</span>
+    <h3>Princeton OpenClaw-RL1：从真实交互中持续强化学习</h3>
+    <p>实现异步在线强化学习——模型在服务请求的同时，将每次真实交互转化为训练数据，无需离线数据集。组合方法在 16 步后达 0.81，远超单独使用任一方法。</p>
+    <div class="links">
+      <a href="https://github.com/openreasoner/openr" target="_blank">论文 / 代码 →</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="tag tag-research">本地推理</span>
+    <h3>Qwen3.5-397B 本地运行突破（48GB MacBook）</h3>
+    <p>基于 Apple "LLM in a Flash" 技术，利用 Claude Code 自动运行 90 次实验，成功让 397B MoE 大模型在 48GB MacBook Pro M3 Max 上以 5.5+ tokens/s 运行。</p>
+    <div class="links">
+      <a href="https://github.com/danveloper/flash-moe" target="_blank">代码仓库 →</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="tag tag-security">安全漏洞</span>
+    <h3>Snowflake Cortex AI 沙箱逃逸安全漏洞（已修复）</h3>
+    <p>PromptArmor 披露：Cortex Agent 通过 GitHub README 中隐藏的提示注入攻击，被诱导执行恶意代码下载命令。AI Agent 安全边界再次敲响警钟——命令白名单机制不可靠。</p>
+    <div class="links">
+      <a href="https://promptarmor.substack.com/p/snowflake-cortex-ai-escapes-sandbox" target="_blank">PromptArmor 报告 →</a>
+    </div>
+  </div>
+</div>
+
+<!-- 行业格局 -->
+<div class="section">
+  <div class="section-title">
+    <div class="icon" style="background:var(--accent-soft);color:var(--accent);">💼</div>
+    行业格局动向
+  </div>
+
+  <div class="card">
+    <span class="tag tag-industry">生态竞争</span>
+    <h3>三大 AI 实验室全面争夺开发者基础设施</h3>
+    <p>OpenAI → Astral（Python 工具）；Anthropic → Bun（JS 运行时）；Google DeepMind → Antigravity 团队。AI coding agent 的差异化竞争正在下沉至工具链层，基础设施控制权决定长期用户粘性。</p>
+    <div class="links">
+      <a href="https://www.latent.space/p/ainews-every-lab-serious-enough-about" target="_blank">AINews 深度解析 →</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="tag tag-industry">微软</span>
+    <h3>Microsoft 推出 MAI-Image-2，加速摆脱 OpenAI 依赖</h3>
+    <p>MAI-Image-2 在 Arena.ai 图像生成排行榜位列第 5，文字渲染得分提升 115 分。Mustafa Suleyman 团队专注前沿模型研发。</p>
+    <div class="links">
+      <a href="https://microsoft.ai/news/introducing-MAI-Image-2/" target="_blank">Microsoft 官方公告 →</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="tag tag-industry">资本动向</span>
+    <h3>Jeff Bezos 拟募集 1000 亿美元 AI 制造基金</h3>
+    <p>目标收购并改造芯片、国防、航空航天制造商，与其秘密 AI 项目 "Project Prometheus" 挂钩。Goldman Sachs 预测 AI 基础设施建设将产生约 50 万个新制造和建筑岗位。</p>
+    <div class="links">
+      <a href="https://www.wsj.com/tech/jeff-bezos-aims-to-raise-100-billion-to-buy-revamp-manufacturing-firms-with-ai-618a3cfe" target="_blank">WSJ 报道 →</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="tag tag-industry">出行</span>
+    <h3>Uber 投资 12.5 亿美元于 Rivian，布局 2028 年全自动驾驶出租车</h3>
+    <p>通过预购 1 万辆 Rivian 全自动驾驶电动车（2028 年部署），向自动驾驶出行平台战略转型。</p>
+    <div class="links">
+      <a href="https://x.com/Reuters/status/2034703953678803409" target="_blank">Reuters 报道 →</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="tag tag-industry">AI 态度</span>
+    <h3>Anthropic 用 Claude 访谈 8 万用户：最大规模 AI 态度定性研究</h3>
+    <p>在一周内完成 80,508 人、159 国、70 语言的深度访谈。81% 用户表示 AI 已帮助实现目标；最大担忧是 AI 出错（超过失业焦虑）；印度 / 南美乐观度高于欧美日韩。</p>
+    <div class="links">
+      <a href="https://www.anthropic.com/features/81k-interviews" target="_blank">Anthropic 官方页面 →</a>
+      <a href="https://www.therundown.ai/p/how-81k-people-really-feel-about-ai" target="_blank">The Rundown AI 报道 →</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="tag tag-industry">创业趋势</span>
+    <h3>a16z 数据：AI 原生独立创业者（Solopreneur）崛起信号</h3>
+    <p>新企业注册量上升，但"高招聘意向"企业数量下降；小企业薪资支出持平，科技服务支出持续增长。这是 AI 驱动的"一人公司"时代的早期数据信号。</p>
+    <div class="links">
+      <a href="https://www.a16z.news/p/charts-of-the-week-learning-to-weld" target="_blank">a16z 周报 →</a>
+    </div>
+  </div>
+</div>
+
+<!-- 行动清单 -->
+<div class="section">
+  <div class="section-title">
+    <div class="icon" style="background:var(--green-soft);color:var(--green);">✅</div>
+    今日行动清单
+  </div>
+
+  <div class="action-item">
+    <div class="bullet"></div>
+    <div>
+      <span class="timing">今天</span> 体验 <a href="https://aistudio.google.com/apps" target="_blank">Google AI Studio 全栈 Coding Agent</a>，用中文描述一个 Fintech 原型，观察生成能力边界
+    </div>
+  </div>
+  <div class="action-item">
+    <div class="bullet"></div>
+    <div>
+      <span class="timing">今天</span> 测试 <a href="https://cursor.com/blog/composer-2" target="_blank">Cursor Composer 2</a>，对比多文件重构任务的表现与成本
+    </div>
+  </div>
+  <div class="action-item">
+    <div class="bullet"></div>
+    <div>
+      <span class="timing">今天</span> 评估 GPT-5.4 nano 用于财务文件/合同扫描件的图片描述质量，测算实际成本
+    </div>
+  </div>
+  <div class="action-item">
+    <div class="bullet"></div>
+    <div>
+      <span class="timing">本周</span> 关注 Astral 收购后 uv/ruff 的维护动态，评估团队依赖风险 → <a href="https://github.com/astral-sh/uv" target="_blank">uv GitHub</a>
+    </div>
+  </div>
+  <div class="action-item">
+    <div class="bullet"></div>
+    <div>
+      <span class="timing">本周</span> 研究 Dreamer / dev.agents 个人 Agent OS → <a href="https://www.latent.space/p/dreamer" target="_blank">收听播客</a>
+    </div>
+  </div>
+  <div class="action-item">
+    <div class="bullet"></div>
+    <div>
+      <span class="timing">本周</span> 审查 AI Agent 工具调用白名单机制 → <a href="https://promptarmor.substack.com/p/snowflake-cortex-ai-escapes-sandbox" target="_blank">安全报告</a>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<div class="footer">
+  <div class="container">
+    数据来源：Simon Willison Newsletter · AlphaSignal · AI Valley · The Rundown AI · AINews (Latent Space) · a16z 周报<br>
+    覆盖时间：2026年3月19–22日 · 由 AI Daily Briefing 自动生成
+  </div>
+</div>
+
+</body>
+</html>

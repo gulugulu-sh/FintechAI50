@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>全球金融AI跟踪与分析平台 | 腾讯金融科技商业分析团队</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#0C0B0F;
+  --bg-2:#13121A;
+  --bg-card:rgba(255,255,255,0.04);
+  --bg-card-hover:rgba(255,255,255,0.08);
+  --accent:#D97757;
+  --accent-2:#F0956C;
+  --accent-glow:rgba(217,119,87,0.3);
+  --green:#4AE3A0;
+  --blue:#5B8DEF;
+  --purple:#A78BFA;
+  --cyan:#22D3EE;
+  --text:#F5F3F0;
+  --text-2:rgba(245,243,240,0.6);
+  --text-3:rgba(245,243,240,0.35);
+  --border:rgba(255,255,255,0.08);
+  --border-2:rgba(255,255,255,0.15);
+}
+html{scroll-behavior:smooth;}
+body{
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ===== NOISE OVERLAY ===== */
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  background:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events:none;
+  z-index:9999;
+}
+
+/* ===== ANIMATED GRID BG ===== */
+.grid-bg{
+  position:fixed;
+  inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+  background-size:80px 80px;
+  pointer-events:none;
+  z-index:0;
+}
+
+/* ===== HERO ===== */
+.hero{
+  position:relative;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  padding:60px 40px;
+  overflow:hidden;
+  z-index:1;
+}
+
+/* Orb effects */
+.orb{
+  position:absolute;
+  border-radius:50%;
+  filter:blur(100px);
+  pointer-events:none;
+  animation:orbFloat 12s ease-in-out infinite;
+}
+.orb-1{
+  width:500px;height:500px;
+  background:radial-gradient(circle,var(--accent-glow),transparent 70%);
+  top:-10%;right:-5%;
+  animation-delay:0s;
+}
+.orb-2{
+  width:400px;height:400px;
+  background:radial-gradient(circle,rgba(90,141,239,0.15),transparent 70%);
+  bottom:10%;left:-8%;
+  animation-delay:-4s;
+}
+.orb-3{
+  width:300px;height:300px;
+  background:radial-gradient(circle,rgba(167,139,250,0.1),transparent 70%);
+  top:40%;right:20%;
+  animation-delay:-8s;
+}
+@keyframes orbFloat{
+  0%,100%{transform:translate(0,0) scale(1);}
+  33%{transform:translate(30px,-20px) scale(1.05);}
+  66%{transform:translate(-20px,15px) scale(0.95);}
+}
+
+.hero-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 20px;
+  background:var(--bg-card);
+  border:1px solid var(--border-2);
+  border-radius:100px;
+  font-size:13px;
+  font-weight:500;
+  color:var(--text-2);
+  margin-bottom:40px;
+  backdrop-filter:blur(20px);
+}
+.hero-badge .pulse{
+  width:8px;height:8px;
+  border-radius:50%;
+  background:var(--green);
+  position:relative;
+}
+.hero-badge .pulse::after{
+  content:'';
+  position:absolute;
+  inset:-4px;
+  border-radius:50%;
+  background:var(--green);
+  opacity:0.4;
+  animation:pulse 2s ease-out infinite;
+}
+@keyframes pulse{
+  0%{transform:scale(1);opacity:0.4;}
+  100%{transform:scale(2.5);opacity:0;}
+}
+
+.hero-title{
+  font-size:clamp(36px,6vw,72px);
+  font-weight:900;
+  letter-spacing:-2px;
+  line-height:1.05;
+  margin-bottom:20px;
+  background:linear-gradient(135deg,#fff 0%,rgba(255,255,255,0.7) 50%,var(--accent-2) 100%);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.hero-subtitle{
+  font-size:clamp(16px,2vw,20px);
+  color:var(--text-2);
+  max-width:600px;
+  line-height:1.7;
+  margin-bottom:16px;
+  font-weight:400;
+}
+.hero-team{
+  font-size:14px;
+  color:var(--text-3);
+  margin-bottom:56px;
+  font-weight:400;
+  letter-spacing:2px;
+  text-transform:uppercase;
+}
+.hero-team span{
+  color:var(--accent);
+  font-weight:600;
+}
+
+/* Stats row */
+.hero-stats{
+  display:flex;
+  gap:48px;
+  flex-wrap:wrap;
+  justify-content:center;
+  margin-bottom:64px;
+}
+.hero-stat{
+  text-align:center;
+}
+.hero-stat-value{
+  font-size:42px;
+  font-weight:800;
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  line-height:1.1;
+}
+.hero-stat-label{
+  font-size:12px;
+  color:var(--text-3);
+  margin-top:6px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+}
+
+/* Scroll indicator */
+.scroll-hint{
+  position:absolute;
+  bottom:40px;
+  left:50%;
+  transform:translateX(-50%);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:8px;
+  color:var(--text-3);
+  font-size:12px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  animation:fadeInUp 1s ease 1.5s both;
+}
+.scroll-arrow{
+  width:24px;height:24px;
+  border-right:2px solid var(--text-3);
+  border-bottom:2px solid var(--text-3);
+  transform:rotate(45deg);
+  animation:scrollBounce 2s ease infinite;
+}
+@keyframes scrollBounce{
+  0%,100%{transform:rotate(45deg) translate(0,0);opacity:0.5;}
+  50%{transform:rotate(45deg) translate(5px,5px);opacity:1;}
+}
+@keyframes fadeInUp{
+  from{opacity:0;transform:translateX(-50%) translateY(20px);}
+  to{opacity:1;transform:translateX(-50%) translateY(0);}
+}
+
+/* ===== HORIZONTAL SCROLL SECTION ===== */
+.modules-section{
+  position:relative;
+  z-index:1;
+  padding:0 0 100px;
+}
+.modules-header{
+  text-align:center;
+  padding:80px 40px 48px;
+}
+.modules-header h2{
+  font-size:14px;
+  letter-spacing:3px;
+  text-transform:uppercase;
+  color:var(--accent);
+  font-weight:600;
+  margin-bottom:12px;
+}
+.modules-header p{
+  font-size:clamp(24px,3vw,36px);
+  font-weight:800;
+  letter-spacing:-1px;
+  color:var(--text);
+}
+
+/* Horizontal scroll container */
+.modules-track{
+  display:flex;
+  gap:32px;
+  padding:0 max(40px, calc((100vw - 1200px)/2));
+  overflow-x:auto;
+  scroll-snap-type:x mandatory;
+  scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;
+  scroll-padding-left:max(40px, calc((100vw - 1200px)/2));
+}
+.modules-track::-webkit-scrollbar{display:none;}
+
+/* Module card */
+.module-card{
+  flex:0 0 min(560px, 80vw);
+  min-height:440px;
+  border-radius:24px;
+  overflow:hidden;
+  position:relative;
+  cursor:pointer;
+  scroll-snap-align:start;
+  transition:transform 0.4s cubic-bezier(0.16,1,0.3,1), box-shadow 0.4s ease;
+  text-decoration:none;
+  display:flex;
+  flex-direction:column;
+}
+.module-card:hover{
+  transform:translateY(-8px);
+  box-shadow:0 40px 80px rgba(0,0,0,0.4);
+}
+
+/* Card inner */
+.module-visual{
+  flex:1;
+  position:relative;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:48px 40px;
+}
+.module-visual::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  opacity:0.12;
+  transition:opacity 0.4s;
+}
+.module-card:hover .module-visual::before{opacity:0.18;}
+
+/* Card themes */
+.module-card.theme-daily{
+  background:linear-gradient(145deg,#0F1923 0%,#162032 100%);
+  border:1px solid rgba(91,141,239,0.2);
+}
+.module-card.theme-daily .module-visual::before{
+  background:radial-gradient(ellipse at 30% 50%, rgba(91,141,239,0.3), transparent 70%);
+}
+.module-card.theme-daily:hover{
+  border-color:rgba(91,141,239,0.4);
+  box-shadow:0 40px 80px rgba(91,141,239,0.1);
+}
+
+.module-card.theme-top50{
+  background:linear-gradient(145deg,#1A1210 0%,#251A15 100%);
+  border:1px solid rgba(217,119,87,0.2);
+}
+.module-card.theme-top50 .module-visual::before{
+  background:radial-gradient(ellipse at 70% 50%, rgba(217,119,87,0.3), transparent 70%);
+}
+.module-card.theme-top50:hover{
+  border-color:rgba(217,119,87,0.4);
+  box-shadow:0 40px 80px rgba(217,119,87,0.1);
+}
+
+.module-card.theme-coming{
+  background:linear-gradient(145deg,#12111A 0%,#1A1826 100%);
+  border:1px solid rgba(167,139,250,0.15);
+}
+.module-card.theme-coming .module-visual::before{
+  background:radial-gradient(ellipse at 50% 50%, rgba(167,139,250,0.15), transparent 70%);
+}
+
+/* Icon container */
+.module-icon{
+  width:80px;height:80px;
+  border-radius:20px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin-bottom:28px;
+  position:relative;
+  z-index:2;
+}
+.module-icon svg{
+  width:40px;height:40px;
+}
+.module-card.theme-daily .module-icon{
+  background:rgba(91,141,239,0.15);
+  border:1px solid rgba(91,141,239,0.25);
+  color:var(--blue);
+}
+.module-card.theme-top50 .module-icon{
+  background:rgba(217,119,87,0.15);
+  border:1px solid rgba(217,119,87,0.25);
+  color:var(--accent);
+}
+.module-card.theme-coming .module-icon{
+  background:rgba(167,139,250,0.1);
+  border:1px solid rgba(167,139,250,0.2);
+  color:var(--purple);
+}
+
+.module-content{
+  position:relative;
+  z-index:2;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+}
+
+.module-tag{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:5px 14px;
+  border-radius:100px;
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  margin-bottom:16px;
+}
+.module-card.theme-daily .module-tag{
+  background:rgba(91,141,239,0.12);
+  color:var(--blue);
+  border:1px solid rgba(91,141,239,0.2);
+}
+.module-card.theme-top50 .module-tag{
+  background:rgba(217,119,87,0.12);
+  color:var(--accent-2);
+  border:1px solid rgba(217,119,87,0.2);
+}
+.module-card.theme-coming .module-tag{
+  background:rgba(167,139,250,0.1);
+  color:var(--purple);
+  border:1px solid rgba(167,139,250,0.15);
+}
+
+.module-title{
+  font-size:24px;
+  font-weight:800;
+  letter-spacing:-0.5px;
+  margin-bottom:12px;
+  color:var(--text);
+  line-height:1.3;
+}
+.module-desc{
+  font-size:14px;
+  line-height:1.8;
+  color:var(--text-2);
+  margin-bottom:24px;
+}
+
+/* Card footer */
+.module-footer{
+  padding:20px 40px;
+  border-top:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  background:rgba(0,0,0,0.2);
+}
+.module-meta{
+  display:flex;
+  gap:20px;
+}
+.module-meta-item{
+  font-size:12px;
+  color:var(--text-3);
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.module-meta-item svg{
+  width:14px;height:14px;
+  opacity:0.6;
+}
+.module-enter{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:13px;
+  font-weight:600;
+  color:var(--text-2);
+  transition:all 0.3s;
+}
+.module-card:hover .module-enter{
+  color:var(--text);
+  gap:12px;
+}
+.module-enter svg{
+  width:18px;height:18px;
+  transition:transform 0.3s;
+}
+.module-card:hover .module-enter svg{
+  transform:translateX(4px);
+}
+
+/* Coming soon overlay */
+.coming-soon-overlay{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:3;
+  pointer-events:none;
+}
+
+/* Scroll indicators */
+.scroll-indicators{
+  display:flex;
+  justify-content:center;
+  gap:8px;
+  margin-top:40px;
+}
+.scroll-dot{
+  width:8px;height:8px;
+  border-radius:50%;
+  background:var(--border-2);
+  cursor:pointer;
+  transition:all 0.3s;
+}
+.scroll-dot.active{
+  width:32px;
+  border-radius:4px;
+  background:var(--accent);
+}
+
+/* ===== FOOTER ===== */
+.site-footer{
+  position:relative;
+  z-index:1;
+  text-align:center;
+  padding:60px 40px;
+  border-top:1px solid var(--border);
+}
+.footer-logo{
+  font-size:16px;
+  font-weight:700;
+  color:var(--text);
+  margin-bottom:8px;
+}
+.footer-sub{
+  font-size:13px;
+  color:var(--text-3);
+  margin-bottom:24px;
+}
+.footer-links{
+  display:flex;
+  justify-content:center;
+  gap:24px;
+}
+.footer-links a{
+  font-size:12px;
+  color:var(--text-3);
+  text-decoration:none;
+  transition:color 0.2s;
+}
+.footer-links a:hover{color:var(--accent);}
+
+/* ===== ANIMATIONS ===== */
+.fade-in{
+  opacity:0;
+  transform:translateY(30px);
+  animation:fadeInUp2 0.8s cubic-bezier(0.16,1,0.3,1) forwards;
+}
+.fade-in:nth-child(1){animation-delay:0.1s;}
+.fade-in:nth-child(2){animation-delay:0.2s;}
+.fade-in:nth-child(3){animation-delay:0.3s;}
+.fade-in:nth-child(4){animation-delay:0.35s;}
+.fade-in:nth-child(5){animation-delay:0.4s;}
+@keyframes fadeInUp2{
+  to{opacity:1;transform:translateY(0);}
+}
+
+/* ===== PARTICLE CANVAS ===== */
+#particles{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:0;
+}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:768px){
+  .hero{padding:40px 24px;min-height:90vh;}
+  .hero-stats{gap:28px;}
+  .hero-stat-value{font-size:32px;}
+  .modules-track{padding:0 24px;gap:20px;scroll-padding-left:24px;}
+  .module-card{flex:0 0 min(480px, 85vw);min-height:380px;}
+  .module-visual{padding:36px 28px;}
+  .module-footer{padding:16px 28px;}
+  .modules-header{padding:60px 24px 36px;}
+}
+@media(max-width:480px){
+  .module-card{flex:0 0 90vw;}
+  .hero-stats{gap:20px;}
+  .hero-stat-value{font-size:28px;}
+}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<canvas id="particles"></canvas>
+
+<!-- ===== HERO ===== -->
+<section class="hero">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <div class="hero-badge fade-in">
+    <span class="pulse"></span>
+    持续追踪中 · 每日更新
+  </div>
+
+  <h1 class="hero-title fade-in">全球金融 AI<br>跟踪与分析平台</h1>
+
+  <p class="hero-subtitle fade-in">
+    系统性跟踪全球金融AI前沿技术演进与商业落地，<br>
+    为战略决策提供第一手洞察
+  </p>
+
+  <p class="hero-team fade-in">出品 — <span>腾讯金融科技商业分析团队</span></p>
+
+  <div class="hero-stats fade-in">
+    <div class="hero-stat">
+      <div class="hero-stat-value" id="stat-companies">50+</div>
+      <div class="hero-stat-label">跟踪企业</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-value">6</div>
+      <div class="hero-stat-label">细分赛道</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-value">365</div>
+      <div class="hero-stat-label">日更天数/年</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-value" id="stat-updates">实时</div>
+      <div class="hero-stat-label">动态更新</div>
+    </div>
+  </div>
+
+  <div class="scroll-hint">
+    <span>探索模块</span>
+    <div class="scroll-arrow"></div>
+  </div>
+</section>
+
+<!-- ===== MODULE CARDS ===== -->
+<section class="modules-section">
+  <div class="modules-header">
+    <h2>产品矩阵</h2>
+    <p>构建完整的金融AI研究体系</p>
+  </div>
+
+  <div class="modules-track" id="modulesTrack">
+
+    <!-- Module 1: AI Daily Briefing -->
+    <a href="ai-daily-briefing/publish/index.html" class="module-card theme-daily" data-index="0">
+      <div class="module-visual">
+        <div class="module-content">
+          <div class="module-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+          </div>
+          <span class="module-tag">
+            <svg width="6" height="6" viewBox="0 0 6 6"><circle cx="3" cy="3" r="3" fill="currentColor"/></svg>
+            每日更新
+          </span>
+          <h3 class="module-title">全球 AI 前沿能力<br>跟踪日报</h3>
+          <p class="module-desc">
+            每日扫描全球AI前沿技术突破、重磅产品发布与政策动态，覆盖基础模型、Agent架构、多模态等关键领域，第一时间捕捉行业拐点信号。
+          </p>
+        </div>
+      </div>
+      <div class="module-footer">
+        <div class="module-meta">
+          <span class="module-meta-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+            日更频率
+          </span>
+          <span class="module-meta-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            8大技术领域
+          </span>
+        </div>
+        <span class="module-enter">
+          进入
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </span>
+      </div>
+    </a>
+
+    <!-- Module 2: Top 50 -->
+    <a href="Dashboard.html" class="module-card theme-top50" data-index="1">
+      <div class="module-visual">
+        <div class="module-content">
+          <div class="module-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7" rx="1"/>
+              <rect x="14" y="3" width="7" height="7" rx="1"/>
+              <rect x="3" y="14" width="7" height="7" rx="1"/>
+              <rect x="14" y="14" width="7" height="7" rx="1"/>
+            </svg>
+          </div>
+          <span class="module-tag">
+            <svg width="6" height="6" viewBox="0 0 6 6"><circle cx="3" cy="3" r="3" fill="currentColor"/></svg>
+            每周更新
+          </span>
+          <h3 class="module-title">全球金融 AI<br>Top 50 应用案例库</h3>
+          <p class="module-desc">
+            深度解析全球50家最具代表性的金融AI原生应用，覆盖智能投顾、风控反欺诈、信贷科技等六大赛道，每个案例万字级深度分析。
+          </p>
+        </div>
+      </div>
+      <div class="module-footer">
+        <div class="module-meta">
+          <span class="module-meta-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            50家企业
+          </span>
+          <span class="module-meta-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            6大赛道
+          </span>
+        </div>
+        <span class="module-enter">
+          进入
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </span>
+      </div>
+    </a>
+
+    <!-- Module 3: Coming Soon placeholder -->
+    <div class="module-card theme-coming" data-index="2" style="cursor:default;">
+      <div class="module-visual">
+        <div class="module-content">
+          <div class="module-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+            </svg>
+          </div>
+          <span class="module-tag">即将上线</span>
+          <h3 class="module-title">更多模块<br>敬请期待</h3>
+          <p class="module-desc">
+            金融AI投融资周报、监管政策追踪、技术架构拆解等更多专题模块正在筹备中，持续扩展研究版图。
+          </p>
+        </div>
+      </div>
+      <div class="module-footer">
+        <div class="module-meta">
+          <span class="module-meta-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            筹备中
+          </span>
+        </div>
+        <span class="module-enter" style="opacity:0.3;">
+          Coming Soon
+        </span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Scroll indicators -->
+  <div class="scroll-indicators" id="scrollIndicators">
+    <div class="scroll-dot active" data-index="0"></div>
+    <div class="scroll-dot" data-index="1"></div>
+    <div class="scroll-dot" data-index="2"></div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="site-footer">
+  <div class="footer-logo">全球金融AI跟踪与分析平台</div>
+  <div class="footer-sub">腾讯金融科技商业分析团队 · 内部研究工具</div>
+  <div class="footer-links">
+    <a href="ai-daily-briefing/publish/index.html">AI前沿日报</a>
+    <a href="Dashboard.html">Top 50 案例库</a>
+  </div>
+</footer>
+
+<script>
+// ===== Particle system =====
+(function(){
+  const canvas = document.getElementById('particles');
+  const ctx = canvas.getContext('2d');
+  let w, h, particles = [];
+
+  function resize(){
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight * 3;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  class Particle{
+    constructor(){
+      this.reset();
+    }
+    reset(){
+      this.x = Math.random() * w;
+      this.y = Math.random() * h;
+      this.r = Math.random() * 1.5 + 0.3;
+      this.vx = (Math.random() - 0.5) * 0.3;
+      this.vy = (Math.random() - 0.5) * 0.3;
+      this.alpha = Math.random() * 0.4 + 0.1;
+    }
+    update(){
+      this.x += this.vx;
+      this.y += this.vy;
+      if(this.x < 0 || this.x > w) this.vx *= -1;
+      if(this.y < 0 || this.y > h) this.vy *= -1;
+    }
+    draw(){
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(217,119,87,${this.alpha})`;
+      ctx.fill();
+    }
+  }
+
+  for(let i = 0; i < 60; i++) particles.push(new Particle());
+
+  function animate(){
+    ctx.clearRect(0, 0, w, h);
+    particles.forEach(p => { p.update(); p.draw(); });
+    // Draw connections
+    for(let i = 0; i < particles.length; i++){
+      for(let j = i + 1; j < particles.length; j++){
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if(dist < 150){
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(217,119,87,${0.06 * (1 - dist/150)})`;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(animate);
+  }
+  animate();
+})();
+
+// ===== Scroll indicator sync =====
+(function(){
+  const track = document.getElementById('modulesTrack');
+  const dots = document.querySelectorAll('.scroll-dot');
+  const cards = document.querySelectorAll('.module-card');
+
+  function updateDots(){
+    const scrollLeft = track.scrollLeft;
+    const cardWidth = cards[0].offsetWidth + 32; // gap
+    const activeIndex = Math.round(scrollLeft / cardWidth);
+    dots.forEach((dot, i) => {
+      dot.classList.toggle('active', i === activeIndex);
+    });
+  }
+
+  track.addEventListener('scroll', updateDots);
+
+  dots.forEach(dot => {
+    dot.addEventListener('click', () => {
+      const index = parseInt(dot.dataset.index);
+      const cardWidth = cards[0].offsetWidth + 32;
+      track.scrollTo({ left: cardWidth * index, behavior: 'smooth' });
+    });
+  });
+})();
+
+// ===== Counter animation =====
+(function(){
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if(entry.isIntersecting){
+        animateCounters();
+        observer.disconnect();
+      }
+    });
+  }, { threshold: 0.5 });
+
+  const statSection = document.querySelector('.hero-stats');
+  if(statSection) observer.observe(statSection);
+
+  function animateCounters(){
+    const counters = [
+      { el: document.getElementById('stat-companies'), target: 50, suffix: '+' },
+    ];
+    counters.forEach(({el, target, suffix}) => {
+      if(!el) return;
+      let current = 0;
+      const step = Math.ceil(target / 40);
+      const interval = setInterval(() => {
+        current += step;
+        if(current >= target){ current = target; clearInterval(interval); }
+        el.textContent = current + suffix;
+      }, 30);
+    });
+  }
+})();
+</script>
+</body>
+</html>
